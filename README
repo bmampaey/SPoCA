@@ -1,0 +1,20 @@
+General consideration:
+To make a program named program_name.x type "make -f program_name.mk -B", this will generate the corresponding executable in the bin directory.
+If there is no make file for a program you can always try to generate one with the command ./script/makemake.pl ./programs/program_name.cpp. It should generate a file ./program_name.mk
+You can always get help for a program by calling it with the -h option 
+
+The directories are organized as follow :
+spoca		: repository for the makefiles
+spoca/programs	: repository for the main c++ files of programs
+spoca/classes	: repository for the classes .h and .cpp files (classifiers, images, ...) written specifically for SPoCA
+spoca/bin		: repository for executables
+spoca/objects	: repository for temporary object files during compilation
+spoca/cgt		: a library of graph class
+spoca/script	: repository of scripts (mainly in perl) to help in running spoca and manipulating output (creation of movies, ...)
+spoca/idl		: repository for idl code
+
+There are also 2 directories for your convenience :
+spoca/results
+spoca/data
+
+

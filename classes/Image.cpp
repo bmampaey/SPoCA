@@ -337,7 +337,12 @@ int Image<T>::writeFitsImageP(fitsfile *fptr)
 	}
 
 
-	
+	/*if ( fits_set_compression_type(fptr, RICE_1, &status) )
+	{
+		cerr<<"Error : could not set image compression :"<< status <<endl;			
+		fits_report_error(stderr, status);
+		status = 0;
+	}*/
 	if ( fits_create_img(fptr,  bitpix, naxis, axes, &status) )
 	{
 		cerr<<"Error : creating image in file "<<fptr->Fptr->filename<<" :"<< status <<endl;			

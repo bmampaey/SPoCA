@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-Wall -fkeep-inline-functions -O3
 LFLAGS=-l cfitsio
-DFLAGS=-DDEBUG=3 -DNUMBERWAVELENGTH=2
+DFLAGS=-DDEBUG=4 -DNUMBERWAVELENGTH=2
 
 
 all:bin/classification.x

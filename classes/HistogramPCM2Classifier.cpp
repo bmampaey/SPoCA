@@ -48,6 +48,7 @@ void HistogramPCM2Classifier::saveCHmap(SunImage* outImage)
 void HistogramPCM2Classifier::computeU()
 {
 	U.resize(numberBins * numberClasses);
+	
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
 		for (unsigned j = 0 ; j < numberBins ; ++j)
@@ -57,19 +58,23 @@ void HistogramPCM2Classifier::computeU()
 			{
 				U[i*numberBins+j] *= U[i*numberBins+j];
 				U[i*numberBins+j] *= U[i*numberBins+j];
-				U[i*numberBins+j] = 1. / (1. + U[i*numberBins+j] ) ;
 			}
 			else if(fuzzifier == 2)
 			{
 				U[i*numberBins+j] *= U[i*numberBins+j];
-				U[i*numberBins+j] = 1. / (1. + U[i*numberBins+j] ) ;
+				
 			}
 			else
-				U[i*numberBins+j] = 1. / (1. + pow( U[i*numberBins+j] , 2./(fuzzifier-1.) ) );
+			{
+				U[i*numberBins+j] = pow( U[i*numberBins+j] , 2./(fuzzifier-1.) ) ;
+			}
+				
+			U[i*numberBins+j] = 1. / (1. + U[i*numberBins+j] ) ;
 
 		}
 
 	}
+
 
 }
 

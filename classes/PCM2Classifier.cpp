@@ -18,15 +18,18 @@ void PCM2Classifier::computeU()
 			{
 				U[i*numberValidPixels+j] *= U[i*numberValidPixels+j];
 				U[i*numberValidPixels+j] *= U[i*numberValidPixels+j];
-				U[i*numberValidPixels+j] = 1. / (1. + U[i*numberValidPixels+j] ) ;
 			}
 			else if(fuzzifier == 2)
 			{
 				U[i*numberValidPixels+j] *= U[i*numberValidPixels+j];
-				U[i*numberValidPixels+j] = 1. / (1. + U[i*numberValidPixels+j] ) ;
+				
 			}
 			else
-				U[i*numberValidPixels+j] = 1. / (1. + pow( U[i*numberValidPixels+j] , 2./(fuzzifier-1.) ) );
+			{
+				U[i*numberValidPixels+j] = pow( U[i*numberValidPixels+j] , 2./(fuzzifier-1.) ) ;
+			}
+				
+			U[i*numberValidPixels+j] = 1. / (1. + U[i*numberValidPixels+j] ) ;
 
 		}
 

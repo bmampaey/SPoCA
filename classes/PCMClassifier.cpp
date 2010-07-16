@@ -13,13 +13,16 @@ void PCMClassifier::computeU()
 	{
 		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
 		{
-			if(fuzzifier == 2)
-				U[i*numberValidPixels+j] = 1. / (1. + d2(X[j],B[i]) / eta[i] ) ;
-			else if(fuzzifier == 1.5)
-				U[i*numberValidPixels+j] = 1. / (1. + ( d2(X[j],B[i]) / eta[i] ) *  ( d2(X[j],B[i]) / eta[i] )) ;
-			else
-				U[i*numberValidPixels+j] = 1. / (1. + pow( d2(X[j],B[i]) / eta[i] , 1./(fuzzifier-1.) ) );
-
+			U[i*numberValidPixels+j] = d2(X[j],B[i]) / eta[i] ;
+			if(fuzzifier == 1.5)
+			{
+				U[i*numberValidPixels+j] *=  U[i*numberValidPixels+j];
+			}
+			else if(fuzzifier != 2)
+			{
+				U[i*numberValidPixels+j] = pow( U[i*numberValidPixels+j] , 1./(fuzzifier-1.) );
+			}
+			U[i*numberValidPixels+j] = 1. / (1. + U[i*numberValidPixels+j]);
 		}
 
 	}

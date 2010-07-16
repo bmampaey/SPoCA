@@ -56,10 +56,14 @@ void HistogramPCMClassifier::computeU()
 
 			U[i*numberBins+j] = d2(HistoX[j],B[i]) / eta[i] ;
 			if(fuzzifier == 1.5)
+			{
 				U[i*numberBins+j] *=  U[i*numberBins+j];
+			}
 			else if(fuzzifier != 2)
+			{
 				U[i*numberBins+j] = pow( U[i*numberBins+j] , 1./(fuzzifier-1.) );
-
+			}
+			
 			U[i*numberBins+j] = 1. / (1. + U[i*numberBins+j]);
 
 		}

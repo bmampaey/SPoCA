@@ -13,12 +13,12 @@
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
+#include "../classes/mainutilities.h"
+#include "../classes/ArgumentHelper.h"
+
 #include "../classes/SunImage.h"
 #include "../classes/Region.h"
-#include "../classes/gradient.h"
-#include "../classes/ArgumentHelper.h"
-#include "../classes/MainUtilities.h"
-#include "../classes/CoordinateConvertor.h"
+#include "../classes/trackable.h"
 #include "../cgt/graph.h"
 
 
@@ -27,187 +27,6 @@ using namespace dsr;
 using namespace cgt;
 
 string outputFileName;
-unsigned long newColor;
-
-typedef graph<Region*, int> RegionGraph;
-
-// Comparison of 2 images according to time (for sorting)
-inline bool compare(const SunImage* a, const SunImage* b)
-{
-	return a->ObservationTime() < b->ObservationTime();
-}
-
-
-// Compute the number of pixels common to 2 regions from 2 images
-unsigned overlay(SunImage* image1, const Region* region1, SunImage* image2, const Region* region2)
-{
-	unsigned intersectPixels = 0;
-	PixelType setValue1 = image1->pixel(region1->FirstPixel());
-	PixelType setValue2 = image2->pixel(region2->FirstPixel());
-	unsigned Xmin = region1->Boxmin().x > region2->Boxmin().x ? region1->Boxmin().x : region2->Boxmin().x;
-	unsigned Ymin = region1->Boxmin().y > region2->Boxmin().y ? region1->Boxmin().y : region2->Boxmin().y;
-	unsigned Xmax = region1->Boxmax().x < region2->Boxmax().x ? region1->Boxmax().x : region2->Boxmax().x;
-	unsigned Ymax = region1->Boxmax().y < region2->Boxmax().y ? region1->Boxmax().y : region2->Boxmax().y;
-
-	// We scan the intersection between the 2 boxes of the regions
-	// If the 2 regions don't overlay, we will not even enter the loops
-	for (unsigned y = Ymin; y <= Ymax; ++y)
-	{
-		for (unsigned x = Xmin; x <= Xmax; ++x)
-		{
-												  //There is overlay between the two regions
-			if(image1->pixel(x,y) == setValue1 && image2->pixel(x,y) == setValue2)
-				++intersectPixels;
-		}
-	}
-	return intersectPixels;
-
-}
-
-
-// Find the biggest parrent of a node (the one I have the biggest intersection with)
-RegionGraph::node& biggestParent(RegionGraph::node& n)
-{
-	const RegionGraph::adjlist &parentsList = n.iadjlist();
-	const RegionGraph::adjlist::const_iterator itadjEnd = parentsList.end();
-	RegionGraph::adjlist::const_iterator biggest = parentsList.begin();
-	for (RegionGraph::adjlist::const_iterator itadj = parentsList.begin(); itadj != itadjEnd; ++itadj)
-	{
-		if(itadj->edge().value() > biggest->edge().value())
-			biggest = itadj;
-
-	}
-	return biggest->node();
-}
-
-
-// Find the biggest son of a node (the one I have the biggest intersection with)
-RegionGraph::node& biggestSon(RegionGraph::node& n)
-{
-	const RegionGraph::adjlist &sonsList = n.adjlist();
-	const RegionGraph::adjlist::const_iterator itadjEnd = sonsList.end();
-	RegionGraph::adjlist::const_iterator biggest = sonsList.begin();
-	for (RegionGraph::adjlist::const_iterator itadj = sonsList.begin(); itadj != itadjEnd; ++itadj)
-	{
-		if(itadj->edge().value() > biggest->edge().value())
-			biggest = itadj;
-
-	}
-	return biggest->node();
-}
-
-
-
-// Color a node
-void colorize(RegionGraph::node& me)
-{
-	//If I'm already colored than I am fine
-	if(me.value()->Color() != 0)
-		return;
-
-	// I need all my parents to have their color
-	const RegionGraph::adjlist &parentsList = me.iadjlist();
-	const RegionGraph::adjlist::const_iterator itadjEnd = parentsList.end();
-	RegionGraph::adjlist::const_iterator biggestParent = parentsList.begin();
-	for (RegionGraph::adjlist::const_iterator itadj = parentsList.begin(); itadj != itadjEnd; ++itadj)
-	{
-		colorize(itadj->node());				  //Carefull there is recursion here
-		// We search for the biggest parent
-		if(itadj->edge().value() > biggestParent->edge().value())
-			biggestParent = itadj;
-
-	}
-												  //Either I am the only child of my biggest parrent, or I am his biggest Son
-	if(biggestParent != itadjEnd && me.value() == biggestSon(biggestParent->node()).value())
-		me.value()->setColor(biggestParent->node().value()->Color());
-	else										  //There was a split or a merge, or I have no parrents
-		me.value()->setColor(++newColor);
-
-}
-
-
-// Tell if there is a path between a node and a region
-bool path(const RegionGraph::node* n, const Region* r)
-{
-	if (n->value() == r)
-		return true;
-
-	const RegionGraph::adjlist &adjList = n->adjlist();
-	const RegionGraph::adjlist::const_iterator itadjEnd = adjList.end();
-	for (RegionGraph::adjlist::const_iterator itadj = adjList.begin(); itadj != itadjEnd; ++itadj)
-	{
-		if(path(&(itadj->node()), r))
-			return true;
-
-	}
-	return false;
-}
-
-
-// Output a graph in the dot format
-void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, const string graphName)
-{
-	string filename = outputFileName + graphName + ".dot";
-	ofstream graphFile(filename.c_str());
-	if (graphFile.good())
-	{
-
-		graphFile<<"digraph "<<graphName<<" {"<<endl;
-		graphFile<<"node [colorscheme=set312 penwidth=4];"<<endl;
-		//First we output all node info
-		for (unsigned s = 0; s < regions.size(); ++s)
-		{
-			string rank;
-			for (unsigned r = 0; r < regions[s].size(); ++r)
-			{
-				rank += " \"" + regions[s][r]->Label() + "\"";
-				graphFile <<"\""<< regions[s][r]->Label()<<"\"";
-				if(regions[s][r]->Color() != 0)
-					graphFile<<" [color=\""<< gradient[ (int(regions[s][r]->Color()) % gradientMax) + 1 ] <<"\"];" << endl;
-				else
-					graphFile<<" [color="<< (s%12) + 1 <<"];" << endl;
-
-			}
-			graphFile<<"{ rank=same; "<< rank <<" };" << endl;
-
-		}
-		// Then we output all edges info
-		const RegionGraph::const_iterator itnEnd = g.end();
-		for (RegionGraph::const_iterator itn = g.begin(); itn != itnEnd; ++itn)
-		{
-			const RegionGraph::adjlist &adjList = itn->adjlist();
-			const RegionGraph::adjlist::const_iterator itadjEnd = adjList.end();
-			for (RegionGraph::adjlist::const_iterator itadj = adjList.begin(); itadj != itadjEnd; ++itadj)
-			{
-				graphFile <<"\""<< itn->value()->Label()<<"\" -> \"" << itadj->node().value()->Label()<< "\" [label="<<itadj->edge().value()<<"];" << endl;
-			}
-
-		}
-		graphFile<<"}"<<endl;
-	}
-	graphFile.close();
-}
-
-
-// Output regions in the region format
-void ouputRegions(const vector<vector<Region*> >& regions, string filename)
-{
-	filename = outputFileName + filename;
-	ofstream regionFile(filename.c_str());
-	if (regionFile.good())
-	{
-		regionFile<<Region::header<<endl<<endl;
-		for (unsigned s = 0; s < regions.size(); ++s)
-		{
-			for (unsigned r = 0; r < regions[s].size(); ++r)
-			{
-				regionFile<<*(regions[s][r])<<endl;
-			}
-			regionFile<<endl;
-		}
-	}
-	regionFile.close();
-}
 
 
 int main(int argc, const char **argv)
@@ -244,38 +63,19 @@ int main(int argc, const char **argv)
 	arguments.set_version("1.0");
 	arguments.process(argc, argv);
 
-	// General variables
-	vector<SunImage*> images;
-
 	// We read the color maps
-	images = getImagesFromFiles(imageType, sunImagesFileNames, true);
+	vector<SunImage*> images = getImagesFromFiles(imageType, sunImagesFileNames, true);
+
+	//We ordonate the images according to time
+	ordonate(images);
+
 	// We crop the images
 	for (unsigned p = 0; p < images.size(); ++p)
 	{
 		images[p]->preprocessing("NAR", 1);
 	}
 
-	//We ordonate the images according to time
-	sort(images.begin(), images.end(), compare);
 
-	#if defined(DEBUG) && DEBUG >= 1
-	//We remove the ones that have duplicate time
-	vector<SunImage*>::iterator s1 = images.begin();
-	vector<SunImage*>::iterator s2 = images.begin() + 1;
-	while (s2 != images.end())
-	{
-		if (unsigned(difftime((*s2)->ObservationTime(),(*s1)->ObservationTime())) == 0)
-		{
-			s1 = images.erase(s1,s2);
-		}
-		else
-		{
-			++s1;
-		}
-		s2 = s1 + 1;
-	}
-	#endif
-	
 	// We get the regions out of the images
 	vector<vector<Region*> > regions;
 	for (unsigned s = 0; s < images.size(); ++s)
@@ -365,7 +165,6 @@ int main(int argc, const char **argv)
 	ouputRegions(regions, "regions_postmodification.txt");
 	#endif
 
-
 	
 	#if defined(DEBUG) && DEBUG >= 2
 	// We color the first images and output them
@@ -376,7 +175,7 @@ int main(int argc, const char **argv)
 			if(images[s]->pixel(regions[s][r]->FirstPixel()) != regions[s][r]->Color())
 				images[s]->propagateColor(regions[s][r]->Color(), regions[s][r]->FirstPixel());
 		}
-		images[s]->writeFitsImage(outputFileName + sunImagesFileNames[s].substr(0, sunImagesFileNames[s].rfind(".fits")) + ".tracked.fits");
+		images[s]->writeFitsImage(outputFileName + sunImagesFileNames[s]);
 		delete images[s];
 	}
 	#endif
@@ -388,43 +187,100 @@ int main(int argc, const char **argv)
 			if(images[s]->pixel(regions[s][r]->FirstPixel()) != regions[s][r]->Color())
 				images[s]->propagateColor(regions[s][r]->Color(), regions[s][r]->FirstPixel());
 		}
-		images[s]->writeFitsImage(outputFileName + sunImagesFileNames[s].substr(0, sunImagesFileNames[s].rfind(".fits")) + ".tracked.fits");
+		images[s]->writeFitsImage(outputFileName + sunImagesFileNames[s]);
 		delete images[s];
 
 	}
 
+	#ifndef HEK
+	cout<<"Last color assigned: "<<newColor<<endl;	
+	#else
 	
-	cout<<"Last color assigned: "<<newColor<<endl;
+	//We output the number of Active Events and the last color assigned
+	cout<<regions[images.size() - 1].size()<<" "<<newColor<<endl;
+
+	// We output the relations between the AR of the last region map and the ones from the previous last (i.e. the last from the previous call to tracking) 
 	
-	/* For Tufjan Kolak 3D visualisation program
-	//We output the regions
-	for (unsigned s = 0; s + overlap < images.size(); ++s)
-	{
-		cout<<"IMAGE "<<sunImagesFileNames[s]<<endl;
-		for (unsigned r = 0; r < regions[s].size(); ++r)
-		{
-			cout<<*(regions[s][r])<<endl;
-		}
-		cout<<"IMAGEEND"<<endl;
-	}
+	/* First we recolor the graph top to bottom by giving to any child the color of its biggest parent
+	map[previous_last] 	(== overlap - 1)
+	map[previous_last + 1]	|
+	map[previous_last + 2]	|
+	map[previous_last + 3]	| Must only contain colors from map[previous_last]
+	...					|
+	map[last - 1]			|
+	map[last]
 	*/
 	
-
-	//We output the regions
-	for (unsigned s = 0; s  < images.size(); ++s)
+	unsigned last = regions.size() - 1;
+	unsigned previous_last = overlap - 1;
+	
+	for (unsigned s = previous_last + 1 ; s < last; ++s)
 	{
-		cout<<"IMAGE "<<images[s]->ObservationDate()<<endl;
-		CoordinateConvertor cc(images[s]);
-		float x = 0, y = 0;
 		for (unsigned r = 0; r < regions[s].size(); ++r)
 		{
-			cc.convert("HGC", regions[s][r]->Center(), x, y);
-			cout<<x<<" "<<y<<" "<<regions[s][r]->Color()<<endl;
+			const RegionGraph::node* myBiggestParent = biggestParent( tracking_graph.get_node(regions[s][r]) );
+			if(myBiggestParent)
+			 	regions[s][r]->setColor( myBiggestParent->value()->Color() );
 		}
-		cout<<"IMAGEEND"<<endl;
 	}
-
 	
+	#if defined(DEBUG) && DEBUG >= 2
+	// We output the graph after recolorization
+	ouputGraph(tracking_graph, regions, "ar_graph_recolorization");
+	#endif
+	
+	
+	// Now we create for each region of map[last] the list of parents that have a color existing in map[previous_last]
 
+	for (unsigned r = 0; r < regions[last].size(); ++r)
+	{
+		const RegionGraph::node* n = tracking_graph.get_node(regions[last][r]);
+		const RegionGraph::adjlist &parentsList = n->iadjlist();
+		const RegionGraph::adjlist::const_iterator itadjEnd = parentsList.end();
+		vector<unsigned> ancestors_color;
+		for (RegionGraph::adjlist::const_iterator itadj = parentsList.begin(); itadj != itadjEnd; ++itadj)
+		{
+			for (unsigned r1 = 0; r1 < regions[previous_last].size(); ++r1)
+			{
+				if(itadj->node().value()->Color() == regions[previous_last][r1]->Color())
+				{
+					ancestors_color.push_back(regions[previous_last][r1]->Color());
+					break;
+				}
+			}
+					
+
+		}
+		// Now that I know the list of my ancestors_color, I can output the relations
+		if(ancestors_color.size() == 0)
+		{
+			// I have no ancestors, so I am a new color 
+			cout<< regions[last][r]->Color() << " new " << 0 <<endl;
+		}
+		else if(ancestors_color.size() == 1 && ancestors_color[0] != regions[last][r]->Color())
+		{
+			// I have one ancestor of a different color, I am a split from him
+			cout<< regions[last][r]->Color() << " splits_from " <<  ancestors_color[0]<<endl;
+		}
+		else
+		{
+			// I have many ancestors, I am a merge of them (unless we have the same color then I am a follow)
+			for (unsigned a = 0; a < ancestors_color.size(); ++a)
+			{
+				if(ancestors_color[a] == regions[last][r]->Color())
+				{
+					cout<<  regions[last][r]->Color() << " follows " <<  ancestors_color[a] <<endl;
+				}
+				else
+				{
+					cout<<  regions[last][r]->Color() << " merges_from " << ancestors_color[a] <<endl;
+				}
+			}
+		}
+				
+	}
+	
+	#endif
+	
 	return EXIT_SUCCESS;
 }

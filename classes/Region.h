@@ -13,6 +13,10 @@
 #include "Coordinate.h"
 #include "SunImage.h"
 
+#ifdef COCO
+#include "CoordinateConvertor.h"
+#endif
+
 class Region
 {
 	protected :
@@ -46,13 +50,18 @@ class Region
 		unsigned NumberPixels() const;
 		time_t ObservationTime() const;
 		std::string ObservationDate() const;
-		std::string Label() const;
+		std::string HekLabel() const;
+		std::string Visu3DLabel() const;
+		// Output a region as a string
+		std::string toString() const;
+		#ifdef CoordinateConvertor_H
+		std::string toString(const CoordinateConvertor& coco) const;
+		#endif
 		
 
 	public :
 
 		static const std::string header;
-		friend std::ostream& operator<<(std::ostream& out, const Region& r);
 		friend std::vector<Region*> getRegions(const SunImage* colorizedComponentsMap);
 
 };

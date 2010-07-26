@@ -11,10 +11,10 @@ spoca/bin		: repository for executables
 spoca/objects	: repository for temporary object files during compilation
 spoca/cgt		: a library of graph class
 spoca/script	: repository of scripts (mainly in perl) to help in running spoca and manipulating output (creation of movies, ...)
-spoca/idl		: repository for idl code
+spoca/utilities: repository for some utilities program
 
-There are also 2 directories for your convenience :
+There are also 1 directory for your convenience :
 spoca/results
-spoca/data
+
 
 

@@ -101,7 +101,7 @@ void Region::add(const Coordinate& pixelCoordinate)
 }
 
 
-string Region::Label() const
+string Region::HekLabel() const
 {
 	tm* date_obs;
 	date_obs = gmtime(&observationTime);
@@ -110,15 +110,44 @@ string Region::Label() const
 	return ss.str();
 }
 
-
-const string Region::header = "(Center.x,Center.y)\t(Boxmin.x,Boxmin.y)\t(Boxmax.x,Boxmax.y)\tId\tNumberPixels\tLabel\tObservationDate\tColor";
-
-ostream& operator<<(ostream& out, const Region& r)
+string Region::Visu3DLabel() const
 {
-	
-	out<<setiosflags(ios::fixed)<<r.Center()<<"\t"<<r.Boxmin()<<"\t"<<r.Boxmax()<<"\t"<<r.Id()<<"\t"<<r.NumberPixels()<<"\t"<<r.Label()<<"\t"<<r.ObservationDate()<<"\t"<<r.Color();
-	return out;
+	tm* date_obs;
+	date_obs = gmtime(&observationTime);
+	ostringstream ss;
+	ss<<setfill('0')<<setw(4)<<date_obs->tm_year<<setw(2)<<date_obs->tm_mon + 1<<setw(2)<<date_obs->tm_mday<<setw(2)<<date_obs->tm_hour<<setw(2)<<date_obs->tm_min;
+	return ss.str();
 }
+
+
+const string Region::header = "Id\tColor\tObservationDate\t(Center.x,Center.y)\t(Boxmin.x,Boxmin.y)\t(Boxmax.x,Boxmax.y)\tNumberPixels";
+
+string Region::toString() const
+{
+	ostringstream out;
+	out<<setiosflags(ios::fixed)<<Id()<<"\t"<<Color()<<"\t"<<ObservationDate()<<"\t"<<Center()<<"\t"<<Boxmin()<<"\t"<<Boxmax()<<"\t"<<NumberPixels();
+	return out.str();
+}
+
+#ifdef CoordinateConvertor_H
+string Region::toString(const CoordinateConvertor& coco) const
+{
+	ostringstream out;
+	out<<setiosflags(ios::fixed)<<Id()<<"\t"<<Color()<<"\t"<<ObservationDate();
+
+	float fx, fy;
+	out<<setiosflags(ios::fixed);
+	coco.convert(Center(), fx, fy);
+	out<<"\t"<<"("<<fx<<","<<fy<<")";
+	coco.convert(Boxmin(), fx, fy);
+	out<<"\t"<<"("<<fx<<","<<fy<<")";
+	coco.convert(Boxmax(), fx, fy);
+	out<<"\t"<<"("<<fx<<","<<fy<<")";
+	
+	out<<"\t"<<NumberPixels();
+	return out.str();
+}
+#endif
 
 // Extraction of the regions from a connected component colored Map
 vector<Region*> getRegions(const SunImage* colorizedComponentsMap)

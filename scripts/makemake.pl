@@ -13,8 +13,10 @@ my $CC = 'CC=g++';
 my $CFLAGS = 'CFLAGS=-Wall -fkeep-inline-functions';
 my $LFLAGS = 'LFLAGS=-lcfitsio';
 my $DFLAGS = 'DFLAGS=';
-my $TRACKINGFLAGS = 'TRACKINGFLAGS=-lpthread';
-my $IDLFLAGS = 'IDLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lXpm -lXmu -lXext -lXt -lSM -lICE  -lXinerama -lX11 -ldl -ltermcap -lrt -lm /usr/lib/libXm.a';
+my $TRACKINGLFLAGS = 'TRACKINGLFLAGS=-lpthread';
+my $MAGICKLFLAGS = 'MAGICKLFLAGS=`Magick++-config --cppflags --cxxflags --ldflags --libs`';
+my $MAGICKCFLAGS = 'MAGICKCFLAGS=-I /usr/include/ImageMagick/';
+my $IDLLFLAGS = 'IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lXpm -lXmu -lXext -lXt -lSM -lICE  -lXinerama -lX11 -ldl -ltermcap -lrt -lm /usr/lib/libXm.a';
 
 
 my @suffixes = ('.c', '.cpp', '.h', '.x', '.o', '.hpp');
@@ -152,11 +154,21 @@ my @objects;
 
 while (my $file = shift @untreated)
 {
+
+	if($file =~ /tracking/i)
+	{
+		$LFLAGS .= '  $(TRACKINGLFLAGS)';
+	}
+	if($file =~ /CoordinateConvertor/i)
+	{
+		$LFLAGS .= '  $(IDLLFLAGS)';
+	}
+
 	my @includes;
 	open FILE, "<$file" or die "Could not open $file" ;
 	while (<FILE>)
 	{ 
-		if (m/#include\s+"(.*)"/)
+		if (m/^#include\s+"(.*)"/)
 		{
 			push @includes, $1;
 		}
@@ -199,7 +211,7 @@ while (my $file = shift @untreated)
 
 open MAKEFILE, ">$makefile" or die "Could not open $makefile";
 
-print MAKEFILE "$CC\n$CFLAGS\n$LFLAGS\n$TRACKINGFLAGS\n$IDLFLAGS\n$DFLAGS\n\n";
+print MAKEFILE "$CC\n$CFLAGS\n$TRACKINGLFLAGS\n$IDLLFLAGS\n$MAGICKLFLAGS\n$MAGICKCFLAGS\n$DFLAGS\n$LFLAGS\n\n";
 print MAKEFILE "all:$executable\n";
 print MAKEFILE "clean: rm $executable " . (join ' ', @objects) . "\n";
 print MAKEFILE "\n\n";

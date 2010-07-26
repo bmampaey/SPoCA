@@ -17,11 +17,44 @@ my $all = 0;
 my $yes = 0;
 my $answer = "no";
 
-#my $prefix = 'aia';
-my $prefix = 'proba2';
+my $prefix = 'aia';
+my @filenames;
 
+sub parse_arguments
+{
+	my $help = undef;
+	if (@ARGV == 0)
+	{
+		$help = 1;
+	}
+	else
+	{
+		use Getopt::Long;
+		GetOptions(
+	            "p:s"=>\$prefix,
+	            "h"=>\$help,
+		);
+	}
 
-my @filenames = @ARGV or die "Provide a filename";
+	if (! defined $prefix)
+	{
+		$help = 1;		
+	}
+
+	@filenames = @ARGV or $help = 1;
+	
+	if ($help == 1)
+	{
+		print STDERR "Usage: rename.pl [-p prefix] filenames_to_be_renamed\n";
+		print STDERR "This script renames fits files like so: prefix.yyyymmdd_hhmmss.wavelength.fits\n";
+		print STDERR "The prefix can be set up using the -p option, by default it is \"$prefix\"\n";
+		exit(2);
+	
+	}
+}
+
+parse_arguments();
+
 foreach my $filename (@filenames)
 {
 	my $status;

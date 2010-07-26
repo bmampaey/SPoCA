@@ -20,4 +20,5 @@ std::ostream& operator<<(std::ostream& out, const std::vector<unsigned>& v);
 std::istream& operator>>(std::istream& in, std::vector<unsigned>& v);
 
 std::string itos(const int& i);
+std::string dtos(const double& i);
 #endif

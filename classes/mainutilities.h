@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fstream>
+#include <sys/stat.h>
 
 #include "FeatureVector.h"
 #include "SunImage.h"
@@ -23,10 +24,16 @@ extern std::string outputFileName;
 extern const char * instruments[];
 extern const char * limb_corrections[];
 
-//Read the centers and the wavelength from a file
-void readCentersFromFile(std::vector<RealFeature>& B, RealFeature& wavelengths, const std::string& centersFileName);
+// Read the centers and the wavelength from a file
+unsigned readCentersFromFile(std::vector<RealFeature>& B, RealFeature& wavelengths, const std::string& centersFileName);
 
+// Read the binsize
+bool readbinSize(RealFeature& binSize, const std::string& sbinSize);
 
-//Read the images from fits files
+// Tell if a file exists
+bool fileExists(const std::string& filename);
+
+// Read the images from fits files
+SunImage* getImageFromFile(const std::string type, const std::string sunImageFileName);
 std::vector<SunImage*> getImagesFromFiles(const std::string type, const std::vector<std::string>& sunImagesFileNames, bool align = false);
 #endif

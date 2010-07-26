@@ -8,7 +8,7 @@
 #include <string>
 #include <fenv.h>
 #include <iomanip>
-
+#include <Magick++.h>
 #include "../classes/tools.h"
 #include "../classes/constants.h"
 #include "../classes/Image.h"
@@ -18,6 +18,9 @@
 
 using namespace std;
 using namespace dsr;
+using Magick::Color;
+using Magick::ColorGray;
+using Magick::Geometry;
 
 string outputFileName;
 
@@ -32,48 +35,66 @@ int main(int argc, const char **argv)
 	vector<string> imagesFileNames;
 	
 	// Options for the colorisation
-	bool modulo = false;
+	bool transparent = false;
+	bool colorize = false;
 
-	string programDescription = "This Programm makes the fits files usable with ImageMagick utilities.\n";
+	string programDescription = "This Program makes the fits files usable with ImageMagick utilities.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
 
 	ArgumentHelper arguments;
-	arguments.new_flag('M', "modulo", "\n\tIf you want the colors to be between 1 and gradientMax\n\t" , modulo);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFileNames);
+	arguments.new_flag('T', "transparent", "\n\tIf you want the null values to be transparent\n\t" , transparent);
+	arguments.new_flag('C', "colorize", "\n\tIf you want to colorize the image\n\t" , colorize);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images.\n\t", imagesFileNames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
 	arguments.set_version("1.0");
 	arguments.process(argc, argv);
 
-	Image<PixelType>* image = NULL;
+	Color background(0, 0 ,0, 0);
+	if(transparent)
+	{
+	    background.alphaQuantum(MaxRGB);
+	}
+	else
+	{
+	    background.alphaQuantum(0);
+	}
+
 
 	for (unsigned p = 0; p < imagesFileNames.size(); ++p)
 	{
-		image = new Image<PixelType>(imagesFileNames[p]);
+		Image<PixelType>* image = new Image<PixelType>(imagesFileNames[p]);
+		unsigned Xaxes = image->Xaxes();
+		unsigned Yaxes = image->Yaxes();
 
-		for (unsigned j = 0; j < image->NumberPixels(); ++j)
+		Magick::Image pngImage( Geometry(Xaxes, Yaxes), background );
+		//pngImage.type(Magick::TrueColorMatteType);
+    
+		for (unsigned y = 0; y < Yaxes; ++y)
 		{
-			if(image->pixel(j) == image->nullvalue )
-			{
-				image->pixel(j) = 0;
-			}
-			else if(modulo)
-			{
-				image->pixel(j) = 1 + (int(image->pixel(j)) % gradientMax);
-			}
-			else
-			{
-				image->pixel(j) += 1;
+		    for (unsigned x = 0; x < Xaxes; ++x)
+		    {	
+				if(image->pixel(x, y) != image->nullvalue )
+				{
+					unsigned indice = (unsigned(image->pixel(x, y)) % gradientMax) + 1 ;
+					if(colorize)
+					{
+						pngImage.pixelColor(x, Yaxes - y - 1, Color(magick_gradient[indice]));
+					}
+					else
+					{
+						pngImage.pixelColor(x, Yaxes - y - 1, ColorGray(double(indice * MaxRGB)/gradientMax);
+					}
+				}
 			}
 		}
-		image->pixel(0) = 0;
-		image->pixel(1) = gradientMax;
+
 		outputFileName =  imagesFileNames[p].substr(0, imagesFileNames[p].find(".fits"));
-		image->writeFitsImage(outputFileName + ".magick.fits");
+		pngImage.write(outputFileName + ".png");
 		delete image;
 	}
 	return EXIT_SUCCESS;

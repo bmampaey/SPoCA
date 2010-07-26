@@ -3,7 +3,6 @@
 #define Coordinate_H
 
 #include <stdio.h> 
-#include "idl_export.h"
 #include <limits>
 #include <iostream>
 

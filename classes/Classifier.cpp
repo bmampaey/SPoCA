@@ -510,7 +510,7 @@ void Classifier::saveAllResults(SunImage* outImage)
 			uncleanedResultsFile<<Region::header<<endl;
 			for(unsigned r = 0; r < regions.size() && uncleanedResultsFile.good(); ++r)
 			{
-				uncleanedResultsFile<<*(regions[r])<<endl;
+				uncleanedResultsFile<<regions[r]->toString()<<endl;
 				delete regions[r];
 			}
 		}
@@ -562,7 +562,7 @@ void Classifier::saveAllResults(SunImage* outImage)
 			resultsFile<<Region::header<<endl;
 			for(unsigned r = 0; r < regions.size() && resultsFile.good(); ++r)
 			{
-				resultsFile<<*(regions[r])<<endl;
+				resultsFile<<regions[r]->toString()<<endl;
 			}
 		}
 		resultsFile.close();

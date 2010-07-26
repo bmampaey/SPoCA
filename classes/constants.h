@@ -29,7 +29,7 @@
 // 2 is 1 + lots of output to files
 // 3 is 2 + lots of output to screen
 #if ! defined(DEBUG)
-#define DEBUG 3
+#define DEBUG 0
 #endif
 
 //The minimal size for an AR in (arc/sec)square (otherwise it is a bright point)

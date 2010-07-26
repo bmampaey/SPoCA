@@ -42,10 +42,16 @@ class RegionStats : public Region
 		Real Area_RawUncert() const;
 		Real Area_AtDiskCenter() const;
 		Real Area_AtDiskCenterUncert() const;
+		
+		// Output a region as a string
+		std::string toString() const;
+		#ifdef CoordinateConvertor_H
+		std::string toString(const CoordinateConvertor& coco) const;
+		#endif
+
 
 	public :
 		static const std::string header;
-		friend std::ostream& operator<<(std::ostream& out, const RegionStats& r);
 		friend std::vector<RegionStats*> getRegions(const SunImage* colorizedComponentsMap, const SunImage* image);
 
 };

@@ -12,6 +12,7 @@
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
+#include "../classes/mainutilities.h"
 
 #include "../classes/SunImage.h"
 
@@ -27,7 +28,7 @@
 
 #include "../classes/FeatureVector.h"
 #include "../classes/ArgumentHelper.h"
-#include "../classes/MainUtilities.h"
+
 
 
 using namespace std;
@@ -44,8 +45,11 @@ int main(int argc, const char **argv)
 	cout<<setiosflags(ios::fixed);
 	#endif
 
-	// Options for the preprocessing of images
+	// The list of names of the sun images to process
 	string imageType = "AIA";
+	vector<string> sunImagesFileNames;
+
+	// Options for the preprocessing of images
 	string preprocessingSteps = "NAR";
 	double radiusRatio = 1.31;
 
@@ -56,7 +60,7 @@ int main(int argc, const char **argv)
 	string centersFileName;
 
 	// Options for the classification
-	string classifierType;
+	string classifierType = "HFCM";
 	unsigned maxNumberIteration = 100;
 	double precision = 0.001;
 	double fuzzifier = 2;
@@ -68,9 +72,6 @@ int main(int argc, const char **argv)
 	string sbinSize;
 	string histogramFile;
 	
-	// The list of names of the sun images to process
-	vector<string> sunImagesFileNames;
-
 
 	// We parse the arguments
 
@@ -104,13 +105,13 @@ int main(int argc, const char **argv)
 
 	
 	// General variables
-	vector<SunImage*> images;
 	vector<RealFeature> B;
 	RealFeature wavelengths = 0;
 	Classifier* F;
 	RealFeature binSize(0);
 
 	bool classifierIsPossibilistic = false;
+	bool classifierIsHistogram = false;
 
 	// We process the arguments
 
@@ -131,40 +132,22 @@ int main(int argc, const char **argv)
 	outputFileName += ".";
 	
 	// We read the wavelengths and the initial centers from the centers file
-	if(! centersFileName.empty())
+	if(readCentersFromFile(B, wavelengths, centersFileName))
 	{
-		readCentersFromFile(B, wavelengths, centersFileName);
 		if(B.size() != numberClasses)
 		{
 			cerr<<"Error : The number of classes is different than the number of centers read in the center file."<<endl;
-			if(B.size() != 0)
-			{
-				numberClasses = B.size();
-				cerr<<"The number of classes will be set to "<<numberClasses<<endl;
-			}
+			numberClasses = B.size();
+			cerr<<"The number of classes will be set to "<<numberClasses<<endl;
+			
 		}
 	}
 	
-	// We read and preprocess the sun images
-	images = getImagesFromFiles(imageType, sunImagesFileNames, true);
-	for (unsigned p = 0; p < images.size(); ++p)
-	{
-		images[p]->preprocessing(preprocessingSteps, radiusRatio);
-		#if defined(DEBUG) && DEBUG >= 2
-		images[p]->writeFitsImage(outputFileName + "preprocessed." + sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0));
-		#endif
-	}
 	
 	// We read the bin size
-	if(!sbinSize.empty())
+	if(!readbinSize(binSize,sbinSize))
 	{
-		istringstream Z(sbinSize);
-		Z>>binSize;
-		if(Z.fail())
-		{
-			cerr<<"Error reading the binSize."<<endl;
-			return EXIT_FAILURE;
-		}
+		return EXIT_FAILURE;
 	}
 
 	// We declare the type of Classifier we want
@@ -194,7 +177,7 @@ int main(int argc, const char **argv)
 	}
 	else if (classifierType == "HFCM")
 	{
-		if(!histogramFile.empty())
+		if(fileExists(histogramFile))
 		{
 			F = new HistogramFCMClassifier(histogramFile, fuzzifier);
 		}
@@ -207,11 +190,12 @@ int main(int argc, const char **argv)
 			cerr<<"Error : for histogram classification you must provide the bin size or an histogram file."<<endl;
 			return EXIT_FAILURE;
 		}
+		classifierIsHistogram = true;
 	}
 	else if (classifierType == "HPCM")
 	{
 
-		if(!histogramFile.empty())
+		if(fileExists(histogramFile))
 		{
 			F = new HistogramPCMClassifier(histogramFile, fuzzifier);
 		}
@@ -224,13 +208,13 @@ int main(int argc, const char **argv)
 			cerr<<"Error : for histogram classification you must provide the bin size or an histogram file."<<endl;
 			return EXIT_FAILURE;
 		}
-
+		classifierIsHistogram = true;
 		classifierIsPossibilistic = true;
 	}
 	else if (classifierType == "HPCM2")
 	{
 
-		if(!histogramFile.empty())
+		if(fileExists(histogramFile))
 		{
 			F = new HistogramPCM2Classifier(histogramFile, fuzzifier);
 		}
@@ -243,6 +227,7 @@ int main(int argc, const char **argv)
 			cerr<<"Error : for histogram classification you must provide the bin size or an histogram file."<<endl;
 			return EXIT_FAILURE;
 		}
+		classifierIsHistogram = true;
 		classifierIsPossibilistic = true;
 	}
 	else 
@@ -252,8 +237,26 @@ int main(int argc, const char **argv)
 	}
 	
 		
+	// We read and preprocess the sun images
+	vector<SunImage*> images = getImagesFromFiles(imageType, sunImagesFileNames, true);
+	for (unsigned p = 0; p < images.size(); ++p)
+	{
+		images[p]->preprocessing(preprocessingSteps, radiusRatio);
+		#if defined(DEBUG) && DEBUG >= 2
+		images[p]->writeFitsImage(outputFileName + "preprocessed." + sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0));
+		#endif
+	}
+
+	
 	// We add the images to the classifier
 	F->addImages(images);
+		
+	// We delete all images but the first one to gain memory space
+	for (unsigned p = 1; p < images.size(); ++p)
+	{
+		delete images[p];
+	}
+	images.resize(1);
 		
 		
 	// If we don't have centers we initialise randomly
@@ -269,6 +272,10 @@ int main(int argc, const char **argv)
 	if(classifierIsPossibilistic)
 	{
 		dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
+		#if defined(DEBUG) && DEBUG >= 2
+		// We save the centers we found
+		F->saveB(outputFileName + "FCM.centers.txt");
+		#endif
 	}	
 	
 	#if defined(DEBUG) && DEBUG >= 3
@@ -278,16 +285,31 @@ int main(int argc, const char **argv)
 	// We have all the information we need, we can do the classification
 	F->classification(precision, maxNumberIteration);
 
+	#if defined(DEBUG) && DEBUG >= 2
 	// We save the results
 	F->saveAllResults(images[0]);
+	#endif
 	
 	// We save the map of AR
 	F->saveARmap(images[0]);
+	
+	//We save the centers for the next run (for PCM and derivatives, must be done before classification)
+	if (!centersFileName.empty())
+	{
+		F->saveB(centersFileName);
+	}
 
-	// We save the centers we found
-	F->saveB(outputFileName + "centers.txt");
+	//We save the histogram for the next run
+	if(classifierIsHistogram && !histogramFile.empty())
+	{
+		dynamic_cast<HistogramClassifier*>(F)->saveHistogram(histogramFile);
+	}
+
+	//We save the AR map for tracking
+	F->saveARmap(images[0]);
 	
 	delete F;
+	delete images[0];
 
 	return EXIT_SUCCESS;
 }

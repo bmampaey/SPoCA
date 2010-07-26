@@ -11,6 +11,7 @@
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
+#include "../classes/mainutilities.h"
 
 #include "../classes/SunImage.h"
 
@@ -23,7 +24,7 @@
 
 #include "../classes/FeatureVector.h"
 #include "../classes/ArgumentHelper.h"
-#include "../classes/MainUtilities.h"
+
 
 
 using namespace std;
@@ -38,8 +39,11 @@ int main(int argc, const char **argv)
 	cout<<setiosflags(ios::fixed);
 	#endif
 
-	// Options for the preprocessing of images
+	// The list of names of the sun images to process
 	string imageType = "AIA";
+	vector<string> sunImagesFileNames;
+
+	// Options for the preprocessing of images
 	string preprocessingSteps = "NAR";
 	double radiusRatio = 1.31;
 
@@ -64,8 +68,6 @@ int main(int argc, const char **argv)
 	string sbinSize;
 	string histogramFile;
 	
-	// The list of names of the sun images to process
-	vector<string> sunImagesFileNames;
 
 	// We parse the arguments
 
@@ -89,8 +91,8 @@ int main(int argc, const char **argv)
 	arguments.new_named_unsigned_int('N', "neighboorhoodRadius", "positive integer", "\n\tOnly for spatial classifiers like SPoCA.\n\tThe neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.\n\t", neighboorhoodRadius);
 	arguments.new_named_string('H', "histogramFile","file name", "\n\tThe name of a file containing an histogram.\n\t", histogramFile);
 	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogramm.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
-	arguments.new_named_unsigned_int('t', "classificationPeriodicity", "classificationPeriodicity", "The periodicity with wich we do the classification (0 means only classification at the end).", classificationPeriodicity);
-	arguments.new_flag('R', "reinitializeCenters", "Set this flag if you want the centers to be reinitialized before each classification (For possibilistic classifiers this mean doing a FCM init again", reinit);
+	arguments.new_named_unsigned_int('t', "classificationPeriodicity", "classificationPeriodicity", "The periodicity with wich we do the classification (0 means only classification at the end).\n\t", classificationPeriodicity);
+	arguments.new_flag('R', "reinitializeCenters", "Set this flag if you want the centers to be reinitialized before each classification (For possibilistic classifiers this mean doing a FCM init again.\n\t", reinit);
 	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", sunImagesFileNames);
 	arguments.set_description(programDescription.c_str());
@@ -101,7 +103,6 @@ int main(int argc, const char **argv)
 
 	
 	// General variables
-	vector<SunImage*> images;
 	vector<RealFeature> B;
 	RealFeature wavelengths = 0;
 	Classifier* F;
@@ -128,37 +129,29 @@ int main(int argc, const char **argv)
 	outputFileName += ".";
 	
 	// We read the wavelengths and the initial centers from the centers file
-	if(! centersFileName.empty())
+	if(readCentersFromFile(B, wavelengths, centersFileName))
 	{
-		readCentersFromFile(B, wavelengths, centersFileName);
 		if(B.size() != numberClasses)
 		{
 			cerr<<"Error : The number of classes is different than the number of centers read in the center file."<<endl;
-			if(B.size() != 0)
-			{
-				numberClasses = B.size();
-				cerr<<"The number of classes will be set to "<<numberClasses<<endl;
-			}
+			numberClasses = B.size();
+			cerr<<"The number of classes will be set to "<<numberClasses<<endl;
+			
 		}
 	}
 	
 	
-	// We read the histogram bin size
-	if(!sbinSize.empty())
+	// We read the bin size
+	if(!readbinSize(binSize,sbinSize))
 	{
-		istringstream Z(sbinSize);
-		Z>>binSize;
-		if(Z.fail())
-		{
-			cerr<<"Error reading the binSize."<<endl;
-			return EXIT_FAILURE;
-		}
+		return EXIT_FAILURE;
 	}
+
 	
 	// We declare the type of Classifier we want
 	if (classifierType == "FCM")
 	{
-		if(!histogramFile.empty())
+		if(fileExists(histogramFile))
 		{
 			F = new CumulativeFCMClassifier(histogramFile, fuzzifier);
 		}
@@ -174,7 +167,7 @@ int main(int argc, const char **argv)
 	}
 	else if (classifierType == "PCM")
 	{
-		if(!histogramFile.empty())
+		if(fileExists(histogramFile))
 		{
 			F = new CumulativePCMClassifier(histogramFile, fuzzifier);
 		}
@@ -191,7 +184,7 @@ int main(int argc, const char **argv)
 	}
 	else if (classifierType == "PCM2")
 	{
-		if(!histogramFile.empty())
+		if(fileExists(histogramFile))
 		{
 			F = new CumulativePCM2Classifier(histogramFile, fuzzifier);
 		}
@@ -238,7 +231,7 @@ int main(int argc, const char **argv)
 		for (unsigned p = 0; p <  NUMBERWAVELENGTH; ++p)
 			subSunImagesFileNames[p] = sunImagesFileNames[m * NUMBERWAVELENGTH + p];
 			
-		images = getImagesFromFiles(imageType, subSunImagesFileNames, true);
+		vector<SunImage*> images = getImagesFromFiles(imageType, subSunImagesFileNames, true);
 		
 		for (unsigned p = 0; p < images.size(); ++p)
 		{
@@ -288,7 +281,11 @@ int main(int argc, const char **argv)
 			// Everything s ready, we do the classification
 			F->classification(precision, maxNumberIteration);
 			// We save the centers
-			outputFile<<"m: "<< m + 1<<"\tB: "<<F->getB()<<endl;
+			outputFile<<"m: "<< m + 1<<"\tB: "<<F->getB();
+			if(classifierIsPossibilistic)
+				outputFile<<"\teta: "<<dynamic_cast<CumulativePCMClassifier*>(F)->getEta();
+			cout<<endl;
+			
 		}
 
 	}

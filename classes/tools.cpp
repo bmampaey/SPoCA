@@ -80,5 +80,12 @@ string itos(const int& i)
 	return ss.str();
 }
 
+string dtos(const double& i)
+{
+	ostringstream ss;
+	ss << i;
+	return ss.str();
+}
+
 
 

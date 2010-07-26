@@ -178,13 +178,23 @@ Real RegionStats::Area_AtDiskCenterUncert() const
 
 const string RegionStats::header = Region::header + "MinIntensity\tMaxIntensity\tMean\tVariance\tSkewness\tKurtosis\tTotalIntensity\tCenterxError\tCenteryError\tArea_Raw\tArea_RawUncert\tArea_AtDiskCenter\tArea_AtDiskCenterUncert";
 
-ostream& operator<<(ostream& out, const RegionStats& r)
+string RegionStats::toString() const
 {
-	out<<setiosflags(ios::fixed)<<Region(r)<<"\t"<<r.MinIntensity()<<"\t"<<r.MaxIntensity()<<"\t"<<r.Mean()<<"\t"<<r.Variance()<<"\t"<<r.Skewness()<<"\t"<<r.Kurtosis()<<"\t"<<r.TotalIntensity()<<"\t"<<r.CenterxError()<<"\t"<<r.CenteryError()<<"\t"<<r.Area_Raw()<<"\t"<<r.Area_RawUncert()<<"\t"<<r.Area_AtDiskCenter()<<"\t"<<r.Area_AtDiskCenterUncert();
-	return out;
+	ostringstream out;
+	out<<static_cast<const Region*>(this)->toString();
+	out<<setiosflags(ios::fixed)<<"\t"<<MinIntensity()<<"\t"<<MaxIntensity()<<"\t"<<Mean()<<"\t"<<Variance()<<"\t"<<Skewness()<<"\t"<<Kurtosis()<<"\t"<<TotalIntensity()<<"\t"<<CenterxError()<<"\t"<<CenteryError()<<"\t"<<Area_Raw()<<"\t"<<Area_RawUncert()<<"\t"<<Area_AtDiskCenter()<<"\t"<<Area_AtDiskCenterUncert();
+	return out.str();
 }
 
-
+#ifdef CoordinateConvertor_H
+string RegionStats::toString(const CoordinateConvertor& coco) const
+{
+	ostringstream out;
+	out<<static_cast<const Region*>(this)->toString(coco);
+	out<<setiosflags(ios::fixed)<<"\t"<<MinIntensity()<<"\t"<<MaxIntensity()<<"\t"<<Mean()<<"\t"<<Variance()<<"\t"<<Skewness()<<"\t"<<Kurtosis()<<"\t"<<TotalIntensity()<<"\t"<<CenterxError()<<"\t"<<CenteryError()<<"\t"<<Area_Raw()<<"\t"<<Area_RawUncert()<<"\t"<<Area_AtDiskCenter()<<"\t"<<Area_AtDiskCenterUncert();
+	return out.str();
+}
+#endif
 
 vector<RegionStats*> getRegions(const SunImage* colorizedComponentsMap, const SunImage* image)
 {

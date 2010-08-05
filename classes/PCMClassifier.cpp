@@ -92,6 +92,8 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 		exit(EXIT_FAILURE);
 
 	}
+	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
+	cout<<setiosflags(ios::fixed);
 	#endif
 
 	#if defined(DEBUG) && DEBUG >= 3
@@ -174,7 +176,9 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	#if defined(DEBUG) && DEBUG >= 3
 	cout<<"--PCMClassifier::classification--END--"<<endl;
 	#endif
-
+	#if defined(DEBUG) && DEBUG >= 1
+	feenableexcept(excepts);
+	#endif
 }
 
 
@@ -270,11 +274,20 @@ vector<Real> PCMClassifier::getEta()
 	return eta;
 }
 
+void PCMClassifier::saveEta(const string& filename)
+{
+	ofstream etaFile(filename.c_str());
+	if (etaFile.good())
+	{
+		etaFile<<eta<<endl;
+		etaFile.close();
+	}
+}
 
-void PCMClassifier::init(const vector<RealFeature>& initB, const vector<Real>& initEta)
+void PCMClassifier::initBEta(const vector<RealFeature>& B, const vector<Real>& eta)
 {
 	#if defined(DEBUG) && DEBUG >= 1
-	if(initB.size() != initEta.size())
+	if(B.size() != eta.size())
 	{
 		cerr<<"Error : The size of initB is different than the size of initEta"<<endl;
 		exit(EXIT_FAILURE);
@@ -282,8 +295,13 @@ void PCMClassifier::init(const vector<RealFeature>& initB, const vector<Real>& i
 	}
 	#endif
 
-	init(initB);
-	eta = initEta;
+	initB(B);
+	this->eta = eta;
+}
+
+void PCMClassifier::initEta(const vector<Real>& eta)
+{
+	this->eta = eta;
 }
 
 

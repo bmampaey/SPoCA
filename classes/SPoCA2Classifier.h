@@ -31,6 +31,9 @@ class SPoCA2Classifier :  public PCM2Classifier, public virtual SPoCAClassifier
 		//Classification functions
 		using PCM2Classifier::classification;
 		
+		// Function to initialise the eta
+		using PCM2Classifier::initEta;
+		
 
 			
 };

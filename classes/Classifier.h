@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <string>
 #include <algorithm>
+#include <fenv.h>
+#include <iomanip>
 
 #include "tools.h"
 #include "constants.h"
@@ -49,7 +51,7 @@ class Classifier
 		virtual void merge(unsigned i1, unsigned i2);
 		
 		//Function to initialise the centers
-		virtual void init(const std::vector<RealFeature>& initB);
+		virtual void initB(const std::vector<RealFeature>& B);
 		
 
 	public :
@@ -67,19 +69,20 @@ class Classifier
 		void attribution();
 
 		//Function to initialise the centers
-		virtual void init(const std::vector<RealFeature>& initB, const RealFeature& channels);
-		virtual void randomInit(unsigned C);
+		virtual void initB(const std::vector<RealFeature>& B, const RealFeature& channels);
+		virtual void randomInitB(unsigned C);
 		
 		//Segmentation functions
 		virtual Image<unsigned>* segmentedMap_maxUij();
 		virtual Image<unsigned>* segmentedMap_closestCenter();
 		virtual Image<unsigned>* segmentedMap_classTreshold(unsigned i, Real lowerIntensity_minMembership, Real higherIntensity_minMembership);
 		virtual Image<unsigned>* segmentedMap_limits(std::vector<RealFeature>& limits);
+		virtual Image<unsigned>* segmentedMap_fixed(std::vector<unsigned>& ch, std::vector<unsigned>& qs, std::vector<unsigned>& ar);
 		virtual Image<Real>* fuzzyMap(const unsigned i);
 		virtual Image<Real>* normalizedFuzzyMap(const unsigned i);
 		
 		//Sursegmentation functions
-		unsigned sursegmentation(std::vector<RealFeature>& initB, unsigned C = 0);
+		unsigned sursegmentation(std::vector<RealFeature>& B, unsigned C = 0);
 		unsigned sursegmentation(unsigned C = 0);
 
 		//Utilities function for outputing results

@@ -337,7 +337,7 @@ int Image<T>::writeFitsImageP(fitsfile *fptr)
 	}
 
 
-	/*if ( fits_set_compression_type(fptr, RICE_1, &status) )
+/*	if ( fits_set_compression_type(fptr, RICE_1, &status) )
 	{
 		cerr<<"Error : could not set image compression :"<< status <<endl;			
 		fits_report_error(stderr, status);

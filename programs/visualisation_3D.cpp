@@ -6,7 +6,6 @@
 #include <fstream>
 #include <cstdlib>
 #include <string>
-#include <fenv.h>
 #include <iomanip>
 #include <ctime>
 #include <algorithm>

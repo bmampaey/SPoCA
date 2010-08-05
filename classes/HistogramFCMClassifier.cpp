@@ -206,6 +206,8 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 		exit(EXIT_FAILURE);
 
 	}
+	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
+	cout<<setiosflags(ios::fixed);
 	#endif
 
 	#if defined(DEBUG) && DEBUG >= 3
@@ -246,7 +248,9 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 	#if defined(DEBUG) && DEBUG >= 3
 	cout<<"--HistogramFCMClassifier::classification--END--"<<endl;
 	#endif
-
+	#if defined(DEBUG) && DEBUG >= 1
+	feenableexcept(excepts);
+	#endif
 }
 
 
@@ -413,7 +417,7 @@ vector<RealFeature> HistogramFCMClassifier::classAverage() const
 	return class_average;
 }
 
-void HistogramFCMClassifier::init(const vector<RealFeature>& initB, const RealFeature& channels)
+void HistogramFCMClassifier::initB(const vector<RealFeature>& B, const RealFeature& channels)
 {
 	if(!histoChannels)
 	{
@@ -424,11 +428,11 @@ void HistogramFCMClassifier::init(const vector<RealFeature>& initB, const RealFe
 		cerr<<"Error : channels in the histogram file do not correspond to channels of the classifier (check centers file or order of the images)."<<endl;
 		exit(EXIT_FAILURE);
 	}
-	FCMClassifier::init(initB, channels);
+	FCMClassifier::initB(B, channels);
 }
 
 
-void HistogramFCMClassifier::randomInit(unsigned C)
+void HistogramFCMClassifier::randomInitB(unsigned C)
 {
 	#if defined(DEBUG) && DEBUG >= 1
 	if(HistoX.size() == 0)

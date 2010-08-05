@@ -36,8 +36,8 @@ class CumulativeFCMClassifier : public virtual HistogramFCMClassifier, public Cu
 		using HistogramFCMClassifier::computeJ;
 		
 		//Function to initialise the centers
-		using HistogramFCMClassifier::init;
-		using HistogramFCMClassifier::randomInit;
+		using HistogramFCMClassifier::initB;
+		using HistogramFCMClassifier::randomInitB;
 		
 
 };

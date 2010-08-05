@@ -39,8 +39,8 @@ class HistogramPCMClassifier : public virtual PCMClassifier,  public virtual His
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
 
 		//Function to initialise the centers
-		using HistogramFCMClassifier::init;
-		using HistogramFCMClassifier::randomInit;
+		using HistogramFCMClassifier::initB;
+		using HistogramFCMClassifier::randomInitB;
 		void FCMinit(Real precision = 0.00001, unsigned maxNumberIteration = 100, Real FCMfuzzifier = 2);
 
 		//Utilities functions for outputing results

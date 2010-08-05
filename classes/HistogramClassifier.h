@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <string>
 #include <fstream>
+#include <fenv.h>
+#include <iomanip>
 
 #include "SunImage.h"
 #include "HistogramFeatureVector.h"

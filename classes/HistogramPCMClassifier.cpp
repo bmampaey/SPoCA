@@ -169,6 +169,8 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 		exit(EXIT_FAILURE);
 
 	}
+	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
+	cout<<setiosflags(ios::fixed);
 	#endif
 
 	#if defined(DEBUG) && DEBUG >= 3
@@ -251,6 +253,9 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 
 	#if defined(DEBUG) && DEBUG >= 3
 	cout<<"--HistogramPCMClassifier::classification--END--"<<endl;
+	#endif
+	#if defined(DEBUG) && DEBUG >= 1
+	feenableexcept(excepts);
 	#endif
 }
 

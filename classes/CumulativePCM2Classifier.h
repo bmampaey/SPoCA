@@ -37,9 +37,10 @@ class CumulativePCM2Classifier : public HistogramPCM2Classifier, public Cumulati
 			
 		using HistogramPCM2Classifier::computeJ;
 		
-		//Function to initialise the centers
-		using CumulativePCMClassifier::init;
-		using CumulativePCMClassifier::randomInit;
+		//Function to initialise the centers & eta
+		using CumulativePCMClassifier::initB;
+		using CumulativePCMClassifier::randomInitB;
+		using HistogramPCM2Classifier::initEta;
 
 };
 #endif

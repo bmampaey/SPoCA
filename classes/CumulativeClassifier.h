@@ -7,6 +7,8 @@
 #include <ctime>
 #include <cstdlib>
 #include <string>
+#include <fenv.h>
+#include <iomanip>
 
 #include "tools.h"
 #include "constants.h"

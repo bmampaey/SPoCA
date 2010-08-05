@@ -113,6 +113,8 @@ void PCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 		exit(EXIT_FAILURE);
 
 	}
+	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
+	cout<<setiosflags(ios::fixed);
 	#endif
 
 	#if defined(DEBUG) && DEBUG >= 3
@@ -180,9 +182,16 @@ void PCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 	#if defined(DEBUG) && DEBUG >= 3
 	cout<<"--PCM2Classifier::classification--END--"<<endl;
 	#endif
-
+	#if defined(DEBUG) && DEBUG >= 1
+	feenableexcept(excepts);
+	#endif
 }
 
+void PCM2Classifier::initEta(const vector<Real>& eta)
+{
+	this->eta = eta;
+	reduceEta();
+}
 
 /*
 // BAD RESULTS, BUT KEEP FOR NOW

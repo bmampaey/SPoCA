@@ -34,13 +34,15 @@ class PCMClassifier : public virtual FCMClassifier
 		// Classification functions
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
 
-		// Function to initialise the centers
-		using Classifier::init;
-		void init(const std::vector<RealFeature>& initB, const std::vector<Real>& initEta);
+		// Function to initialise the centers & eta
+		using Classifier::initB;
+		virtual void initEta(const std::vector<Real>& eta);
+		void initBEta(const std::vector<RealFeature>& B, const std::vector<Real>& eta);
 		virtual void FCMinit(Real precision = 0.00001, unsigned maxNumberIteration = 100, Real FCMfuzzifier = 2);
 
 		// Accessors
 		std::vector<Real> getEta();
+		void saveEta(const std::string& filename);
 
 };
 #endif

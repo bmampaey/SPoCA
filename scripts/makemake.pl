@@ -5,7 +5,7 @@ use File::Basename;
 
 # My global variable
 
-my ($main, $makefile, $debug, $defines, $executable) = undef;
+my ($main, $makefile, $debug, $defines, $executable, $coco) = undef;
 my $objectdir = 'objects';
 my $bindir = 'bin';
 
@@ -62,7 +62,8 @@ sub parse_arguments
             "o:s"=>\$makefile,
             "d"=>\$debug,
             "D:s"=> \$defines,
-            "x:s"=> \$executable
+            "x:s"=> \$executable,
+            "C"=> \$coco
 	);
 
 	if (! defined $main)
@@ -103,6 +104,10 @@ sub parse_arguments
 	{
 		$executable = fileparse($main, @suffixes);
 		$executable = $bindir . '/' . $executable . '.x';
+	}
+	if($coco)
+	{
+		 $DFLAGS =  $DFLAGS . ' -DCOCO ';
 	}
 		
 }
@@ -170,7 +175,15 @@ while (my $file = shift @untreated)
 	{ 
 		if (m/^#include\s+"(.*)"/)
 		{
-			push @includes, $1;
+			my $include = $1;
+			if($coco || $include !~ /CoordinateConvertor/i)
+			{
+				push @includes, $include;
+			}
+			else
+			{
+				print "Skipping $include.\n"
+			}
 		}
 	} 
 	close FILE;

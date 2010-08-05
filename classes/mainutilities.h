@@ -34,6 +34,13 @@ bool readbinSize(RealFeature& binSize, const std::string& sbinSize);
 bool fileExists(const std::string& filename);
 
 // Read the images from fits files
-SunImage* getImageFromFile(const std::string type, const std::string sunImageFileName);
-std::vector<SunImage*> getImagesFromFiles(const std::string type, const std::vector<std::string>& sunImagesFileNames, bool align = false);
+SunImage* getImageFromFile(const std::string imageType, const std::string sunImageFileName);
+std::vector<SunImage*> getImagesFromFiles(const std::string imageType, const std::vector<std::string>& sunImagesFileNames, bool align = false);
+
+// Read the eta from a file
+unsigned readEtaFromFile(std::vector<Real>& eta, const std::string& etaFileName);
+
+// Read the max limits from file
+unsigned readMaxLimitsFromFile (std::vector<RealFeature>& maxLimits, const std::string& maxLimitsFileName);
+
 #endif

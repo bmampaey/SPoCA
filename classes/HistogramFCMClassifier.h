@@ -47,8 +47,8 @@ class HistogramFCMClassifier : public virtual FCMClassifier, public HistogramCla
 		std::vector<RealFeature> classAverage() const;
 		
 		//Function to initialise the centers
-		void init(const std::vector<RealFeature>& initB, const RealFeature& channels);
-		void randomInit(unsigned C);
+		void initB(const std::vector<RealFeature>& B, const RealFeature& channels);
+		void randomInitB(unsigned C);
 
 };
 #endif

@@ -35,8 +35,8 @@ class CumulativeSPoCAClassifier : public virtual SPoCAClassifier, public Cumulat
 		using SPoCAClassifier::attribution;
 		
 		//Function to initialise the centers
-		using SPoCAClassifier::init;
-		using SPoCAClassifier::randomInit;
+		using SPoCAClassifier::initB;
+		using SPoCAClassifier::randomInitB;
 
 };
 #endif

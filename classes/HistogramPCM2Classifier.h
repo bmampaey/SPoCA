@@ -40,10 +40,11 @@ class HistogramPCM2Classifier : public PCM2Classifier, public virtual HistogramP
 		//Classification functions
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
 
-		//Function to initialise the centers
-		using HistogramPCMClassifier::init;
-		using HistogramPCMClassifier::randomInit;
+		//Function to initialise the centers & eta
+		using HistogramPCMClassifier::initB;
+		using HistogramPCMClassifier::randomInitB;
 		using HistogramPCMClassifier::FCMinit;
+		using PCM2Classifier::initEta;
 
 		//Utilities functions for outputing results
 		void saveAllResults(SunImage* outImage);

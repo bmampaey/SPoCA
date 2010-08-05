@@ -38,8 +38,8 @@ class CumulativeSPoCA2Classifier : public  SPoCA2Classifier, public CumulativeSP
 		using SPoCA2Classifier::computeJ;
 		
 		//Function to initialise the centers
-		using CumulativeSPoCAClassifier::init;
-		using CumulativeSPoCAClassifier::randomInit;
+		using CumulativeSPoCAClassifier::initB;
+		using CumulativeSPoCAClassifier::randomInitB;
 
 
 };

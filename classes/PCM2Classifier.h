@@ -31,6 +31,9 @@ class PCM2Classifier : public virtual PCMClassifier
 
 		//Classification functions
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
+		
+		// Function to initialise the eta
+		void initEta(const std::vector<Real>& eta);
 
 };
 #endif

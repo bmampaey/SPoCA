@@ -42,7 +42,7 @@ inline bool readbinSize(RealFeature& binSize, const string& sbinSize)
 	return true;
 }
 
-inline vector<SunImage*> getImagesFromFiles(const string type, const vector<string>& sunImagesFileNames, bool align)
+inline vector<SunImage*> getImagesFromFiles(const string imageType, const vector<string>& sunImagesFileNames, bool align)
 {
 
 	vector<SunImage*> images;
@@ -50,7 +50,7 @@ inline vector<SunImage*> getImagesFromFiles(const string type, const vector<stri
 	// We read the files
 	for (unsigned p = 0; p < sunImagesFileNames.size(); ++p)
 	{
-		images.push_back(getImageFromFile(type, sunImagesFileNames[p]));
+		images.push_back(getImageFromFile(imageType, sunImagesFileNames[p]));
 	}
 	
 	
@@ -76,7 +76,7 @@ inline vector<SunImage*> getImagesFromFiles(const string type, const vector<stri
 	return images;
 }
 
-inline SunImage* getImageFromFile(const string type, const string sunImageFileName)
+inline SunImage* getImageFromFile(const string imageType, const string sunImageFileName)
 {
 
 	SunImage* image;
@@ -88,13 +88,13 @@ inline SunImage* getImageFromFile(const string type, const string sunImageFileNa
 	}
 	#endif
 		
-	if (type == "EIT")
+	if (imageType == "EIT")
 		image = new EITImage(sunImageFileName);
-	else if (type == "EUVI")
+	else if (imageType == "EUVI")
 		image = new EUVIImage(sunImageFileName);
-	else if (type == "AIA")
+	else if (imageType == "AIA")
 		image = new AIAImage(sunImageFileName);
-	else if (type == "SWAP")
+	else if (imageType == "SWAP")
 		image = new SWAPImage(sunImageFileName);
 	else 
 		image = new SunImage(sunImageFileName);
@@ -115,3 +115,48 @@ inline bool fileExists(const string& filename)
 		return false;
 }
 
+inline unsigned readEtaFromFile (vector<Real>& eta, const string& etaFileName)
+{
+	eta.clear();
+	ifstream etaFile(etaFileName.c_str());
+	if (etaFile.good())
+	{
+		Real etai;
+		etaFile>>etai;
+		while(etaFile.good())
+		{
+			eta.push_back(etai);
+			etaFile>>etai;
+		}
+		etaFile.close();
+		
+	}
+	else
+	{
+		cerr<<"Error : could not read eta from file "<<etaFileName<<endl;
+	}
+	return eta.size();
+}
+
+inline unsigned readMaxLimitsFromFile (vector<RealFeature>& maxLimits, const string& maxLimitsFileName)
+{
+	maxLimits.clear();
+	ifstream maxLimitsFile(maxLimitsFileName.c_str());
+	if (maxLimitsFile.good())
+	{
+		RealFeature L;
+		maxLimitsFile>>L;
+		while(maxLimitsFile.good())
+		{
+			maxLimits.push_back(L);
+			maxLimitsFile>>L;
+		}
+		maxLimitsFile.close();
+	}
+	else
+	{
+		cerr<<"Error : could not read the max limits from file "<<maxLimitsFileName<<endl;
+	}
+	return maxLimits.size();
+
+}

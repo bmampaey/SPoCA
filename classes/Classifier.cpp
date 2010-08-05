@@ -156,7 +156,7 @@ unsigned Classifier::sursegmentation(unsigned Cmin)
 		if( Cmin == 0 && oldScore < newScore )
 		{
 			//We put back the old center, and we stop
-			init(oldB);
+			initB(oldB);
 			attribution();
 			break;
 
@@ -171,12 +171,12 @@ unsigned Classifier::sursegmentation(unsigned Cmin)
 	return numberClasses;
 }
 
-unsigned Classifier::sursegmentation(vector<RealFeature>& initB, unsigned Cmin)
+unsigned Classifier::sursegmentation(vector<RealFeature>& B, unsigned Cmin)
 {
 
 	
 	//We must be sure that some classification has been done
-	init(initB);
+	initB(B);
 	attribution();
 
 	return sursegmentation(Cmin);
@@ -346,7 +346,7 @@ Image<unsigned>* Classifier::segmentedMap_closestCenter()
 		for (unsigned i = 1 ; i < numberClasses ; ++i)
 		{
 			d2XjBi = d2(X[j], B[i]);
-			if (d2XjBi > minDistance)
+			if (d2XjBi < minDistance)
 			{
 				minDistance = d2XjBi;
 				segmentedMap->pixel(coordinates[j]) = i + 1;
@@ -358,34 +358,56 @@ Image<unsigned>* Classifier::segmentedMap_closestCenter()
 
 }
 
-Image<unsigned>* Classifier::segmentedMap_classTreshold(unsigned i, Real lowerIntensity_minMembership, Real higherIntensity_minMembership)
+Image<unsigned>* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowerIntensity_minMembership, Real higherIntensity_minMembership)
 {
 
 	#if defined(DEBUG) && DEBUG >= 1
 	if (U.size() != numberClasses*numberValidPixels)
-		cerr<<"The membership matrix U has not yet been calculated"<<endl;
+		cerr<<"The membership matrix U has not yet been calculated."<<endl;
+	if (middleClass == 0 || middleClass > numberClasses)
+	{
+		cerr<<"The class number for treshold segmentation should be between 1 and numberClasses. It was set to: "<<middleClass<<endl;
+		exit(EXIT_FAILURE);
+	}
+	if(lowerIntensity_minMembership < 0 || lowerIntensity_minMembership > 1)
+	{
+		cerr<<"The lowerIntensity minMembership must be a real between 0 and 1. It was set to: "<<lowerIntensity_minMembership<<endl;
+		exit(EXIT_FAILURE);
+	}
+	if(higherIntensity_minMembership < 0 || higherIntensity_minMembership > 1)
+	{
+		cerr<<"The higherIntensity minMembership must be a real between 0 and 1. It was set to: "<<higherIntensity_minMembership<<endl;
+		exit(EXIT_FAILURE);
+	}
 	#endif
+	
+	--middleClass;
+	
+	#if defined(DEBUG) && DEBUG >= 2
+	Image<Real>* map = fuzzyMap(middleClass);
+	map->writeFitsImage(outputFileName + "fuzzymap.fits");
+	delete map;
+	#endif
+
 
 	Image<unsigned>* segmentedMap = new Image<unsigned>(Xaxes, Yaxes);
 	segmentedMap->zero();
-
 	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
 	{
-		if(X[j] < B[i])
+		if(X[j] < B[middleClass])
 		{
-			if(U[j] < lowerIntensity_minMembership)
+			if(U[middleClass*numberValidPixels+j] < lowerIntensity_minMembership)
 				segmentedMap->pixel(coordinates[j]) = 1;
 			else
 				segmentedMap->pixel(coordinates[j]) = 2;
 		}
 		else
 		{
-			if(U[j] < higherIntensity_minMembership)
+			if(U[middleClass*numberValidPixels+j] < higherIntensity_minMembership)
 				segmentedMap->pixel(coordinates[j]) = 3;
 			else
 				segmentedMap->pixel(coordinates[j]) = 2;
 		}
-
 	}
 	return segmentedMap;
 
@@ -396,6 +418,10 @@ Image<unsigned>* Classifier::segmentedMap_limits(vector<RealFeature>& limits)
 {
 
 	Image<unsigned>* segmentedMap = segmentedMap_maxUij();
+	
+	#if defined(DEBUG) && DEBUG >= 2
+	segmentedMap->writeFitsImage(outputFileName + "max.segmented.fits");
+	#endif
 
 	//We create a vector of transformation telling wich class must be merged to what class
 	vector<unsigned> transfo(numberClasses + 1, 1);
@@ -408,6 +434,35 @@ Image<unsigned>* Classifier::segmentedMap_limits(vector<RealFeature>& limits)
 
 	transfo[0] = 0;
 	
+	for (unsigned j = 0 ; j < segmentedMap->NumberPixels() ; ++j)
+	{
+		segmentedMap->pixel(j) = transfo[segmentedMap->pixel(j)];
+	}
+	return segmentedMap;
+
+}
+
+Image<unsigned>* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>& qs, vector<unsigned>& ar)
+{
+
+	Image<unsigned>* segmentedMap = segmentedMap_maxUij();
+
+	#if defined(DEBUG) && DEBUG >= 2
+	segmentedMap->writeFitsImage(outputFileName + "max.segmented.fits");
+	#endif
+
+	//We create a vector of transformation telling wich class must be merged to what class
+	vector<unsigned> transfo(numberClasses + 1, 0);
+
+	for (unsigned i = 0; i < ch.size(); ++i)
+		transfo[ch[i]] = 1;
+
+	for (unsigned i = 0; i < qs.size(); ++i)
+		transfo[qs[i]] = 2;
+		
+	for (unsigned i = 0; i < ar.size(); ++i)
+		transfo[ar[i]] = 3;
+		
 	for (unsigned j = 0 ; j < segmentedMap->NumberPixels() ; ++j)
 	{
 		segmentedMap->pixel(j) = transfo[segmentedMap->pixel(j)];
@@ -761,7 +816,7 @@ SunImage* Classifier::getImage(unsigned p)
 }
 
 
-void Classifier::randomInit(unsigned C)
+void Classifier::randomInitB(unsigned C)
 {
 	#if defined(DEBUG) && DEBUG >= 1
 	if(X.size() == 0)
@@ -785,15 +840,15 @@ void Classifier::randomInit(unsigned C)
 }
 
 
-void Classifier::init(const vector<RealFeature>& initB)
+void Classifier::initB(const vector<RealFeature>& B)
 {
-	B = initB;
+	this->B = B;
 	numberClasses = B.size();
 }
 
-void Classifier::init(const vector<RealFeature>& initB, const RealFeature& channels)
+void Classifier::initB(const vector<RealFeature>& B, const RealFeature& channels)
 {
-	B = initB;
+	this->B = B;
 	numberClasses = B.size();
 	this->channels = channels;
 }

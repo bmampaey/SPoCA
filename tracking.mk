@@ -5,14 +5,14 @@ IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lX
 MAGICKLFLAGS=`Magick++-config --cppflags --cxxflags --ldflags --libs`
 MAGICKCFLAGS=-I /usr/include/ImageMagick/
 DFLAGS=
-LFLAGS=-lcfitsio  $(TRACKINGLFLAGS) 
+LFLAGS=-lcfitsio  $(TRACKINGLFLAGS)
 
 all:bin/tracking.x
-clean: rm bin/tracking.x objects/tracking.o objects/trackable.o objects/gradient.o objects/Region.o objects/CoordinateConvertor.o objects/Coordinate.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o
+clean: rm bin/tracking.x objects/tracking.o objects/trackable.o objects/gradient.o objects/Region.o objects/Coordinate.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o
 
 
-bin/tracking.x : tracking.mk objects/tracking.o objects/trackable.o objects/gradient.o objects/Region.o objects/CoordinateConvertor.o objects/Coordinate.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/tracking.o objects/trackable.o objects/gradient.o objects/Region.o objects/CoordinateConvertor.o objects/Coordinate.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o $(LFLAGS) -o bin/tracking.x
+bin/tracking.x : tracking.mk objects/tracking.o objects/trackable.o objects/gradient.o objects/Region.o objects/Coordinate.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/tracking.o objects/trackable.o objects/gradient.o objects/Region.o objects/Coordinate.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o $(LFLAGS) -o bin/tracking.x
 
 objects/tracking.o : tracking.mk programs/tracking.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/SunImage.h classes/Region.h classes/trackable.h cgt/graph.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) programs/tracking.cpp -o objects/tracking.o
@@ -23,11 +23,8 @@ objects/trackable.o : tracking.mk classes/trackable.cpp classes/tools.h classes/
 objects/gradient.o : tracking.mk classes/gradient.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/gradient.cpp -o objects/gradient.o
 
-objects/Region.o : tracking.mk classes/Region.cpp classes/constants.h classes/Coordinate.h classes/SunImage.h classes/CoordinateConvertor.h
+objects/Region.o : tracking.mk classes/Region.cpp classes/constants.h classes/Coordinate.h classes/SunImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Region.cpp -o objects/Region.o
-
-objects/CoordinateConvertor.o : tracking.mk classes/CoordinateConvertor.cpp classes/idl_export.h classes/Coordinate.h classes/SunImage.h
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/CoordinateConvertor.cpp -o objects/CoordinateConvertor.o
 
 objects/Coordinate.o : tracking.mk classes/Coordinate.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o

@@ -9,8 +9,7 @@
 #include "../classes/tools.h"
 #include "../classes/constants.h"
 #include "../classes/Image.h"
-#include "../dsr/ArgumentHelper.h"
-#include "../classes/MainUtilities.h"
+#include "../classes/ArgumentHelper.h"
 
 using namespace std;
 using namespace dsr;
@@ -19,20 +18,17 @@ string outputFileName;
 
 int main(int argc, const char **argv)
 {
-	#if defined(DEBUG) && DEBUG >= 1
-	feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
-	cout<<setiosflags(ios::fixed);
-	#endif
-
 
 	// The list of names of the images to process
 	vector<string> sunImagesFileNames;
 
 	// Options for the contours
 	unsigned width = 5;
+	bool external = false;
+	bool internal = false;
 
 	
-	string programDescription = "This Programm makes contours out off color regions.\n";
+	string programDescription = "This Program makes contours out off color regions.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
@@ -41,7 +37,8 @@ int main(int argc, const char **argv)
 
 	ArgumentHelper arguments;
 	arguments.new_named_unsigned_int('w', "width", "positive integer", "\n\tThe width of the contour..\n\t", width);
-	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
+	arguments.new_flag('i', "internal", "\n\tSet this flag if you want the contours inside the regions.\n\t", internal);
+	arguments.new_flag('e', "external", "\n\tSet this flag if you want the contours outside the regions..\n\t", external);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files to draw the contours.\n\t", sunImagesFileNames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
@@ -54,7 +51,14 @@ int main(int argc, const char **argv)
 	for (unsigned s = 0; s < sunImagesFileNames.size(); ++s)
 	{
 		image = new Image<PixelType>(sunImagesFileNames[s]);
-		image->drawContours(width);
+		
+		if(internal)
+			image->drawInternContours(width, image->nullvalue);
+		else if(external)
+			image->drawExternContours(width, image->nullvalue);
+		else
+			image->drawContours(width, image->nullvalue);
+			
 		outputFileName =  sunImagesFileNames[s].substr(0, sunImagesFileNames[s].find(".fits"));
 		image->writeFitsImage(outputFileName + ".contours.fits");
 		delete image;

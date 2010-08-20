@@ -120,7 +120,7 @@ Image<T>::Image(const string& filename)
 
 	readFitsImage(filename);
 	
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	// We check that there is no lost of precision
 
 	switch(bitpix)
@@ -474,351 +474,104 @@ Image<T>* Image<T>::erodeDiamond(unsigned size, T pixelValueToErode)
 }
 
 
-// CIRCULAR DILATION
 template<class T>
-Image<T>* Image<T>::dilateCircular(unsigned size, T pixelValueToDilate)
+Image<T>* Image<T>::dilateCircular(const unsigned size, const T unsetValue)
 {
-	unsigned        x, y, x_dilation, y_dilation, x_min, y_min, x_max, y_max, doublesize = 2 * size + 1;
-	float        maxDistance = Xaxes() * Xaxes() + Yaxes() * Yaxes();
-	const float    epsilon = 1e-4f;
-	float*        distance      = NULL;
-	float*        distanceTable = NULL;
-
-	try
-	{
-		distance      = new float[Xaxes() * Yaxes()];
-		distanceTable = new float[doublesize * doublesize];
-
-		// precalculate Euclidean distances
-		for (y_dilation = 0; y_dilation < doublesize; ++y_dilation)
+	T * newPixels = new T[numberPixels];
+	fill(newPixels, newPixels + numberPixels, unsetValue);
+	vector<unsigned> shape;
+	shape.reserve(size*size*3);
+	for(unsigned x = 1; x <= size; ++x)
+		shape.push_back(x);
+	for(int x = -size; x <= int(size); ++x)
+		for(unsigned y = 1; y <= size; ++y)
+			if(sqrt(x * x + y *y) <= size)
+				shape.push_back(y * Xaxes() + x);
+	
+				
+	int j;
+	unsigned y, x;
+	for(y = size; y < Yaxes() - size; ++y)
+	{		
+		j = 	y * Xaxes() + size;
+		for(x = size; x < Xaxes() - size; ++x)
 		{
-			for (x_dilation = 0; x_dilation < doublesize; ++x_dilation)
+			
+			if(pixels[j] != unsetValue)
 			{
-				distanceTable[x_dilation + y_dilation * doublesize] = (x_dilation - size) * (x_dilation - size) + (y_dilation - size) * (y_dilation - size);
-			}
-		}
-
-		// initialization distance
-		for (y = 0; y < Yaxes(); ++y)
-		{
-			for (x = 0; x < Xaxes(); ++x)
-			{
-				distance[x+y*Xaxes()] = maxDistance;
-			}
-		}
-		for (y = 0; y < Yaxes(); ++y)
-		{
-			y_min = y        < size    ? 0       : y - size;
-			y_max = y + size > Yaxes() ? Yaxes() : y + size;
-
-			for (x = 0; x < Xaxes(); ++x)
-			{
-				if (pixel(x,y) == pixelValueToDilate)
+				newPixels[j] = pixels[j];
+				if(pixels[j-1] == unsetValue || pixels[j+1] == unsetValue || pixels[j-Xaxes()] == unsetValue || pixels[j+Xaxes()] == unsetValue)
 				{
-					x_min = x        < size    ? 0       : x - size;
-					x_max = x + size > Xaxes() ? Xaxes() : x + size;
-
-					for (y_dilation = y_min; y_dilation < y_max + 1; ++y_dilation)
+					
+					for(unsigned s = 0; s < shape.size(); ++s)
 					{
-						for (x_dilation = x_min; x_dilation < x_max + 1; ++x_dilation)
-						{
-							if (distanceTable[(x_dilation - x + size) + (y_dilation - y + size) * doublesize] < distance[x_dilation + y_dilation * Xaxes()])
+						#if DEBUG >= 1
+							if(j + shape[s] >= numberPixels || j - shape[s] < 0)
 							{
-								distance[x_dilation + y_dilation * Xaxes()] = distanceTable[(x_dilation - x + size) + (y_dilation - y + size) * doublesize];
-							}
-						}
+								cerr<<"Error : trying to access pixel out of image in drawContours"<<endl;
+								exit(EXIT_FAILURE);
+							}	
+						#endif
+						newPixels[j + shape[s]] = newPixels[j - shape[s]] = pixels[j];
 					}
-
 				}
+
 			}
+			++j;
 		}
-		for (y = 0; y < Yaxes(); ++y)
-		{
-			for (x = 0; x < Xaxes(); ++x)
-			{
-				if (distance[x+y*Xaxes()] < size * size + epsilon)
-				{
-					pixel(x,y) = pixelValueToDilate;
-				}
-			}
-		}
-
-		if (distance)
-		{
-			delete[] distance;
-			distance = NULL;
-		}
-		if (distanceTable)
-		{
-			delete[] distanceTable;
-			distanceTable = NULL;
-		}
-
 	}
-	catch(...)
-	{
-		std::cout << "Error in Image<T>::dilateCircular.\n";
-
-		if (distance)
-		{
-			delete[] distance;
-			distance = NULL;
-		}
-		if (distanceTable)
-		{
-			delete[] distanceTable;
-			distanceTable = NULL;
-		}
-
-	}
+	
+	delete[] pixels;
+	pixels = newPixels;
 	return this;
 }
 
 
-// CIRCULAR EROSION
 template<class T>
-Image<T>* Image<T>::erodeCircular(unsigned size, T pixelValueToErode)
+Image<T>* Image<T>::erodeCircular(const unsigned size, const T unsetValue)
 {
-	T        fillPixelValue = nullvalue;
-	unsigned        x, y, x_erosion, y_erosion, x_min, y_min, x_max, y_max, doublesize = 2 * size + 1;
-	bool        success;
-	const float    epsilon = 1e-4f;
-	bool*        belongsToErodedSet = NULL;
-	float*        distanceTable      = NULL;
-
-	try
-	{
-		belongsToErodedSet = new bool [Xaxes() * Yaxes()];
-		distanceTable      = new float[doublesize * doublesize];
-
-		// precalculate Euclidean distances
-		for (y_erosion = 0; y_erosion < doublesize; ++y_erosion)
+	T * newPixels = new T[numberPixels];
+	memcpy(newPixels, pixels, numberPixels * sizeof(T));
+	vector<unsigned> shape;
+	shape.reserve(size*size*3);
+	for(unsigned x = 1; x <= size; ++x)
+		shape.push_back(x);
+	for(int x = -size; x <= int(size); ++x)
+		for(unsigned y = 1; y <= size; ++y)
+			if(sqrt(x * x + y *y) <= size)
+				shape.push_back(y * Xaxes() + x);
+	
+				
+	int j;
+	for(unsigned y = size; y < Yaxes() - size; ++y)
+	{		
+		j = 	y * Xaxes() + size;
+		for(unsigned x = size; x < Xaxes() - size; ++x)
 		{
-			for (x_erosion = 0; x_erosion < doublesize; ++x_erosion)
+			
+			if(pixels[j] != unsetValue && (pixels[j-1] == unsetValue || pixels[j+1] == unsetValue || pixels[j-Xaxes()] == unsetValue || pixels[j+Xaxes()] == unsetValue))
 			{
-				distanceTable[x_erosion + y_erosion * doublesize] = (x_erosion - size) * (x_erosion - size) + (y_erosion - size) * (y_erosion - size);
-			}
-		}
-
-		// initialization
-		for (y = 0; y < Yaxes(); ++y)
-		{
-			for (x = 0; x < Xaxes(); ++x)
-			{
-				belongsToErodedSet[x+y*Xaxes()] = false;
-			}
-		}
-		for (y = 0; y < Yaxes(); ++y)
-		{
-			for (x = 0; x < Xaxes(); ++x)
-			{
-				if (pixel(x,y) == pixelValueToErode)
+				newPixels[j] = unsetValue;
+				for(unsigned s = 0; s < shape.size(); ++s)
 				{
-					success = true;
-
-					y_min = y        < size    ? 0       : y - size;
-					y_max = y + size > Yaxes() ? Yaxes() : y + size;
-
-					for (y_erosion = y_min; y_erosion < y_max + 1; ++y_erosion)
-					{
-						x_min = x        < size    ? 0       : x - size;
-						x_max = x + size > Xaxes() ? Xaxes() : x + size;
-
-						for (x_erosion = x_min; x_erosion < x_max + 1; ++x_erosion)
+					#if DEBUG >= 1
+						if(j + shape[s] >= numberPixels || j - shape[s] < 0)
 						{
-							if (distanceTable[(x_erosion - x + size) + (y_erosion - y + size) * doublesize] < size * size + epsilon)
-							{
-								if (pixel(x_erosion, y_erosion) != pixelValueToErode)
-								{
-									success = false;
-									break;
-								}
-
-							}
-						}
-
-						if (success == false)
-						{
-							break;
-						}
-					}
-
-					if (success)
-					{
-						belongsToErodedSet[x+y*Xaxes()] = true;
-					}
+							cerr<<"Error : trying to access pixel out of image in drawContours"<<endl;
+							exit(EXIT_FAILURE);
+						}	
+					#endif
+					newPixels[j + shape[s]] = newPixels[j - shape[s]] = unsetValue;
 				}
+				
 			}
+			++j;
 		}
-
-		for (y = 0; y < Yaxes(); ++y)
-		{
-			for (x = 0; x < Xaxes(); ++x)
-			{
-				if (belongsToErodedSet[x+y*Xaxes()] == true)
-				{
-					pixel(x,y) = pixelValueToErode;
-				}
-				else
-				{
-					pixel(x,y) = fillPixelValue;
-				}
-			}
-		}
-
-		if (belongsToErodedSet)
-		{
-			delete[] belongsToErodedSet;
-			belongsToErodedSet = NULL;
-		}
-		if (distanceTable)
-		{
-			delete[] distanceTable;
-			distanceTable = NULL;
-		}
-
 	}
-	catch(...)
-	{
-		std::cout << "Error in Image<T>::erodeCircular.\n";
-
-		if (belongsToErodedSet)
-		{
-			delete[] belongsToErodedSet;
-			belongsToErodedSet = NULL;
-		}
-		if (distanceTable)
-		{
-			delete[] distanceTable;
-			distanceTable = NULL;
-		}
-
-	}
+	
+	delete[] pixels;
+	pixels = newPixels;
 	return this;
-}
-
-
-// CIRCULAR EROSION
-template<class T>
-Image<T>* Image<T>::erodeCircularColor(unsigned size, T unsetValue)
-{
-	T        fillPixelValue = nullvalue;
-	unsigned        x, y, x_erosion, y_erosion, x_min, y_min, x_max, y_max, doublesize = 2 * size + 1;
-	bool        success;
-	const float    epsilon = 1e-4f;
-	bool*        belongsToErodedSet = NULL;
-	float*        distanceTable      = NULL;
-
-	try
-	{
-		belongsToErodedSet = new bool [Xaxes() * Yaxes()];
-		distanceTable      = new float[doublesize * doublesize];
-
-		// precalculate Euclidean distances
-		for (y_erosion = 0; y_erosion < doublesize; ++y_erosion)
-		{
-			for (x_erosion = 0; x_erosion < doublesize; ++x_erosion)
-			{
-				distanceTable[x_erosion + y_erosion * doublesize] = (x_erosion - size) * (x_erosion - size) + (y_erosion - size) * (y_erosion - size);
-			}
-		}
-
-		// initialization
-		for (y = 0; y < Yaxes(); ++y)
-		{
-			for (x = 0; x < Xaxes(); ++x)
-			{
-				belongsToErodedSet[x+y*Xaxes()] = false;
-			}
-		}
-		for (y = 0; y < Yaxes(); ++y)
-		{
-			for (x = 0; x < Xaxes(); ++x)
-			{
-				if (pixel(x,y) != unsetValue)
-				{
-					success = true;
-
-					y_min = y        < size    ? 0       : y - size;
-					y_max = y + size > Yaxes() ? Yaxes() : y + size;
-
-					for (y_erosion = y_min; y_erosion < y_max + 1; ++y_erosion)
-					{
-						x_min = x        < size    ? 0       : x - size;
-						x_max = x + size > Xaxes() ? Xaxes() : x + size;
-
-						for (x_erosion = x_min; x_erosion < x_max + 1; ++x_erosion)
-						{
-							if (distanceTable[(x_erosion - x + size) + (y_erosion - y + size) * doublesize] < size * size + epsilon)
-							{
-								if (pixel(x_erosion, y_erosion) == unsetValue)
-								{
-									success = false;
-									break;
-								}
-
-							}
-						}
-
-						if (success == false)
-						{
-							break;
-						}
-					}
-
-					if (success)
-					{
-						belongsToErodedSet[x+y*Xaxes()] = true;
-					}
-				}
-			}
-		}
-
-		for (y = 0; y < Yaxes(); ++y)
-		{
-			for (x = 0; x < Xaxes(); ++x)
-			{
-				if (belongsToErodedSet[x+y*Xaxes()] == true)
-				{
-					//pixel(x,y) = pixelValueToErode;
-				}
-				else
-				{
-					pixel(x,y) = fillPixelValue;
-				}
-			}
-		}
-
-		if (belongsToErodedSet)
-		{
-			delete[] belongsToErodedSet;
-			belongsToErodedSet = NULL;
-		}
-		if (distanceTable)
-		{
-			delete[] distanceTable;
-			distanceTable = NULL;
-		}
-
-	}
-	catch(...)
-	{
-		std::cout << "Error in Image<T>::erodeCircular.\n";
-
-		if (belongsToErodedSet)
-		{
-			delete[] belongsToErodedSet;
-			belongsToErodedSet = NULL;
-		}
-		if (distanceTable)
-		{
-			delete[] distanceTable;
-			distanceTable = NULL;
-		}
-
-	}
-	return this;
-
 }
 
 
@@ -870,17 +623,81 @@ Image<T>* Image<T>::drawCross(const T color, Coordinate c, const unsigned size)
 }
 
 template<class T>
-Image<T>* Image<T>::drawContours(const unsigned width)
+Image<T>* Image<T>::drawInternContours(const unsigned width, const T unsetValue)
 {
 
 	Image<T> * eroded = new Image<T> (this);
-	eroded->erodeCircularColor(width, nullvalue);
+	eroded->erodeCircular(width, unsetValue);
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
 		if(eroded->pixels[j] != eroded->nullvalue)
-			pixels[j] = nullvalue;
+			pixels[j] = unsetValue;
 	}
 	delete eroded;
+	return this;
+
+}
+
+template<class T>
+Image<T>* Image<T>::drawExternContours(const unsigned width, const T unsetValue)
+{
+
+	Image<T> * copy = new Image<T> (this);
+	this->dilateCircular(width, unsetValue);
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if(pixels[j] == copy->pixels[j])
+			pixels[j] = unsetValue;
+	}
+	delete copy;
+	return this;
+
+}
+
+template<class T>
+Image<T>* Image<T>::drawContours(const unsigned width, const T unsetValue)
+{
+	unsigned size = width / 2;
+	T * newPixels = new T[numberPixels];
+	fill(newPixels, newPixels + numberPixels, unsetValue);
+	vector<unsigned> shape;
+	shape.reserve(size*size*3);
+	for(unsigned x = 1; x <= size; ++x)
+		shape.push_back(x);
+	for(int x = -size; x <= int(size); ++x)
+		for(unsigned y = 1; y <= size; ++y)
+			if(sqrt(x * x + y *y) <= size)
+				shape.push_back(y * Xaxes() + x);
+	
+				
+	int j;
+	for(unsigned y = size; y < Yaxes() - size; ++y)
+	{		
+		j = 	y * Xaxes() + size;
+		for(unsigned x = size; x < Xaxes() - size; ++x)
+		{
+			
+			if(pixels[j] != unsetValue && (pixels[j-1] == unsetValue || pixels[j+1] == unsetValue || pixels[j-Xaxes()] == unsetValue || pixels[j+Xaxes()] == unsetValue))
+			{
+				newPixels[j] = pixels[j];
+				for(unsigned s = 0; s < shape.size(); ++s)
+				{
+					#if DEBUG >= 1
+						if(j + shape[s] >= numberPixels || j - shape[s] < 0)
+						{
+							cerr<<"Error : trying to access pixel out of image in drawContours"<<endl;
+							exit(EXIT_FAILURE);
+						}	
+					#endif
+					newPixels[j + shape[s]] = newPixels[j - shape[s]] = pixels[j];
+				}
+			}
+			++j;
+		}
+	}
+	
+	delete[] pixels;
+	pixels = newPixels;
 	return this;
 
 }

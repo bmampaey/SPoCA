@@ -84,7 +84,7 @@ void HistogramPCM2Classifier::computeU()
 void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 {
 
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	if(HistoX.size() == 0 || B.size() == 0 || B.size() != eta.size())
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
@@ -95,8 +95,13 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 	cout<<setiosflags(ios::fixed);
 	#endif
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"--HistogramPCM2Classifier::classification--START--"<<endl;
+	#endif
+	
+	#if DEBUG >= 2
+		stepinit(outputFileName+"iterations.txt");
+		unsigned decimals = 1 - log10(precision);;
 	#endif
 
 	const Real maxFactor = ETA_MAXFACTOR;
@@ -145,26 +150,17 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 
 		oldB = B;
 
-		#if defined(DEBUG) && DEBUG >= 3
-		cout<<"iteration :"<<iteration;
-		cout<<"\tprecisionReached :"<<precisionReached;
-		#if DEBUG >= 4
-			cout<<"\tJPCM :"<<computeJ();
-		#endif
-		cout<<"\tB :"<<B;
-		cout<<"\teta :"<<eta;		
-		cout<<"\tclass_average :"<<classAverage();
-		cout<<endl;
-	
+		#if DEBUG >= 2
+			stepout(iteration, precisionReached, decimals);
 		#endif
 	}
 	
 
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"--HistogramPCM2Classifier::classification--END--"<<endl;
 	#endif
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	feenableexcept(excepts);
 	#endif
 }
@@ -175,7 +171,7 @@ void HistogramPCM2Classifier::computeEta()
 {
 	HistogramPCMClassifier::computeEta();
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 		cout<<"pre_eta:\t"<<eta<<"\t";
 	#endif
 

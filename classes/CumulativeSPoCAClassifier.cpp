@@ -27,7 +27,7 @@ void CumulativeSPoCAClassifier::addImages(vector<SunImage*>& images)
 	{
 		Xaxes = xaxes;
 	}
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	if(xaxes != Xaxes)
 	{
 		cerr<<"Error : All the images must have the same Xaxes size."<<endl;
@@ -62,7 +62,7 @@ void CumulativeSPoCAClassifier::addImages(vector<SunImage*>& images)
 				continue;
 			
 			//In a normal situation, we can suppose that the sun disc isn't going to touch the borders of the picture. Otherwise just take a radiusRatio smaller.
-			#if defined(DEBUG) && DEBUG >= 1
+			#if DEBUG >= 1
 			#define ASSERTBOUNDARIES neighboor > 0 && neighboor < images[0]->NumberPixels()
 			#else
 			#define ASSERTBOUNDARIES true
@@ -114,7 +114,7 @@ void CumulativeSPoCAClassifier::addImages(vector<SunImage*>& images)
 	++numberImages;
 
 	// We write the fits file of smmothedX for verification
-	#if defined(DEBUG) && DEBUG >= 2
+	#if DEBUG >= 2
 	string filename;
 	Image<PixelType> image(Xaxes,Yaxes);
 	for (unsigned p = 0; p <  NUMBERWAVELENGTH; ++p)
@@ -131,7 +131,7 @@ void CumulativeSPoCAClassifier::addImages(vector<SunImage*>& images)
 	}
 	#endif
 	
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	#include <fstream>
 	filename = outputFileName + "betaN.txt";
 	ofstream betaFile(filename.c_str());

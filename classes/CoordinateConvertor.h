@@ -4,11 +4,14 @@
 #ifndef CoordinateConvertor_H
 #define CoordinateConvertor_H
 
+
 #warning "To use this class you need to have installed open-motif libraries libmotif3 and lesstif2"
+#warning "You should also make sure to set your solar soft path (SSW_PATH) in the constant.h file"
 
 #include <limits>
 #include <iostream>
 #include <string>
+#include <cstdlib>
 
 #include "idl_export.h"
 #include "Coordinate.h"

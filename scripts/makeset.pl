@@ -7,6 +7,7 @@
 
 #use strict;
 use File::Basename;
+use File::Spec::Functions;
 use Data::Dumper;
 use Cwd;
 use POSIX;
@@ -108,14 +109,14 @@ foreach my $filename (@filenames)
 	}
 	if ($wavelnth == @wavelengths[0])
 	{
-		$date_obs =~ m#(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)#;
-		my $date = timegm($6, $5, $4, $3, $2, $1);
+		$date_obs =~ m#(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)# or die "DATE-OBS of file $filename is incorrect : $date_obs";
+		my $date = timegm($6, $5, $4, $3, $2-1, $1) or die "date of file $filename is incorrect : $date_obs";
 		push @files0, [$date, $filename];
 	}
 	if ($wavelnth == @wavelengths[1])
 	{
-		$date_obs =~ m#(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)#;
-		my $date = timegm($6, $5, $4, $3, $2, $1);
+		$date_obs =~ m#(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)# or die "DATE-OBS of file $filename is incorrect : $date_obs";
+		my $date = timegm($6, $5, $4, $3, $2-1, $1) or die "date of file $filename is incorrect : $date_obs";
 		push @files1, [$date, $filename];
 	}
 }
@@ -153,8 +154,8 @@ while($index0 < @files0 && $index1 < @files1)
 		++$index1 while ($index1 < $#files1 and abs($files0[$index0]->[0] - $files1[$index1 + 1]->[0]) < abs($files0[$index0]->[0] - $files1[$index1]->[0]));
 	}
 	#print "tuple $linkindex : ", $files0[$index0]->[1], " ", $files1[$index1]->[1], "\n";
-	my $link0 = $repository.'/'.sprintf("%0*d", $precision, $linkindex).'.'.$files0[$index0]->[1];
-	my $link1 = $repository.'/'.sprintf("%0*d", $precision, $linkindex).'.'.$files1[$index1]->[1];
+	my $link0 = $repository.'/'.sprintf("%0*d", $precision, $linkindex).'.'.(basename($files0[$index0]->[1]));
+	my $link1 = $repository.'/'.sprintf("%0*d", $precision, $linkindex).'.'.(basename($files1[$index1]->[1]));
 	if (! $all)
 	{
 		print "About to creates soft link $link0 and $link1 \nIs it ok ? [yes/no/all/none] :";
@@ -167,8 +168,8 @@ while($index0 < @files0 && $index1 < @files1)
 	}
 	if ($all or $yes)
 	{ 
-		symlink $files0[$index0]->[1], $link0;
-		symlink $files1[$index1]->[1], $link1;
+		symlink File::Spec->rel2abs($files0[$index0]->[1]), $link0;
+		symlink File::Spec->rel2abs($files1[$index1]->[1]), $link1;
 	}
 	
 	++$linkindex;

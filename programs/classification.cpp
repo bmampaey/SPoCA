@@ -238,7 +238,7 @@ int main(int argc, const char **argv)
 	for (unsigned p = 0; p < images.size(); ++p)
 	{
 		images[p]->preprocessing(preprocessingSteps, radiusRatio);
-		#if defined(DEBUG) && DEBUG >= 2
+		#if DEBUG >= 2
 		images[p]->writeFitsImage(outputFileName + "preprocessed." + sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0));
 		#endif
 	}
@@ -268,20 +268,20 @@ int main(int argc, const char **argv)
 	if(classifierIsPossibilistic)
 	{
 		dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
-		#if defined(DEBUG) && DEBUG >= 2
+		#if DEBUG >= 2
 		// We save the centers we found
 		F->saveB(outputFileName + "FCM.centers.txt");
 		#endif
 	}	
 	
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"The centers have been initialized to B :"<<F->getB()<<endl;
 	#endif
 
 	// We have all the information we need, we can do the classification
 	F->classification(precision, maxNumberIteration);
 
-	#if defined(DEBUG) && DEBUG >= 2
+	#if DEBUG >= 2
 	// We save the results
 	F->saveAllResults(images[0]);
 	#endif

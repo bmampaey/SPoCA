@@ -72,7 +72,7 @@ void CumulativeFCMClassifier::addImages(std::vector<SunImage*>& images)
 	{
 		Xaxes = xaxes;
 	}
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	if(xaxes != Xaxes)
 	{
 		cerr<<"Error : All the images must have the same Xaxes size."<<endl;
@@ -109,7 +109,7 @@ void CumulativeFCMClassifier::addImages(std::vector<SunImage*>& images)
 	Yaxes += yaxes;
 	++numberImages;
 
-	#if defined(DEBUG) && DEBUG >= 2
+	#if DEBUG >= 2
 	saveHistogram(outputFileName + itos(numberImages) + "image.histogram.txt");
 	#endif
 

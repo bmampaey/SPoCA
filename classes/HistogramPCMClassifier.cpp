@@ -162,7 +162,7 @@ Real HistogramPCMClassifier::computeJ() const
 void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 {
 
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	if(HistoX.size() == 0 || B.size() == 0 || B.size() != eta.size())
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
@@ -173,8 +173,13 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 	cout<<setiosflags(ios::fixed);
 	#endif
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"--HistogramPCMClassifier::classification--START--"<<endl;
+	#endif
+
+	#if DEBUG >= 2
+		stepinit(outputFileName+"iterations.txt");
+		unsigned decimals = 1 - log10(precision);;
 	#endif
 
 	const Real maxFactor = ETA_MAXFACTOR;
@@ -213,48 +218,15 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 
 		oldB = B;
 
-		#if defined(DEBUG) && DEBUG >= 3
-		cout<<"iteration :"<<iteration;
-		cout<<"\tprecisionReached :"<<precisionReached;
-		#if DEBUG >= 4
-			cout<<"\tJPCM :"<<computeJ();
-		#endif
-		cout<<"\tB :"<<B;
-		cout<<"\teta :"<<eta;
-		
-		// We compute the real average of each class
-		vector<RealFeature> class_average(numberClasses, 0.);
-		vector<Real> cardinal(numberClasses, 0.);
-		for (unsigned j = 0 ; j < numberBins ; ++j)
-		{
-			Real max_uij = U[j];
-			unsigned belongsTo = 0;
-			for (unsigned i = 1 ; i < numberClasses ; ++i)
-			{
-				if (U[i*numberBins+j] > max_uij)
-				{
-					max_uij = U[i*numberBins+j];
-					belongsTo = i;
-				}
-			}
-			class_average[belongsTo] += HistoX[j];
-			cardinal[belongsTo]+=HistoX[j].c;
-
-		}
-		cout<<"\tclass_average :";
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
-		{
-			cout<<class_average[i]/cardinal[i]<<"\t";
-		}
-		cout<<endl;
-	
+		#if DEBUG >= 2
+			stepout(iteration, precisionReached, decimals);
 		#endif
 	}
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"--HistogramPCMClassifier::classification--END--"<<endl;
 	#endif
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	feenableexcept(excepts);
 	#endif
 }
@@ -322,7 +294,7 @@ Real HistogramPCMClassifier::assess(vector<Real>& V)
 void HistogramPCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FCMfuzzifier)
 {
 
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	if(HistoX.size() == 0)
 	{
 		cerr<<"Error : The vector of FeatureVector must be initialized before doing a centers only init."<<endl;
@@ -351,7 +323,7 @@ void HistogramPCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration
 	computeEta();
 	
 	// We output the FCM segementation for comparison with PCM 
-	#if defined(DEBUG) && DEBUG >= 2
+	#if DEBUG >= 2
 	string tempName = outputFileName;
 	outputFileName += "HFCM.";
 	saveAllResults(NULL);

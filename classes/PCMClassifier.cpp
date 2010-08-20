@@ -85,7 +85,7 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	const Real maxFactor = ETA_MAXFACTOR;
 
 
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	if(X.size() == 0 || B.size() == 0 || B.size() != eta.size())
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
@@ -96,10 +96,15 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	cout<<setiosflags(ios::fixed);
 	#endif
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"--PCMClassifier::classification--START--"<<endl;
 	#endif
-
+	
+	#if DEBUG >= 2
+		stepinit(outputFileName+"iterations.txt");
+		unsigned decimals = 1 - log10(precision);;
+	#endif
+	
 	//Initialisation of precision & U
 	this->precision = precision;
 
@@ -134,49 +139,16 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 
 		oldB = B;
 
-		#if defined(DEBUG) && DEBUG >= 3
-		cout<<"iteration :"<<iteration;
-		cout<<"\tprecisionReached :"<<precisionReached;
-		#if DEBUG >= 4
-			cout<<"\tJPCM :"<<computeJ();
-		#endif
-		cout<<"\tB :"<<B;
-		cout<<"\teta :"<<eta;
-		
-		// We compute the real average of each class
-		vector<RealFeature> class_average(numberClasses, 0.);
-		vector<Real> cardinal(numberClasses, 0.);
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
-		{
-			Real max_uij = U[j];
-			unsigned belongsTo = 0;
-			for (unsigned i = 1 ; i < numberClasses ; ++i)
-			{
-				if (U[i*numberValidPixels+j] > max_uij)
-				{
-					max_uij = U[i*numberValidPixels+j];
-					belongsTo = i;
-				}
-			}
-			class_average[belongsTo] += X[j];
-			++cardinal[belongsTo];
-
-		}
-		cout<<"\tclass_average :";
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
-		{
-			cout<<class_average[i]/cardinal[i]<<"\t";
-		}
-		cout<<endl;
-	
+		#if DEBUG >= 2
+			stepout(iteration, precisionReached, decimals);
 		#endif
 	}
 
 	
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"--PCMClassifier::classification--END--"<<endl;
 	#endif
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	feenableexcept(excepts);
 	#endif
 }
@@ -286,7 +258,7 @@ void PCMClassifier::saveEta(const string& filename)
 
 void PCMClassifier::initBEta(const vector<RealFeature>& B, const vector<Real>& eta)
 {
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	if(B.size() != eta.size())
 	{
 		cerr<<"Error : The size of initB is different than the size of initEta"<<endl;
@@ -308,7 +280,7 @@ void PCMClassifier::initEta(const vector<Real>& eta)
 void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FCMfuzzifier)
 {
 
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	if(X.size() == 0)
 	{
 		cerr<<"Error : The vector of FeatureVector must be initialized before doing a FCM init."<<endl;
@@ -336,7 +308,7 @@ void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FC
 	computeEta();
 
 	// We output the FCM segementation for comparison with PCM 
-	#if defined(DEBUG) && DEBUG >= 2
+	#if DEBUG >= 2
 	string tempName = outputFileName;
 	outputFileName += "FCM.";
 	saveAllResults(NULL);
@@ -367,5 +339,35 @@ void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FC
 	#endif
 }
 
+void PCMClassifier::stepinit(const string filename)
+{
+		Classifier::stepinit(filename);
+		ostringstream out;
+		out<<"\t"<<"eta";
+		if(stepfile.good())
+			stepfile<<out.str();
+		
+		#if DEBUG >= 3
+			cout<<out.str();
+		#endif
+	
+}
 
+
+void PCMClassifier::stepout(const unsigned iteration, const Real precisionReached, const int decimals)
+{
+		Classifier::stepout(iteration, precisionReached, decimals);
+		ostringstream out;
+		out.setf(ios::fixed);
+		out.precision(decimals);
+		out<<"\t"<<eta;
+
+		if(stepfile.good())
+			stepfile<<out.str();
+		
+		#if DEBUG >= 3
+			cout<<out.str();
+		#endif
+		
+}
 

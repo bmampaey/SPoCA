@@ -76,9 +76,11 @@ class SunImage : public Image<PixelType>
 		SunImage* blobsIntoAR ();
 		
 		//Future routines to derotate an image (in progress) 
+		/*
 		Real angularSpeed(Real latitude);
 		unsigned newPos(Real x, Real y, const Real t);
 		SunImage* rotate(const unsigned t);
+		*/
 		
 };
 

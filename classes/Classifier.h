@@ -12,6 +12,7 @@
 #include <fenv.h>
 #include <iomanip>
 
+
 #include "tools.h"
 #include "constants.h"
 #include "Image.h"
@@ -46,6 +47,9 @@ class Classifier
 		virtual void computeB() = 0;
 		virtual void computeU() = 0;
 
+		//Computation of J
+		virtual Real computeJ() const = 0;
+
 		//Asses & Merge functions for the sursegmentation
 		virtual Real assess(std::vector<Real>& V) = 0;
 		virtual void merge(unsigned i1, unsigned i2);
@@ -54,10 +58,20 @@ class Classifier
 		virtual void initB(const std::vector<RealFeature>& B);
 		
 
+		//File stream to output classification steps
+		std::ofstream stepfile;
+		
+		//Function to output classification steps
+		virtual void stepinit(const std::string filename);
+		virtual void stepout(const unsigned iteration, const Real precisionReached, const int precision = 5);
+
+		
+
 	public :
+	
 		//Constructors & Destructors
 		Classifier();
-		virtual ~Classifier(){};
+		virtual ~Classifier();
 
 		//Functions to add and check images
 		void checkImages(const std::vector<SunImage*>& images);

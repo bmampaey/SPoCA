@@ -36,6 +36,7 @@ int main(int argc, const char **argv)
 	newColor = 0;
 	unsigned delta_time = 3600;
 	unsigned overlap = 1;
+	bool writeAllImages = false;
 	
 	// The list of names of the sun images to process
 	string imageType = "AIA";
@@ -52,6 +53,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_unsigned_long('n',"newColor","positive integer","\n\tThe last color given to active regions\n\t",newColor);
 	arguments.new_named_unsigned_int('d',"delta_time","positive integer","\n\tThe maximal delta time between 2 tracked regions\n\t",delta_time);
 	arguments.new_named_unsigned_int('D',"overlap","positive integer","\n\tThe number of images that overlap between 2 tracking run\n\t",overlap);
+	arguments.new_flag('A', "writeAllImages", "\n\tSet this flag if you want all images to be colored and written to disk.\n\tOtherwise only the image for the next tracking will be colored and written.\n\t", writeAllImages);
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP\n\t", imageType);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
@@ -88,7 +90,7 @@ int main(int argc, const char **argv)
 			newColor = regions[0][r]->Color();
 	}
 	
-	#if defined(DEBUG) && DEBUG >= 2
+	#if DEBUG >= 2
 	// We output the regions found
 	ouputRegions(regions, "regions_premodification.txt");
 	#endif
@@ -136,13 +138,19 @@ int main(int argc, const char **argv)
 		}
 	}
 
-	// To gain some memory space we can delete all images but the last ones
-	#if !defined(DEBUG) || DEBUG < 2			  // We must keep them in case of debug because we display them
-	for (unsigned s = 0; s < images.size() - overlap; ++s)
-		delete images[s];
-	#endif
+	// To gain some memory space we can delete all images but the one used for the next tracking
+	unsigned firstImageNextTracking = images.size() - overlap > 0 ? images.size() - overlap : 0;
+	if(!writeAllImages)
+	{
+		for (unsigned s = 0; s < images.size(); ++s)
+			if(s != firstImageNextTracking)
+			{
+				delete images[s];
+				images[s] = NULL;
+			}
+	}
 
-	#if defined(DEBUG) && DEBUG >= 2
+	#if DEBUG >= 2
 	// We output the graph before tranformation
 	ouputGraph(tracking_graph, regions, "ar_graph_premodification");
 	#endif
@@ -154,7 +162,7 @@ int main(int argc, const char **argv)
 		colorize(*itn);
 	}
 
-	#if defined(DEBUG) && DEBUG >= 2
+	#if DEBUG >= 2
 	// We output the graph after tranformation
 	ouputGraph(tracking_graph, regions, "ar_graph_postmodification");
 	// We output the regions found
@@ -162,38 +170,30 @@ int main(int argc, const char **argv)
 	#endif
 
 	
-	#if defined(DEBUG) && DEBUG >= 2
-	// We color the first images and output them
-	for (unsigned s = 0; s + overlap < images.size(); ++s)
+	
+	if(writeAllImages) // We color all the images and output them
 	{
-		for (unsigned r = 0; r < regions[s].size(); ++r)
+		for (unsigned s = 0; s < images.size(); ++s)
 		{
-			if(images[s]->pixel(regions[s][r]->FirstPixel()) != regions[s][r]->Color())
-				images[s]->propagateColor(regions[s][r]->Color(), regions[s][r]->FirstPixel());
+			recolorFromRegions(images[s], regions[s]);
+			images[s]->writeFitsImage(outputFileName + sunImagesFileNames[s]);
+			delete images[s];
 		}
-		images[s]->writeFitsImage(outputFileName + sunImagesFileNames[s]);
-		delete images[s];
 	}
-	#endif
-	//We color the last images and output them
-	for (unsigned s = images.size() - overlap; s < images.size(); ++s)
+	else //We color the image used for the next tracking
 	{
-		for (unsigned r = 0; r < regions[s].size(); ++r)
-		{
-			if(images[s]->pixel(regions[s][r]->FirstPixel()) != regions[s][r]->Color())
-				images[s]->propagateColor(regions[s][r]->Color(), regions[s][r]->FirstPixel());
-		}
-		images[s]->writeFitsImage(outputFileName + sunImagesFileNames[s]);
-		delete images[s];
-
+		recolorFromRegions(images[firstImageNextTracking], regions[firstImageNextTracking]);
+		images[firstImageNextTracking]->writeFitsImage(outputFileName + sunImagesFileNames[firstImageNextTracking]);
+		delete images[firstImageNextTracking];
 	}
+	
 
 	#ifndef HEK
 	cout<<"Last color assigned: "<<newColor<<endl;	
 	#else
 	
 	//We output the number of Active Events and the last color assigned
-	cout<<regions[images.size() - 1].size()<<" "<<newColor<<endl;
+	cout<<regions[regions.size() - 1].size()<<" "<<newColor<<endl;
 
 	// We output the relations between the AR of the last region map and the ones from the previous last (i.e. the last from the previous call to tracking) 
 	
@@ -220,8 +220,9 @@ int main(int argc, const char **argv)
 		}
 	}
 	
-	#if defined(DEBUG) && DEBUG >= 2
+	#if DEBUG >= 2
 	// We output the graph after recolorization
+	// Ideally I should remove first all regions before previous_overlap from the graph 
 	ouputGraph(tracking_graph, regions, "ar_graph_recolorization");
 	#endif
 	

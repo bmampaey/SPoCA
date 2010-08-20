@@ -23,7 +23,7 @@ string outputFileName;
 
 int main(int argc, const char **argv)
 {
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
 	cout<<setiosflags(ios::fixed);
 	#endif

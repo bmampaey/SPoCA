@@ -73,7 +73,7 @@ void HistogramFCMClassifier::addImages(std::vector<SunImage*>& images)
 
 	numberBins = HistoX.size();
 	
-	#if defined(DEBUG) && DEBUG >= 2
+	#if DEBUG >= 2
 	saveHistogram(outputFileName + "histogram.txt");
 	#endif
 
@@ -199,7 +199,7 @@ Real HistogramFCMClassifier::computeJ() const
 
 void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 {
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	if(HistoX.size() == 0 || B.size() == 0)
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
@@ -210,8 +210,13 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 	cout<<setiosflags(ios::fixed);
 	#endif
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"--HistogramFCMClassifier::classification--START--"<<endl;
+	#endif
+	
+	#if DEBUG >= 2
+		stepinit(outputFileName+"iterations.txt");
+		unsigned decimals = 1 - log10(precision);;
 	#endif
 
 	//Initialisation of precision
@@ -234,21 +239,16 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 		}
 		oldB = B;
 
-		#if defined(DEBUG) && DEBUG >= 3
-		cout<<"iteration :"<<iteration;
-		cout<<"\tprecisionReached :"<<precisionReached;
-		#if DEBUG >= 4
-		cout<<"\tJFCMH :"<<computeJ();
-		#endif
-		cout<<"\tB :"<<B<<endl;
+		#if DEBUG >= 2
+			stepout(iteration, precisionReached, decimals);
 		#endif
 
 	}
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"--HistogramFCMClassifier::classification--END--"<<endl;
 	#endif
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	feenableexcept(excepts);
 	#endif
 }
@@ -306,7 +306,7 @@ Real HistogramFCMClassifier::assess(vector<Real>& V)
 void HistogramFCMClassifier::merge(unsigned i1, unsigned i2)
 {
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2];
 	#endif
 
@@ -339,7 +339,7 @@ void HistogramFCMClassifier::merge(unsigned i1, unsigned i2)
 
 	B[i1] /= sum;
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<" into new center :"<<B[i1]<<endl;
 	#endif
 
@@ -355,7 +355,7 @@ void HistogramFCMClassifier::merge(unsigned i1, unsigned i2)
 void HistogramFCMClassifier::merge(unsigned i1, unsigned i2)
 {
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2];
 	#endif
 
@@ -378,7 +378,7 @@ void HistogramFCMClassifier::merge(unsigned i1, unsigned i2)
 
 	B[i1] /= sum;
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<" into new center :"<<B[i1]<<endl;
 	#endif
 
@@ -434,7 +434,7 @@ void HistogramFCMClassifier::initB(const vector<RealFeature>& B, const RealFeatu
 
 void HistogramFCMClassifier::randomInitB(unsigned C)
 {
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	if(HistoX.size() == 0)
 	{
 		cerr<<"Error : The vector of FeatureVector must be initialized before doing a random init."<<endl;
@@ -454,4 +454,6 @@ void HistogramFCMClassifier::randomInitB(unsigned C)
 	//We like our centers to be sorted
 	sort(B.begin(), B.end());
 }
+
+
 

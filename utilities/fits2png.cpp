@@ -14,7 +14,7 @@
 #include "../classes/Image.h"
 #include "../classes/gradient.h"
 #include "../classes/ArgumentHelper.h"
-#include "../classes/MainUtilities.h"
+
 
 using namespace std;
 using namespace dsr;
@@ -26,7 +26,7 @@ string outputFileName;
 
 int main(int argc, const char **argv)
 {
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
 	cout<<setiosflags(ios::fixed);
 	#endif
@@ -87,7 +87,7 @@ int main(int argc, const char **argv)
 					}
 					else
 					{
-						pngImage.pixelColor(x, Yaxes - y - 1, ColorGray(double(indice * MaxRGB)/gradientMax);
+						pngImage.pixelColor(x, Yaxes - y - 1, ColorGray(double(indice * MaxRGB)/gradientMax));
 					}
 				}
 			}

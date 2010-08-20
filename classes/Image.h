@@ -61,12 +61,13 @@ class Image
 		Image<T>* zero(T value = 0);
 		Image<T>* drawBox(const T color, Coordinate min, Coordinate max);
 		Image<T>* drawCross(const T color, Coordinate c, const unsigned size = 5);
-		Image<T>* drawContours(const unsigned width = 5);
+		Image<T>* drawContours(const unsigned width, const T unsetValue );
+		Image<T>* drawInternContours(const unsigned width, const T unsetValue);
+		Image<T>* drawExternContours(const unsigned width, const T unsetValue);
 		Image<T>* dilateDiamond(const unsigned size, const T pixelValueToDilate);
 		Image<T>* erodeDiamond(const unsigned size, const T pixelValueToErode);
-		Image<T>* dilateCircular(const unsigned size, const T pixelValueToDilate);
-		Image<T>* erodeCircular(const unsigned size, const T pixelValueToErode);
-		Image<T>* erodeCircularColor(const unsigned size, const T unsetValue);
+		Image<T>* dilateCircular(const unsigned size, const T unsetValue);
+		Image<T>* erodeCircular(const unsigned size, const T unsetValue);
 		void diff(const Image<T> * img);
 		void div(const Image<T> * img);
 		unsigned propagateColor(const T color, const Coordinate& firstPixel);

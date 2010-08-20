@@ -78,7 +78,7 @@ int main(int argc, const char **argv)
 		//We read and preprocess the sun image
 		SunImage* image = getImageFromFile(imageType, sunImagesFileNames[p]);
 		image->preprocessing(preprocessingSteps, radiusRatio);
-		#if defined(DEBUG) && DEBUG >= 2
+		#if DEBUG >= 2
 		image->writeFitsImage(outputFileName + "preprocessed."+sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0));
 		#endif
 

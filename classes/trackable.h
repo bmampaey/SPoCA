@@ -49,5 +49,5 @@ void ouputGraph(const RegionGraph& g, const std::vector<std::vector<Region*> >& 
 // Output regions in the region format
 void ouputRegions(const std::vector<std::vector<Region*> >& regions, std::string filename);
 
-
+void recolorFromRegions(SunImage* image, const std::vector<Region*>& regions);
 #endif

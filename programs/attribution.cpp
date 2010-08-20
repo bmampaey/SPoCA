@@ -199,7 +199,7 @@ int main(int argc, const char **argv)
 	for (unsigned p = 0; p < images.size(); ++p)
 	{
 		images[p]->preprocessing(preprocessingSteps, radiusRatio);
-		#if defined(DEBUG) && DEBUG >= 2
+		#if DEBUG >= 2
 		images[p]->writeFitsImage(outputFileName + "preprocessed." + sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0));
 		#endif
 	}
@@ -242,7 +242,7 @@ int main(int argc, const char **argv)
 		}
 	}	
 	
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"The centers have been initialized to B :"<<F->getB()<<endl;
 	if(classifierIsPossibilistic)
 	{

@@ -178,21 +178,34 @@ Real RegionStats::Area_AtDiskCenterUncert() const
 
 const string RegionStats::header = Region::header + "MinIntensity\tMaxIntensity\tMean\tVariance\tSkewness\tKurtosis\tTotalIntensity\tCenterxError\tCenteryError\tArea_Raw\tArea_RawUncert\tArea_AtDiskCenter\tArea_AtDiskCenterUncert";
 
+inline string prettyReal(const Real value)
+{
+	
+	if (value == numeric_limits<PixelType>::max() || isinf(value) || isnan(value))
+	{
+		return "nan";
+	}
+	else
+	{
+		ostringstream out;
+		out<<setiosflags(ios::fixed)<<"\t"<<value;
+		return out.str(); 
+	}
+
+} 
 string RegionStats::toString() const
 {
-	ostringstream out;
-	out<<static_cast<const Region*>(this)->toString();
-	out<<setiosflags(ios::fixed)<<"\t"<<MinIntensity()<<"\t"<<MaxIntensity()<<"\t"<<Mean()<<"\t"<<Variance()<<"\t"<<Skewness()<<"\t"<<Kurtosis()<<"\t"<<TotalIntensity()<<"\t"<<CenterxError()<<"\t"<<CenteryError()<<"\t"<<Area_Raw()<<"\t"<<Area_RawUncert()<<"\t"<<Area_AtDiskCenter()<<"\t"<<Area_AtDiskCenterUncert();
-	return out.str();
+	string result = static_cast<const Region*>(this)->toString();
+	result+="\t"+prettyReal(MinIntensity())+"\t"+prettyReal(MaxIntensity())+"\t"+prettyReal(Mean())+"\t"+prettyReal(Variance())+"\t"+prettyReal(Skewness())+"\t"+prettyReal(Kurtosis())+"\t"+prettyReal(TotalIntensity())+"\t"+prettyReal(CenterxError())+"\t"+prettyReal(CenteryError())+"\t"+prettyReal(Area_Raw())+"\t"+prettyReal(Area_RawUncert())+"\t"+prettyReal(Area_AtDiskCenter())+"\t"+prettyReal(Area_AtDiskCenterUncert());
+	return result;
 }
 
 #ifdef CoordinateConvertor_H
 string RegionStats::toString(const CoordinateConvertor& coco) const
 {
-	ostringstream out;
-	out<<static_cast<const Region*>(this)->toString(coco);
-	out<<setiosflags(ios::fixed)<<"\t"<<MinIntensity()<<"\t"<<MaxIntensity()<<"\t"<<Mean()<<"\t"<<Variance()<<"\t"<<Skewness()<<"\t"<<Kurtosis()<<"\t"<<TotalIntensity()<<"\t"<<CenterxError()<<"\t"<<CenteryError()<<"\t"<<Area_Raw()<<"\t"<<Area_RawUncert()<<"\t"<<Area_AtDiskCenter()<<"\t"<<Area_AtDiskCenterUncert();
-	return out.str();
+	string result = static_cast<const Region*>(this)->toString(coco);
+	result+="\t"+prettyReal(MinIntensity())+"\t"+prettyReal(MaxIntensity())+"\t"+prettyReal(Mean())+"\t"+prettyReal(Variance())+"\t"+prettyReal(Skewness())+"\t"+prettyReal(Kurtosis())+"\t"+prettyReal(TotalIntensity())+"\t"+prettyReal(CenterxError())+"\t"+prettyReal(CenteryError())+"\t"+prettyReal(Area_Raw())+"\t"+prettyReal(Area_RawUncert())+"\t"+prettyReal(Area_AtDiskCenter())+"\t"+prettyReal(Area_AtDiskCenterUncert());
+	return result;
 }
 #endif
 

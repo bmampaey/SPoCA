@@ -26,6 +26,10 @@ class PCMClassifier : public virtual FCMClassifier
 		virtual void computeEta(Real alpha);
 
 		Real assess(std::vector<Real>& V);
+		
+		//Function to output classification steps
+		virtual void stepinit(const std::string filename);
+		virtual void stepout(const unsigned iteration, const Real precisionReached, const int precision = 5);
 
 	public :
 		// Constructors & Destructors

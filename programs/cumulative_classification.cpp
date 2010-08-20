@@ -88,7 +88,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('H', "histogramFile","file name", "\n\tThe name of a file containing an histogram.\n\t", histogramFile);
 	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogramm.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
 	arguments.new_named_unsigned_int('t', "classificationPeriodicity", "classificationPeriodicity", "The periodicity with wich we do the classification (0 means only classification at the end).\n\t", classificationPeriodicity);
-	arguments.new_flag('R', "reinitializeCenters", "Set this flag if you want the centers to be reinitialized before each classification (For possibilistic classifiers this mean doing a FCM init again.\n\t", reinit);
+	arguments.new_flag('R', "reinitializeCenters", "\n\tSet this flag if you want the centers to be reinitialized before each classification (For possibilistic classifiers this mean doing a FCM init again.\n\t", reinit);
 	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", sunImagesFileNames);
 	arguments.set_description(programDescription.c_str());
@@ -232,7 +232,7 @@ int main(int argc, const char **argv)
 		for (unsigned p = 0; p < images.size(); ++p)
 		{
 			images[p]->preprocessing(preprocessingSteps, radiusRatio);
-			#if defined(DEBUG) && DEBUG >= 2
+			#if DEBUG >= 2
 			images[p]->writeFitsImage(outputFileNameBase + "preprocessed." + sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0));
 			#endif
 		}

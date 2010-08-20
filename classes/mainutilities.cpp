@@ -66,7 +66,7 @@ inline vector<SunImage*> getImagesFromFiles(const string imageType, const vector
 				images[p]->recenter(sunCenter);
 			}
 
-			#if defined(DEBUG) && DEBUG >= 2
+			#if DEBUG >= 2
 			string filename = outputFileName + "recentered.";
 			filename +=  sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0);
 			images[p]->writeFitsImage(filename);
@@ -81,7 +81,7 @@ inline SunImage* getImageFromFile(const string imageType, const string sunImageF
 
 	SunImage* image;
 
-	#if defined(DEBUG) && DEBUG >= 1
+	#if DEBUG >= 1
 	if(sunImageFileName.find(".fits")==string::npos && sunImageFileName.find(".fts")==string::npos)
 	{
 		cerr<<sunImageFileName<<" is not a fits file! (must end in .fits or .fts)"<<endl;

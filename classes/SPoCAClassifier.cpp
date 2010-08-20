@@ -47,7 +47,7 @@ void SPoCAClassifier::addImages(vector<SunImage*>& images)
 				continue;
 			
 			//In a normal situation, we can suppose that the sun disc isn't going to touch the borders of the picture. Otherwise just take a radiusRatio smaller.
-			#if defined(DEBUG) && DEBUG >= 1
+			#if DEBUG >= 1
 			#define ASSERTBOUNDARIES neighboor > 0 && neighboor < images[0]->NumberPixels()
 			#else
 			#define ASSERTBOUNDARIES true
@@ -98,7 +98,7 @@ void SPoCAClassifier::addImages(vector<SunImage*>& images)
 	}
 	
 	// We write the fits file of smoothedX for verification
-	#if defined(DEBUG) && DEBUG >= 2
+	#if DEBUG >= 2
 	string filename;
 	Image<PixelType> image(Xaxes,Yaxes);
 	for (unsigned p = 0; p <  NUMBERWAVELENGTH; ++p)
@@ -114,7 +114,7 @@ void SPoCAClassifier::addImages(vector<SunImage*>& images)
 
 	}
 	#endif
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	#include <fstream>
 	filename = outputFileName + "betaN.txt";
 	ofstream betaFile(filename.c_str());
@@ -319,7 +319,7 @@ Real SPoCAClassifier::assess(vector<Real>& V)
 void SPoCAClassifier::merge(unsigned i1, unsigned i2)
 {
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2];
 	#endif
 
@@ -353,7 +353,7 @@ void SPoCAClassifier::merge(unsigned i1, unsigned i2)
 	sum *= 2;
 	B[i1] /= sum;
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<" into new center :"<<B[i1]<<endl;
 	#endif
 
@@ -370,7 +370,7 @@ void SPoCAClassifier::merge(unsigned i1, unsigned i2)
 void SPoCAClassifier::merge(unsigned i1, unsigned i2)
 {
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2];
 	#endif
 
@@ -393,7 +393,7 @@ void SPoCAClassifier::merge(unsigned i1, unsigned i2)
 
 	B[i1] /= 2 * sum;
 
-	#if defined(DEBUG) && DEBUG >= 3
+	#if DEBUG >= 3
 	cout<<" into new center :"<<B[i1]<<endl;
 	#endif
 

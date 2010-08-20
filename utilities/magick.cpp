@@ -14,7 +14,7 @@
 #include "../classes/Image.h"
 #include "../classes/gradient.h"
 #include "../classes/ArgumentHelper.h"
-#include "../classes/MainUtilities.h"
+#include "../classes/mainutilities.h"
 
 using namespace std;
 using namespace dsr;

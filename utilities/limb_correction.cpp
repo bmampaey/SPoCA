@@ -10,8 +10,8 @@
 #include "../classes/constants.h"
 #include "../classes/Coordinate.h"
 #include "../classes/SunImage.h"
-#include "../dsr/ArgumentHelper.h"
-#include "../classes/MainUtilities.h"
+#include "../classes/ArgumentHelper.h"
+#include "../classes/mainutilities.h"
 
 using namespace std;
 using namespace dsr;
@@ -67,7 +67,7 @@ int main(int argc, const char **argv)
 	string preprocessingSteps = "NAR";
 	double radiusRatio = 1.31;
 	
-	string programDescription = "This Programm output the value of the function used for annulus limb correction.\n";
+	string programDescription = "This Program helps you study the annulus limb correction.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);

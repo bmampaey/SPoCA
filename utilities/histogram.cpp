@@ -12,7 +12,7 @@
 
 #include "../classes/SunImage.h"
 #include "../classes/ArgumentHelper.h"
-#include "../classes/MainUtilities.h"
+#include "../classes/mainutilities.h"
 #include "../classes/HistogramFeatureVector.h"
 #include "../classes/FeatureVector.h"
 
@@ -138,7 +138,7 @@ int main(int argc, const char **argv)
 	
 	outputFileName = "histogram.txt";
 
-	string programDescription = "This Programm will generate the histogram file for the given images.\n";
+	string programDescription = "This Program will generate the histogram file for the given images.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);

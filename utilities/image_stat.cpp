@@ -11,8 +11,8 @@
 
 #include "../classes/Image.h"
 #include "../classes/SunImage.h"
-#include "../dsr/ArgumentHelper.h"
-#include "../classes/MainUtilities.h"
+#include "../classes/ArgumentHelper.h"
+#include "../classes/mainutilities.h"
 
 #ifndef Real
 #define Real float
@@ -44,7 +44,7 @@ int main(int argc, const char **argv)
 	// Option for the size of the neighboorhood
 	unsigned neighboorhoodRadius = 1;
 
-	string programDescription = "This Programm generates neigboorhood stats fits files.\n";
+	string programDescription = "This Program generates neigboorhood stats fits files.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);

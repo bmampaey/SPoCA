@@ -867,6 +867,16 @@ void SunImage::copyKeywords(const SunImage* i)
 	datap95=i->datap95;
 	cdelt[0]=i->cdelt[0];
 	cdelt[1]=i->cdelt[1];
+	for (unsigned k = 0; k < header.size(); ++k)
+	{
+		delete header[k];
+	}
+	header.resize(i->header.size());
+	for (unsigned k = 0; k < i->header.size(); ++k)
+	{
+		header[k] = new char[81];
+		strncpy (header[k], i->header[k], 80);
+	}
 }
 
 #if defined(AGGREGATE_DILATE)

@@ -21,6 +21,7 @@ using namespace dsr;
 using Magick::Color;
 using Magick::ColorGray;
 using Magick::Geometry;
+using Magick::Quantum; 
 
 string outputFileName;
 

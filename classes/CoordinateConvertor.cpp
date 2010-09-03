@@ -51,7 +51,7 @@ CoordinateConvertor::CoordinateConvertor(SunImage* image, string coordinateType)
 		string load_wcs_routines = "RESTORE, '"WCS_ROUTINES_SAV"'";
 		IDL_do(load_wcs_routines);
 		//setenv("ANCIL_DATA", SSW_PATH,1);
-		setenv("DLM_PATH", "<IDL_DEFAULT>:"SSW_PATHSSW_PATH"/stereo/gen/exe/icy/linux_x86/lib/",1);
+		setenv("DLM_PATH", "<IDL_DEFAULT>:"SSW_PATH"/stereo/gen/exe/icy/linux_x86/lib/",1);
 	}
 	
 	string create_header = "header = STRARR("+itos(3 + image->header.size())+")";

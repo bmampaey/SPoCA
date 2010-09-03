@@ -73,12 +73,7 @@ int main(int argc, const char **argv)
 		cerr<<"No fits image file given as parameter!"<<endl;
 		return EXIT_FAILURE;
 	}
-	
-	SunImage* colorizedComponentsMap = getImageFromFile(imageType, colorizedComponentsMapFileName);
-	colorizedComponentsMap->nullifyAboveRadius(1);		
-	Coordinate sunCenter = colorizedComponentsMap->SunCenter();
-	double sunRadius = colorizedComponentsMap->SunRadius();
-	
+		
 
 	for (unsigned p = 0; p < sunImagesFileNames.size(); ++p)
 	{
@@ -89,17 +84,9 @@ int main(int argc, const char **argv)
 		#if DEBUG >= 2
 		image->writeFitsImage(outputFileName + "preprocessed."+sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0));
 		#endif
-
-		if( sunCenter.d2(image->SunCenter()) > 2 )
-		{
-			cerr<<"Warning : Image "<<sunImagesFileNames[p]<<" will be recentered to have the same sun centre than image "<<colorizedComponentsMapFileName<<endl;
-			image->recenter(sunCenter);
-		}
-		if( abs(1. - (image->SunRadius() / sunRadius)) > 0.01 )
-		{
-			cerr<<"Error : Image "<<sunImagesFileNames[p]<<" does not have the same sun radius than image "<<colorizedComponentsMapFileName<<endl;
-			exit(EXIT_FAILURE);
-		}
+		SunImage* colorizedComponentsMap = getImageFromFile(imageType, colorizedComponentsMapFileName);
+		colorizedComponentsMap->copyKeywords(image);
+		colorizedComponentsMap->nullifyAboveRadius(1);		
 		
 		// We get the regions stats and output them
 		vector<RegionStats*> regions = getRegions(colorizedComponentsMap, image);
@@ -117,8 +104,8 @@ int main(int argc, const char **argv)
 			delete regions[r];
 		}
 		delete image;
+		delete colorizedComponentsMap;
 	}
-	delete colorizedComponentsMap;
 	return EXIT_SUCCESS;
 	
 }

@@ -858,6 +858,7 @@ void SunImage::recenter(const Coordinate& newCenter)
 
 void SunImage::copyKeywords(const SunImage* i)
 {
+
 	radius = i->radius;
 	suncenter = i->suncenter;
 	wavelength = i->wavelength;
@@ -867,6 +868,8 @@ void SunImage::copyKeywords(const SunImage* i)
 	datap95=i->datap95;
 	cdelt[0]=i->cdelt[0];
 	cdelt[1]=i->cdelt[1];
+	strncpy (date_obs, i->date_obs, 80);
+	exposureTime = i->exposureTime;
 	for (unsigned k = 0; k < header.size(); ++k)
 	{
 		delete header[k];

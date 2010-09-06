@@ -216,7 +216,7 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 	
 	#if DEBUG >= 2
 		stepinit(outputFileName+"iterations.txt");
-		unsigned decimals = 1 - log10(precision);;
+		unsigned decimals = unsigned(1 - log10(precision));;
 	#endif
 
 	//Initialisation of precision

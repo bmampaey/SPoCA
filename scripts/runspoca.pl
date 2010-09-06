@@ -484,7 +484,7 @@ sub do_execute
 {
 	my $execute = join ' ', @_;
 	print "START $execute\n";
-	my $output = `$execute 2>&1`;
+	my $output = `$execute`;
 	if ($? >> 8 != 0)
 	{
 		die "There was an error doing $execute : $output\n";

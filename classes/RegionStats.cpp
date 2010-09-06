@@ -176,7 +176,7 @@ Real RegionStats::Area_AtDiskCenterUncert() const
 }
 
 
-const string RegionStats::header = Region::header + "MinIntensity\tMaxIntensity\tMean\tVariance\tSkewness\tKurtosis\tTotalIntensity\tCenterxError\tCenteryError\tArea_Raw\tArea_RawUncert\tArea_AtDiskCenter\tArea_AtDiskCenterUncert";
+const string RegionStats::header = Region::header + "\tMinIntensity\tMaxIntensity\tMean\tVariance\tSkewness\tKurtosis\tTotalIntensity\tCenterxError\tCenteryError\tArea_Raw\tArea_RawUncert\tArea_AtDiskCenter\tArea_AtDiskCenterUncert";
 
 inline string prettyReal(const Real value)
 {

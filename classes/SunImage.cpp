@@ -883,9 +883,9 @@ void SunImage::copyKeywords(const SunImage* i)
 SunImage* SunImage::blobsIntoAR ()
 {
 
-	//We agregate the blobs together by dilation of 31.44 arcsec (== 12 pixel EIT)
-	unsigned dilateFactor = unsigned(31.44 / cdelt[0]);
-	this->dilateCircular(dilateFactor,0);
+	//We agregate the blobs together by dilation 
+	unsigned dilateFactor = unsigned(AR_AGGREGATION  / cdelt[0]);
+	this->dilateCircular(dilateFactor,nullvalue);
 	
 	this->colorizeConnectedComponents(0);
 	
@@ -897,10 +897,10 @@ SunImage* SunImage::blobsIntoAR ()
 SunImage* SunImage::blobsIntoAR ()
 {
 
-	//We create  a map by dilation of 31.44 arcsec (== 12 pixel EIT)
-	unsigned dilateFactor = unsigned(31.44 / cdelt[0]);
+	//We create  a map by dilation 
+	unsigned dilateFactor = unsigned(AR_AGGREGATION  / cdelt[0]);
 	SunImage* dilated = new SunImage(this);
-	dilated->dilateCircular(dilateFactor,0);
+	dilated->dilateCircular(dilateFactor,nullvalue);
 	dilated->colorizeConnectedComponents(0);
 	
 	//We color the blobs using the dilated map 

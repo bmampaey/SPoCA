@@ -281,6 +281,42 @@ int main(int argc, const char **argv)
 	// We have all the information we need, we can do the classification
 	F->classification(precision, maxNumberIteration);
 
+	#ifdef HEK
+	// Hack asked by Veronique
+		if(numberClasses >= 4)
+		{
+			vector<RealFeature> newB = F->getB();
+			sort(newB.begin(), newB.end());
+			//We compare if the 2 lastclass centers are different enough
+			if(d(newB[numberClasses-1]/newB[numberClasses-2], RealFeature(0)) < DELOUILLE_FACTOR)
+			{
+				// In that case we use the old centers to do an attribution
+				F->initB(B, wavelengths);
+
+				if(classifierIsPossibilistic)
+				{
+						dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
+						F->initB(B, wavelengths);
+				}	
+	
+				#if DEBUG >= 3
+				cout<<"Centers of AR classes are too close, doing an attribution with old centers"<<endl;
+				cout<<"oldB :"<<B<<" newB: "<<newB<<endl; 
+				cout<<"The centers have been initialized to B :"<<F->getB()<<endl;
+				if(classifierIsPossibilistic)
+				{
+					cout<<"The eta have been initialized to :"<<dynamic_cast<PCMClassifier*>(F)->getEta()<<endl;
+				}
+				#endif
+
+				// We have all the information we need, we can do the attribution
+				F->attribution();
+
+			
+			}
+		} 
+	#endif
+
 	#if DEBUG >= 2
 	// We save the results
 	F->saveAllResults(images[0]);

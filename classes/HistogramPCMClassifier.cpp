@@ -24,26 +24,13 @@ HistogramPCMClassifier::HistogramPCMClassifier(const std::string& histogramFilen
 
 
 //Because we need to use the value fund for B to classify the normal images
-void HistogramPCMClassifier::saveAllResults(SunImage* outImage)
+void HistogramPCMClassifier::attribution()
 {
 	PCMClassifier::computeU();
 	PCMClassifier::saveAllResults(outImage);
 }
 
 
-void HistogramPCMClassifier::saveARmap(SunImage* outImage)
-{
-
-	PCMClassifier::computeU();
-	PCMClassifier::saveARmap(outImage);
-}
-
-void HistogramPCMClassifier::saveCHmap(SunImage* outImage)
-{
-
-	PCMClassifier::computeU();
-	PCMClassifier::saveCHmap(outImage);
-}
 
 
 void HistogramPCMClassifier::computeU()
@@ -224,7 +211,7 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 	}
 
 	#if DEBUG >= 3
-	cout<<"--HistogramPCMClassifier::classification--END--"<<endl;
+	cout<<endl<<"--HistogramPCMClassifier::classification--END--"<<endl;
 	#endif
 	#if DEBUG >= 1
 	feenableexcept(excepts);

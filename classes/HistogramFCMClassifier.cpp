@@ -82,24 +82,11 @@ void HistogramFCMClassifier::addImages(std::vector<SunImage*>& images)
 
 
 //Because we need to use the value fund for B to classify the normal images
-void HistogramFCMClassifier::saveAllResults(SunImage* outImage)
+void HistogramFCMClassifier::attribution()
 {
 	FCMClassifier::computeU();
-	FCMClassifier::saveAllResults(outImage);
 }
 
-
-void HistogramFCMClassifier::saveARmap(SunImage* outImage)
-{
-	FCMClassifier::computeU();
-	FCMClassifier::saveARmap(outImage);
-}
-
-void HistogramFCMClassifier::saveCHmap(SunImage* outImage)
-{
-	FCMClassifier::computeU();
-	FCMClassifier::saveCHmap(outImage);
-}
 
 
 void HistogramFCMClassifier::computeB()
@@ -246,7 +233,7 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 	}
 
 	#if DEBUG >= 3
-	cout<<"--HistogramFCMClassifier::classification--END--"<<endl;
+	cout<<endl<<"--HistogramFCMClassifier::classification--END--"<<endl;
 	#endif
 	#if DEBUG >= 1
 	feenableexcept(excepts);

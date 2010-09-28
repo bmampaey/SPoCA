@@ -895,6 +895,290 @@ SunImage* SunImage::blobsIntoAR ()
 	return this;
 }
 
+#elif defined(AGGREGATE_DILATE_BENTEST)
+// The idea is that we dilate more the smaller blobs than the bigger ones
+SunImage* SunImage::blobsIntoAR ()
+{
+	vector<unsigned> blobList;
+	vector<unsigned> sizes;
+	//We create a list of blobs and their size
+	for (unsigned j=0; j < numberPixels; ++j)
+	{
+		if (pixels[j] == 0)
+		{
+			blobList.push_back(j);
+			sizes.push_back(this->propagateColor(1,j));
+			
+		}
+	}
+	// We transform the sizes in dilation factor
+	const unsigned AR_DILATION_FACTOR = 100;
+	unsigned maxDilateFactor = unsigned(AR_AGGREGATION  / cdelt[0]);
+	for (unsigned s=0; s < sizes.size(); ++s)
+	{
+		sizes[s] /=  AR_DILATION_FACTOR;
+		sizes[s] = sizes[s] > maxDilateFactor ? 0 : maxDilateFactor -  sizes[s];
+		
+	}
+	//We create the map of dilation 
+	SunImage* dilated = new SunImage(this);
+	for (unsigned b=0; b < blobList.size(); ++b)
+	{
+		vector<unsigned> shape;
+		shape.reserve(sizes[b]*sizes[b]*3);
+		for(unsigned x = 1; x <= sizes[b]; ++x)
+			shape.push_back(x);
+		for(int x = -sizes[b]; x <= int(sizes[b]); ++x)
+			for(unsigned y = 1; y <= sizes[b]; ++y)
+				if(sqrt(x * x + y *y) <= sizes[b])
+					shape.push_back(y * Xaxes() + x);
+					
+		vector<unsigned> pixelList;
+		unsigned setValue =1;
+		unsigned h;
+
+		pixelList.push_back(blobList[b]);
+		while ( ! pixelList.empty())
+		{
+			h = pixelList.back();
+			pixelList.pop_back();
+			pixels[h] = b+2;
+			bool propagate = false;
+			if(h+1 < numberPixels && pixels[h+1] == setValue)
+				pixelList.push_back(h+1);
+			else
+				propagate=true;
+			if(h+Xaxes() < numberPixels && pixels[h+Xaxes()] == setValue)
+				pixelList.push_back(h+Xaxes());
+			else
+				propagate=true;
+			if(h >= 1 && pixels[h-1] == setValue)
+				pixelList.push_back(h-1);
+			else
+				propagate=true;
+			if(h >= Xaxes() && pixels[h-Xaxes()] == setValue)
+				pixelList.push_back(h-Xaxes());
+			else
+				propagate=true;
+							
+			if(propagate)
+			{
+			
+				for(unsigned s = 0; s < shape.size(); ++s)
+				{
+					#if DEBUG >= 1
+						if(h + shape[s] >= numberPixels || h - shape[s] < 0)
+						{
+							cerr<<"Error : trying to access pixel out of image in drawContours"<<endl;
+							exit(EXIT_FAILURE);
+						}	
+					#endif
+					dilated->pixels[h + shape[s]] = dilated->pixels[h - shape[s]] = 1;
+				}
+			}
+
+		}
+
+	}
+	for (unsigned b=0; b < blobList.size(); ++b)
+	{
+		if(dilated->pixels[blobList[b]] == 1)
+		{
+			dilated->propagateColor(b+2, blobList[b]);
+		}
+	}
+	
+	//We remove the AR too small
+	unsigned minSize = unsigned(MIN_AR_SIZE / PixelArea());
+	dilated->tresholdConnectedComponents(minSize, 0);
+	dilated->writeFitsImage("dilated.fits");
+
+	//We color the blobs using the dilated map 
+	for (unsigned j=0; j < numberPixels; ++j)
+	{
+		if (pixels[j] != nullvalue)
+		{
+			pixels[j] = dilated->pixels[j];
+			
+		}
+	}		
+
+
+	delete dilated;
+	
+	return this;
+}
+#elif defined(AGGREGATE_DILATE_BENTEST2)
+// The idea is that we dilate more the smaller blobs than the bigger ones
+SunImage* SunImage::blobsIntoAR ()
+{
+
+	const double R0 = radius * PixelArea();
+	const double R2 = radius * radius;
+	unsigned setValue = 0;
+	vector<int> neighboors;
+	neighboors.push_back(1);
+	neighboors.push_back(-1);
+	neighboors.push_back(Xaxes());
+	neighboors.push_back(-Xaxes());
+	
+	neighboors.push_back(Xaxes()+1);
+	neighboors.push_back(Xaxes()-1);
+	neighboors.push_back(-Xaxes()+1);
+	neighboors.push_back(-Xaxes()-1);
+	
+	//We create a list of blobs and their areas
+	unsigned newColor = setValue;
+	vector<unsigned> blobList;
+	vector<double> areas(newColor,0);
+	for (unsigned j=0; j < numberPixels; ++j)
+	{
+		if(pixels[j] != setValue)
+			continue;
+			
+		blobList.push_back(j);
+		++newColor;
+		areas.push_back(0);
+		vector<unsigned> pixelList(1,j);
+		while ( ! pixelList.empty())
+		{
+			unsigned h = pixelList.back();
+			pixelList.pop_back();
+			pixels[h] = newColor;
+			Coordinate c = coordinate(h);
+			int cx = c.x > suncenter.x ? c.x - suncenter.x : suncenter.x - c.x;
+			int cy = c.y > suncenter.y ? c.y - suncenter.y : suncenter.y - c.y;
+			double pixelArea2 = R2 - (cx * cx) - (cy * cy);
+			if(pixelArea2 > 0)
+				areas[blobList.size()-1] += R0 / sqrt(pixelArea2);
+			else
+				areas[blobList.size()-1] = numeric_limits<double>::infinity();
+			for(unsigned n = 0; n < neighboors.size(); ++n)
+				if(pixels[h+neighboors[n]] == setValue)
+					pixelList.push_back(h+neighboors[n]);
+		}
+	}
+	//writeFitsImage("undilated.fits");
+	
+	vector<unsigned> dilation_size (areas.size(), 0);
+	// We transform the areas in dilation size
+	#define AR_DILATION_FACTOR 12
+	const double AR_area_factor = 1 / (AR_DILATION_FACTOR * PixelArea());
+	unsigned maxDilateFactor = unsigned(AR_AGGREGATION  / cdelt[0]);
+	for (unsigned s=0; s < areas.size(); ++s)
+	{
+		if(areas[s] != numeric_limits<double>::infinity())
+		{
+			dilation_size[s] =  areas[s] * AR_area_factor;
+			dilation_size[s] = dilation_size[s] > maxDilateFactor ? 0 : maxDilateFactor -  dilation_size[s];
+		}
+		//cout<<pixels[blobList[s]]<<" a:"<<areas[s]<<" ds:"<<dilation_size[s]<<endl;
+	}
+	
+	
+
+
+	//We create the map of dilation 
+	SunImage * dilated = new SunImage(Xaxes(), Yaxes());
+	dilated->zero();
+	for (unsigned b=0; b < blobList.size(); ++b)
+	{
+		vector<unsigned> shape;
+		shape.reserve(dilation_size[b]*dilation_size[b]*3);
+		for(unsigned x = 1; x <= dilation_size[b]; ++x)
+			shape.push_back(x);
+		for(int x = -dilation_size[b]; x <= int(dilation_size[b]); ++x)
+			for(unsigned y = 1; y <= dilation_size[b]; ++y)
+				if(sqrt(x * x + y *y) <= dilation_size[b])
+					shape.push_back(y * Xaxes() + x);
+					
+		vector<unsigned> pixelList(1,blobList[b]);
+		while ( ! pixelList.empty())
+		{
+			unsigned h = pixelList.back();
+			pixelList.pop_back();
+			dilated->pixels[h] = 1;
+			pixels[h] = setValue;
+			bool propagate = false;
+			for(unsigned n = 0; n < neighboors.size(); ++n)
+				if(pixels[h+neighboors[n]] != nullvalue && pixels[h+neighboors[n]] > setValue)
+					pixelList.push_back(h+neighboors[n]);
+				else
+					propagate=true;
+							
+			if(propagate)
+			{
+			
+				for(unsigned s = 0; s < shape.size(); ++s)
+				{
+					#if DEBUG >= 1
+						if(h + shape[s] >= numberPixels || h - shape[s] < 0)
+						{
+							cerr<<"Error : trying to access pixel out of image in drawContours"<<endl;
+							exit(EXIT_FAILURE);
+						}	
+					#endif
+					dilated->pixels[h + shape[s]] = dilated->pixels[h - shape[s]] = 1;
+				}
+			}
+
+		}
+
+	}
+	
+	unsigned numberRegions = dilated->colorizeConnectedComponents(1);
+	//dilated->writeFitsImage("dilated.fits");
+	areas.clear();
+	areas.resize(numberRegions + 2, 0);
+	//We color the image using the dilated map and recompute the new areas
+	for (unsigned j=0; j < numberPixels; ++j)
+	{
+		if (pixels[j] != nullvalue)
+		{
+			pixels[j] = dilated->pixels[j];
+			Coordinate c = coordinate(j);
+			int cx = c.x > suncenter.x ? c.x - suncenter.x : suncenter.x - c.x;
+			int cy = c.y > suncenter.y ? c.y - suncenter.y : suncenter.y - c.y;
+			double pixelArea2 = R2 - (cx * cx) - (cy * cy);
+			if(pixelArea2 > 0)
+				areas[pixels[j]] += R0 / sqrt(pixelArea2);
+			else
+				areas[pixels[j]] = numeric_limits<double>::infinity();
+		}
+	}		
+	//writeFitsImage("recolored.fits");
+	
+	//We remove the AR too small
+	for (unsigned j=0; j < numberPixels; ++j)
+	{
+		if (pixels[j] != nullvalue && areas[pixels[j]]  < MIN_AR_SIZE)
+		{
+			pixels[j] = nullvalue;
+		}
+	}
+
+	/*
+	// Test of the size of each pixel
+	for (unsigned j=0; j < numberPixels; ++j)
+	{
+			Coordinate c = coordinate(j);
+			int cx = c.x > suncenter.x ? c.x - suncenter.x : suncenter.x - c.x;
+			int cy = c.y > suncenter.y ? c.y - suncenter.y : suncenter.y - c.y;
+			double pixelArea2 = R2 - (cx * cx) - (cy * cy);
+			if(pixelArea2 > 0)
+				dilated->pixels[j]= R0 / sqrt(pixelArea2);
+			else
+				dilated->pixels[j]= numeric_limits<double>::infinity();
+		
+	}
+	dilated->writeFitsImage("pixel_real_size.fits");
+	*/
+
+	delete dilated;
+	
+	return this;
+}
+
 #else
 
 SunImage* SunImage::blobsIntoAR ()
@@ -916,6 +1200,8 @@ SunImage* SunImage::blobsIntoAR ()
 	
 	return this;
 }
+
+
 
 #endif
 

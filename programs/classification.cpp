@@ -128,7 +128,7 @@ int main(int argc, const char **argv)
 	outputFileName += ".";
 	
 	// We read the wavelengths and the initial centers from the centers file
-	if(readCentersFromFile(B, wavelengths, centersFileName))
+	if(fileExists(centersFileName) && readCentersFromFile(B, wavelengths, centersFileName))
 	{
 		if(B.size() != numberClasses)
 		{
@@ -282,13 +282,13 @@ int main(int argc, const char **argv)
 	F->classification(precision, maxNumberIteration);
 
 	#ifdef HEK
-	// Hack asked by Veronique
-		if(numberClasses >= 4)
+	// Hack asked by Veronique, to stabilize the centers
+		if(B.size() >= 4)
 		{
 			vector<RealFeature> newB = F->getB();
 			sort(newB.begin(), newB.end());
 			//We compare if the 2 lastclass centers are different enough
-			if(d(newB[numberClasses-1]/newB[numberClasses-2], RealFeature(0)) < DELOUILLE_FACTOR)
+			if(d(newB[numberClasses-1]/newB[numberClasses-2], RealFeature(0)) < MIN_QUOTIENT_FACTOR)
 			{
 				// In that case we use the old centers to do an attribution
 				F->initB(B, wavelengths);
@@ -317,6 +317,12 @@ int main(int argc, const char **argv)
 		} 
 	#endif
 
+	//We need to use the value found for B to classify the normal images
+	if(classifierIsHistogram)
+	{
+		F->attribution();
+	}
+
 	#if DEBUG >= 2
 	// We save the results
 	F->saveAllResults(images[0]);
@@ -329,6 +335,10 @@ int main(int argc, const char **argv)
 	if (!centersFileName.empty())
 	{
 		F->saveB(centersFileName);
+	}
+	else
+	{
+		F->saveB(outputFileName + "centers.txt");
 	}
 
 	//We save the histogram for the next run

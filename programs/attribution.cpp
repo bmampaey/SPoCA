@@ -315,6 +315,18 @@ int main(int argc, const char **argv)
 	delete F;
 
 	segmentedImage->writeFitsImage(outputFileName + "segmented.fits");
+	/*HACK for maps with AR and CH
+	for (unsigned j=0; j < segmentedImage->NumberPixels(); ++j)
+	{
+		if (segmentedImage->pixel(j) == 2 || segmentedImage->pixel(j) == 0)
+			segmentedImage->pixel(j) = segmentedImage->nullvalue;
+	}
+	segmentedImage->dilateCircular(8,segmentedImage->nullvalue)->erodeCircular(8,segmentedImage->nullvalue)->dilateCircular(1,segmentedImage->nullvalue);
+	unsigned minSize = 80;
+	segmentedImage->tresholdConnectedComponents(20000, 1);
+	segmentedImage->tresholdConnectedComponents(4166, 3);
+	segmentedImage->writeFitsImage(outputFileName + "cleaned.segmented.fits");
+	*/
 	delete segmentedImage;	
           
 	return EXIT_SUCCESS;

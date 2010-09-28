@@ -25,8 +25,6 @@ const double DR = 2.;
 const double HIGGINS_FACTOR = 31;
 
 
-
-
 void RegionStats::add(const Coordinate& pixelCoordinate, const PixelType& pixelIntensity, const Coordinate sunCenter, const bool atBorder, const double R)
 {
 	Region::add(pixelCoordinate);

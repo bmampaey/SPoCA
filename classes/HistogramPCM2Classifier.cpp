@@ -24,25 +24,10 @@ HistogramPCM2Classifier::HistogramPCM2Classifier(const std::string& histogramFil
 
 
 //Because we need to use the value fund for B to classify the normal images
-void HistogramPCM2Classifier::saveAllResults(SunImage* outImage)
+void HistogramPCM2Classifier::attribution()
 {
 	PCM2Classifier::computeU();
-	PCM2Classifier::saveAllResults(outImage);
 }
-
-
-void HistogramPCM2Classifier::saveARmap(SunImage* outImage)
-{
-	PCM2Classifier::computeU();
-	PCM2Classifier::saveARmap(outImage);
-}
-
-void HistogramPCM2Classifier::saveCHmap(SunImage* outImage)
-{
-	PCM2Classifier::computeU();
-	PCM2Classifier::saveCHmap(outImage);
-}
-
 
 
 void HistogramPCM2Classifier::computeU()
@@ -158,7 +143,7 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 
 
 	#if DEBUG >= 3
-	cout<<"--HistogramPCM2Classifier::classification--END--"<<endl;
+	cout<<endl<<"--HistogramPCM2Classifier::classification--END--"<<endl;
 	#endif
 	#if DEBUG >= 1
 	feenableexcept(excepts);

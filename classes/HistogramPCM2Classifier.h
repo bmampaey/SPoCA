@@ -39,6 +39,7 @@ class HistogramPCM2Classifier : public PCM2Classifier, public virtual HistogramP
 
 		//Classification functions
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
+		void attribution();
 
 		//Function to initialise the centers & eta
 		using HistogramPCMClassifier::initB;
@@ -47,9 +48,6 @@ class HistogramPCM2Classifier : public PCM2Classifier, public virtual HistogramP
 		using PCM2Classifier::initEta;
 
 		//Utilities functions for outputing results
-		void saveAllResults(SunImage* outImage);
-		void saveARmap(SunImage* outImage);
-		void saveCHmap(SunImage* outImage);
 		using HistogramFCMClassifier::classAverage;
 
 };

@@ -39,11 +39,9 @@ class HistogramFCMClassifier : public virtual FCMClassifier, public HistogramCla
 
 		//Classification functions
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
+		void attribution();
 
-		//Utilities functions for outputing results
-		void saveAllResults(SunImage* outImage);
-		void saveARmap(SunImage* outImage);
-		void saveCHmap(SunImage* outImage);	
+		//Utilities functions for outputing results	
 		std::vector<RealFeature> classAverage() const;
 		
 		//Function to initialise the centers

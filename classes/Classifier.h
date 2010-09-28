@@ -80,7 +80,7 @@ class Classifier
 
 		//Classification functions
 		virtual void classification(Real precision = 1., unsigned maxNumberIteration = 100) = 0;
-		void attribution();
+		virtual void attribution();
 
 		//Function to initialise the centers
 		virtual void initB(const std::vector<RealFeature>& B, const RealFeature& channels);

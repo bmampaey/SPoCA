@@ -673,9 +673,49 @@ void Classifier::saveAllResults(SunImage* outImage)
 }
 
 
+#if defined(AGGREGATE_DILATE_BENTEST2)
+// Function that saves the AR map for tracking
+// You pass it a SunImage that has already all the keywords correctly set
+void Classifier::saveARmap(SunImage* outImage)
+{
+	Image<unsigned> * segmentedMap = segmentedMap_maxUij();
+	string filename;
+	unsigned ARclass = 0;
+	RealFeature maxB = 0;
+	// The Active Regions class has the biggest center
+	for (unsigned i = 0; i < numberClasses; ++i)
+	{
+		if (maxB < B[i])
+		{
+			maxB = B[i];
+			ARclass = i + 1;
+		}
+	}
+	outImage->zero();
+
+	//We create a map of the class ARclass
+	outImage->bitmap(segmentedMap, ARclass);
+
+	delete segmentedMap;
+	
 
 
+	//We smooth the edges
+	outImage->erodeCircular(2,outImage->nullvalue)->dilateCircular(2,outImage->nullvalue);
 
+	//We don't need the AR post limb anymore
+	outImage->nullifyAboveRadius(1.); 
+	//We agregate the blobs together
+	outImage->blobsIntoAR();
+	
+
+
+	filename = outputFileName + "ARmap.tracking.fits";
+	outImage->writeFitsImage(filename);
+
+}
+
+#else
 // Function that saves the AR map for tracking
 // You pass it a SunImage that has already all the keywords correctly set
 void Classifier::saveARmap(SunImage* outImage)
@@ -717,7 +757,7 @@ void Classifier::saveARmap(SunImage* outImage)
 	outImage->writeFitsImage(filename);
 
 }
-
+#endif
 // Work in progress
 // Function that saves the CH map for tracking
 // You pass it a SunImage that has already all the keywords correctly set
@@ -727,7 +767,7 @@ void Classifier::saveCHmap(SunImage* outImage)
 	string filename;
 	unsigned CHclass = 0;
 	RealFeature minB = numeric_limits<Real>::max();
-	// The Active Regions class has the biggest center
+	// The Coronal Hole class has the smallest center
 	for (unsigned i = 0; i < numberClasses; ++i)
 	{
 		if (minB < B[i])

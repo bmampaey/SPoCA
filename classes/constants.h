@@ -16,9 +16,9 @@
 // The type of the pixel values of the images. 
 // Acceptable values are TBYTE TSBYTE TUSHORT TSHORT TUINT TINT TULONG TLONG TFLOAT TLONGLONG TDOUBLE
 // Be carrefull that depending on the type of the image you may loose precision.
-
+#if ! defined(PIXELTYPE)
 #define PIXELTYPE TFLOAT
-
+#endif
 // The number of wavelength, or images to process in parralel
 #if ! defined(NUMBERWAVELENGTH)
 #define NUMBERWAVELENGTH 2
@@ -119,7 +119,7 @@
 #define WCS_ROUTINES_SAV "./idl/wcs_routines.sav"
 
 // The Delouille Factor
-#define DELOUILLE_FACTOR 3
+#define MIN_QUOTIENT_FACTOR 5
 
 /*---------------- Do NOT modify below please ------------------*/
 

@@ -37,6 +37,7 @@ class HistogramPCMClassifier : public virtual PCMClassifier,  public virtual His
 		
 		//Classification functions
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
+		void attribution();
 
 		//Function to initialise the centers
 		using HistogramFCMClassifier::initB;
@@ -44,9 +45,6 @@ class HistogramPCMClassifier : public virtual PCMClassifier,  public virtual His
 		void FCMinit(Real precision = 0.00001, unsigned maxNumberIteration = 100, Real FCMfuzzifier = 2);
 
 		//Utilities functions for outputing results
-		void saveAllResults(SunImage* outImage);
-		void saveARmap(SunImage* outImage);
-		void saveCHmap(SunImage* outImage);
 		using HistogramFCMClassifier::classAverage;
 
 };

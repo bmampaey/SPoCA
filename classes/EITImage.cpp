@@ -6,15 +6,23 @@ using namespace std;
 EITImage::~EITImage()
 {}
 
-EITImage::EITImage(const long xAxes, const long yAxes, const double radius, const double wavelength)
-:SunImage(xAxes, yAxes, radius, wavelength)
-{}
-
 
 EITImage::EITImage(const string& filename)
-:SunImage()
+:SunImage(filename)
 {
-	readFitsImage(filename);
+
+	readKeywords();
+	if(!isEIT(header))
+		cerr<<"Error : "<<filename<<" is not EIT!"<<endl;
+	//In EIT images, bad pixels have negative values according to Veronique
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if (pixels[j] < 0)
+		{
+			pixels[j] = nullvalue_;
+		}
+	}
+
 }
 
 
@@ -29,34 +37,36 @@ EITImage::EITImage(const SunImage* i)
 {}
 
 
-int EITImage::readFitsImageP(fitsfile* fptr)
+void EITImage::readKeywords()
 {
-	int   status  = 0;
-	char * comment = NULL  ;					  /**<By specifying NULL we say that we don't want the comments	*/
-
-	status = SunImage::readFitsImageP(fptr);
-	if(status)
-		return status;
-		
-	if (fits_read_key(fptr, TDOUBLE, "SOLAR_R", &radius, comment, &status))
+	wavelength = header.get<double>("WAVELNTH");
+	suncenter.x = header.get<int>("CRPIX1");
+	suncenter.y = header.get<int>("CRPIX2");
+	cdelt1 = header.get<double>("CDELT1");
+	cdelt2 = header.get<double>("CDELT2");
+	
+	exposureTime = header.get<double>("EXPTIME");
+	
+	// We read the radius
+	radius = header.get<double>("SOLAR_R");
+	
+	date_obs = header.get<string>("DATE-OBS");
+	if(date_obs.empty())
 	{
-		
-		cerr<<"Error reading key SOLAR_R from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
+		date_obs = header.get<string>("DATE_OBS");
 	}
-	//In EIT images, bad pixels have negative values according to Veronique
-	for (unsigned j = 0; j < numberPixels; ++j)
-	{
-		if (pixels[j] < 0)
-		{
-			pixels[j] = nullvalue;
-		}
-	}
-
-	return status;
+	//Sometimes the date is appended with a z
+	if(date_obs.find_first_of("Zz") != string::npos)
+		date_obs.erase(date_obs.find_first_of("Zz"));
+	observationTime = ObservationTime();
+	
 	
 }
+
+void EITImage::writeKeywords()
+{
+}
+
 
 inline Real EITImage::percentCorrection(const Real r)const
 {
@@ -82,5 +92,10 @@ inline Real EITImage::percentCorrection(const Real r)const
 		return (sin((BIPI/T)*r + phi) + 1)/2;
 	}
 
+}
+
+bool isEIT(const FitsHeader& header)
+{
+	return header.get<bool>("INSTRUME") && header.get<string>("INSTRUME").find("EIT") != string::npos;	
 }
 

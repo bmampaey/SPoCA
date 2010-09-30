@@ -5,16 +5,18 @@ using namespace std;
 
 SunImage::~SunImage()
 {
-	for (unsigned k = 0; k < header.size(); ++k)
-		delete header[k];
+
 }
 
-SunImage::SunImage(const long xAxes, const long yAxes, const double radius, const double wavelength)
-:Image<PixelType>(xAxes,yAxes),radius(radius),wavelength(wavelength),observationTime(0),median(0),datap01(0), datap95(numeric_limits<PixelType>::max()), exposureTime(0)
+SunImage::SunImage(const long xAxes, const long yAxes)
+:Image<PixelType>(xAxes,yAxes)
 {
-	suncenter.x = xAxes/2;
-	suncenter.y = yAxes/2;
-	cdelt[0] = cdelt[1] = 1;
+}
+
+SunImage::SunImage(const long xAxes, const long yAxes,  const Coordinate suncenter, const double radius, const double cdelt1, const double cdelt2, const double wavelength)
+:Image<PixelType>(xAxes,yAxes),radius(radius),wavelength(wavelength),observationTime(0),suncenter(suncenter),cdelt1(cdelt1),cdelt2(cdelt2),median(0),datap01(0), datap95(numeric_limits<PixelType>::max()), exposureTime(0)
+{
+
 }
 
 
@@ -26,145 +28,31 @@ SunImage::SunImage(const string& filename)
 
 
 SunImage::SunImage(const SunImage& i)
-:Image<PixelType>(i),radius(i.radius),wavelength(i.wavelength),observationTime(i.observationTime),suncenter(i.suncenter),median(i.median),datap01(i.datap01),datap95(i.datap95), exposureTime(i.exposureTime)
+:Image<PixelType>(i),radius(i.radius),wavelength(i.wavelength),observationTime(i.observationTime),suncenter(i.suncenter),cdelt1(i.cdelt1),cdelt2(i.cdelt2),median(i.median),datap01(i.datap01),datap95(i.datap95),date_obs(i.date_obs),exposureTime(i.exposureTime),header(i.header)
 {
-	strncpy (date_obs, i.date_obs, 80);
-	cdelt[0] = i.cdelt[0];
-	cdelt[1] = i.cdelt[1];
-	header.resize(i.header.size(), NULL);
-	for (unsigned k = 0; k < i.header.size(); ++k)
-	{
-		header[k] = new char[81];
-		strncpy (header[k], i.header[k], 80);
-	}
 }
 
 
 SunImage::SunImage(const SunImage* i)
-:Image<PixelType>(i),radius(i->radius),wavelength(i->wavelength),observationTime(i->observationTime),suncenter(i->suncenter),median(i->median),datap01(i->datap01),datap95(i->datap95), exposureTime(i->exposureTime)
+:Image<PixelType>(i),radius(i->radius),wavelength(i->wavelength),observationTime(i->observationTime),suncenter(i->suncenter),cdelt1(i->cdelt1),cdelt2(i->cdelt2),median(i->median),datap01(i->datap01),datap95(i->datap95), date_obs(i->date_obs), exposureTime(i->exposureTime),header(i->header)
 {
-	strncpy (date_obs, i->date_obs, 80);
-	cdelt[0] = i->cdelt[0];
-	cdelt[1] = i->cdelt[1];
-	header.resize(i->header.size(), NULL);
-	for (unsigned k = 0; k < i->header.size(); ++k)
-	{
-		header[k] = new char[81];
-		strncpy (header[k], i->header[k], 80);
-	}
+
 }
 
 
 int SunImage::readFitsImageP(fitsfile* fptr)
 {
-	int   status  = 0;
-	char* comment = NULL;					  /**<By specifying NULL we say that we don't want the comments	*/
-
-	status = Image<PixelType>::readFitsImageP(fptr);
+	int status = Image<PixelType>::readFitsImageP(fptr);
 	if(status)
 		return status;
-
-	if (fits_read_key(fptr, TDOUBLE, "WAVELNTH", &wavelength,comment, &status))
-	{
-		cerr<<"Error reading key WAVELNTH from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
-	}
-	if (fits_read_key(fptr, TINT, "CRPIX1", &(suncenter.x),comment, &status))
-	{
-		cerr<<"Error reading key CRPIX1 from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
-	}
-	if (fits_read_key(fptr, TINT, "CRPIX2", &(suncenter.y), comment, &status))
-	{
-		cerr<<"Error reading key CRPIX2 from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
-	}
-	if (fits_read_key(fptr, TDOUBLE, "CDELT1", &(cdelt[0]), comment, &status))
-	{
-		cerr<<"Error reading key CDELT1 from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
-	}
-	if (fits_read_key(fptr, TDOUBLE, "CDELT2", &(cdelt[1]), comment, &status))
-	{
-		cerr<<"Error reading key CDELT2 from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
-	}
-	
-		
-	//The date of observation can be defined as DATE_OBS ou DATE-OBS
-	if (fits_read_key(fptr, TSTRING, "DATE-OBS", date_obs, comment, &status))
-	{
-		
-		status = 0;
-		if (fits_read_key(fptr, TSTRING, "DATE_OBS", date_obs, comment, &status))
-		{
-
-			cerr<<"Error reading key DATE-OBS from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-			fits_report_error(stderr, status);
-			status = 0;
-		}
-		else
-		{
-			//Sometimes the date is appended with a z
-			char * letter;
-			if((letter = strpbrk (date_obs, "zZ")))
-				*letter = '\0';
-		}
-	}
-	//We convert observationTime to time
-	tm time;
-	double seconds;
-	int month;
-	if (fits_str2time(date_obs, &(time.tm_year), &(month), &(time.tm_mday), &(time.tm_hour), &(time.tm_min), &seconds, &status))
-		cerr<<"Error converting date_obs to time : "<< status <<endl;
-	time.tm_sec = int(seconds);
-	time.tm_mon = month -1;	//Because stupid c++ standard lib has the month going from 0-11
-	time.tm_isdst = 0;
-	observationTime = timegm(&time);
-		
-
-
-	// We save all keywords for future usage
-	status = 0;
-	char record[81];
-	const char* inclist[] = {"*"};
-	const char* exclist[] = {"SIMPLE", "BITPIX", "NAXIS*", "EXTEND", "Z*", "XTENSION", "TTYPE1", "TFORM1", "PCOUNT", "GCOUNT", "TFIELDS"};
-	//We first need to reset the fptr to the beginning
-	if( fits_read_record (fptr, 0, record, &status))
-	{
-		cerr<<"Error reseting the fits pointer to the beginning of the header for file "<<fptr->Fptr->filename<<" :"<< status <<endl;			
-		fits_report_error(stderr, status);
-		status = KEY_NO_EXIST;
-	}
-	while(status != KEY_NO_EXIST)
-	{
-		status = 0;
-		if(fits_find_nextkey(fptr, const_cast<char**>(inclist), sizeof(inclist)/sizeof(char *), const_cast<char**>(exclist), sizeof(exclist)/sizeof(char *), record, &status))
-		{
-			if(status != KEY_NO_EXIST)
-			{
-				cerr<<"Error reading keyword from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-				fits_report_error(stderr, status);
-				status = KEY_NO_EXIST;
-			}
-		}
-		else
-		{
-			header.push_back(strdup(record));
-		}
-	} 
-	
+	header.readHeader(fptr);
+	readKeywords();
 	#if DEBUG >= 1
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
 		if (pixels[j] < 0)
 		{
-			pixels[j] = nullvalue;
+			pixels[j] = nullvalue_;
 		}
 	}
 	#endif
@@ -174,20 +62,12 @@ int SunImage::readFitsImageP(fitsfile* fptr)
 
 int SunImage::writeFitsImageP(fitsfile* fptr)
 {
-
 	int status = Image<PixelType>::writeFitsImageP(fptr);
 	if(status)
 		return status;
-		
-	for (unsigned k = 0; k < header.size(); ++k)
-	{
-		if(fits_write_record(fptr, header[k], &status))
-		{
-			cerr<<"Error : writing keyword to file "<<fptr->Fptr->filename<<" :"<< status <<endl;			
-			fits_report_error(stderr, status);
-			status = 0;
-		} 
-	}
+	
+	writeKeywords();
+	header.writeHeader(fptr);
 	
 	if (fits_write_date(fptr, &status) )
 	{
@@ -199,6 +79,15 @@ int SunImage::writeFitsImageP(fitsfile* fptr)
 	return status;
 }
 
+void SunImage::readKeywords()
+{
+
+}
+
+void SunImage::writeKeywords()
+{
+
+}
 
 
 double SunImage::Wavelength() const
@@ -209,14 +98,40 @@ Coordinate SunImage::SunCenter() const
 {return suncenter;}
 double SunImage::SunRadius() const
 {return radius;}
-time_t SunImage::ObservationTime() const
-{return observationTime;}
+time_t SunImage::ObservationTime()const
+{
+	if(observationTime != 0)
+		return observationTime;
+	else
+	{
+		//We convert observationTime to time
+		int status = 0;
+		tm time;
+		double seconds;
+		int month;
+		if (fits_str2time(const_cast<char *>(date_obs.c_str()), &(time.tm_year), &(month), &(time.tm_mday), &(time.tm_hour), &(time.tm_min), &seconds, &status))
+		{
+			cerr<<"Error converting date_obs to time : "<< status <<endl;
+			fits_report_error(stderr, status);
+		}
+		else
+		{
+			time.tm_sec = int(seconds);
+			time.tm_mon = month -1;	//Because stupid c++ standard lib has the month going from 0-11
+			time.tm_isdst = 0;
+		}
+		return timegm(&time);
+	}
+
+
+}
 string SunImage::ObservationDate() const
-{return string(date_obs);}
+{return date_obs;}
 double SunImage::PixelArea() const
-{return cdelt[0] * cdelt[1];}
+{return cdelt1 * cdelt2;}
 unsigned SunImage::numberValidPixelsEstimate() const
 {return unsigned(PI*radius*radius);}
+
 
 string nextStep(string& preprocessingList)
 {
@@ -273,7 +188,7 @@ void SunImage::preprocessing(string preprocessingList, const Real radiusRatio)
 			}
 			for (unsigned j=0; j < numberPixels; ++j)
 			{
-				if (pixels[j] != nullvalue)
+				if (pixels[j] != nullvalue_)
 					pixels[j] = pixels[j] / median;
 			}
 		}	
@@ -286,7 +201,7 @@ void SunImage::preprocessing(string preprocessingList, const Real radiusRatio)
 			}
 			for (unsigned j=0; j < numberPixels; ++j)
 			{
-				if (pixels[j] != nullvalue)
+				if (pixels[j] != nullvalue_)
 					pixels[j] = pixels[j] / mode;
 			}
 		}	
@@ -294,16 +209,16 @@ void SunImage::preprocessing(string preprocessingList, const Real radiusRatio)
 		{
 			for (unsigned j=0; j < numberPixels; ++j)
 			{
-				if (pixels[j] != nullvalue)
-					pixels[j] = pixels[j] >= 0 ? sqrt(pixels[j]) : nullvalue;
+				if (pixels[j] != nullvalue_)
+					pixels[j] = pixels[j] >= 0 ? sqrt(pixels[j]) : nullvalue_;
 			}
 		}	
 		else if( preprocessingStep == "TakeLog")
 		{
 			for (unsigned j=0; j < numberPixels; ++j)
 			{
-				if (pixels[j] != nullvalue)
-					pixels[j] = pixels[j] > 0 ? log(pixels[j]) : nullvalue;
+				if (pixels[j] != nullvalue_)
+					pixels[j] = pixels[j] > 0 ? log(pixels[j]) : nullvalue_;
 			}
 		}
 		else if( preprocessingStep == "DivExpTime")
@@ -315,7 +230,7 @@ void SunImage::preprocessing(string preprocessingList, const Real radiusRatio)
 			}
 			for (unsigned j=0; j < numberPixels; ++j)
 			{
-				if (pixels[j] != nullvalue)
+				if (pixels[j] != nullvalue_)
 					pixels[j] = pixels[j] / exposureTime;
 			}
 		}
@@ -339,7 +254,7 @@ void SunImage::nullifyAboveRadius(const Real radiusRatio)
 		for (unsigned x=0; x < Xaxes(); ++x)
 		{
 			if ((x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y)> radius2)
-				pixel(x,y) = nullvalue;
+				pixel(x,y) = nullvalue_;
 		}
 	}
 }
@@ -510,7 +425,7 @@ void SunImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 
 				pixelValue = &pixel(x,y);
 
-				if ((*pixelValue) != nullvalue)
+				if ((*pixelValue) != nullvalue_)
 				{
 					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
 
@@ -541,7 +456,7 @@ void SunImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 			for (unsigned x=0; x < Xaxes(); ++x)
 			{
 				pixelValue = &pixel(x,y);
-				if ((*pixelValue) != nullvalue)
+				if ((*pixelValue) != nullvalue_)
 				{
 					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
 
@@ -569,12 +484,12 @@ void SunImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 		for (unsigned x=0; x < Xaxes(); ++x)
 		{
 			pixelValue = &pixel(x,y);
-			if ((*pixelValue) != nullvalue)
+			if ((*pixelValue) != nullvalue_)
 			{
 				pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
 				if (maxLimbRadius2 < pixelRadius2)
 				{
-					(*pixelValue) = nullvalue;
+					(*pixelValue) = nullvalue_;
 				}
 				else if (pixelRadius2 > minLimbRadius2)	  //We correct the limb
 				{
@@ -614,7 +529,7 @@ void SunImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 			{
 
 				pixelValue = &pixel(x,y);
-				if ((*pixelValue) != nullvalue)
+				if ((*pixelValue) != nullvalue_)
 				{
 					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
 
@@ -645,7 +560,7 @@ void SunImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 			for (unsigned x=0; x < Xaxes(); ++x)
 			{
 				pixelValue = &pixel(x,y);
-				if ((*pixelValue) != nullvalue)
+				if ((*pixelValue) != nullvalue_)
 				{
 					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
 
@@ -673,12 +588,12 @@ void SunImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 		for (unsigned x=0; x < Xaxes(); ++x)
 		{
 			pixelValue = &pixel(x,y);
-			if ((*pixelValue) != nullvalue)
+			if ((*pixelValue) != nullvalue_)
 			{
 				pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
 				if (maxLimbRadius2 < pixelRadius2)
 				{
-					(*pixelValue) = nullvalue;
+					(*pixelValue) = nullvalue_;
 				}
 				else if (pixelRadius2 > minLimbRadius2)	  //We correct the limb
 				{
@@ -726,7 +641,7 @@ void SunImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 			{
 
 				pixelValue = &pixel(x,y);
-				if ((*pixelValue) != nullvalue)
+				if ((*pixelValue) != nullvalue_)
 				{
 					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
 
@@ -761,7 +676,7 @@ void SunImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 			for (unsigned x=0; x < Xaxes(); ++x)
 			{
 				pixelValue = &pixel(x,y);
-				if ((*pixelValue) != nullvalue)
+				if ((*pixelValue) != nullvalue_)
 				{
 					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
 
@@ -812,12 +727,12 @@ void SunImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 		for (unsigned x=0; x < Xaxes(); ++x)
 		{
 			pixelValue = &pixel(x,y);
-			if ((*pixelValue) != nullvalue)
+			if ((*pixelValue) != nullvalue_)
 			{
 				pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
 				if (maxLimbRadius2 < pixelRadius2)
 				{
-					(*pixelValue) = nullvalue;
+					(*pixelValue) = nullvalue_;
 				}
 				else
 				{
@@ -845,12 +760,12 @@ void SunImage::recenter(const Coordinate& newCenter)
 	if(delta < 0)
 	{
 		memmove(pixels - delta, pixels, (numberPixels + delta + 1) * sizeof(PixelType));
-		fill(pixels, pixels-delta, nullvalue);
+		fill(pixels, pixels-delta, nullvalue_);
 	}
 	else if (delta > 0)
 	{
 		memmove(pixels, pixels + delta, (numberPixels - delta + 1) * sizeof(PixelType));
-		fill(pixels + numberPixels - delta, pixels + numberPixels, nullvalue);
+		fill(pixels + numberPixels - delta, pixels + numberPixels, nullvalue_);
 	}
 	suncenter = newCenter;
 }
@@ -863,347 +778,18 @@ void SunImage::copyKeywords(const SunImage* i)
 	suncenter = i->suncenter;
 	wavelength = i->wavelength;
 	median = i->median;
+	mode = i->mode;
 	observationTime = i->observationTime;
-	datap01=i->datap01;
-	datap95=i->datap95;
-	cdelt[0]=i->cdelt[0];
-	cdelt[1]=i->cdelt[1];
-	strncpy (date_obs, i->date_obs, 80);
+	datap01 = i->datap01;
+	datap95 = i->datap95;
+	cdelt1 = i->cdelt1;
+	cdelt2 = i->cdelt2;
+	date_obs =  i->date_obs;
 	exposureTime = i->exposureTime;
-	for (unsigned k = 0; k < header.size(); ++k)
-	{
-		delete header[k];
-	}
-	header.resize(i->header.size());
-	for (unsigned k = 0; k < i->header.size(); ++k)
-	{
-		header[k] = new char[81];
-		strncpy (header[k], i->header[k], 80);
-	}
+	header = i->header;
+	
 }
 
-#if defined(AGGREGATE_DILATE)
-SunImage* SunImage::blobsIntoAR ()
-{
-
-	//We agregate the blobs together by dilation 
-	unsigned dilateFactor = unsigned(AR_AGGREGATION  / cdelt[0]);
-	this->dilateCircular(dilateFactor,nullvalue);
-	
-	this->colorizeConnectedComponents(0);
-	
-	return this;
-}
-
-#elif defined(AGGREGATE_DILATE_BENTEST)
-// The idea is that we dilate more the smaller blobs than the bigger ones
-SunImage* SunImage::blobsIntoAR ()
-{
-	vector<unsigned> blobList;
-	vector<unsigned> sizes;
-	//We create a list of blobs and their size
-	for (unsigned j=0; j < numberPixels; ++j)
-	{
-		if (pixels[j] == 0)
-		{
-			blobList.push_back(j);
-			sizes.push_back(this->propagateColor(1,j));
-			
-		}
-	}
-	// We transform the sizes in dilation factor
-	const unsigned AR_DILATION_FACTOR = 100;
-	unsigned maxDilateFactor = unsigned(AR_AGGREGATION  / cdelt[0]);
-	for (unsigned s=0; s < sizes.size(); ++s)
-	{
-		sizes[s] /=  AR_DILATION_FACTOR;
-		sizes[s] = sizes[s] > maxDilateFactor ? 0 : maxDilateFactor -  sizes[s];
-		
-	}
-	//We create the map of dilation 
-	SunImage* dilated = new SunImage(this);
-	for (unsigned b=0; b < blobList.size(); ++b)
-	{
-		vector<unsigned> shape;
-		shape.reserve(sizes[b]*sizes[b]*3);
-		for(unsigned x = 1; x <= sizes[b]; ++x)
-			shape.push_back(x);
-		for(int x = -sizes[b]; x <= int(sizes[b]); ++x)
-			for(unsigned y = 1; y <= sizes[b]; ++y)
-				if(sqrt(x * x + y *y) <= sizes[b])
-					shape.push_back(y * Xaxes() + x);
-					
-		vector<unsigned> pixelList;
-		unsigned setValue =1;
-		unsigned h;
-
-		pixelList.push_back(blobList[b]);
-		while ( ! pixelList.empty())
-		{
-			h = pixelList.back();
-			pixelList.pop_back();
-			pixels[h] = b+2;
-			bool propagate = false;
-			if(h+1 < numberPixels && pixels[h+1] == setValue)
-				pixelList.push_back(h+1);
-			else
-				propagate=true;
-			if(h+Xaxes() < numberPixels && pixels[h+Xaxes()] == setValue)
-				pixelList.push_back(h+Xaxes());
-			else
-				propagate=true;
-			if(h >= 1 && pixels[h-1] == setValue)
-				pixelList.push_back(h-1);
-			else
-				propagate=true;
-			if(h >= Xaxes() && pixels[h-Xaxes()] == setValue)
-				pixelList.push_back(h-Xaxes());
-			else
-				propagate=true;
-							
-			if(propagate)
-			{
-			
-				for(unsigned s = 0; s < shape.size(); ++s)
-				{
-					#if DEBUG >= 1
-						if(h + shape[s] >= numberPixels || h - shape[s] < 0)
-						{
-							cerr<<"Error : trying to access pixel out of image in drawContours"<<endl;
-							exit(EXIT_FAILURE);
-						}	
-					#endif
-					dilated->pixels[h + shape[s]] = dilated->pixels[h - shape[s]] = 1;
-				}
-			}
-
-		}
-
-	}
-	for (unsigned b=0; b < blobList.size(); ++b)
-	{
-		if(dilated->pixels[blobList[b]] == 1)
-		{
-			dilated->propagateColor(b+2, blobList[b]);
-		}
-	}
-	
-	//We remove the AR too small
-	unsigned minSize = unsigned(MIN_AR_SIZE / PixelArea());
-	dilated->tresholdConnectedComponents(minSize, 0);
-	dilated->writeFitsImage("dilated.fits");
-
-	//We color the blobs using the dilated map 
-	for (unsigned j=0; j < numberPixels; ++j)
-	{
-		if (pixels[j] != nullvalue)
-		{
-			pixels[j] = dilated->pixels[j];
-			
-		}
-	}		
-
-
-	delete dilated;
-	
-	return this;
-}
-#elif defined(AGGREGATE_DILATE_BENTEST2)
-// The idea is that we dilate more the smaller blobs than the bigger ones
-SunImage* SunImage::blobsIntoAR ()
-{
-
-	const double R0 = radius * PixelArea();
-	const double R2 = radius * radius;
-	unsigned setValue = 0;
-	vector<int> neighboors;
-	neighboors.push_back(1);
-	neighboors.push_back(-1);
-	neighboors.push_back(Xaxes());
-	neighboors.push_back(-Xaxes());
-	
-	neighboors.push_back(Xaxes()+1);
-	neighboors.push_back(Xaxes()-1);
-	neighboors.push_back(-Xaxes()+1);
-	neighboors.push_back(-Xaxes()-1);
-	
-	//We create a list of blobs and their areas
-	unsigned newColor = setValue;
-	vector<unsigned> blobList;
-	vector<double> areas(newColor,0);
-	for (unsigned j=0; j < numberPixels; ++j)
-	{
-		if(pixels[j] != setValue)
-			continue;
-			
-		blobList.push_back(j);
-		++newColor;
-		areas.push_back(0);
-		vector<unsigned> pixelList(1,j);
-		while ( ! pixelList.empty())
-		{
-			unsigned h = pixelList.back();
-			pixelList.pop_back();
-			pixels[h] = newColor;
-			Coordinate c = coordinate(h);
-			int cx = c.x > suncenter.x ? c.x - suncenter.x : suncenter.x - c.x;
-			int cy = c.y > suncenter.y ? c.y - suncenter.y : suncenter.y - c.y;
-			double pixelArea2 = R2 - (cx * cx) - (cy * cy);
-			if(pixelArea2 > 0)
-				areas[blobList.size()-1] += R0 / sqrt(pixelArea2);
-			else
-				areas[blobList.size()-1] = numeric_limits<double>::infinity();
-			for(unsigned n = 0; n < neighboors.size(); ++n)
-				if(pixels[h+neighboors[n]] == setValue)
-					pixelList.push_back(h+neighboors[n]);
-		}
-	}
-	//writeFitsImage("undilated.fits");
-	
-	vector<unsigned> dilation_size (areas.size(), 0);
-	// We transform the areas in dilation size
-	#define AR_DILATION_FACTOR 12
-	const double AR_area_factor = 1 / (AR_DILATION_FACTOR * PixelArea());
-	unsigned maxDilateFactor = unsigned(AR_AGGREGATION  / cdelt[0]);
-	for (unsigned s=0; s < areas.size(); ++s)
-	{
-		if(areas[s] != numeric_limits<double>::infinity())
-		{
-			dilation_size[s] =  areas[s] * AR_area_factor;
-			dilation_size[s] = dilation_size[s] > maxDilateFactor ? 0 : maxDilateFactor -  dilation_size[s];
-		}
-		//cout<<pixels[blobList[s]]<<" a:"<<areas[s]<<" ds:"<<dilation_size[s]<<endl;
-	}
-	
-	
-
-
-	//We create the map of dilation 
-	SunImage * dilated = new SunImage(Xaxes(), Yaxes());
-	dilated->zero();
-	for (unsigned b=0; b < blobList.size(); ++b)
-	{
-		vector<unsigned> shape;
-		shape.reserve(dilation_size[b]*dilation_size[b]*3);
-		for(unsigned x = 1; x <= dilation_size[b]; ++x)
-			shape.push_back(x);
-		for(int x = -dilation_size[b]; x <= int(dilation_size[b]); ++x)
-			for(unsigned y = 1; y <= dilation_size[b]; ++y)
-				if(sqrt(x * x + y *y) <= dilation_size[b])
-					shape.push_back(y * Xaxes() + x);
-					
-		vector<unsigned> pixelList(1,blobList[b]);
-		while ( ! pixelList.empty())
-		{
-			unsigned h = pixelList.back();
-			pixelList.pop_back();
-			dilated->pixels[h] = 1;
-			pixels[h] = setValue;
-			bool propagate = false;
-			for(unsigned n = 0; n < neighboors.size(); ++n)
-				if(pixels[h+neighboors[n]] != nullvalue && pixels[h+neighboors[n]] > setValue)
-					pixelList.push_back(h+neighboors[n]);
-				else
-					propagate=true;
-							
-			if(propagate)
-			{
-			
-				for(unsigned s = 0; s < shape.size(); ++s)
-				{
-					#if DEBUG >= 1
-						if(h + shape[s] >= numberPixels || h - shape[s] < 0)
-						{
-							cerr<<"Error : trying to access pixel out of image in drawContours"<<endl;
-							exit(EXIT_FAILURE);
-						}	
-					#endif
-					dilated->pixels[h + shape[s]] = dilated->pixels[h - shape[s]] = 1;
-				}
-			}
-
-		}
-
-	}
-	
-	unsigned numberRegions = dilated->colorizeConnectedComponents(1);
-	//dilated->writeFitsImage("dilated.fits");
-	areas.clear();
-	areas.resize(numberRegions + 2, 0);
-	//We color the image using the dilated map and recompute the new areas
-	for (unsigned j=0; j < numberPixels; ++j)
-	{
-		if (pixels[j] != nullvalue)
-		{
-			pixels[j] = dilated->pixels[j];
-			Coordinate c = coordinate(j);
-			int cx = c.x > suncenter.x ? c.x - suncenter.x : suncenter.x - c.x;
-			int cy = c.y > suncenter.y ? c.y - suncenter.y : suncenter.y - c.y;
-			double pixelArea2 = R2 - (cx * cx) - (cy * cy);
-			if(pixelArea2 > 0)
-				areas[pixels[j]] += R0 / sqrt(pixelArea2);
-			else
-				areas[pixels[j]] = numeric_limits<double>::infinity();
-		}
-	}		
-	//writeFitsImage("recolored.fits");
-	
-	//We remove the AR too small
-	for (unsigned j=0; j < numberPixels; ++j)
-	{
-		if (pixels[j] != nullvalue && areas[pixels[j]]  < MIN_AR_SIZE)
-		{
-			pixels[j] = nullvalue;
-		}
-	}
-
-	/*
-	// Test of the size of each pixel
-	for (unsigned j=0; j < numberPixels; ++j)
-	{
-			Coordinate c = coordinate(j);
-			int cx = c.x > suncenter.x ? c.x - suncenter.x : suncenter.x - c.x;
-			int cy = c.y > suncenter.y ? c.y - suncenter.y : suncenter.y - c.y;
-			double pixelArea2 = R2 - (cx * cx) - (cy * cy);
-			if(pixelArea2 > 0)
-				dilated->pixels[j]= R0 / sqrt(pixelArea2);
-			else
-				dilated->pixels[j]= numeric_limits<double>::infinity();
-		
-	}
-	dilated->writeFitsImage("pixel_real_size.fits");
-	*/
-
-	delete dilated;
-	
-	return this;
-}
-
-#else
-
-SunImage* SunImage::blobsIntoAR ()
-{
-
-	//We create  a map by dilation 
-	unsigned dilateFactor = unsigned(AR_AGGREGATION  / cdelt[0]);
-	SunImage* dilated = new SunImage(this);
-	dilated->dilateCircular(dilateFactor,nullvalue);
-	dilated->colorizeConnectedComponents(0);
-	
-	//We color the blobs using the dilated map 
-	for (unsigned j=0; j < numberPixels; ++j)
-	{
-		if (pixels[j] != nullvalue)
-			pixels[j] = dilated->pixel(j);
-	}
-	delete dilated;
-	
-	return this;
-}
-
-
-
-#endif
 
 
 /*

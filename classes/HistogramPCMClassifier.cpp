@@ -22,16 +22,10 @@ HistogramPCMClassifier::HistogramPCMClassifier(const std::string& histogramFilen
 	initHistogram(histogramFilename);
 }
 
-
-//Because we need to use the value fund for B to classify the normal images
 void HistogramPCMClassifier::attribution()
 {
 	PCMClassifier::computeU();
-	PCMClassifier::saveAllResults(outImage);
 }
-
-
-
 
 void HistogramPCMClassifier::computeU()
 {
@@ -311,9 +305,15 @@ void HistogramPCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration
 	
 	// We output the FCM segementation for comparison with PCM 
 	#if DEBUG >= 2
-	string tempName = outputFileName;
+	attribution();
+	string tempName = outputFileName;	
 	outputFileName += "HFCM.";
-	saveAllResults(NULL);
+	SunImage* segmentedMap = segmentedMap_maxUij();
+	segmentedMap->writeFitsImage(outputFileName + "segmented." + itos(numberClasses) + "classes.fits");
+	#if DEBUG >= 4
+	saveAllResults(segmentedMap);
+	#endif
+	delete segmentedMap;
 	outputFileName = tempName;
 	#endif
 

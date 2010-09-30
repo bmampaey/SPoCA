@@ -220,7 +220,7 @@ vector<RegionStats*> getRegions(const SunImage* colorizedComponentsMap, const Su
 	{
 		for (unsigned x = 0; x < colorizedComponentsMap->Xaxes(); ++x)
 		{
-			if(colorizedComponentsMap->pixel(x,y) != colorizedComponentsMap->nullvalue)
+			if(colorizedComponentsMap->pixel(x,y) != colorizedComponentsMap->nullvalue())
 			{
 				unsigned color = unsigned(colorizedComponentsMap->pixel(x,y));
 					
@@ -247,7 +247,7 @@ vector<RegionStats*> getRegions(const SunImage* colorizedComponentsMap, const Su
 	//We make a second pass to calculate the Variance, Skewness and Kurtosis
 	for (unsigned j = 0; j < colorizedComponentsMap->NumberPixels(); ++j)
 	{
-		if(colorizedComponentsMap->pixel(j) != colorizedComponentsMap->nullvalue)
+		if(colorizedComponentsMap->pixel(j) != colorizedComponentsMap->nullvalue())
 		{
 			unsigned color = unsigned(colorizedComponentsMap->pixel(j));
 			regions[color]->update(image->pixel(j));

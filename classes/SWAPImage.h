@@ -29,11 +29,15 @@ class SWAPImage : public SunImage
 		SWAPImage(const SunImage* i);
 		~SWAPImage();
 		
-		//Routines to read and write a fits file
-		virtual int readFitsImageP(fitsfile* fptr);
+		
+		//Routines to read and write the keywords from/to the header
+		void readKeywords();
+		void writeKeywords();
 		
 		//Routines for the preprocessing on SunImages
 		Real percentCorrection(const Real r) const;
 
 };
+
+bool isSWAP(const FitsHeader& header);
 #endif

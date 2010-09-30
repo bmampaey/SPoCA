@@ -23,7 +23,6 @@ HistogramPCM2Classifier::HistogramPCM2Classifier(const std::string& histogramFil
 }
 
 
-//Because we need to use the value fund for B to classify the normal images
 void HistogramPCM2Classifier::attribution()
 {
 	PCM2Classifier::computeU();

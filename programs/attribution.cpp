@@ -68,7 +68,7 @@ int main(int argc, const char **argv)
 	unsigned neighboorhoodRadius = 1;
 	
 	// Options for the segmentation
-	string segmentation;
+	string segmentation = "max";
 	
 	// Options for the limit segmentation
 	string maxLimitsFileName;
@@ -209,7 +209,9 @@ int main(int argc, const char **argv)
 	F->addImages(images);
 		
 	// We delete all images but the first one to gain memory space
-	for (unsigned p = 0; p < images.size(); ++p)
+	SunImage* segmentedMap = images[0];
+	
+	for (unsigned p = 1; p < images.size(); ++p)
 	{
 		delete images[p];
 	}
@@ -252,16 +254,16 @@ int main(int argc, const char **argv)
 
 	// We have all the information we need, we can do the attribution
 	F->attribution();
-
-	Image<unsigned>* segmentedImage;	
-
+	
+	
+	// We do the segmentation
 	if (segmentation == "max")
 	{
-		segmentedImage = F->segmentedMap_maxUij();
+		F->segmentedMap_maxUij(segmentedMap);
 	}
 	else if (segmentation == "closest")
 	{
-		segmentedImage = F->segmentedMap_closestCenter();
+		F->segmentedMap_closestCenter(segmentedMap);
 	}
 	else if (segmentation == "treshold")
 	{
@@ -270,7 +272,7 @@ int main(int argc, const char **argv)
 		Real lowerIntensity_minMembership, higherIntensity_minMembership;
 		istringstream iss(treshold);
 		iss>>class_number>>delimitor>>lowerIntensity_minMembership>>delimitor>>higherIntensity_minMembership;
-		segmentedImage = F->segmentedMap_classTreshold(class_number, lowerIntensity_minMembership, higherIntensity_minMembership);
+		F->segmentedMap_classTreshold(class_number, lowerIntensity_minMembership, higherIntensity_minMembership, segmentedMap);
 	}
 	else if (segmentation == "limits")
 	{
@@ -284,7 +286,7 @@ int main(int argc, const char **argv)
 		{
 			readMaxLimitsFromFile(maxLimits, maxLimitsFileName);
 		}
-		segmentedImage = F->segmentedMap_limits(maxLimits);
+		F->segmentedMap_limits(maxLimits, segmentedMap);
 	}
 	else if (segmentation == "fix")
 	{
@@ -304,7 +306,7 @@ int main(int argc, const char **argv)
 			istringstream iss(activeRegion);
 			iss>>ar;
 		}
-		segmentedImage = F->segmentedMap_fixed(ch, qs, ar);
+		F->segmentedMap_fixed(ch, qs, ar, segmentedMap);
 	}
 	else 
 	{
@@ -314,20 +316,20 @@ int main(int argc, const char **argv)
 	
 	delete F;
 
-	segmentedImage->writeFitsImage(outputFileName + "segmented.fits");
+	segmentedMap->writeFitsImage(outputFileName + "segmented.fits");
 	/*HACK for maps with AR and CH
-	for (unsigned j=0; j < segmentedImage->NumberPixels(); ++j)
+	for (unsigned j=0; j < segmentedMap->NumberPixels(); ++j)
 	{
-		if (segmentedImage->pixel(j) == 2 || segmentedImage->pixel(j) == 0)
-			segmentedImage->pixel(j) = segmentedImage->nullvalue;
+		if (segmentedMap->pixel(j) == 2 || segmentedMap->pixel(j) == 0)
+			segmentedMap->pixel(j) = segmentedMap->nullvalue();
 	}
-	segmentedImage->dilateCircular(8,segmentedImage->nullvalue)->erodeCircular(8,segmentedImage->nullvalue)->dilateCircular(1,segmentedImage->nullvalue);
+	segmentedMap->dilateCircular(8,segmentedMap->nullvalue())->erodeCircular(8,segmentedMap->nullvalue())->dilateCircular(1,segmentedMap->nullvalue());
 	unsigned minSize = 80;
-	segmentedImage->tresholdConnectedComponents(20000, 1);
-	segmentedImage->tresholdConnectedComponents(4166, 3);
-	segmentedImage->writeFitsImage(outputFileName + "cleaned.segmented.fits");
+	segmentedMap->tresholdConnectedComponents(20000, 1);
+	segmentedMap->tresholdConnectedComponents(4166, 3);
+	segmentedMap->writeFitsImage(outputFileName + "cleaned.segmented.fits");
 	*/
-	delete segmentedImage;	
+	delete segmentedMap;	
           
 	return EXIT_SUCCESS;
 }

@@ -8,11 +8,11 @@ DFLAGS=
 LFLAGS=-lcfitsio
 
 all:bin/uncompres.x
-clean: rm bin/uncompres.x objects/uncompres.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/Coordinate.o objects/Image.o objects/tools.o
+clean: rm bin/uncompres.x objects/uncompres.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o
 
 
-bin/uncompres.x : uncompres.mk objects/uncompres.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/Coordinate.o objects/Image.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/uncompres.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/Coordinate.o objects/Image.o objects/tools.o $(LFLAGS) -o bin/uncompres.x
+bin/uncompres.x : uncompres.mk objects/uncompres.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/uncompres.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o $(LFLAGS) -o bin/uncompres.x
 
 objects/uncompres.o : uncompres.mk utilities/uncompres.cpp classes/SunImage.h classes/ArgumentHelper.h classes/mainutilities.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) utilities/uncompres.cpp -o objects/uncompres.o
@@ -38,8 +38,11 @@ objects/FeatureVector.o : uncompres.mk classes/FeatureVector.cpp classes/constan
 objects/ArgumentHelper.o : uncompres.mk classes/ArgumentHelper.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ArgumentHelper.cpp -o objects/ArgumentHelper.o
 
-objects/SunImage.o : uncompres.mk classes/SunImage.cpp classes/fitsio.h classes/longnam.h classes/Image.h classes/Coordinate.h
+objects/SunImage.o : uncompres.mk classes/SunImage.cpp classes/fitsio.h classes/longnam.h classes/Image.h classes/Coordinate.h classes/FitsHeader.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SunImage.cpp -o objects/SunImage.o
+
+objects/FitsHeader.o : uncompres.mk classes/FitsHeader.cpp classes/fitsio.h classes/longnam.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/FitsHeader.cpp -o objects/FitsHeader.o
 
 objects/Coordinate.o : uncompres.mk classes/Coordinate.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o

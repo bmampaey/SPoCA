@@ -39,7 +39,7 @@ void SPoCAClassifier::addImages(vector<SunImage*>& images)
 			for (unsigned p = 0; p <  NUMBERWAVELENGTH && validPixel; ++p)
 			{
 				xj.v[p] = images[p]->pixel(x,y);
-				if(xj.v[p] == images[p]->nullvalue)
+				if(xj.v[p] == images[p]->nullvalue())
 					validPixel=false;
 			}
 			

@@ -53,11 +53,11 @@ int main(int argc, const char **argv)
 		image = new Image<PixelType>(sunImagesFileNames[s]);
 		
 		if(internal)
-			image->drawInternContours(width, image->nullvalue);
+			image->drawInternContours(width, 0);
 		else if(external)
-			image->drawExternContours(width, image->nullvalue);
+			image->drawExternContours(width, 0);
 		else
-			image->drawContours(width, image->nullvalue);
+			image->drawContours(width, 0);
 			
 		outputFileName =  sunImagesFileNames[s].substr(0, sunImagesFileNames[s].find(".fits"));
 		image->writeFitsImage(outputFileName + ".contours.fits");

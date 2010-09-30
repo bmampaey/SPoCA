@@ -29,12 +29,17 @@ class EUVIImage : public SunImage
 		EUVIImage(const SunImage* i);
 		~EUVIImage();
 		
-		//Routines to read and write a fits file
-		virtual int readFitsImageP(fitsfile* fptr);
+		
+		//Routines to read and write the keywords from/to the header
+		void readKeywords();
+		void writeKeywords();
+		
 		
 		//Routines for the preprocessing on SunImages
 		Real percentCorrection(const Real r) const;
 
 
 };
+
+bool isEUVI(const FitsHeader& header);
 #endif

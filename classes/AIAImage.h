@@ -24,17 +24,19 @@ class AIAImage : public SunImage
 		
 		//Constructors and destructors
 		AIAImage(const std::string& filename);
-		AIAImage(const long xAxes = 0, const long yAxes = 0, const double radius = 0., const double wavelength = 0.);
 		AIAImage(const SunImage& i);
 		AIAImage(const SunImage* i);
 		~AIAImage();
 		
-		//Routines to read and write a fits file
-		virtual int readFitsImageP(fitsfile* fptr);
+		//Routines to read and write the keywords from/to the header
+		void readKeywords();
+		void writeKeywords();
 		
 		//Routines for the preprocessing on SunImages
 		Real percentCorrection(const Real r) const;
 		
 
 };
+
+bool isAIA(const FitsHeader& header);
 #endif

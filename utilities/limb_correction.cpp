@@ -18,33 +18,70 @@ using namespace dsr;
 
 string outputFileName;
 
-bool circleAt(Real pixelRadius)
+bool circleAt(Real pixelRadius, string imageType)
 {
 	if(pixelRadius > 1. - 0.001 &&  pixelRadius < 1. + 0.001)
 		return true;
 		
-#if LIMB_CORRECTION == VINCE_CORR
-	if(pixelRadius > Real(VINCE_CORR_R1)/100. - 0.001 &&  pixelRadius < Real(VINCE_CORR_R1)/100. + 0.001)
-		return true;
-#endif
+	if (imageType == "EIT")
+	{
+		if(pixelRadius > Real(EIT_SINE_CORR_R1)/100. - 0.001 &&  pixelRadius < Real(EIT_SINE_CORR_R1)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(EIT_SINE_CORR_R2)/100. - 0.001 &&  pixelRadius < Real(EIT_SINE_CORR_R2)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(EIT_SINE_CORR_R3)/100. - 0.001 &&  pixelRadius < Real(EIT_SINE_CORR_R3)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(EIT_SINE_CORR_R4)/100. - 0.001 &&  pixelRadius < Real(EIT_SINE_CORR_R4)/100. + 0.001)
+			return true;
+	}
+	else if (imageType == "EUVI")
+	{
+		if(pixelRadius > Real(EUVI_SINE_CORR_R1)/100. - 0.001 &&  pixelRadius < Real(EUVI_SINE_CORR_R1)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(EUVI_SINE_CORR_R2)/100. - 0.001 &&  pixelRadius < Real(EUVI_SINE_CORR_R2)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(EUVI_SINE_CORR_R3)/100. - 0.001 &&  pixelRadius < Real(EUVI_SINE_CORR_R3)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(EUVI_SINE_CORR_R4)/100. - 0.001 &&  pixelRadius < Real(EUVI_SINE_CORR_R4)/100. + 0.001)
+			return true;
 
-#if LIMB_CORRECTION == CIS1_CORR
-	if(pixelRadius > Real(CIS1_CORR_R1)/100. - 0.001 &&  pixelRadius < Real(CIS1_CORR_R1)/100. + 0.001)
-		return true;
-	if(pixelRadius > Real(CIS1_CORR_R2)/100. - 0.001 &&  pixelRadius < Real(CIS1_CORR_R2)/100. + 0.001)
-		return true;
-#endif
+	}
+	else if (imageType == "AIA")
+	{
+		if(pixelRadius > Real(AIA_SINE_CORR_R1)/100. - 0.001 &&  pixelRadius < Real(AIA_SINE_CORR_R1)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(AIA_SINE_CORR_R2)/100. - 0.001 &&  pixelRadius < Real(AIA_SINE_CORR_R2)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(AIA_SINE_CORR_R3)/100. - 0.001 &&  pixelRadius < Real(AIA_SINE_CORR_R3)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(AIA_SINE_CORR_R4)/100. - 0.001 &&  pixelRadius < Real(AIA_SINE_CORR_R4)/100. + 0.001)
+			return true;
 
-#if LIMB_CORRECTION == BEN_CORR
-	if(pixelRadius > Real(BEN_CORR_R1)/100. - 0.001 &&  pixelRadius < Real(BEN_CORR_R1)/100. + 0.001)
-		return true;
-	if(pixelRadius > Real(BEN_CORR_R2)/100. - 0.001 &&  pixelRadius < Real(BEN_CORR_R2)/100. + 0.001)
-		return true;
-	if(pixelRadius > Real(BEN_CORR_R3)/100. - 0.001 &&  pixelRadius < Real(BEN_CORR_R3)/100. + 0.001)
-		return true;
-	if(pixelRadius > Real(BEN_CORR_R4)/100. - 0.001 &&  pixelRadius < Real(BEN_CORR_R4)/100. + 0.001)
-		return true;
-#endif
+	}
+	else if (imageType == "SWAP")
+	{
+		if(pixelRadius > Real(SWAP_SINE_CORR_R1)/100. - 0.001 &&  pixelRadius < Real(SWAP_SINE_CORR_R1)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(SWAP_SINE_CORR_R2)/100. - 0.001 &&  pixelRadius < Real(SWAP_SINE_CORR_R2)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(SWAP_SINE_CORR_R3)/100. - 0.001 &&  pixelRadius < Real(SWAP_SINE_CORR_R3)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(SWAP_SINE_CORR_R4)/100. - 0.001 &&  pixelRadius < Real(SWAP_SINE_CORR_R4)/100. + 0.001)
+			return true;
+
+	}
+	else 
+	{
+		if(pixelRadius > Real(SINE_CORR_R1)/100. - 0.001 &&  pixelRadius < Real(SINE_CORR_R1)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(SINE_CORR_R2)/100. - 0.001 &&  pixelRadius < Real(SINE_CORR_R2)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(SINE_CORR_R3)/100. - 0.001 &&  pixelRadius < Real(SINE_CORR_R3)/100. + 0.001)
+			return true;
+		if(pixelRadius > Real(SINE_CORR_R4)/100. - 0.001 &&  pixelRadius < Real(SINE_CORR_R4)/100. + 0.001)
+			return true;
+
+	}
 
 	return false;
 
@@ -69,7 +106,6 @@ int main(int argc, const char **argv)
 	
 	string programDescription = "This Program helps you study the annulus limb correction.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
@@ -88,29 +124,30 @@ int main(int argc, const char **argv)
 
 
 	//Let's set the name of output files
-	//If none as been provided as a program argument, we set it to the executable file name minus the last .extension
 	if(outputFileName.empty())
 	{
-		outputFileName = argv[0];
-		outputFileName = outputFileName.substr(outputFileName.rfind('/')!=string::npos?outputFileName.rfind('/')+1:0);
-		outputFileName = outputFileName.substr(0, outputFileName.rfind('.'));
+		outputFileName = "limb_correction";
 	}
 	outputFileName += ".";
+
+	// We read  the sun images
+	vector<SunImage*> images = getImagesFromFiles(imageType, sunImagesFileNames, true);
+	
+
 
 	//We output the middle line of the images
 	for (unsigned p = 0; p < sunImagesFileNames.size(); ++p)
 	{
-		SunImage* image  = getImageFromFile(imageType, sunImagesFileNames[p]);
-		image->nullifyAboveRadius(radiusRatio);
-		string filename = outputFileName + string(limb_corrections[LIMB_CORRECTION]) + ".";
+		images[p]->nullifyAboveRadius(radiusRatio);
+		string filename = outputFileName;
 		filename +=  sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0);
 		filename += ".line.txt";
 		ofstream lineFile(filename.c_str());
 		if (lineFile)
 		{
-			unsigned y = image->Yaxes() / 2;
-			for (unsigned x = 0; x < image->Xaxes(); ++x)
-				lineFile<<image->pixel(x, y) <<endl;
+			unsigned y = images[p]->Yaxes() / 2;
+			for (unsigned x = 0; x < images[p]->Xaxes(); ++x)
+				lineFile<<images[p]->pixel(x, y) <<endl;
 		}
 		else
 		{
@@ -120,17 +157,19 @@ int main(int argc, const char **argv)
 		
 
 		lineFile.close();
-		delete image;
-
 	}
 
-	//We read and preprocess the sun images
-	fetchImagesFromFile(images, sunImagesFileNames, preprocessingSteps, radiusRatio);
+	//We preprocess the sun images
+	for (unsigned p = 0; p < images.size(); ++p)
+	{
+		images[p]->preprocessing(preprocessingSteps, radiusRatio);
+
+	}
 	
 	//We output the middle line of the images
 	for (unsigned p = 0; p < images.size(); ++p)
 	{
-		string filename = outputFileName + string(limb_corrections[LIMB_CORRECTION]) + ".";
+		string filename = outputFileName;
 		filename +=  sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0);
 		filename += ".preprocessed.line.txt";
 		ofstream lineFile(filename.c_str());
@@ -163,12 +202,12 @@ int main(int argc, const char **argv)
 			{
 
 				pixelRadius = sqrt(sunCenter.d2(Coordinate(x,y))) / sunRadius;
-				if(circleAt(pixelRadius))
-					images[p]->pixel(x,y) = images[p]->nullvalue;
+				if(circleAt(pixelRadius, imageType))
+					images[p]->pixel(x,y) = images[p]->nullvalue();
 				
 			}
 		}
-		string filename = outputFileName + string(limb_corrections[LIMB_CORRECTION]) + ".";
+		string filename = outputFileName;
 		filename +=  sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0);
 		images[p]->writeFitsImage(filename);
 	}
@@ -183,14 +222,14 @@ int main(int argc, const char **argv)
 		{
 
 			pixelRadius = sqrt(sunCenter.d2(Coordinate(x,y))) / sunRadius;
-			if(circleAt(pixelRadius))
+			if(circleAt(pixelRadius, imageType))
 				images[0]->pixel(x,y) = 2;
 			else
 				images[0]->pixel(x,y) = images[0]->percentCorrection(pixelRadius);
 			
 		}
 	}
-	string filename = outputFileName + string(limb_corrections[LIMB_CORRECTION]) + ".function.fits";
+	string filename = outputFileName + ".function.fits";
 	images[0]->writeFitsImage(filename);
 
 	return EXIT_SUCCESS;

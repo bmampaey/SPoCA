@@ -6,15 +6,13 @@ using namespace std;
 SWAPImage::~SWAPImage()
 {}
 
-SWAPImage::SWAPImage(const long xAxes, const long yAxes, const double radius, const double wavelength)
-:SunImage(xAxes, yAxes, radius, wavelength)
-{}
-
 
 SWAPImage::SWAPImage(const string& filename)
-:SunImage()
+:SunImage(filename)
 {
-	readFitsImage(filename);
+	readKeywords();
+	if(!isSWAP(header))
+		cerr<<"Error : "<<filename<<" is not SWAP!"<<endl;
 }
 
 
@@ -29,26 +27,32 @@ SWAPImage::SWAPImage(const SunImage* i)
 {}
 
 
-int SWAPImage::readFitsImageP(fitsfile* fptr)
-{
-	int   status  = 0;
-	char * comment = NULL  ;					  /**<By specifying NULL we say that we don't want the comments	*/
-
-	status = SunImage::readFitsImageP(fptr);
-	if(status)
-		return status;
+void SWAPImage::readKeywords()
+{	
+	wavelength = header.get<double>("WAVELNTH");
+	suncenter.x = header.get<int>("CRPIX1");
+	suncenter.y = header.get<int>("CRPIX2");
+	cdelt1 = header.get<double>("CDELT1");
+	cdelt2 = header.get<double>("CDELT2");
 	
-	if (fits_read_key(fptr, TDOUBLE, "RSUN_ARC", &radius, comment, &status))
-	{
-		
-		cerr<<"Error reading key RSUN_ARC from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
-	}
+	exposureTime = header.get<double>("EXPTIME");
+	
+	//We read the radius
+	radius = header.get<double>("RSUN_ARC");
 	// PROBA2 express the radius in arc/sec
-	radius/=cdelt[0];
+	radius/=cdelt1;
+	
+	//We read the date
+	date_obs = header.get<string>("DATE-OBS");
+	//Sometimes the date is appended with a z
+	if(date_obs.find_first_of("Zz") != string::npos)
+		date_obs.erase(date_obs.find_first_of("Zz"));
+	observationTime = ObservationTime();
 
-	return status;
+}
+
+void SWAPImage::writeKeywords()
+{
 
 }
 
@@ -76,5 +80,10 @@ inline Real SWAPImage::percentCorrection(const Real r)const
 		return (sin((BIPI/T)*r + phi) + 1)/2;
 	}
 
+}
+
+bool isSWAP(const FitsHeader& header)
+{
+	return header.get<bool>("INSTRUME") && header.get<string>("INSTRUME").find("SWAP") != string::npos;	
 }
 

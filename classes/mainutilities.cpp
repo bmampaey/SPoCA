@@ -64,13 +64,12 @@ inline vector<SunImage*> getImagesFromFiles(const string imageType, const vector
 			{
 				cerr<<"Warning : Image "<<sunImagesFileNames[p]<<" will be recentered to have the same sun centre than image "<<sunImagesFileNames[0]<<endl;
 				images[p]->recenter(sunCenter);
+				#if DEBUG >= 2
+				string filename = outputFileName + "recentered.";
+				filename +=  sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0);
+				images[p]->writeFitsImage(filename);
+				#endif
 			}
-
-			#if DEBUG >= 2
-			string filename = outputFileName + "recentered.";
-			filename +=  sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0);
-			images[p]->writeFitsImage(filename);
-			#endif
 		}
 	}
 	return images;
@@ -97,9 +96,22 @@ inline SunImage* getImageFromFile(const string imageType, const string sunImageF
 	else if (imageType == "SWAP")
 		image = new SWAPImage(sunImageFileName);
 	else 
-		image = new SunImage(sunImageFileName);
-	
-
+	{
+		FitsHeader header(sunImageFileName);
+		if(isEIT(header))
+			image = new EITImage(sunImageFileName);
+		else if (isEUVI(header))
+			image = new EUVIImage(sunImageFileName);
+		else if (isAIA(header))
+			image = new AIAImage(sunImageFileName);
+		else if (isSWAP(header))
+			image = new SWAPImage(sunImageFileName);
+		else
+		{
+			cerr<<"Error: Unknown instrument for "<<sunImageFileName<<endl;
+			image = NULL;
+		}
+	}
 	return image;
 }
 

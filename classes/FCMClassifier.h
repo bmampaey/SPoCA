@@ -34,6 +34,5 @@ class FCMClassifier : public Classifier
 
 		//Classification functions
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
-		void attribution();
 };
 #endif

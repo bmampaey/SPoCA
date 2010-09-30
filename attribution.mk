@@ -4,15 +4,15 @@ TRACKINGLFLAGS=-lpthread
 IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lXpm -lXmu -lXext -lXt -lSM -lICE  -lXinerama -lX11 -ldl -ltermcap -lrt -lm /usr/lib/libXm.a
 MAGICKLFLAGS=`Magick++-config --cppflags --cxxflags --ldflags --libs`
 MAGICKCFLAGS=-I /usr/include/ImageMagick/
-DFLAGS=-DNUMBERWAVELENGTH=1
+DFLAGS=
 LFLAGS=-lcfitsio
 
 all:bin/attribution.x
-clean: rm bin/attribution.x objects/attribution.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Coordinate.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+clean: rm bin/attribution.x objects/attribution.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Coordinate.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
 
 
-bin/attribution.x : attribution.mk objects/attribution.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Coordinate.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/attribution.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Coordinate.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/attribution.x
+bin/attribution.x : attribution.mk objects/attribution.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Coordinate.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/attribution.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Coordinate.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/attribution.x
 
 objects/attribution.o : attribution.mk programs/attribution.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/SunImage.h classes/Classifier.h classes/FCMClassifier.h classes/PCMClassifier.h classes/PCM2Classifier.h classes/SPoCAClassifier.h classes/SPoCA2Classifier.h classes/FeatureVector.h classes/ArgumentHelper.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) programs/attribution.cpp -o objects/attribution.o
@@ -50,8 +50,11 @@ objects/Classifier.o : attribution.mk classes/Classifier.cpp classes/tools.h cla
 objects/Region.o : attribution.mk classes/Region.cpp classes/constants.h classes/Coordinate.h classes/SunImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Region.cpp -o objects/Region.o
 
-objects/SunImage.o : attribution.mk classes/SunImage.cpp classes/fitsio.h classes/longnam.h classes/Image.h classes/Coordinate.h
+objects/SunImage.o : attribution.mk classes/SunImage.cpp classes/fitsio.h classes/longnam.h classes/Image.h classes/Coordinate.h classes/FitsHeader.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SunImage.cpp -o objects/SunImage.o
+
+objects/FitsHeader.o : attribution.mk classes/FitsHeader.cpp classes/fitsio.h classes/longnam.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/FitsHeader.cpp -o objects/FitsHeader.o
 
 objects/mainutilities.o : attribution.mk classes/mainutilities.cpp classes/FeatureVector.h classes/SunImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/mainutilities.cpp -o objects/mainutilities.o

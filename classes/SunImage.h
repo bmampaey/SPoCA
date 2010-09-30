@@ -14,6 +14,8 @@
 #include "longnam.h"
 #include "Image.h"
 #include "Coordinate.h"
+#include "FitsHeader.h"
+
 
 class SunImage : public Image<PixelType>
 {
@@ -24,22 +26,23 @@ class SunImage : public Image<PixelType>
 		double wavelength;
 		time_t observationTime;
 		Coordinate suncenter;
-		double cdelt[2];
+		double cdelt1, cdelt2;
 		PixelType median, mode, datap01, datap95;
-		char date_obs[80];
+		std::string date_obs;
 		double exposureTime;
 	
 		virtual Real MINRADIUS()
 		{ return SINE_CORR_R1 / 100.; }
 		
 	public :
-		std::vector<char*> header;
+		FitsHeader header;
 
 	public :
 		
 		//Constructors and destructors
+		SunImage(const long xAxes = 0, const long yAxes = 0);
+		SunImage(const long xAxes, const long yAxes, const Coordinate suncenter, const double radius, const double cdelt1, const double cdelt2, const double wavelength = 0.);
 		SunImage(const std::string& filename);
-		SunImage(const long xAxes = 0, const long yAxes = 0, const double radius = 0., const double wavelength = 0.);
 		SunImage(const SunImage& i);
 		SunImage(const SunImage* i);
 		~SunImage();
@@ -47,8 +50,10 @@ class SunImage : public Image<PixelType>
 		//Routines to read and write a fits file
           int writeFitsImageP(fitsfile* fptr);
           int readFitsImageP(fitsfile* fptr);
-
-
+          
+          //Routines to read and write the keywords from/to the header
+		virtual void readKeywords();
+		virtual void writeKeywords();
 		
 		//Accessors
 		double Wavelength() const;
@@ -72,8 +77,6 @@ class SunImage : public Image<PixelType>
 		void recenter(const Coordinate& newCenter);
 		void copyKeywords(const SunImage* i);
 		
-		//Routine to aggregate blobs into AR
-		SunImage* blobsIntoAR ();
 		
 		//Future routines to derotate an image (in progress) 
 		/*

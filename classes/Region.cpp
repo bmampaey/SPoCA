@@ -161,7 +161,7 @@ vector<Region*> getRegions(const SunImage* colorizedComponentsMap)
 	{
 		for (unsigned x = 0; x < colorizedComponentsMap->Xaxes(); ++x)
 		{
-			if(colorizedComponentsMap->pixel(x,y) != colorizedComponentsMap->nullvalue)
+			if(colorizedComponentsMap->pixel(x,y) != colorizedComponentsMap->nullvalue())
 			{
 				unsigned color = unsigned(colorizedComponentsMap->pixel(x,y));
 				

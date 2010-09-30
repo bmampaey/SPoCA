@@ -87,13 +87,13 @@ class Classifier
 		virtual void randomInitB(unsigned C);
 		
 		//Segmentation functions
-		virtual Image<unsigned>* segmentedMap_maxUij();
-		virtual Image<unsigned>* segmentedMap_closestCenter();
-		virtual Image<unsigned>* segmentedMap_classTreshold(unsigned i, Real lowerIntensity_minMembership, Real higherIntensity_minMembership);
-		virtual Image<unsigned>* segmentedMap_limits(std::vector<RealFeature>& limits);
-		virtual Image<unsigned>* segmentedMap_fixed(std::vector<unsigned>& ch, std::vector<unsigned>& qs, std::vector<unsigned>& ar);
-		virtual Image<Real>* fuzzyMap(const unsigned i);
-		virtual Image<Real>* normalizedFuzzyMap(const unsigned i);
+		virtual SunImage* segmentedMap_maxUij(SunImage* segmentedMap = NULL);
+		virtual SunImage* segmentedMap_closestCenter(SunImage* segmentedMap = NULL);
+		virtual SunImage* segmentedMap_classTreshold(unsigned i, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, SunImage* segmentedMap = NULL);
+		virtual SunImage* segmentedMap_limits(std::vector<RealFeature>& limits, SunImage* segmentedMap = NULL);
+		virtual SunImage* segmentedMap_fixed(std::vector<unsigned>& ch, std::vector<unsigned>& qs, std::vector<unsigned>& ar, SunImage* segmentedMap = NULL);
+		virtual SunImage* fuzzyMap(const unsigned i, SunImage* fuzzyMap = NULL);
+		virtual SunImage* normalizedFuzzyMap(const unsigned i, SunImage* fuzzyMap = NULL);
 		
 		//Sursegmentation functions
 		unsigned sursegmentation(std::vector<RealFeature>& B, unsigned C = 0);
@@ -101,8 +101,6 @@ class Classifier
 
 		//Utilities function for outputing results
 		virtual void saveAllResults(SunImage* outImage);
-		virtual void saveARmap(SunImage* outImage);
-		virtual void saveCHmap(SunImage* outImage);	
 		void saveB(const std::string& filename);
 		virtual std::vector<RealFeature> classAverage() const;
 		

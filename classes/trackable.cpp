@@ -225,7 +225,7 @@ void recolorFromRegions(SunImage* image, const vector<Region*>& regions)
 	}
 	for (unsigned j = 0; j < image->NumberPixels(); ++j)
 	{
-		if(image->pixel(j) != image->nullvalue)
+		if(image->pixel(j) != image->nullvalue())
 		{
 			#if DEBUG >= 1
 				if(unsigned(image->pixel(j)) > colorTransfo.size())

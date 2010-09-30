@@ -6,18 +6,14 @@ using namespace std;
 AIAImage::~AIAImage()
 {}
 
-AIAImage::AIAImage(const long xAxes, const long yAxes, const double radius, const double wavelength)
-:SunImage(xAxes, yAxes, radius, wavelength)
-{}
-
 
 AIAImage::AIAImage(const string& filename)
-:SunImage()
+:SunImage(filename)
 {
-	readFitsImage(filename);
+	readKeywords();
+	if(!isAIA(header))
+		cerr<<"Error : "<<filename<<" is not AIA!"<<endl;
 }
-
-
 
 AIAImage::AIAImage(const SunImage& i)
 :SunImage(i)
@@ -30,70 +26,43 @@ AIAImage::AIAImage(const SunImage* i)
 
 
 
-int AIAImage::readFitsImageP(fitsfile* fptr)
+void AIAImage::readKeywords()
 {
-	int   status  = 0;
-	char * comment = NULL  ;					  /**<By specifying NULL we say that we don't want the comments	*/
 
-	status = SunImage::readFitsImageP(fptr);
-	if(status)
-		return status;
-		
-	if (fits_read_key(fptr, TDOUBLE, "R_SUN", &radius, comment, &status))
+	wavelength = header.get<double>("WAVELNTH");
+	suncenter.x = header.get<int>("CRPIX1");
+	suncenter.y = header.get<int>("CRPIX2");
+	cdelt1 = header.get<double>("CDELT1");
+	cdelt2 = header.get<double>("CDELT2");
+	
+	exposureTime = header.get<double>("EXPTIME");
+	
+	median = header.get<double>("DATAMEDN");
+	datap01 = header.get<PixelType>("DATAP01");
+	datap95 = header.get<PixelType>("DATAP95");
+	
+	// We read the radius
+	if(header.get<bool>("R_SUN"))
+		radius = header.get<double>("R_SUN");
+	else
 	{
-		
-		cerr<<"Error reading key R_SUN from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
-		
-		//HACK for bad AIA fits header, remove when R_SUN is corrected
-		if (fits_read_key(fptr, TDOUBLE, "RSUN_OBS", &radius, comment, &status))
-		{
-			
-			cerr<<"Error reading key RSUN_OBS from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-			fits_report_error(stderr, status);
-			status = 0;
-		}
-		radius/=cdelt[0];
-		//END of HACK
-	}
-
-	/* We remove it for Ryan
-	if (fits_read_key(fptr, datatype, "DATAP01", &datap01,comment, &status))
-	{
-		
-		cerr<<"Error reading key DATAP01 from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
-	}
-	if (fits_read_key(fptr, datatype, "DATAP95", &datap95,comment, &status))
-	{
-		
-		cerr<<"Error reading key DATAP95 from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
-	}
-	*/
-
-	if (fits_read_key(fptr, datatype, "DATAMEDN", &median,comment, &status))
-	{
-		
-		cerr<<"Error reading key DATAPMEDN from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
-	}
-
-	if (fits_read_key(fptr, TDOUBLE, "EXPTIME", &exposureTime,comment, &status))
-	{
-		
-		cerr<<"Error reading key EXPTIME from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
-		fits_report_error(stderr, status);
-		status = 0;
+		//HACK for bad AIA fits header when R_SUN is not set
+		radius = header.get<double>("RSUN_OBS");
+		// RSUN_OBS is expressed in arc/sec
+		radius/=cdelt1;
 	}
 	
-	return status;
+	date_obs = header.get<string>("T_OBS");
+	//Sometimes the date is appended with a z
+	if(date_obs.find_first_of("Zz") != string::npos)
+		date_obs.erase(date_obs.find_first_of("Zz"));
+	observationTime = ObservationTime();
+	
+}
 
-
+void AIAImage::writeKeywords()
+{
+	header.set<double>("R_SUN", radius);
 }
 
 
@@ -124,5 +93,8 @@ inline Real AIAImage::percentCorrection(const Real r)const
 
 }
 
-
+bool isAIA(const FitsHeader& header)
+{
+	return header.get<bool>("INSTRUME") && header.get<string>("INSTRUME").find("AIA") != string::npos;	
+}
 

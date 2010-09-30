@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <ctime>
+#include <cstring>
 
 #include "fitsio.h"
 #include "longnam.h"
@@ -22,6 +23,7 @@ class FitsHeader
 	public :
 		
 		//Constructors and destructors
+		FitsHeader();
 		FitsHeader(const std::string& filename);
 		FitsHeader(const FitsHeader& i);
 		FitsHeader(const FitsHeader* i);
@@ -33,9 +35,10 @@ class FitsHeader
 		
 		//Accessors
 		template<class T>
-		T get(const std::string& key);
+		T get(const std::string& key) const;
 		template<class T>
-		T get(const char* key);
+		T get(const char* key) const;
+
 		template<class T>
 		void set(const std::string& key, const T& value);
 		template<class T>

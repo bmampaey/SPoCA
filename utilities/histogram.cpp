@@ -78,7 +78,7 @@ void histogram(const vector<SunImage*>& images, RealFeature binSize)
 			for (unsigned p = 0; p <  NUMBERWAVELENGTH && validPixel; ++p)
 			{
 				xj.v[p] = images[p]->pixel(j);
-				if(xj.v[p] == images[p]->nullvalue)
+				if(xj.v[p] == images[p]->nullvalue())
 					validPixel=false;
 				else 
 					xj.v[p] = (int(xj.v[p]/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
@@ -101,7 +101,7 @@ void histogram(const vector<SunImage*>& images, RealFeature binSize)
 			for (unsigned p = 0; p <  NUMBERWAVELENGTH && validPixel; ++p)
 			{
 				xj.v[p] = images[p]->pixel(j);
-				if(xj.v[p] == images[p]->nullvalue)
+				if(xj.v[p] == images[p]->nullvalue())
 					validPixel=false;
 			}
 			if(validPixel)

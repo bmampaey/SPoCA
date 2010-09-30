@@ -57,7 +57,7 @@ int main(int argc, const char **argv)
 
 		for (unsigned j = 0; j < image->NumberPixels(); ++j)
 		{
-			if(image->pixel(j) == image->nullvalue )
+			if(image->pixel(j) == image->nullvalue() )
 			{
 				image->pixel(j) = 0;
 			}

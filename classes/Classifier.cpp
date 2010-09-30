@@ -63,7 +63,7 @@ void Classifier::addImages(vector<SunImage*>& images)
 			for (unsigned p = 0; p <  NUMBERWAVELENGTH && validPixel; ++p)
 			{
 				xj.v[p] = images[p]->pixel(x, y);
-				if(xj.v[p] == images[p]->nullvalue)
+				if(xj.v[p] == images[p]->nullvalue())
 					validPixel=false;
 			}
 			if(validPixel)
@@ -81,10 +81,8 @@ void Classifier::addImages(vector<SunImage*>& images)
 
 void Classifier::attribution()
 {
-	//Initialisation of U
 	computeU();
 }
-
 
 unsigned Classifier::sursegmentation(unsigned Cmin)
 {
@@ -101,7 +99,7 @@ unsigned Classifier::sursegmentation(unsigned Cmin)
 	
 	#if DEBUG >= 2
 	string filename;
-	Image<unsigned> * segmentedMap;
+	SunImage * segmentedMap;
 	#endif
 
 	for (unsigned C = numberClasses - 1; C >= Cmin; --C)
@@ -299,17 +297,26 @@ void Classifier::merge(unsigned i1, unsigned i2)
 
 */
 
-Image<unsigned>* Classifier::segmentedMap_maxUij()
+SunImage* Classifier::segmentedMap_maxUij(SunImage* segmentedMap)
 {
 
 	#if DEBUG >= 1
 	if (U.size() != numberClasses*numberValidPixels)
 		cerr<<"The membership matrix U has not yet been calculated"<<endl;
 	#endif
-
-	Image<unsigned>* segmentedMap = new Image<unsigned>(Xaxes, Yaxes);
+	
+	if(segmentedMap)
+	{
+		segmentedMap->resize(Xaxes, Yaxes);
+	}
+	else
+	{
+		segmentedMap = new SunImage(Xaxes, Yaxes);
+	}
+	
 	segmentedMap->zero();
-
+	segmentedMap->setNullvalue(0);
+	
 	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
 	{
 		Real max_uij = U[j];
@@ -328,7 +335,7 @@ Image<unsigned>* Classifier::segmentedMap_maxUij()
 
 }
 
-Image<unsigned>* Classifier::segmentedMap_closestCenter()
+SunImage* Classifier::segmentedMap_closestCenter(SunImage* segmentedMap)
 {
 
 	#if DEBUG >= 1
@@ -336,8 +343,18 @@ Image<unsigned>* Classifier::segmentedMap_closestCenter()
 		cerr<<"The membership matrix U has not yet been calculated"<<endl;
 	#endif
 
-	Image<unsigned>* segmentedMap = new Image<unsigned>(Xaxes, Yaxes);
+	if(segmentedMap)
+	{
+		segmentedMap->resize(Xaxes, Yaxes);
+	}
+	else
+	{
+		segmentedMap = new SunImage(Xaxes, Yaxes);
+	}
+	
 	segmentedMap->zero();
+	segmentedMap->setNullvalue(0);
+	
 	Real d2XjBi;
 	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
 	{
@@ -358,7 +375,7 @@ Image<unsigned>* Classifier::segmentedMap_closestCenter()
 
 }
 
-Image<unsigned>* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowerIntensity_minMembership, Real higherIntensity_minMembership)
+SunImage* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, SunImage* segmentedMap)
 {
 
 	#if DEBUG >= 1
@@ -383,15 +400,26 @@ Image<unsigned>* Classifier::segmentedMap_classTreshold(unsigned middleClass, Re
 	
 	--middleClass;
 	
+
+
+	
 	#if DEBUG >= 2
-	Image<Real>* map = fuzzyMap(middleClass);
-	map->writeFitsImage(outputFileName + "fuzzymap.fits");
-	delete map;
+	fuzzyMap(middleClass,segmentedMap);
+	segmentedMap->writeFitsImage(outputFileName + "fuzzymap.fits");
 	#endif
-
-
-	Image<unsigned>* segmentedMap = new Image<unsigned>(Xaxes, Yaxes);
+	
+	if(segmentedMap)
+	{
+		segmentedMap->resize(Xaxes, Yaxes);
+	}
+	else
+	{
+		segmentedMap = new SunImage(Xaxes, Yaxes);
+	}
+	
 	segmentedMap->zero();
+	segmentedMap->setNullvalue(0);
+	
 	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
 	{
 		if(X[j] < B[middleClass])
@@ -414,10 +442,10 @@ Image<unsigned>* Classifier::segmentedMap_classTreshold(unsigned middleClass, Re
 }
 
 
-Image<unsigned>* Classifier::segmentedMap_limits(vector<RealFeature>& limits)
+SunImage* Classifier::segmentedMap_limits(vector<RealFeature>& limits,SunImage* segmentedMap)
 {
 
-	Image<unsigned>* segmentedMap = segmentedMap_maxUij();
+	segmentedMap_maxUij(segmentedMap);
 	
 	#if DEBUG >= 2
 	segmentedMap->writeFitsImage(outputFileName + "max.segmented.fits");
@@ -442,10 +470,10 @@ Image<unsigned>* Classifier::segmentedMap_limits(vector<RealFeature>& limits)
 
 }
 
-Image<unsigned>* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>& qs, vector<unsigned>& ar)
+SunImage* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>& qs, vector<unsigned>& ar, SunImage* segmentedMap)
 {
 
-	Image<unsigned>* segmentedMap = segmentedMap_maxUij();
+	segmentedMap_maxUij(segmentedMap);
 
 	#if DEBUG >= 2
 	segmentedMap->writeFitsImage(outputFileName + "max.segmented.fits");
@@ -473,23 +501,40 @@ Image<unsigned>* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<uns
 
 
 
-Image<Real>* Classifier::fuzzyMap(const unsigned i)
+SunImage* Classifier::fuzzyMap(const unsigned i, SunImage* fuzzyMap)
 {
-	Image<Real>* map = new Image<Real>(Xaxes, Yaxes);
-	map->zero();
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
-		map->pixel(coordinates[j]) = U[i*numberValidPixels+j];
+	if(fuzzyMap)
+	{
+		fuzzyMap->resize(Xaxes, Yaxes);
+	}
+	else
+	{
+		fuzzyMap = new SunImage(Xaxes, Yaxes);
+	}
+	
+	fuzzyMap->zero();
 
-	return map;
+	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		fuzzyMap->pixel(coordinates[j]) = U[i*numberValidPixels+j];
+
+	return fuzzyMap;
 }
 
 
-Image<Real>* Classifier::normalizedFuzzyMap(const unsigned i)
+SunImage* Classifier::normalizedFuzzyMap(const unsigned i, SunImage* fuzzyMap)
 {
-	Image<Real>* map = new Image<Real>(Xaxes, Yaxes);
-	Real    sum;
-	map->zero();
+	if(fuzzyMap)
+	{
+		fuzzyMap->resize(Xaxes, Yaxes);
+	}
+	else
+	{
+		fuzzyMap = new SunImage(Xaxes, Yaxes);
+	}
+	
+	fuzzyMap->zero();
 
+	Real    sum;
 	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
 	{
 		sum = 0;
@@ -497,10 +542,10 @@ Image<Real>* Classifier::normalizedFuzzyMap(const unsigned i)
 		{
 			sum += U[k*numberValidPixels+j];
 		}
-		map->pixel(coordinates[j]) = U[i*numberValidPixels+j] / sum;
+		fuzzyMap->pixel(coordinates[j]) = U[i*numberValidPixels+j] / sum;
 	}
 
-	return map;
+	return fuzzyMap;
 }
 
 
@@ -509,57 +554,39 @@ Image<Real>* Classifier::normalizedFuzzyMap(const unsigned i)
 // You pass it a SunImage that has already all the keywords correctly set
 void Classifier::saveAllResults(SunImage* outImage)
 {
-	Image<unsigned> * segmentedMap = segmentedMap_maxUij();
-	string filename;
 
-	#if DEBUG >= 2
-	filename = outputFileName + "segmented." + itos(numberClasses) + "classes.fits";
-	segmentedMap->writeFitsImage(filename);
-	#endif
-	#if DEBUG >= 4
-	if(!outImage)
-	{
-		delete segmentedMap;
-		return;
-	}
-	unsigned numberRegions;
-	vector<Region*> regions;
+	SunImage* segmentedMap = segmentedMap_maxUij();
+	segmentedMap->writeFitsImage(outputFileName + "segmented." + itos(numberClasses) + "classes.fits");
+	
+	outImage->resize(Xaxes, Yaxes);
+	
+	unsigned minSize = unsigned(MIN_AR_SIZE / outImage->PixelArea());
+	
 	for (unsigned i = 1; i <= numberClasses; ++i)
 	{
+		
 		outImage->zero();
 
 		//We create a map of the class i
 		outImage->bitmap(segmentedMap, i);
 		string baseName = outputFileName + "class" + itos(i) + ".";
-
-		#if DEBUG >= 2
-		filename = baseName + "uncleaned.fits";
-		outImage->writeFitsImage(filename);
-		#endif
+		
+		outImage->writeFitsImage(baseName + "uncleaned.fits");
 
 		//We smooth the edges
-		outImage->dilateCircular(2,outImage->nullvalue)->erodeCircular(2,outImage->nullvalue);
+		outImage->dilateCircular(2,outImage->nullvalue())->erodeCircular(2,outImage->nullvalue());
 
-		#if DEBUG >= 2
-		filename = baseName + "smoothed.uncleaned.fits";
-		outImage->writeFitsImage(filename);
-		#endif
+		outImage->writeFitsImage(baseName + "smoothed.uncleaned.fits");
 
 		//Let's find the connected regions
-		numberRegions = outImage->colorizeConnectedComponents(0);
+		unsigned numberRegions = outImage->colorizeConnectedComponents(0);
 
-		#if DEBUG >= 2
-		filename = baseName + "blobs.uncleaned.fits";
-		outImage->writeFitsImage(filename);
-		#endif
+		outImage->writeFitsImage( baseName + "blobs.uncleaned.fits");
 
-		
 
-		#if DEBUG >= 2
 		//Let's get the connected regions info
-		regions = getRegions(outImage);
-		filename = baseName + "regions.uncleaned.txt";
-		ofstream uncleanedResultsFile(filename.c_str());
+		vector<Region*> regions = getRegions(outImage);
+		ofstream uncleanedResultsFile((baseName + "regions.uncleaned.txt").c_str());
 		if (uncleanedResultsFile.good())
 		{
 			uncleanedResultsFile<<Region::header<<endl;
@@ -570,43 +597,33 @@ void Classifier::saveAllResults(SunImage* outImage)
 			}
 		}
 		uncleanedResultsFile.close();
-		#endif
 
-		#if DEBUG >= 2
+
+
 		//Let's draw the contours
-		outImage->drawContours(3, outImage->nullvalue);
-		filename = baseName + "contours.uncleaned.fits";
-		outImage->writeFitsImage(filename);
-		#endif
+		outImage->drawContours(3, outImage->nullvalue());
+
+		outImage->writeFitsImage(baseName + "contours.uncleaned.fits");
+
 
 		//Let's cleanup by removing the small regions (i.e. assimilated to bright points )
 		outImage->zero();
 		outImage->bitmap(segmentedMap, i);
 
 		//We smooth the edges
-		outImage->dilateCircular(2,outImage->nullvalue)->erodeCircular(2,outImage->nullvalue);
-
-		unsigned minSize = unsigned(MIN_AR_SIZE / outImage->PixelArea());
+		outImage->dilateCircular(2,outImage->nullvalue())->erodeCircular(2,outImage->nullvalue());
 		outImage->tresholdConnectedComponents(minSize, 0);
+		outImage->writeFitsImage(baseName + "fits");
 
-		#if DEBUG >= 2
-		filename = baseName + "fits";
-		outImage->writeFitsImage(filename);
-		#endif
 
 		//Let's find the connected regions
 		numberRegions = outImage->colorizeConnectedComponents(0);
+		outImage->writeFitsImage(baseName + "blobs.fits");
 
-		#if DEBUG >= 2
-		filename = baseName + "blobs.fits";
-		outImage->writeFitsImage(filename);
-		#endif
 
 		//Let's get the connected regions info
 		regions = getRegions(outImage);
-
-		filename = baseName + "regions.txt";
-		ofstream resultsFile(filename.c_str());
+		ofstream resultsFile((baseName + "regions.txt").c_str());
 		if (resultsFile.good())
 		{
 			resultsFile<<Region::header<<endl;
@@ -617,187 +634,45 @@ void Classifier::saveAllResults(SunImage* outImage)
 		}
 		resultsFile.close();
 		
-		#if DEBUG >= 2
-		//Let's draw the contours
-		outImage->drawContours(3, outImage->nullvalue);
-		filename = baseName + "contours.fits";
-		outImage->writeFitsImage(filename);
-		#endif
 
-		#if DEBUG >= 2
+		//Let's draw the contours
+		outImage->drawContours(3, outImage->nullvalue());
+		outImage->writeFitsImage(baseName + "contours.fits");
+
+
+
 		//Let's draw the boxes
 		outImage->zero();
 		for (unsigned r = 1; r < regions.size(); ++r)
 		{
 			outImage->drawBox(regions[r]->Id(), regions[r]->Boxmin(), regions[r]->Boxmax());
 		}
+		outImage->writeFitsImage(baseName + "boxes.fits");
 
-		filename = baseName + "boxes.fits";
-		outImage->writeFitsImage(filename);
-		#endif
 
-		#if DEBUG >= 2
 		//Let's draw the centers
 		outImage->zero();
 		for (unsigned r = 1; r < regions.size(); ++r)
 		{
 			outImage->drawCross(regions[r]->Id(), regions[r]->Center(), 5);
 		}
+		outImage->writeFitsImage(baseName + "centers.fits");
 
-		filename = baseName + "centers.fits";
-		outImage->writeFitsImage(filename);
-		#endif
 
 		//We cleanup
 		for(unsigned r = 0; r < regions.size(); ++r)
 			delete regions[r];
 
-		#if DEBUG >= 2
 		//Let's get the fuzzyMaps
-		Image<Real>* map = fuzzyMap(i-1);
-		filename = baseName + "fuzzy.fits";
-		map->writeFitsImage(filename);
-		delete map;
-		#endif
-		#if DEBUG >= 2
+		fuzzyMap(i-1, outImage);
+		outImage->writeFitsImage(baseName + "fuzzy.fits");
+
 		//Let's get the normalized fuzzyMaps
-		Image<Real>* normalizedMap = normalizedFuzzyMap(i-1);
-		filename = baseName + "fuzzy.normalized.fits";
-		normalizedMap->writeFitsImage(filename);
-		delete normalizedMap;
-		#endif
+		normalizedFuzzyMap(i-1,outImage);
+		outImage->writeFitsImage(baseName + "fuzzy.normalized.fits");
+
 	}
-	#endif
 	delete segmentedMap;
-
-}
-
-
-#if defined(AGGREGATE_DILATE_BENTEST2)
-// Function that saves the AR map for tracking
-// You pass it a SunImage that has already all the keywords correctly set
-void Classifier::saveARmap(SunImage* outImage)
-{
-	Image<unsigned> * segmentedMap = segmentedMap_maxUij();
-	string filename;
-	unsigned ARclass = 0;
-	RealFeature maxB = 0;
-	// The Active Regions class has the biggest center
-	for (unsigned i = 0; i < numberClasses; ++i)
-	{
-		if (maxB < B[i])
-		{
-			maxB = B[i];
-			ARclass = i + 1;
-		}
-	}
-	outImage->zero();
-
-	//We create a map of the class ARclass
-	outImage->bitmap(segmentedMap, ARclass);
-
-	delete segmentedMap;
-	
-
-
-	//We smooth the edges
-	outImage->erodeCircular(2,outImage->nullvalue)->dilateCircular(2,outImage->nullvalue);
-
-	//We don't need the AR post limb anymore
-	outImage->nullifyAboveRadius(1.); 
-	//We agregate the blobs together
-	outImage->blobsIntoAR();
-	
-
-
-	filename = outputFileName + "ARmap.tracking.fits";
-	outImage->writeFitsImage(filename);
-
-}
-
-#else
-// Function that saves the AR map for tracking
-// You pass it a SunImage that has already all the keywords correctly set
-void Classifier::saveARmap(SunImage* outImage)
-{
-	Image<unsigned> * segmentedMap = segmentedMap_maxUij();
-	string filename;
-	unsigned ARclass = 0;
-	RealFeature maxB = 0;
-	// The Active Regions class has the biggest center
-	for (unsigned i = 0; i < numberClasses; ++i)
-	{
-		if (maxB < B[i])
-		{
-			maxB = B[i];
-			ARclass = i + 1;
-		}
-	}
-	outImage->zero();
-
-	//We create a map of the class ARclass
-	outImage->bitmap(segmentedMap, ARclass);
-
-	delete segmentedMap;
-
-	//We smooth the edges
-	outImage->dilateCircular(2,outImage->nullvalue)->erodeCircular(2,outImage->nullvalue);
-
-	//We erase small regions
-	unsigned minSize = unsigned(MIN_AR_SIZE / outImage->PixelArea());
-	outImage->tresholdConnectedComponents(minSize, 0);
-	
-	//We agregate the blobs together
-	outImage->blobsIntoAR();
-	
-	//We don't need the AR post limb anymore
-	outImage->nullifyAboveRadius(1.); 
-
-	filename = outputFileName + "ARmap.tracking.fits";
-	outImage->writeFitsImage(filename);
-
-}
-#endif
-// Work in progress
-// Function that saves the CH map for tracking
-// You pass it a SunImage that has already all the keywords correctly set
-void Classifier::saveCHmap(SunImage* outImage)
-{
-	Image<unsigned> * segmentedMap = segmentedMap_maxUij();
-	string filename;
-	unsigned CHclass = 0;
-	RealFeature minB = numeric_limits<Real>::max();
-	// The Coronal Hole class has the smallest center
-	for (unsigned i = 0; i < numberClasses; ++i)
-	{
-		if (minB < B[i])
-		{
-			minB = B[i];
-			CHclass = i + 1;
-		}
-	}
-	outImage->zero();
-
-	//We create a map of the class CHclass
-	outImage->bitmap(segmentedMap, CHclass);
-
-	delete segmentedMap;
-
-	//We smooth the edges
-	outImage->dilateCircular(2,outImage->nullvalue)->erodeCircular(2,outImage->nullvalue);
-
-	//We erase small regions
-	unsigned minSize = unsigned(MIN_CH_SIZE / outImage->PixelArea());
-	outImage->tresholdConnectedComponents(minSize, 0);
-	
-	//We agregate the blobs together
-	outImage->blobsIntoAR(); //TODO
-	
-	//We don't need the CH post limb anymore
-	outImage->nullifyAboveRadius(1.); 
-
-	filename = outputFileName + "CHmap.tracking.fits";
-	outImage->writeFitsImage(filename);
 
 }
 

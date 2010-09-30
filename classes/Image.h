@@ -27,10 +27,10 @@ class Image
 		T * pixels;
 		int datatype;
 		int anynull, bitpix;
+		T nullvalue_;  //nullvalue is the value of a non significatif pixel, it is set to the max. May be a problem if the picture is saturated
+		
 
 	public :
-		const T nullvalue;						  //nullvalue is the value of a non significatif pixel, it is set to the max. May be a problem if the picture is saturated
-		
 		//Constructors and destructors
 		Image(const std::string& filename);
 		Image(const long xAxes = 0, const long yAxes = 0);
@@ -55,9 +55,15 @@ class Image
 		T& pixel(const Coordinate& c);
 		const T& pixel(const Coordinate& c)const;
 		Coordinate coordinate (const unsigned j)const;
+		T nullvalue() const
+		{return nullvalue_;}
+		void setNullvalue(T nullvalue)
+		{nullvalue_ = nullvalue;}
+						 
 
 
 		//Various routines to work on images
+		Image<T>* resize(const long xAxes, const long yAxes = 1);
 		Image<T>* zero(T value = 0);
 		Image<T>* drawBox(const T color, Coordinate min, Coordinate max);
 		Image<T>* drawCross(const T color, Coordinate c, const unsigned size = 5);
@@ -74,9 +80,7 @@ class Image
 		unsigned propagateColor(const T color, const unsigned firstPixel);
 		unsigned colorizeConnectedComponents(const T setValue = 0);
 		unsigned tresholdConnectedComponents(const unsigned minSize, const T setValue = 0);
-
-		//returns the image with all the pixels set to nullvalue if bitMap != setValue;
-		Image<T>* bitmap(const Image<unsigned>* bitMap, unsigned setValue = 1);
+		Image<T>* bitmap(const Image<T>* bitMap, T setValue = 1);
 
 		//Return the mean value of the image
 		Real mean() const;

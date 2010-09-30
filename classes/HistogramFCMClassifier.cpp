@@ -22,6 +22,11 @@ HistogramFCMClassifier::HistogramFCMClassifier(const std::string& histogramFilen
 	initHistogram(histogramFilename);
 }
 
+void HistogramFCMClassifier::attribution()
+{
+	FCMClassifier::computeU();
+}
+
 void HistogramFCMClassifier::addImages(std::vector<SunImage*>& images)
 {
 
@@ -77,14 +82,6 @@ void HistogramFCMClassifier::addImages(std::vector<SunImage*>& images)
 	saveHistogram(outputFileName + "histogram.txt");
 	#endif
 
-}
-
-
-
-//Because we need to use the value fund for B to classify the normal images
-void HistogramFCMClassifier::attribution()
-{
-	FCMClassifier::computeU();
 }
 
 

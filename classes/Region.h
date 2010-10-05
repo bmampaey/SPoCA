@@ -11,7 +11,7 @@
 
 #include "constants.h"
 #include "Coordinate.h"
-#include "SunImage.h"
+#include "ColorMap.h"
 
 #ifdef COCO
 #include "CoordinateConvertor.h"

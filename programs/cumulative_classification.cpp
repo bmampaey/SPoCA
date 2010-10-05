@@ -36,8 +36,8 @@ int main(int argc, const char **argv)
 	cout<<setiosflags(ios::fixed);
 
 	// The list of names of the sun images to process
-	string imageType = "AIA";
-	vector<string> sunImagesFileNames;
+	string imageType = "UNKNOWN";
+	vector<string> imagesFilenames;
 
 	// Options for the preprocessing of images
 	string preprocessingSteps = "NAR";
@@ -90,7 +90,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_unsigned_int('t', "classificationPeriodicity", "classificationPeriodicity", "The periodicity with wich we do the classification (0 means only classification at the end).\n\t", classificationPeriodicity);
 	arguments.new_flag('R', "reinitializeCenters", "\n\tSet this flag if you want the centers to be reinitialized before each classification (For possibilistic classifiers this mean doing a FCM init again.\n\t", reinit);
 	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", sunImagesFileNames);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
@@ -109,9 +109,9 @@ int main(int argc, const char **argv)
 	// We process the arguments
 
 	// We assert that the number of sun images provided is correct
-	if(sunImagesFileNames.size() % NUMBERWAVELENGTH != 0)
+	if(imagesFilenames.size() % NUMBERWAVELENGTH != 0)
 	{
-		cerr<<"Error : "<<sunImagesFileNames.size()<<" fits image file given as parameter, a multiple of "<<NUMBERWAVELENGTH<<" must be given!"<<endl;
+		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, a multiple of "<<NUMBERWAVELENGTH<<" must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
 
@@ -213,7 +213,7 @@ int main(int argc, const char **argv)
 	
 	string outputFileNameBase = outputFileName;
 	bool firstinit = true;
-	unsigned M = sunImagesFileNames.size() / NUMBERWAVELENGTH;
+	unsigned M = imagesFilenames.size() / NUMBERWAVELENGTH;
 	vector<string> subSunImagesFileNames(NUMBERWAVELENGTH);
 	
 	ofstream outputFile((outputFileName + "cumulative_output.txt").c_str());
@@ -225,7 +225,7 @@ int main(int argc, const char **argv)
 
 		// We read and preprocess a tuple sun images
 		for (unsigned p = 0; p <  NUMBERWAVELENGTH; ++p)
-			subSunImagesFileNames[p] = sunImagesFileNames[m * NUMBERWAVELENGTH + p];
+			subSunImagesFileNames[p] = imagesFilenames[m * NUMBERWAVELENGTH + p];
 			
 		vector<SunImage*> images = getImagesFromFiles(imageType, subSunImagesFileNames, true);
 		
@@ -233,7 +233,7 @@ int main(int argc, const char **argv)
 		{
 			images[p]->preprocessing(preprocessingSteps, radiusRatio);
 			#if DEBUG >= 2
-			images[p]->writeFitsImage(outputFileNameBase + "preprocessed." + sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0));
+			images[p]->writeFitsImage(outputFileNameBase + "preprocessed." + stripPath(imagesFilenames[p]) );
 			#endif
 		}
 		

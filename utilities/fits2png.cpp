@@ -11,7 +11,7 @@
 #include <Magick++.h>
 #include "../classes/tools.h"
 #include "../classes/constants.h"
-#include "../classes/Image.h"
+#include "../classes/ColorMap.h"
 #include "../classes/gradient.h"
 #include "../classes/ArgumentHelper.h"
 
@@ -33,7 +33,7 @@ int main(int argc, const char **argv)
 	#endif
 	
 	// The list of names of the sun images to process
-	vector<string> imagesFileNames;
+	vector<string> imagesFilenames;
 	
 	// Options for the colorisation
 	bool transparent = false;
@@ -48,7 +48,7 @@ int main(int argc, const char **argv)
 	ArgumentHelper arguments;
 	arguments.new_flag('T', "transparent", "\n\tIf you want the null values to be transparent\n\t" , transparent);
 	arguments.new_flag('C', "colorize", "\n\tIf you want to colorize the image\n\t" , colorize);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images.\n\t", imagesFileNames);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
@@ -66,9 +66,9 @@ int main(int argc, const char **argv)
 	}
 
 
-	for (unsigned p = 0; p < imagesFileNames.size(); ++p)
+	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		Image<PixelType>* image = new Image<PixelType>(imagesFileNames[p]);
+		ColorMap* image = new ColorMap(imagesFilenames[p]);
 		unsigned Xaxes = image->Xaxes();
 		unsigned Yaxes = image->Yaxes();
 
@@ -94,7 +94,7 @@ int main(int argc, const char **argv)
 			}
 		}
 
-		outputFileName =  imagesFileNames[p].substr(0, imagesFileNames[p].find(".fits"));
+		outputFileName =  stripSuffix(imagesFilenames[p]);
 		pngImage.write(outputFileName + ".png");
 		delete image;
 	}

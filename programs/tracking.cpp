@@ -15,7 +15,7 @@
 #include "../classes/mainutilities.h"
 #include "../classes/ArgumentHelper.h"
 
-#include "../classes/SunImage.h"
+#include "../classes/ColorMap.h"
 #include "../classes/Region.h"
 #include "../classes/trackable.h"
 #include "../cgt/graph.h"
@@ -39,8 +39,7 @@ int main(int argc, const char **argv)
 	bool writeAllImages = false;
 	
 	// The list of names of the sun images to process
-	string imageType = "AIA";
-	vector<string> sunImagesFileNames;
+	vector<string> imagesFilenames;
 
 	string programDescription = "This Programm will track regions from color maps.\n";
 	programDescription+="Compiled with options :";
@@ -49,12 +48,11 @@ int main(int argc, const char **argv)
 	programDescription+="\nReal: " + string(typeid(Real).name());
 
 	ArgumentHelper arguments;
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the maps of the regions to track.\n\t", sunImagesFileNames);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the maps of the regions to track.\n\t", imagesFilenames);
 	arguments.new_named_unsigned_long('n',"newColor","positive integer","\n\tThe last color given to active regions\n\t",newColor);
 	arguments.new_named_unsigned_int('d',"delta_time","positive integer","\n\tThe maximal delta time between 2 tracked regions\n\t",delta_time);
 	arguments.new_named_unsigned_int('D',"overlap","positive integer","\n\tThe number of images that overlap between 2 tracking run\n\t",overlap);
 	arguments.new_flag('A', "writeAllImages", "\n\tSet this flag if you want all images to be colored and written to disk.\n\tOtherwise only the image for the next tracking will be colored and written.\n\t", writeAllImages);
-	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP\n\t", imageType);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
@@ -62,7 +60,7 @@ int main(int argc, const char **argv)
 	arguments.process(argc, argv);
 
 	// We read the color maps
-	vector<SunImage*> images = getImagesFromFiles(imageType, sunImagesFileNames, true);
+	vector<SunImage*> images = getImagesFromFiles("ColorMap", imagesFilenames, true);
 
 	//We ordonate the images according to time
 	ordonate(images);
@@ -176,14 +174,14 @@ int main(int argc, const char **argv)
 		for (unsigned s = 0; s < images.size(); ++s)
 		{
 			recolorFromRegions(images[s], regions[s]);
-			images[s]->writeFitsImage(outputFileName + sunImagesFileNames[s]);
+			images[s]->writeFitsImage(outputFileName + imagesFilenames[s]);
 			delete images[s];
 		}
 	}
 	else //We color the image used for the next tracking
 	{
 		recolorFromRegions(images[firstImageNextTracking], regions[firstImageNextTracking]);
-		images[firstImageNextTracking]->writeFitsImage(outputFileName + sunImagesFileNames[firstImageNextTracking]);
+		images[firstImageNextTracking]->writeFitsImage(outputFileName + imagesFilenames[firstImageNextTracking]);
 		delete images[firstImageNextTracking];
 	}
 	

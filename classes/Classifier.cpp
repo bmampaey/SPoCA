@@ -97,10 +97,6 @@ unsigned Classifier::sursegmentation(unsigned Cmin)
 	cout<<"V :\t"<<V<<"\tscore :"<<newScore<<endl;
 	#endif
 	
-	#if DEBUG >= 2
-	string filename;
-	SunImage * segmentedMap;
-	#endif
 
 	for (unsigned C = numberClasses - 1; C >= Cmin; --C)
 	{
@@ -139,11 +135,11 @@ unsigned Classifier::sursegmentation(unsigned Cmin)
 		newScore = assess(V);
 
 		#if DEBUG >= 2
-		filename = outputFileName + "segmented." + itos(numberClasses) + "classes.fits" ;
-		segmentedMap = segmentedMap_maxUij();
-		segmentedMap->writeFitsImage(filename);
-		delete segmentedMap;
+		ColorMap segmentedMap;
+		segmentedMap_maxUij(&segmentedMap);
+		segmentedMap.writeFitsImage(outputFileName + "segmented." + itos(numberClasses) + "classes.fits");
 		#endif
+		
 		#if DEBUG >= 3
 		cout<<"new B :"<<B<<endl;
 		cout<<"V :"<<V<<"\tscore :"<<newScore<<endl;
@@ -297,7 +293,7 @@ void Classifier::merge(unsigned i1, unsigned i2)
 
 */
 
-SunImage* Classifier::segmentedMap_maxUij(SunImage* segmentedMap)
+ColorMap* Classifier::segmentedMap_maxUij(ColorMap* segmentedMap)
 {
 
 	#if DEBUG >= 1
@@ -311,7 +307,7 @@ SunImage* Classifier::segmentedMap_maxUij(SunImage* segmentedMap)
 	}
 	else
 	{
-		segmentedMap = new SunImage(Xaxes, Yaxes);
+		segmentedMap = new ColorMap(Xaxes, Yaxes);
 	}
 	
 	segmentedMap->zero();
@@ -335,7 +331,7 @@ SunImage* Classifier::segmentedMap_maxUij(SunImage* segmentedMap)
 
 }
 
-SunImage* Classifier::segmentedMap_closestCenter(SunImage* segmentedMap)
+ColorMap* Classifier::segmentedMap_closestCenter(ColorMap* segmentedMap)
 {
 
 	#if DEBUG >= 1
@@ -349,7 +345,7 @@ SunImage* Classifier::segmentedMap_closestCenter(SunImage* segmentedMap)
 	}
 	else
 	{
-		segmentedMap = new SunImage(Xaxes, Yaxes);
+		segmentedMap = new ColorMap(Xaxes, Yaxes);
 	}
 	
 	segmentedMap->zero();
@@ -375,7 +371,7 @@ SunImage* Classifier::segmentedMap_closestCenter(SunImage* segmentedMap)
 
 }
 
-SunImage* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, SunImage* segmentedMap)
+ColorMap* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, ColorMap* segmentedMap)
 {
 
 	#if DEBUG >= 1
@@ -414,7 +410,7 @@ SunImage* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowe
 	}
 	else
 	{
-		segmentedMap = new SunImage(Xaxes, Yaxes);
+		segmentedMap = new ColorMap(Xaxes, Yaxes);
 	}
 	
 	segmentedMap->zero();
@@ -442,7 +438,7 @@ SunImage* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowe
 }
 
 
-SunImage* Classifier::segmentedMap_limits(vector<RealFeature>& limits,SunImage* segmentedMap)
+ColorMap* Classifier::segmentedMap_limits(vector<RealFeature>& limits,ColorMap* segmentedMap)
 {
 
 	segmentedMap_maxUij(segmentedMap);
@@ -470,7 +466,7 @@ SunImage* Classifier::segmentedMap_limits(vector<RealFeature>& limits,SunImage* 
 
 }
 
-SunImage* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>& qs, vector<unsigned>& ar, SunImage* segmentedMap)
+ColorMap* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>& qs, vector<unsigned>& ar, ColorMap* segmentedMap)
 {
 
 	segmentedMap_maxUij(segmentedMap);
@@ -501,7 +497,7 @@ SunImage* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>&
 
 
 
-SunImage* Classifier::fuzzyMap(const unsigned i, SunImage* fuzzyMap)
+ColorMap* Classifier::fuzzyMap(const unsigned i, ColorMap* fuzzyMap)
 {
 	if(fuzzyMap)
 	{
@@ -509,7 +505,7 @@ SunImage* Classifier::fuzzyMap(const unsigned i, SunImage* fuzzyMap)
 	}
 	else
 	{
-		fuzzyMap = new SunImage(Xaxes, Yaxes);
+		fuzzyMap = new ColorMap(Xaxes, Yaxes);
 	}
 	
 	fuzzyMap->zero();
@@ -521,7 +517,7 @@ SunImage* Classifier::fuzzyMap(const unsigned i, SunImage* fuzzyMap)
 }
 
 
-SunImage* Classifier::normalizedFuzzyMap(const unsigned i, SunImage* fuzzyMap)
+ColorMap* Classifier::normalizedFuzzyMap(const unsigned i, ColorMap* fuzzyMap)
 {
 	if(fuzzyMap)
 	{
@@ -529,7 +525,7 @@ SunImage* Classifier::normalizedFuzzyMap(const unsigned i, SunImage* fuzzyMap)
 	}
 	else
 	{
-		fuzzyMap = new SunImage(Xaxes, Yaxes);
+		fuzzyMap = new ColorMap(Xaxes, Yaxes);
 	}
 	
 	fuzzyMap->zero();
@@ -551,11 +547,11 @@ SunImage* Classifier::normalizedFuzzyMap(const unsigned i, SunImage* fuzzyMap)
 
 // Function that saves all results possible
 // It is not very efficient, can output a LOT of big files, and is only for research and testing
-// You pass it a SunImage that has already all the keywords correctly set
-void Classifier::saveAllResults(SunImage* outImage)
+// You pass it a ColorMap that has already all the keywords correctly set
+void Classifier::saveAllResults(ColorMap* outImage)
 {
 
-	SunImage* segmentedMap = segmentedMap_maxUij();
+	ColorMap* segmentedMap = segmentedMap_maxUij();
 	segmentedMap->writeFitsImage(outputFileName + "segmented." + itos(numberClasses) + "classes.fits");
 	
 	outImage->resize(Xaxes, Yaxes);

@@ -10,7 +10,6 @@ SWAPImage::~SWAPImage()
 SWAPImage::SWAPImage(const string& filename)
 :SunImage(filename)
 {
-	readKeywords();
 	if(!isSWAP(header))
 		cerr<<"Error : "<<filename<<" is not SWAP!"<<endl;
 }
@@ -27,8 +26,10 @@ SWAPImage::SWAPImage(const SunImage* i)
 {}
 
 
-void SWAPImage::readKeywords()
+void SWAPImage::readHeader(fitsfile* fptr)
 {	
+
+	header.readKeywords(fptr);
 	wavelength = header.get<double>("WAVELNTH");
 	suncenter.x = header.get<int>("CRPIX1");
 	suncenter.y = header.get<int>("CRPIX2");
@@ -51,9 +52,17 @@ void SWAPImage::readKeywords()
 
 }
 
-void SWAPImage::writeKeywords()
+void SWAPImage::writeHeader(fitsfile* fptr)
 {
-
+	header.set<double>("WAVELNTH", wavelength);
+	header.set<int>("CRPIX1", suncenter.x);
+	header.set<int>("CRPIX2", suncenter.y);
+	header.set<double>("CDELT1", cdelt1);
+	header.set<double>("CDELT2",cdelt2);
+	header.set<string>("DATE-OBS", date_obs);
+	header.set<double>("RSUN_ARC", radius*cdelt1);
+	header.set<double>("EXPTIME", exposureTime);
+	header.writeKeywords(fptr);
 }
 
 inline Real SWAPImage::percentCorrection(const Real r)const

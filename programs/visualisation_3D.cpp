@@ -34,7 +34,7 @@ int main(int argc, const char **argv)
 
 	// The list of names of the images to process
 	string imageType = "AIA";
-	vector<string> sunImagesFileNames;
+	vector<string> imagesFilenames;
 
 	// Options for the output
 	string algorithmId = "SPoCA";
@@ -51,7 +51,7 @@ int main(int argc, const char **argv)
 	programDescription+="\nReal: " + string(typeid(Real).name());
 
 	ArgumentHelper arguments;
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the tracked color maps.\n\t", sunImagesFileNames);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the tracked color maps.\n\t", imagesFilenames);
 	arguments.new_named_unsigned_int('w', "wavelength", "positive integer", "\n\tThe wavelength in Angstrom\n\t", wavelength);
 	arguments.new_named_string('I', "imageType", "string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP\n\t", imageType);
 	arguments.new_named_string('T', "OIT", "string", "\n\tThe triplet Observatory Instrument Type (should be 3 digits).\n\t", oit);
@@ -122,11 +122,11 @@ int main(int argc, const char **argv)
 	}
 
 	//We output the regions for each image
-	for (unsigned s = 0; s  < sunImagesFileNames.size(); ++s)
+	for (unsigned s = 0; s  < imagesFilenames.size(); ++s)
 	{
 
 		// We read the color maps
-		SunImage* image = getImageFromFile(imageType, sunImagesFileNames[s]);
+		SunImage* image = getImageFromFile(imageType, imagesFilenames[s]);
 
 		// We crop the images
 		image->preprocessing("NAR", 1);

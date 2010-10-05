@@ -8,17 +8,20 @@ DFLAGS=
 LFLAGS=-lcfitsio
 
 all:bin/uncompres.x
-clean: rm bin/uncompres.x objects/uncompres.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o
+clean: rm bin/uncompres.x objects/uncompres.o objects/mainutilities.o objects/ColorMap.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o
 
 
-bin/uncompres.x : uncompres.mk objects/uncompres.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/uncompres.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o $(LFLAGS) -o bin/uncompres.x
+bin/uncompres.x : uncompres.mk objects/uncompres.o objects/mainutilities.o objects/ColorMap.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/uncompres.o objects/mainutilities.o objects/ColorMap.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o $(LFLAGS) -o bin/uncompres.x
 
 objects/uncompres.o : uncompres.mk utilities/uncompres.cpp classes/SunImage.h classes/ArgumentHelper.h classes/mainutilities.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) utilities/uncompres.cpp -o objects/uncompres.o
 
-objects/mainutilities.o : uncompres.mk classes/mainutilities.cpp classes/FeatureVector.h classes/SunImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h
+objects/mainutilities.o : uncompres.mk classes/mainutilities.cpp classes/FeatureVector.h classes/SunImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h classes/ColorMap.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/mainutilities.cpp -o objects/mainutilities.o
+
+objects/ColorMap.o : uncompres.mk classes/ColorMap.cpp classes/fitsio.h classes/longnam.h classes/SunImage.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ColorMap.cpp -o objects/ColorMap.o
 
 objects/SWAPImage.o : uncompres.mk classes/SWAPImage.cpp classes/fitsio.h classes/longnam.h classes/SunImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SWAPImage.cpp -o objects/SWAPImage.o

@@ -33,8 +33,8 @@ int main(int argc, const char **argv)
 	#endif
 
 	// The list of names of the sun images to process
-	string imageType = "AIA";
-	vector<string> sunImagesFileNames;
+	string imageType = "UNKNOWN";
+	vector<string> imagesFilenames;
 
 	// Options for the preprocessing of images
 	string preprocessingSteps = "NAR";
@@ -56,30 +56,30 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
 	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
 	arguments.new_named_unsigned_int('N', "neighboorhoodRadius", "positive integer", "\n\tOnly for spatial classifiers like SPoCA.\n\tThe neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.\n\t", neighboorhoodRadius);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", sunImagesFileNames);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
 	arguments.set_version("1.0");
 	arguments.process(argc, argv);
 
-	if(sunImagesFileNames.size() == 0)
+	if(imagesFilenames.size() == 0)
 	{
-		cerr<<sunImagesFileNames.size()<<" fits image file given as parameter, at least 1 must be given!"<<endl;
+		cerr<<imagesFilenames.size()<<" fits image file given as parameter, at least 1 must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
 	
 	SunImage stat;
 
-	for (unsigned p = 0; p< sunImagesFileNames.size(); ++p)
+	for (unsigned p = 0; p< imagesFilenames.size(); ++p)
 	{
 
-		SunImage* image  = getImageFromFile(imageType, sunImagesFileNames[p]);
+		SunImage* image  = getImageFromFile(imageType, imagesFilenames[p]);
 		image->preprocessing(preprocessingSteps,radiusRatio);
 		
 		stat.copyKeywords(image);
 		
-		outputFileName =  sunImagesFileNames[p].substr(0, sunImagesFileNames[p].find(".fits")) + ".N" + itos(neighboorhoodRadius) + ".";
+		outputFileName = stripSuffix(imagesFilenames[p]) + ".N" + itos(neighboorhoodRadius) + ".";
 		
 		stat.neighboorhoodMean(image, neighboorhoodRadius);
 		stat.writeFitsImage(outputFileName + "neighboorhoodMean.fits");

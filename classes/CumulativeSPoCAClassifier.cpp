@@ -113,28 +113,24 @@ void CumulativeSPoCAClassifier::addImages(vector<SunImage*>& images)
 	Yaxes += yaxes;
 	++numberImages;
 
-	// We write the fits file of smmothedX for verification
+	// We write the fits file of smoothedX for verification
 	#if DEBUG >= 2
-	string filename;
 	Image<PixelType> image(Xaxes,Yaxes);
 	for (unsigned p = 0; p <  NUMBERWAVELENGTH; ++p)
 	{
-		filename = outputFileName + "smoothed." + itos(int(images[p]->Wavelength())) + ".fits";
-
 		image.zero();
 
 		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
 			image.pixel(coordinates[j]) = smoothedX[j].v[p];
 
-		image.writeFitsImage(filename);
+		image.writeFitsImage(outputFileName + "smoothed." + itos(int(images[p]->Wavelength())) + ".fits");
 
 	}
 	#endif
 	
 	#if DEBUG >= 3
 	#include <fstream>
-	filename = outputFileName + "betaN.txt";
-	ofstream betaFile(filename.c_str());
+	ofstream betaFile((outputFileName + "betaN.txt").c_str());
 	for (unsigned j = 0; j < numberValidPixels && betaFile.good(); ++j)
 	{
 		betaFile<<coordinates[j]<<"\t"<<beta[j];

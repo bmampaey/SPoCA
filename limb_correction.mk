@@ -8,17 +8,20 @@ DFLAGS=
 LFLAGS=-lcfitsio
 
 all:bin/limb_correction.x
-clean: rm bin/limb_correction.x objects/limb_correction.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/Coordinate.o objects/tools.o
+clean: rm bin/limb_correction.x objects/limb_correction.o objects/mainutilities.o objects/ColorMap.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/Coordinate.o objects/tools.o
 
 
-bin/limb_correction.x : limb_correction.mk objects/limb_correction.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/Coordinate.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/limb_correction.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/Coordinate.o objects/tools.o $(LFLAGS) -o bin/limb_correction.x
+bin/limb_correction.x : limb_correction.mk objects/limb_correction.o objects/mainutilities.o objects/ColorMap.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/Coordinate.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/limb_correction.o objects/mainutilities.o objects/ColorMap.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/Coordinate.o objects/tools.o $(LFLAGS) -o bin/limb_correction.x
 
 objects/limb_correction.o : limb_correction.mk utilities/limb_correction.cpp classes/tools.h classes/constants.h classes/Coordinate.h classes/SunImage.h classes/ArgumentHelper.h classes/mainutilities.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) utilities/limb_correction.cpp -o objects/limb_correction.o
 
-objects/mainutilities.o : limb_correction.mk classes/mainutilities.cpp classes/FeatureVector.h classes/SunImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h
+objects/mainutilities.o : limb_correction.mk classes/mainutilities.cpp classes/FeatureVector.h classes/SunImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h classes/ColorMap.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/mainutilities.cpp -o objects/mainutilities.o
+
+objects/ColorMap.o : limb_correction.mk classes/ColorMap.cpp classes/fitsio.h classes/longnam.h classes/SunImage.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ColorMap.cpp -o objects/ColorMap.o
 
 objects/SWAPImage.o : limb_correction.mk classes/SWAPImage.cpp classes/fitsio.h classes/longnam.h classes/SunImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SWAPImage.cpp -o objects/SWAPImage.o

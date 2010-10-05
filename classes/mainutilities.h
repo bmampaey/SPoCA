@@ -19,6 +19,7 @@
 #include "EUVIImage.h"
 #include "AIAImage.h"
 #include "SWAPImage.h"
+#include "ColorMap.h"
 
 extern std::string outputFileName;
 extern const char * instruments[];

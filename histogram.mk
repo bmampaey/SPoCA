@@ -8,11 +8,11 @@ DFLAGS=
 LFLAGS=-lcfitsio
 
 all:bin/histogram.x
-clean: rm bin/histogram.x objects/histogram.o objects/FeatureVector.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/ArgumentHelper.o objects/SunImage.o objects/Coordinate.o objects/Image.o objects/tools.o
+clean: rm bin/histogram.x objects/histogram.o objects/FeatureVector.o objects/mainutilities.o objects/ColorMap.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o
 
 
-bin/histogram.x : histogram.mk objects/histogram.o objects/FeatureVector.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/ArgumentHelper.o objects/SunImage.o objects/Coordinate.o objects/Image.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/histogram.o objects/FeatureVector.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/ArgumentHelper.o objects/SunImage.o objects/Coordinate.o objects/Image.o objects/tools.o $(LFLAGS) -o bin/histogram.x
+bin/histogram.x : histogram.mk objects/histogram.o objects/FeatureVector.o objects/mainutilities.o objects/ColorMap.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/histogram.o objects/FeatureVector.o objects/mainutilities.o objects/ColorMap.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o $(LFLAGS) -o bin/histogram.x
 
 objects/histogram.o : histogram.mk utilities/histogram.cpp classes/SunImage.h classes/ArgumentHelper.h classes/mainutilities.h classes/HistogramFeatureVector.h classes/FeatureVector.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) utilities/histogram.cpp -o objects/histogram.o
@@ -20,8 +20,11 @@ objects/histogram.o : histogram.mk utilities/histogram.cpp classes/SunImage.h cl
 objects/FeatureVector.o : histogram.mk classes/FeatureVector.cpp classes/constants.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/FeatureVector.cpp -o objects/FeatureVector.o
 
-objects/mainutilities.o : histogram.mk classes/mainutilities.cpp classes/FeatureVector.h classes/SunImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h
+objects/mainutilities.o : histogram.mk classes/mainutilities.cpp classes/FeatureVector.h classes/SunImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h classes/ColorMap.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/mainutilities.cpp -o objects/mainutilities.o
+
+objects/ColorMap.o : histogram.mk classes/ColorMap.cpp classes/fitsio.h classes/longnam.h classes/SunImage.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ColorMap.cpp -o objects/ColorMap.o
 
 objects/SWAPImage.o : histogram.mk classes/SWAPImage.cpp classes/fitsio.h classes/longnam.h classes/SunImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SWAPImage.cpp -o objects/SWAPImage.o
@@ -38,8 +41,11 @@ objects/EITImage.o : histogram.mk classes/EITImage.cpp classes/fitsio.h classes/
 objects/ArgumentHelper.o : histogram.mk classes/ArgumentHelper.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ArgumentHelper.cpp -o objects/ArgumentHelper.o
 
-objects/SunImage.o : histogram.mk classes/SunImage.cpp classes/fitsio.h classes/longnam.h classes/Image.h classes/Coordinate.h
+objects/SunImage.o : histogram.mk classes/SunImage.cpp classes/fitsio.h classes/longnam.h classes/Image.h classes/Coordinate.h classes/FitsHeader.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SunImage.cpp -o objects/SunImage.o
+
+objects/FitsHeader.o : histogram.mk classes/FitsHeader.cpp classes/fitsio.h classes/longnam.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/FitsHeader.cpp -o objects/FitsHeader.o
 
 objects/Coordinate.o : histogram.mk classes/Coordinate.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o

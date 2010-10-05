@@ -9,6 +9,7 @@
 #include "Region.h"
 #include "Coordinate.h"
 #include "SunImage.h"
+#include "ColorMap.h"
 
 class RegionStats : public Region
 {

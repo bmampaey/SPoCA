@@ -52,8 +52,8 @@ class SunImage : public Image<PixelType>
           int readFitsImageP(fitsfile* fptr);
           
           //Routines to read and write the keywords from/to the header
-		virtual void readKeywords();
-		virtual void writeKeywords();
+		virtual void readHeader(fitsfile* fptr);
+		virtual void writeHeader(fitsfile* fptr);
 		
 		//Accessors
 		double Wavelength() const;

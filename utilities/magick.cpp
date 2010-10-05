@@ -11,7 +11,7 @@
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
-#include "../classes/Image.h"
+#include "../classes/SunImage.h"
 #include "../classes/gradient.h"
 #include "../classes/ArgumentHelper.h"
 #include "../classes/mainutilities.h"
@@ -29,7 +29,7 @@ int main(int argc, const char **argv)
 	#endif
 	
 	// The list of names of the sun images to process
-	vector<string> imagesFileNames;
+	vector<string> imagesFilenames;
 	
 	// Options for the colorisation
 	bool modulo = false;
@@ -42,18 +42,18 @@ int main(int argc, const char **argv)
 
 	ArgumentHelper arguments;
 	arguments.new_flag('M', "modulo", "\n\tIf you want the colors to be between 1 and gradientMax\n\t" , modulo);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFileNames);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
 	arguments.set_version("1.0");
 	arguments.process(argc, argv);
 
-	Image<PixelType>* image = NULL;
+	SunImage* image = NULL;
 
-	for (unsigned p = 0; p < imagesFileNames.size(); ++p)
+	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		image = new Image<PixelType>(imagesFileNames[p]);
+		image = new SunImage(imagesFilenames[p]);
 
 		for (unsigned j = 0; j < image->NumberPixels(); ++j)
 		{
@@ -72,7 +72,7 @@ int main(int argc, const char **argv)
 		}
 		image->pixel(0) = 0;
 		image->pixel(1) = gradientMax;
-		outputFileName =  imagesFileNames[p].substr(0, imagesFileNames[p].find(".fits"));
+		outputFileName =  stripSuffix(imagesFilenames[p]);
 		image->writeFitsImage(outputFileName + ".magick.fits");
 		delete image;
 	}

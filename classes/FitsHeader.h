@@ -30,8 +30,8 @@ class FitsHeader
 		~FitsHeader();
 		
 		//Routines to read and write a fits header
-          bool writeHeader(fitsfile* fptr);
-          bool readHeader(fitsfile* fptr);
+          bool writeKeywords(fitsfile* fptr);
+          bool readKeywords(fitsfile* fptr);
 		
 		//Accessors
 		template<class T>

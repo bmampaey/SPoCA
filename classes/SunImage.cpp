@@ -45,8 +45,8 @@ int SunImage::readFitsImageP(fitsfile* fptr)
 	int status = Image<PixelType>::readFitsImageP(fptr);
 	if(status)
 		return status;
-	header.readHeader(fptr);
-	readKeywords();
+
+	readHeader(fptr);
 	#if DEBUG >= 1
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
@@ -66,9 +66,7 @@ int SunImage::writeFitsImageP(fitsfile* fptr)
 	if(status)
 		return status;
 	
-	writeKeywords();
-	header.writeHeader(fptr);
-	
+	writeHeader(fptr);
 	if (fits_write_date(fptr, &status) )
 	{
 		cerr<<"Error : writing date to file "<<fptr->Fptr->filename<<" :"<< status <<endl;			
@@ -79,14 +77,14 @@ int SunImage::writeFitsImageP(fitsfile* fptr)
 	return status;
 }
 
-void SunImage::readKeywords()
+void SunImage::readHeader(fitsfile* fptr)
 {
-
+	header.readKeywords(fptr);
 }
 
-void SunImage::writeKeywords()
+void SunImage::writeHeader(fitsfile* fptr)
 {
-
+	header.writeKeywords(fptr);
 }
 
 
@@ -786,7 +784,6 @@ void SunImage::copyKeywords(const SunImage* i)
 	cdelt2 = i->cdelt2;
 	date_obs =  i->date_obs;
 	exposureTime = i->exposureTime;
-	header = i->header;
 	
 }
 

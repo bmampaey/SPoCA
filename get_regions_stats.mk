@@ -8,13 +8,13 @@ DFLAGS=
 LFLAGS=-lcfitsio
 
 all:bin/get_regions_stats.x
-clean: rm bin/get_regions_stats.x objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/Region.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+clean: rm bin/get_regions_stats.x objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
 
 
-bin/get_regions_stats.x : get_regions_stats.mk objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/Region.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/Region.o objects/ArgumentHelper.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/get_regions_stats.x
+bin/get_regions_stats.x : get_regions_stats.mk objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/Image.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/get_regions_stats.x
 
-objects/get_regions_stats.o : get_regions_stats.mk programs/get_regions_stats.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/SunImage.h classes/ArgumentHelper.h classes/RegionStats.h classes/Coordinate.h classes/FeatureVector.h
+objects/get_regions_stats.o : get_regions_stats.mk programs/get_regions_stats.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/ColorMap.h classes/SunImage.h classes/RegionStats.h classes/Coordinate.h classes/FeatureVector.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) programs/get_regions_stats.cpp -o objects/get_regions_stats.o
 
 objects/FeatureVector.o : get_regions_stats.mk classes/FeatureVector.cpp classes/constants.h
@@ -23,14 +23,11 @@ objects/FeatureVector.o : get_regions_stats.mk classes/FeatureVector.cpp classes
 objects/Coordinate.o : get_regions_stats.mk classes/Coordinate.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o
 
-objects/RegionStats.o : get_regions_stats.mk classes/RegionStats.cpp classes/constants.h classes/Region.h classes/Coordinate.h classes/SunImage.h
+objects/RegionStats.o : get_regions_stats.mk classes/RegionStats.cpp classes/constants.h classes/Region.h classes/Coordinate.h classes/SunImage.h classes/ColorMap.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/RegionStats.cpp -o objects/RegionStats.o
 
-objects/Region.o : get_regions_stats.mk classes/Region.cpp classes/constants.h classes/Coordinate.h classes/SunImage.h
+objects/Region.o : get_regions_stats.mk classes/Region.cpp classes/constants.h classes/Coordinate.h classes/ColorMap.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Region.cpp -o objects/Region.o
-
-objects/ArgumentHelper.o : get_regions_stats.mk classes/ArgumentHelper.cpp 
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ArgumentHelper.cpp -o objects/ArgumentHelper.o
 
 objects/SunImage.o : get_regions_stats.mk classes/SunImage.cpp classes/fitsio.h classes/longnam.h classes/Image.h classes/Coordinate.h classes/FitsHeader.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SunImage.cpp -o objects/SunImage.o
@@ -41,7 +38,13 @@ objects/FitsHeader.o : get_regions_stats.mk classes/FitsHeader.cpp classes/fitsi
 objects/Image.o : get_regions_stats.mk classes/Image.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Coordinate.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Image.cpp -o objects/Image.o
 
-objects/mainutilities.o : get_regions_stats.mk classes/mainutilities.cpp classes/FeatureVector.h classes/SunImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h
+objects/ColorMap.o : get_regions_stats.mk classes/ColorMap.cpp classes/fitsio.h classes/longnam.h classes/SunImage.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ColorMap.cpp -o objects/ColorMap.o
+
+objects/ArgumentHelper.o : get_regions_stats.mk classes/ArgumentHelper.cpp 
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ArgumentHelper.cpp -o objects/ArgumentHelper.o
+
+objects/mainutilities.o : get_regions_stats.mk classes/mainutilities.cpp classes/FeatureVector.h classes/SunImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h classes/ColorMap.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/mainutilities.cpp -o objects/mainutilities.o
 
 objects/SWAPImage.o : get_regions_stats.mk classes/SWAPImage.cpp classes/fitsio.h classes/longnam.h classes/SunImage.h

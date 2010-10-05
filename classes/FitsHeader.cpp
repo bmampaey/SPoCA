@@ -19,7 +19,7 @@ FitsHeader::FitsHeader(const string& filename)
 		fits_report_error(stderr, status);
 		return;
 	} 
-	readHeader(fptr);
+	readKeywords(fptr);
 	if ( fits_close_file(fptr, &status) )
 	{
 		cerr<<"Error : closing file "<<filename<<" :"<< status <<endl;			
@@ -39,7 +39,7 @@ FitsHeader::FitsHeader(const FitsHeader* i)
 }
 
 
-bool FitsHeader::readHeader(fitsfile* fptr)
+bool FitsHeader::readKeywords(fitsfile* fptr)
 {
 	int   status  = 0;
 	char key[81];
@@ -96,14 +96,14 @@ bool FitsHeader::readHeader(fitsfile* fptr)
 	cout<<"Header for file "<<fptr->Fptr->filename<<endl; 
 	for ( map<string,string>::iterator i = header.begin(); i != header.end(); ++i )
 	{
-		cout<<i->first<<":\t"<<i->second<<endl;
+		cout<<i->first<<":\t"<<i->second<<endl;c++
 	}
 	#endif
 	return status == KEY_OUT_BOUNDS;
 }
 
 
-bool FitsHeader::writeHeader(fitsfile* fptr)
+bool FitsHeader::writeKeywords(fitsfile* fptr)
 {
 	int   status  = 0;
 	char* comment = NULL;

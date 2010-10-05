@@ -81,6 +81,7 @@ class Image
 		unsigned colorizeConnectedComponents(const T setValue = 0);
 		unsigned tresholdConnectedComponents(const unsigned minSize, const T setValue = 0);
 		Image<T>* bitmap(const Image<T>* bitMap, T setValue = 1);
+		Image<T>* removeHoles(T unusedColor = std::numeric_limits<T>::max() - 1);
 
 		//Return the mean value of the image
 		Real mean() const;

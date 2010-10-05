@@ -125,12 +125,12 @@ int main(int argc, const char **argv)
 	#endif
 
 	// Options for the preprocessing of images
-	string imageType = "AIA";
+	string imageType = "UNKNOWN";
 	string preprocessingSteps = "NAR";
 	double radiusRatio = 1.31;
 
 	// The list of names of the sun images to process
-	vector<string> sunImagesFileNames;
+	vector<string> imagesFilenames;
 
 	// Options for the histogram classifiers
 	string sbinSize;
@@ -151,23 +151,22 @@ int main(int argc, const char **argv)
 	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP\n\t", imageType);
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", sunImagesFileNames);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
 	arguments.set_version("1.0");
 	arguments.process(argc, argv);
 
-	vector<SunImage*> images;
 	RealFeature binSize(0);
 
-	if(sunImagesFileNames.size() != NUMBERWAVELENGTH)
+	if(imagesFilenames.size() != NUMBERWAVELENGTH)
 	{
-		cerr<<"Error : "<<sunImagesFileNames.size()<<" fits image file given as parameter, "<<NUMBERWAVELENGTH<<" must be given!"<<endl;
+		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, "<<NUMBERWAVELENGTH<<" must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
 
-	images = getImagesFromFiles(imageType, sunImagesFileNames, true);
+	vector<SunImage*> images = getImagesFromFiles(imageType, imagesFilenames, true);
 	for (unsigned p = 0; p < images.size(); ++p)
 	{
 		images[p]->preprocessing(preprocessingSteps, radiusRatio);

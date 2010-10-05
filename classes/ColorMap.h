@@ -1,6 +1,6 @@
 #pragma once
-#ifndef AIAImage_H
-#define AIAImage_H
+#ifndef ColorMap_H
+#define ColorMap_H
 
 #include <iostream>
 #include <limits>
@@ -14,29 +14,24 @@
 #include "longnam.h"
 #include "SunImage.h"
 
-class AIAImage : public SunImage
+class ColorMap : public SunImage
 {
-
-	Real MINRADIUS()
-	{ return AIA_SINE_CORR_R1 / 100.; }
-
+	
 	public :
 		
 		//Constructors and destructors
-		AIAImage(const std::string& filename);
-		AIAImage(const SunImage& i);
-		AIAImage(const SunImage* i);
-		~AIAImage();
+		ColorMap(const std::string& filename);
+		ColorMap(const long xAxes = 0, const long yAxes = 0);
+		ColorMap(const SunImage& i);
+		ColorMap(const SunImage* i);
+		~ColorMap();
+		
 		
 		//Routines to read and write the keywords from/to the header
 		void readHeader(fitsfile* fptr);
 		void writeHeader(fitsfile* fptr);
-		
-		//Routines for the preprocessing on SunImages
-		Real percentCorrection(const Real r) const;
-		
 
 };
 
-bool isAIA(const FitsHeader& header);
+bool isColorMap(const FitsHeader& header);
 #endif

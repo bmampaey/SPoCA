@@ -10,7 +10,6 @@ AIAImage::~AIAImage()
 AIAImage::AIAImage(const string& filename)
 :SunImage(filename)
 {
-	readKeywords();
 	if(!isAIA(header))
 		cerr<<"Error : "<<filename<<" is not AIA!"<<endl;
 }
@@ -26,9 +25,10 @@ AIAImage::AIAImage(const SunImage* i)
 
 
 
-void AIAImage::readKeywords()
+void AIAImage::readHeader(fitsfile* fptr)
 {
 
+	header.readKeywords(fptr);
 	wavelength = header.get<double>("WAVELNTH");
 	suncenter.x = header.get<int>("CRPIX1");
 	suncenter.y = header.get<int>("CRPIX2");
@@ -60,9 +60,21 @@ void AIAImage::readKeywords()
 	
 }
 
-void AIAImage::writeKeywords()
+void AIAImage::writeHeader(fitsfile* fptr)
 {
+
+	header.set<double>("WAVELNTH", wavelength);
+	header.set<int>("CRPIX1", suncenter.x);
+	header.set<int>("CRPIX2", suncenter.y);
+	header.set<double>("CDELT1", cdelt1);
+	header.set<double>("CDELT2",cdelt2);
+	header.set<string>("T_OBS", date_obs);
 	header.set<double>("R_SUN", radius);
+	header.set<double>("EXPTIME", exposureTime);
+	header.set<double>("DATAMEDN", median);
+	header.set<PixelType>("DATAP01",datap01);
+	header.set<PixelType>("DATAP95", datap95);
+	header.writeKeywords(fptr);
 }
 
 

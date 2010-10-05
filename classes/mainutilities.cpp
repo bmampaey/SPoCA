@@ -42,15 +42,15 @@ inline bool readbinSize(RealFeature& binSize, const string& sbinSize)
 	return true;
 }
 
-inline vector<SunImage*> getImagesFromFiles(const string imageType, const vector<string>& sunImagesFileNames, bool align)
+inline vector<SunImage*> getImagesFromFiles(const string imageType, const vector<string>& imagesFilenames, bool align)
 {
 
 	vector<SunImage*> images;
 
 	// We read the files
-	for (unsigned p = 0; p < sunImagesFileNames.size(); ++p)
+	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		images.push_back(getImageFromFile(imageType, sunImagesFileNames[p]));
+		images.push_back(getImageFromFile(imageType, imagesFilenames[p]));
 	}
 	
 	
@@ -58,15 +58,15 @@ inline vector<SunImage*> getImagesFromFiles(const string imageType, const vector
 	{
 		Coordinate sunCenter = images[0]->SunCenter();
 		
-		for (unsigned p = 1; p < sunImagesFileNames.size(); ++p)
+		for (unsigned p = 1; p < imagesFilenames.size(); ++p)
 		{
 			if( sunCenter.d2(images[p]->SunCenter()) > 2 )
 			{
-				cerr<<"Warning : Image "<<sunImagesFileNames[p]<<" will be recentered to have the same sun centre than image "<<sunImagesFileNames[0]<<endl;
+				cerr<<"Warning : Image "<<imagesFilenames[p]<<" will be recentered to have the same sun centre than image "<<imagesFilenames[0]<<endl;
 				images[p]->recenter(sunCenter);
 				#if DEBUG >= 2
 				string filename = outputFileName + "recentered.";
-				filename +=  sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0);
+				filename +=  stripPath(imagesFilenames[p]);
 				images[p]->writeFitsImage(filename);
 				#endif
 			}
@@ -75,40 +75,46 @@ inline vector<SunImage*> getImagesFromFiles(const string imageType, const vector
 	return images;
 }
 
-inline SunImage* getImageFromFile(const string imageType, const string sunImageFileName)
+inline SunImage* getImageFromFile(const string imageType, const string imageFilename)
 {
 
 	SunImage* image;
 
 	#if DEBUG >= 1
-	if(sunImageFileName.find(".fits")==string::npos && sunImageFileName.find(".fts")==string::npos)
+	if(imageFilename.find(".fits")==string::npos && imageFilename.find(".fts")==string::npos)
 	{
-		cerr<<sunImageFileName<<" is not a fits file! (must end in .fits or .fts)"<<endl;
+		cerr<<imageFilename<<" is not a fits file! (must end in .fits or .fts)"<<endl;
 	}
 	#endif
 		
 	if (imageType == "EIT")
-		image = new EITImage(sunImageFileName);
+		image = new EITImage(imageFilename);
 	else if (imageType == "EUVI")
-		image = new EUVIImage(sunImageFileName);
+		image = new EUVIImage(imageFilename);
 	else if (imageType == "AIA")
-		image = new AIAImage(sunImageFileName);
+		image = new AIAImage(imageFilename);
 	else if (imageType == "SWAP")
-		image = new SWAPImage(sunImageFileName);
-	else 
+		image = new SWAPImage(imageFilename);
+	else if (imageType == "ColorMap")
+		image = new ColorMap(imageFilename);
+	else if (imageType == "SunImage")
+		image = new SunImage(imageFilename);
+	else
 	{
-		FitsHeader header(sunImageFileName);
+		FitsHeader header(imageFilename);
 		if(isEIT(header))
-			image = new EITImage(sunImageFileName);
+			image = new EITImage(imageFilename);
 		else if (isEUVI(header))
-			image = new EUVIImage(sunImageFileName);
+			image = new EUVIImage(imageFilename);
 		else if (isAIA(header))
-			image = new AIAImage(sunImageFileName);
+			image = new AIAImage(imageFilename);
 		else if (isSWAP(header))
-			image = new SWAPImage(sunImageFileName);
+			image = new SWAPImage(imageFilename);
+		else if (isColorMap(header))
+			image = new ColorMap(imageFilename);
 		else
 		{
-			cerr<<"Error: Unknown instrument for "<<sunImageFileName<<endl;
+			cerr<<"Error: Unknown instrument for "<<imageFilename<<endl;
 			image = NULL;
 		}
 	}

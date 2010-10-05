@@ -29,29 +29,29 @@ int main(int argc, const char **argv)
 	#endif
 
 	// The list of names of the sun images to process
-	vector<string> sunImagesFileNames;
+	vector<string> imagesFilenames;
 
 	string programDescription = "This Program will uncompres a fits files.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
 
 	ArgumentHelper arguments;
-	arguments.set_string_vector("input_fitsFileName output_fitsFileName", "", sunImagesFileNames);
+	arguments.set_string_vector("input_fitsFileName output_fitsFileName", "", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
 	arguments.set_version("1.0");
 	arguments.process(argc, argv);
 
-	SunImage* image;
-	if(sunImagesFileNames.size() != 2)
+	if(imagesFilenames.size() != 2)
 	{
-		cerr<<"Error : "<<sunImagesFileNames.size()<<" fits image file name given as parameter, 2 must be given!"<<endl;
+		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file name given as parameter, 2 must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
 
-	image = getImageFromFile("", sunImagesFileNames[0]);
-	image->writeFitsImage(sunImagesFileNames[1]);
+	SunImage* image = getImageFromFile("SunImage", imagesFilenames[0]);
+	image->writeFitsImage(imagesFilenames[1]);
+	delete image;
 
 	return EXIT_SUCCESS;
 }

@@ -21,4 +21,8 @@ std::istream& operator>>(std::istream& in, std::vector<unsigned>& v);
 
 std::string itos(const int& i);
 std::string dtos(const double& i);
+
+std::string stripPath(const std::string &name); 
+std::string stripSuffix(const std::string &name); 
+
 #endif

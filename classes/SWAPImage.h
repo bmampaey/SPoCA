@@ -31,8 +31,8 @@ class SWAPImage : public SunImage
 		
 		
 		//Routines to read and write the keywords from/to the header
-		void readKeywords();
-		void writeKeywords();
+		void readHeader(fitsfile* fptr);
+		void writeHeader(fitsfile* fptr);
 		
 		//Routines for the preprocessing on SunImages
 		Real percentCorrection(const Real r) const;

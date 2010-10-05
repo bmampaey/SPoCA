@@ -120,8 +120,8 @@ bool path(const RegionGraph::node* n, const Region* r)
 // Output a graph in the dot format
 void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, const string graphName)
 {
-	string filename = outputFileName + graphName + ".dot";
-	ofstream graphFile(filename.c_str());
+
+	ofstream graphFile((outputFileName + graphName + ".dot").c_str());
 	if (graphFile.good())
 	{
 
@@ -165,7 +165,6 @@ void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, c
 // Output regions in the region format
 void ouputRegions(const vector<vector<Region*> >& regions, string filename)
 {
-	filename = outputFileName + filename;
 	ofstream regionFile(filename.c_str());
 	if (regionFile.good())
 	{

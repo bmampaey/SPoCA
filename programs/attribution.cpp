@@ -14,6 +14,7 @@
 #include "../classes/mainutilities.h"
 
 #include "../classes/SunImage.h"
+#include "../classes/ColorMap.h"
 
 #include "../classes/Classifier.h"
 #include "../classes/FCMClassifier.h"
@@ -42,8 +43,8 @@ int main(int argc, const char **argv)
 
 
 	// The list of names of the sun images to process
-	string imageType = "AIA";
-	vector<string> sunImagesFileNames;
+	string imageType = "UNKNOWN";
+	vector<string> imagesFilenames;
 
 	// Options for the preprocessing of images
 	string preprocessingSteps = "NAR";
@@ -110,7 +111,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('a',"ar","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Active Region.\n\t", activeRegion);
 	arguments.new_named_string('t',"tr","coma separated list of positive integer (no spaces)", "\n\tOnly for treshold segmentation.\n\tThe parameter of the treshold segmentation.\n\tMust be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership\n\t", treshold);
 	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", sunImagesFileNames);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
@@ -129,9 +130,9 @@ int main(int argc, const char **argv)
 	// We process the arguments
 
 	// We assert that the number of sun images provided is correct
-	if(sunImagesFileNames.size() != NUMBERWAVELENGTH)
+	if(imagesFilenames.size() != NUMBERWAVELENGTH)
 	{
-		cerr<<"Error : "<<sunImagesFileNames.size()<<" fits image file given as parameter, "<<NUMBERWAVELENGTH<<" must be given!"<<endl;
+		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, "<<NUMBERWAVELENGTH<<" must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
 
@@ -195,12 +196,12 @@ int main(int argc, const char **argv)
 	
 		
 	// We read and preprocess the sun images
-	vector<SunImage*> images = getImagesFromFiles(imageType, sunImagesFileNames, true);
+	vector<SunImage*> images = getImagesFromFiles(imageType, imagesFilenames, true);
 	for (unsigned p = 0; p < images.size(); ++p)
 	{
 		images[p]->preprocessing(preprocessingSteps, radiusRatio);
 		#if DEBUG >= 2
-		images[p]->writeFitsImage(outputFileName + "preprocessed." + sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0));
+		images[p]->writeFitsImage(outputFileName + "preprocessed." + stripPath(imagesFilenames[p]) );
 		#endif
 	}
 
@@ -208,10 +209,12 @@ int main(int argc, const char **argv)
 	// We add the images to the classifier
 	F->addImages(images);
 		
-	// We delete all images but the first one to gain memory space
-	SunImage* segmentedMap = images[0];
-	
-	for (unsigned p = 1; p < images.size(); ++p)
+	// We declare the segmented map with the keywords of the first image
+	ColorMap* segmentedMap = new ColorMap();
+	segmentedMap->copyKeywords(images[0]);
+		
+	// We delete all images to gain memory space
+	for (unsigned p = 0; p < images.size(); ++p)
 	{
 		delete images[p];
 	}

@@ -17,6 +17,7 @@
 #include "constants.h"
 #include "Image.h"
 #include "SunImage.h"
+#include "ColorMap.h"
 #include "FeatureVector.h"
 #include "Region.h"
 #include "Coordinate.h"
@@ -87,20 +88,20 @@ class Classifier
 		virtual void randomInitB(unsigned C);
 		
 		//Segmentation functions
-		virtual SunImage* segmentedMap_maxUij(SunImage* segmentedMap = NULL);
-		virtual SunImage* segmentedMap_closestCenter(SunImage* segmentedMap = NULL);
-		virtual SunImage* segmentedMap_classTreshold(unsigned i, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, SunImage* segmentedMap = NULL);
-		virtual SunImage* segmentedMap_limits(std::vector<RealFeature>& limits, SunImage* segmentedMap = NULL);
-		virtual SunImage* segmentedMap_fixed(std::vector<unsigned>& ch, std::vector<unsigned>& qs, std::vector<unsigned>& ar, SunImage* segmentedMap = NULL);
-		virtual SunImage* fuzzyMap(const unsigned i, SunImage* fuzzyMap = NULL);
-		virtual SunImage* normalizedFuzzyMap(const unsigned i, SunImage* fuzzyMap = NULL);
+		virtual ColorMap* segmentedMap_maxUij(ColorMap* segmentedMap = NULL);
+		virtual ColorMap* segmentedMap_closestCenter(ColorMap* segmentedMap = NULL);
+		virtual ColorMap* segmentedMap_classTreshold(unsigned i, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, ColorMap* segmentedMap = NULL);
+		virtual ColorMap* segmentedMap_limits(std::vector<RealFeature>& limits, ColorMap* segmentedMap = NULL);
+		virtual ColorMap* segmentedMap_fixed(std::vector<unsigned>& ch, std::vector<unsigned>& qs, std::vector<unsigned>& ar, ColorMap* segmentedMap = NULL);
+		virtual ColorMap* fuzzyMap(const unsigned i, ColorMap* fuzzyMap = NULL);
+		virtual ColorMap* normalizedFuzzyMap(const unsigned i, ColorMap* fuzzyMap = NULL);
 		
 		//Sursegmentation functions
 		unsigned sursegmentation(std::vector<RealFeature>& B, unsigned C = 0);
 		unsigned sursegmentation(unsigned C = 0);
 
 		//Utilities function for outputing results
-		virtual void saveAllResults(SunImage* outImage);
+		virtual void saveAllResults(ColorMap* outImage);
 		void saveB(const std::string& filename);
 		virtual std::vector<RealFeature> classAverage() const;
 		

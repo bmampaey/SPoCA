@@ -10,8 +10,6 @@ EITImage::~EITImage()
 EITImage::EITImage(const string& filename)
 :SunImage(filename)
 {
-
-	readKeywords();
 	if(!isEIT(header))
 		cerr<<"Error : "<<filename<<" is not EIT!"<<endl;
 	//In EIT images, bad pixels have negative values according to Veronique
@@ -37,8 +35,9 @@ EITImage::EITImage(const SunImage* i)
 {}
 
 
-void EITImage::readKeywords()
+void EITImage::readHeader(fitsfile* fptr)
 {
+	header.readKeywords(fptr);
 	wavelength = header.get<double>("WAVELNTH");
 	suncenter.x = header.get<int>("CRPIX1");
 	suncenter.y = header.get<int>("CRPIX2");
@@ -63,8 +62,19 @@ void EITImage::readKeywords()
 	
 }
 
-void EITImage::writeKeywords()
+void EITImage::writeHeader(fitsfile* fptr)
 {
+	header.set<double>("WAVELNTH", wavelength);
+	header.set<int>("CRPIX1", suncenter.x);
+	header.set<int>("CRPIX2", suncenter.y);
+	header.set<double>("CDELT1", cdelt1);
+	header.set<double>("CDELT2",cdelt2);
+	header.set<string>("DATE-OBS", date_obs);
+	header.set<double>("SOLAR_R", radius);
+	header.set<double>("EXPTIME", exposureTime);
+
+	header.writeKeywords(fptr);
+
 }
 
 

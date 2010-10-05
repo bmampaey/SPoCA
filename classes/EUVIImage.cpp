@@ -10,7 +10,6 @@ EUVIImage::~EUVIImage()
 EUVIImage::EUVIImage(const string& filename)
 :SunImage(filename)
 {
-	readKeywords();
 	if(!isEUVI(header))
 		cerr<<"Error : "<<filename<<" is not EUVI!"<<endl;
 }
@@ -27,8 +26,10 @@ EUVIImage::EUVIImage(const SunImage* i)
 {}
 
 
-void EUVIImage::readKeywords()
+void EUVIImage::readHeader(fitsfile* fptr)
 {
+	header.readKeywords(fptr);
+
 	wavelength = header.get<double>("WAVELNTH");
 	suncenter.x = header.get<int>("CRPIX1");
 	suncenter.y = header.get<int>("CRPIX2");
@@ -54,9 +55,19 @@ void EUVIImage::readKeywords()
 	
 }
 
-void EUVIImage::writeKeywords()
+void EUVIImage::writeHeader(fitsfile* fptr)
 {
-
+	header.set<double>("WAVELNTH", wavelength);
+	header.set<int>("CRPIX1", suncenter.x);
+	header.set<int>("CRPIX2", suncenter.y);
+	header.set<double>("CDELT1", cdelt1);
+	header.set<double>("CDELT2",cdelt2);
+	header.set<string>("DATE-OBS", date_obs);
+	header.set<double>("RSUN", radius*cdelt1);
+	header.set<double>("EXPTIME", exposureTime);
+	header.set<PixelType>("DATAP01",datap01);
+	header.set<PixelType>("DATAP95", datap95);
+	header.writeKeywords(fptr);
 }
 
 inline Real EUVIImage::percentCorrection(const Real r)const

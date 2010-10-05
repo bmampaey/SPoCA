@@ -97,8 +97,8 @@ int main(int argc, const char **argv)
 	#endif
 
 	// The list of names of the images to process
-	string imageType = "AIA";
-	vector<string> sunImagesFileNames;
+	string imageType = "UNKNOWN";
+	vector<string> imagesFilenames;
 
 	// Options for the preprocessing of images
 	string preprocessingSteps = "NAR";
@@ -116,7 +116,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
 	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
 	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", sunImagesFileNames);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
 	arguments.set_version("1.0");
@@ -130,108 +130,86 @@ int main(int argc, const char **argv)
 	}
 	outputFileName += ".";
 
-	// We read  the sun images
-	vector<SunImage*> images = getImagesFromFiles(imageType, sunImagesFileNames, true);
+	ofstream lineFile;
+
 	
-
-
-	//We output the middle line of the images
-	for (unsigned p = 0; p < sunImagesFileNames.size(); ++p)
+	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		images[p]->nullifyAboveRadius(radiusRatio);
-		string filename = outputFileName;
-		filename +=  sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0);
-		filename += ".line.txt";
-		ofstream lineFile(filename.c_str());
+		// We read  the sun image
+		SunImage* image  = getImageFromFile(imageType, imagesFilenames[p]);
+		image->nullifyAboveRadius(radiusRatio);
+		string filename = outputFileName + stripPath(stripSuffix(imagesFilenames[p])) + ".";
+		
+		//We output the middle line of the image
+		lineFile.open((filename + "line.txt").c_str());
 		if (lineFile)
 		{
-			unsigned y = images[p]->Yaxes() / 2;
-			for (unsigned x = 0; x < images[p]->Xaxes(); ++x)
-				lineFile<<images[p]->pixel(x, y) <<endl;
+			unsigned y = image->Yaxes() / 2;
+			for (unsigned x = 0; x < image->Xaxes(); ++x)
+				lineFile<<image->pixel(x, y) <<endl;
 		}
 		else
 		{
 			cerr<<"Error : Could not open file "<<filename<<" for writing."<<endl;
-
 		}
-		
 
 		lineFile.close();
-	}
-
-	//We preprocess the sun images
-	for (unsigned p = 0; p < images.size(); ++p)
-	{
-		images[p]->preprocessing(preprocessingSteps, radiusRatio);
-
-	}
 	
-	//We output the middle line of the images
-	for (unsigned p = 0; p < images.size(); ++p)
-	{
-		string filename = outputFileName;
-		filename +=  sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0);
-		filename += ".preprocessed.line.txt";
-		ofstream lineFile(filename.c_str());
+		//We preprocess the sun image
+		image->preprocessing(preprocessingSteps, radiusRatio);
+		
+		//We output the middle line of the image
+		lineFile.open((filename + ".preprocessed.line.txt").c_str());
 		if (lineFile)
 		{
-			unsigned y = images[p]->Yaxes() / 2;
-			for (unsigned x = 0; x < images[p]->Xaxes(); ++x)
-				lineFile<<images[p]->pixel(x, y) <<endl;
+			unsigned y = image->Yaxes() / 2;
+			for (unsigned x = 0; x < image->Xaxes(); ++x)
+				lineFile<<image->pixel(x, y) <<endl;
 		}
 		else
 		{
 			cerr<<"Error : Could not open file "<<filename<<" for writing."<<endl;
-
 		}
-		
 
 		lineFile.close();
 
-	}
-	//We draw circles on the images
-	Real pixelRadius = 0;
-	for (unsigned p = 0; p < images.size(); ++p)
-	{
-		unsigned Xaxes = images[p]->Xaxes(), Yaxes = images[p]->Yaxes();
-		double sunRadius = images[p]->SunRadius();
-		Coordinate sunCenter = images[p]->SunCenter();
-		for (unsigned y=0; y < Yaxes; ++y)
+	
+		//We draw circles on the image
+		double sunRadius = image->SunRadius();
+		Coordinate sunCenter = image->SunCenter();
+		for (unsigned y = 0; y < image->Yaxes(); ++y)
 		{
-			for (unsigned x=0; x < Xaxes; ++x)
+			for (unsigned x = 0; x < image->Xaxes(); ++x)
 			{
-
-				pixelRadius = sqrt(sunCenter.d2(Coordinate(x,y))) / sunRadius;
-				if(circleAt(pixelRadius, imageType))
-					images[p]->pixel(x,y) = images[p]->nullvalue();
-				
+				if(circleAt(sunCenter.d(Coordinate(x,y)) / sunRadius, imageType))
+					image->pixel(x,y) = image->nullvalue();				
 			}
 		}
-		string filename = outputFileName;
-		filename +=  sunImagesFileNames[p].substr(sunImagesFileNames[p].rfind('/')!=string::npos?sunImagesFileNames[p].rfind('/')+1:0);
-		images[p]->writeFitsImage(filename);
+		image->writeFitsImage(filename + ".preprocessed.fits");
+		delete image;
 	}
+	
 	//We create the function image
-	images[0]->zero();
-	unsigned Xaxes = images[0]->Xaxes(), Yaxes = images[0]->Yaxes();
-	double sunRadius = images[0]->SunRadius();
-	Coordinate sunCenter = images[0]->SunCenter();
-	for (unsigned y=0; y < Yaxes; ++y)
+	SunImage* image  = getImageFromFile(imageType, imagesFilenames[0]);
+	image->zero();
+	double sunRadius = image->SunRadius();
+	Coordinate sunCenter = image->SunCenter();
+	for (unsigned y=0; y < image->Yaxes(); ++y)
 	{
-		for (unsigned x=0; x < Xaxes; ++x)
+		for (unsigned x=0; x < image->Xaxes(); ++x)
 		{
 
-			pixelRadius = sqrt(sunCenter.d2(Coordinate(x,y))) / sunRadius;
+			double pixelRadius = sunCenter.d(Coordinate(x,y)) / sunRadius;
 			if(circleAt(pixelRadius, imageType))
-				images[0]->pixel(x,y) = 2;
+				image->pixel(x,y) = 2;
 			else
-				images[0]->pixel(x,y) = images[0]->percentCorrection(pixelRadius);
+				image->pixel(x,y) = image->percentCorrection(pixelRadius);
 			
 		}
 	}
-	string filename = outputFileName + ".function.fits";
-	images[0]->writeFitsImage(filename);
-
+	image->writeFitsImage(outputFileName + "function.fits");
+	
+	delete image;
 	return EXIT_SUCCESS;
 }
 

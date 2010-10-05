@@ -836,6 +836,25 @@ Image<T>* Image<T>::bitmap(const Image<T>* bitMap, T setValue)
 
 }
 
+template<class T>
+Image<T>* Image<T>::removeHoles(T unusedColor)
+{
+	propagateColor(unusedColor, 0);
+	T lastColor = nullvalue_;
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if(pixels[j] != nullvalue_)
+		{
+			lastColor = pixels[j];
+		}
+		else
+		{
+			pixels[j] = lastColor;
+		}
+	}
+	propagateColor(nullvalue_, 0);
+	return this;
+}
 
 template<class T>
 Real Image<T>::mean() const
@@ -843,10 +862,12 @@ Real Image<T>::mean() const
 	Real sum = 0;
 	Real card = 0;
 	for (unsigned j = 0; j < numberPixels; ++j)
-		if(pixels[j] != nullvalue_)
 	{
-		sum += pixels[j];
-		++card;
+		if(pixels[j] != nullvalue_)
+		{
+			sum += pixels[j];
+			++card;
+		}
 	}
 	if(card == 0)
 		return 0;

@@ -6,16 +6,71 @@ using namespace cgt;
 
 unsigned long newColor;
 
+// Compute the number of pixels common to 2 regions from 2 images, with derotation
+unsigned overlay_derotate(SunImage* image1, const Region* region1, SunImage* image2, const Region* region2)
+{
+	unsigned intersectPixels = 0;
+	PixelType setValue1 = image1->pixel(region1->FirstPixel());
+	PixelType setValue2 = image2->pixel(region2->FirstPixel());
+	
+	
+	// We are going to project the image1 into the coordinate of image2	
+	Coordinate r1_boxmin = image1->shift_like(region1->Boxmin(), image2);
+	Coordinate r1_boxmax = image1->shift_like(region1->Boxmax(), image2);
+	Coordinate r2_boxmin = region2->Boxmin();
+	Coordinate r2_boxmax = region2->Boxmax();
+
+	//The projection of the box of region1 may lie outside of the sundisc ==> the projection is null 
+
+	if(r1_boxmin == Coordinate(0))
+		 r1_boxmin = r2_boxmin;
+	if(r1_boxmax == Coordinate(0))
+		 r1_boxmax = r2_boxmax;		
+
+
+	// We compute the bornes of the intersection of teh 2 regions
+	// If the 2 regions don't overlay, we will not even enter the loops
+	unsigned Xmin = r1_boxmin.x > r2_boxmin.x ? r1_boxmin.x : r2_boxmin.x;
+	unsigned Ymin = r1_boxmin.y > r2_boxmin.y ? r1_boxmin.y : r2_boxmin.y;
+	unsigned Xmax = r1_boxmax.x < r2_boxmax.x ? r1_boxmax.x : r2_boxmax.x;
+	unsigned Ymax = r1_boxmax.y < r2_boxmax.y ? r1_boxmax.y : r2_boxmax.y;
+
+	// We scan the intersection in the coordinates of image2
+	Coordinate c1, c2;
+	for (c2.y = Ymin; c2.y <= Ymax; ++c2.y)
+	{
+		for (c2.x = Xmin; c2.x <= Xmax; ++c2.x)
+		{
+			// We project back the coordinate of image2 into the coordinate of image1
+			c1 = image2->shift_like(c2, image1);
+			// There is overlay between the two regions									  
+			if(image1->pixel(c1) == setValue1 && image2->pixel(c2) == setValue2)
+				++intersectPixels;
+		}
+	}
+	
+	
+	return intersectPixels;
+
+}
+
+
 // Compute the number of pixels common to 2 regions from 2 images
 unsigned overlay(SunImage* image1, const Region* region1, SunImage* image2, const Region* region2)
 {
 	unsigned intersectPixels = 0;
 	PixelType setValue1 = image1->pixel(region1->FirstPixel());
 	PixelType setValue2 = image2->pixel(region2->FirstPixel());
-	unsigned Xmin = region1->Boxmin().x > region2->Boxmin().x ? region1->Boxmin().x : region2->Boxmin().x;
-	unsigned Ymin = region1->Boxmin().y > region2->Boxmin().y ? region1->Boxmin().y : region2->Boxmin().y;
-	unsigned Xmax = region1->Boxmax().x < region2->Boxmax().x ? region1->Boxmax().x : region2->Boxmax().x;
-	unsigned Ymax = region1->Boxmax().y < region2->Boxmax().y ? region1->Boxmax().y : region2->Boxmax().y;
+	
+	Coordinate r1_boxmin = region1->Boxmin();
+	Coordinate r1_boxmax = region1->Boxmax();
+	Coordinate r2_boxmin = region2->Boxmin();
+	Coordinate r2_boxmax = region2->Boxmax();
+
+	unsigned Xmin = r1_boxmin.x > r2_boxmin.x ? r1_boxmin.x : r2_boxmin.x;
+	unsigned Ymin = r1_boxmin.y > r2_boxmin.y ? r1_boxmin.y : r2_boxmin.y;
+	unsigned Xmax = r1_boxmax.x < r2_boxmax.x ? r1_boxmax.x : r2_boxmax.x;
+	unsigned Ymax = r1_boxmax.y < r2_boxmax.y ? r1_boxmax.y : r2_boxmax.y;
 
 	// We scan the intersection between the 2 boxes of the regions
 	// If the 2 regions don't overlay, we will not even enter the loops
@@ -28,6 +83,7 @@ unsigned overlay(SunImage* image1, const Region* region1, SunImage* image2, cons
 				++intersectPixels;
 		}
 	}
+	
 	return intersectPixels;
 
 }

@@ -1,5 +1,9 @@
 #include "AIAImage.h"
 
+const double PI = 3.14159265358979323846;
+const double MIPI = 1.57079632679489661923;
+const double BIPI = 6.28318530717958647692;
+
 using namespace std;
 
 
@@ -8,8 +12,9 @@ AIAImage::~AIAImage()
 
 
 AIAImage::AIAImage(const string& filename)
-:SunImage(filename)
+:SunImage()
 {
+	readFitsImage(filename);
 	if(!isAIA(header))
 		cerr<<"Error : "<<filename<<" is not AIA!"<<endl;
 }
@@ -36,6 +41,7 @@ void AIAImage::readHeader(fitsfile* fptr)
 	cdelt2 = header.get<double>("CDELT2");
 	
 	exposureTime = header.get<double>("EXPTIME");
+	b0 = (header.get<double>("CRLT_OBS")/180.)*PI; //Need to be verified
 	
 	median = header.get<double>("DATAMEDN");
 	datap01 = header.get<PixelType>("DATAP01");
@@ -74,6 +80,7 @@ void AIAImage::writeHeader(fitsfile* fptr)
 	header.set<double>("DATAMEDN", median);
 	header.set<PixelType>("DATAP01",datap01);
 	header.set<PixelType>("DATAP95", datap95);
+	header.set<double>("CRLT_OBS", (b0 * 180)/PI);
 	header.writeKeywords(fptr);
 }
 

@@ -1238,12 +1238,86 @@ void fillRandomDots(Image<PixelType>* image, unsigned numberClasses, const vecto
 
 }
 
+template<class T>
+Image<T>* Image<T>::convolution(const Image<T> * img, const float kernel[3][3])
+{
+	resize(img->Xaxes(), img->Xaxes());
+	unsigned j = Xaxes() + 1;
+
+	T* p0 = img->pixels;
+	T* p1 = p0+Xaxes();
+	T* p2 = p1+Xaxes();
+
+	for(unsigned y = 1; y < Yaxes()-1; ++y)
+	{
+		for(unsigned x = 1; x < Xaxes()-1; ++x)
+		{
+			pixels[j++] =	kernel[0][0] * p0[0] + kernel[0][1] * p0[1] + kernel[0][2] * p0[2] +
+						kernel[1][0] * p1[0] + kernel[1][1] * p1[1] + kernel[1][2] * p1[2] +
+						kernel[2][0] * p2[0] + kernel[2][1] * p2[1] + kernel[2][2] * p2[2] ;
+			++p0;
+			++p1;
+			++p2;
+		}
+
+	}
+	return this;
+}
+
+template<class T>
+Image<T>* Image<T>::convolution(const Image<T> * img, const float kernel[5][5])
+{
+	resize(img->Xaxes(), img->Xaxes());
+	return this;
+}
+
+template<class T>
+Image<T>* Image<T>::sobel_approx(const Image<T> * img)
+{
+	resize(img->Xaxes(), img->Xaxes());
+	unsigned j = 0;
+
+	T* p0 = img->pixels;
+	T* p1 = p0+Xaxes();
+	T* p2 = p1+Xaxes();
+
+	for(unsigned y = 0; y < Yaxes()-2; ++y)
+	{
+		for(unsigned x = 0; x < Xaxes()-2; ++x)
+		{
+			pixels[j++] = ( abs((p0[0] + 2*p0[1] + p0[2]) - (p2[0] + 2*p2[1]+ p2[2])) + abs((p0[2] + 2*p1[2] + p2[2]) - (p0[0] + 2*p1[0] + p2[0])) ) / 6;
+			++p0;
+			++p1;
+			++p2;
+		}
+
+	}
+	return this;
+}
+
+template<class T>
+Image<T>* Image<T>::sobel(const Image<T> * img)
+{
+	resize(img->Xaxes(), img->Xaxes());
+	const float sobel_kernelx[3][3] = {{1, 0, -1}, {2, 0, -2}, {1, 0, -1}};
+	const float sobel_kernely[3][3] = {{1, 2, 1}, {0, 0, 0}, {-1, -2, -1}};
+
+	Image<T> Cx (img->Xaxes(), img->Xaxes());
+	Image<T> Cy (img->Xaxes(), img->Xaxes());
+	Cx.convolution(img, sobel_kernelx);
+	Cy.convolution(img, sobel_kernely);
+	for (unsigned j= 0; j < numberPixels; ++j) 
+	{
+		pixels[j] = sqrt(Cx.pixels[j] * Cx.pixels[j] + Cy.pixels[j] * Cy.pixels[j]);
+	}
+	return this;
+}
 
 /* We create the code for the template class we need
    See constants.h */
 
 template class Image<Real>;
-template class Image<unsigned>;
+//template class Image<unsigned>;
 
 #if PIXELTYPE!=REALTYPE && PIXELTYPE!=TUINT
 template class Image<PixelType>;

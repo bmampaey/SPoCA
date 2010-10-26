@@ -96,7 +96,7 @@ bool FitsHeader::readKeywords(fitsfile* fptr)
 	cout<<"Header for file "<<fptr->Fptr->filename<<endl; 
 	for ( map<string,string>::iterator i = header.begin(); i != header.end(); ++i )
 	{
-		cout<<i->first<<":\t"<<i->second<<endl;c++
+		cout<<i->first<<":\t"<<i->second<<endl;
 	}
 	#endif
 	return status == KEY_OUT_BOUNDS;

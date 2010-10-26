@@ -95,7 +95,7 @@ string stripPath(const string &name)
 string stripSuffix(const string &name) 
 {
 	size_t pos = name.rfind('.');
-	return  pos != string::npos ? name.substr(0,pos-1) : name;
+	return  pos != string::npos ? name.substr(0,pos) : name;
 }
 
 

@@ -118,8 +118,9 @@
 #define SSW_PATH "/usr/local/ssw/"
 #define WCS_ROUTINES_SAV "./idl/wcs_routines.sav"
 
-// The minimu quotient factor Factor
+// The minimum quotient factor Factor
 #define MIN_QUOTIENT_FACTOR 5
+
 
 /*---------------- Do NOT modify below please ------------------*/
 

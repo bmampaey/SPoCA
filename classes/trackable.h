@@ -28,8 +28,13 @@ typedef cgt::graph<Region*, int> RegionGraph;
 //Ordonate the images according to time
 void ordonate(std::vector<SunImage*>& images);
 
+
+// Compute the number of pixels common to 2 regions from 2 images, with derotation
+unsigned overlay_derotate(SunImage* image1, const Region* region1, SunImage* image2, const Region* region2);
+
 // Compute the number of pixels common to 2 regions from 2 images
 unsigned overlay(SunImage* image1, const Region* region1, SunImage* image2, const Region* region2);
+
 
 // Find the biggest parrent of a node (the one I have the biggest intersection with)
 RegionGraph::node* biggestParent(const RegionGraph::node* n);

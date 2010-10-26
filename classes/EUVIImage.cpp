@@ -1,5 +1,9 @@
 #include "EUVIImage.h"
 
+const double PI = 3.14159265358979323846;
+const double MIPI = 1.57079632679489661923;
+const double BIPI = 6.28318530717958647692;
+
 using namespace std;
 
 
@@ -8,8 +12,9 @@ EUVIImage::~EUVIImage()
 
 
 EUVIImage::EUVIImage(const string& filename)
-:SunImage(filename)
+:SunImage()
 {
+	readFitsImage(filename);
 	if(!isEUVI(header))
 		cerr<<"Error : "<<filename<<" is not EUVI!"<<endl;
 }
@@ -37,6 +42,7 @@ void EUVIImage::readHeader(fitsfile* fptr)
 	cdelt2 = header.get<double>("CDELT2");
 	
 	exposureTime = header.get<double>("EXPTIME");
+	b0 = (header.get<double>("HGLT_OBS")/180.)*PI; //Need to be verified
 
 	datap01 = header.get<PixelType>("DATAP01");
 	datap95 = header.get<PixelType>("DATAP95");
@@ -67,6 +73,7 @@ void EUVIImage::writeHeader(fitsfile* fptr)
 	header.set<double>("EXPTIME", exposureTime);
 	header.set<PixelType>("DATAP01",datap01);
 	header.set<PixelType>("DATAP95", datap95);
+	header.set<double>("HGLT_OBS", (b0 * 180)/PI);
 	header.writeKeywords(fptr);
 }
 

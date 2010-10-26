@@ -59,7 +59,11 @@ int main(int argc, const char **argv)
 		cerr<<"Error : you must provide one and only one of -Q or -D."<<endl;
 		return EXIT_FAILURE;
 	}
-	vector<SunImage*> images = getImagesFromFiles("UNKNOWN", imagesFilenames, recenter);
+	vector<SunImage*> images;
+	if(recenter)
+		images = getImagesFromFiles("UNKNOWN", imagesFilenames, recenter);
+	else
+		images = getImagesFromFiles("SunImage", imagesFilenames, recenter);
 	if(images.size() != 2)
 	{
 		cerr<<"Error : you must provide exactly 2 fits files."<<endl;

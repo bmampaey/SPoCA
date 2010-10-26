@@ -99,7 +99,11 @@ class Image
 		void neighboorhoodSkewness(const Image<T>* image, int Nradius);
 		//Replace each pixel by the kurtosis of its neighboors (in circle of radius Nradius)
 		void neighboorhoodKurtosis(const Image<T>* image, int Nradius);
-
+		
+		Image<T>* convolution(const Image<T> * img, const float kernel[3][3]);
+		Image<T>* convolution(const Image<T> * img, const float kernel[5][5]);
+		Image<T>* sobel_approx(const Image<T> * img);
+		Image<T>* sobel(const Image<T> * img);
 };
 
 void fillRandomDots(Image<PixelType>* image, unsigned numberClasses, const std::vector<Real>& classesFeatures, const std::vector<Real>& backgroundFeatures);

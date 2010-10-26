@@ -1,5 +1,9 @@
 #include "SWAPImage.h"
 
+const double PI = 3.14159265358979323846;
+const double MIPI = 1.57079632679489661923;
+const double BIPI = 6.28318530717958647692;
+
 using namespace std;
 
 
@@ -8,8 +12,9 @@ SWAPImage::~SWAPImage()
 
 
 SWAPImage::SWAPImage(const string& filename)
-:SunImage(filename)
+:SunImage()
 {
+	readFitsImage(filename);
 	if(!isSWAP(header))
 		cerr<<"Error : "<<filename<<" is not SWAP!"<<endl;
 }
@@ -37,6 +42,7 @@ void SWAPImage::readHeader(fitsfile* fptr)
 	cdelt2 = header.get<double>("CDELT2");
 	
 	exposureTime = header.get<double>("EXPTIME");
+	b0 = (header.get<double>("HGLT_OBS")/180.)*PI; //Need to be verified
 	
 	//We read the radius
 	radius = header.get<double>("RSUN_ARC");
@@ -62,6 +68,7 @@ void SWAPImage::writeHeader(fitsfile* fptr)
 	header.set<string>("DATE-OBS", date_obs);
 	header.set<double>("RSUN_ARC", radius*cdelt1);
 	header.set<double>("EXPTIME", exposureTime);
+	header.set<double>("HGLT_OBS", (b0 * 180)/PI);
 	header.writeKeywords(fptr);
 }
 

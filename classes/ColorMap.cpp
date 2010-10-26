@@ -1,5 +1,9 @@
 #include "ColorMap.h"
 
+const double PI = 3.14159265358979323846;
+const double MIPI = 1.57079632679489661923;
+const double BIPI = 6.28318530717958647692;
+
 using namespace std;
 
 
@@ -8,8 +12,12 @@ ColorMap::~ColorMap()
 
 
 ColorMap::ColorMap(const string& filename)
-:SunImage(filename)
+:SunImage()
 {
+	readFitsImage(filename);
+	if(!isColorMap(header))
+		cerr<<"Error : "<<filename<<" is not a SPoCA ColorMap!"<<endl;
+	
 	nullvalue_ = 0;
 }
 
@@ -49,6 +57,9 @@ void ColorMap::readHeader(fitsfile* fptr)
 	// We read the radius
 	radius = header.get<double>("RADIUS");
 	
+	
+	b0 = (header.get<double>("SOLAR_B0")/180.)*PI;
+	
 	date_obs = header.get<string>("DATE-OBS");
 	//Sometimes the date is appended with a z
 	if(date_obs.find_first_of("Zz") != string::npos)
@@ -70,6 +81,7 @@ void ColorMap::writeHeader(fitsfile* fptr)
 	header.set<double>("CDELT1", cdelt1);
 	header.set<double>("CDELT2",cdelt2);
 	header.set<string>("DATE-OBS", date_obs);
+	header.set<double>("SOLAR_B0", (b0 * 180)/PI);
 	header.writeKeywords(fptr);
 
 }

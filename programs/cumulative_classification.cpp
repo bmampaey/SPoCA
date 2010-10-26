@@ -286,7 +286,7 @@ int main(int argc, const char **argv)
 
 	}
 	outputFile.close();
-	
+	delete F;
 	return EXIT_SUCCESS;
 
 }

@@ -1,5 +1,9 @@
 #include "EITImage.h"
 
+const double PI = 3.14159265358979323846;
+const double MIPI = 1.57079632679489661923;
+const double BIPI = 6.28318530717958647692;
+
 using namespace std;
 
 
@@ -8,8 +12,10 @@ EITImage::~EITImage()
 
 
 EITImage::EITImage(const string& filename)
-:SunImage(filename)
+:SunImage()
 {
+	readFitsImage(filename);
+	
 	if(!isEIT(header))
 		cerr<<"Error : "<<filename<<" is not EIT!"<<endl;
 	//In EIT images, bad pixels have negative values according to Veronique
@@ -45,6 +51,7 @@ void EITImage::readHeader(fitsfile* fptr)
 	cdelt2 = header.get<double>("CDELT2");
 	
 	exposureTime = header.get<double>("EXPTIME");
+	b0 = (header.get<double>("SOLAR_B0")/180.)*PI;
 	
 	// We read the radius
 	radius = header.get<double>("SOLAR_R");
@@ -72,7 +79,7 @@ void EITImage::writeHeader(fitsfile* fptr)
 	header.set<string>("DATE-OBS", date_obs);
 	header.set<double>("SOLAR_R", radius);
 	header.set<double>("EXPTIME", exposureTime);
-
+	header.set<double>("SOLAR_B0", (b0 * 180)/PI);
 	header.writeKeywords(fptr);
 
 }

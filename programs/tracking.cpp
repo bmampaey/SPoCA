@@ -34,9 +34,10 @@ int main(int argc, const char **argv)
 
 	// Options for the tracking
 	newColor = 0;
-	unsigned delta_time = 3600;
+	unsigned max_delta_t = 3600;
 	unsigned overlap = 1;
 	bool writeAllImages = false;
+	bool derotate = false;
 	
 	// The list of names of the sun images to process
 	vector<string> imagesFilenames;
@@ -50,9 +51,10 @@ int main(int argc, const char **argv)
 	ArgumentHelper arguments;
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the maps of the regions to track.\n\t", imagesFilenames);
 	arguments.new_named_unsigned_long('n',"newColor","positive integer","\n\tThe last color given to active regions\n\t",newColor);
-	arguments.new_named_unsigned_int('d',"delta_time","positive integer","\n\tThe maximal delta time between 2 tracked regions\n\t",delta_time);
-	arguments.new_named_unsigned_int('D',"overlap","positive integer","\n\tThe number of images that overlap between 2 tracking run\n\t",overlap);
+	arguments.new_named_unsigned_int('d',"max_delta_t","positive integer","\n\tThe maximal delta time between 2 tracked regions\n\t",max_delta_t);
+	arguments.new_named_unsigned_int('o',"overlap","positive integer","\n\tThe number of images that overlap between 2 tracking run\n\t",overlap);
 	arguments.new_flag('A', "writeAllImages", "\n\tSet this flag if you want all images to be colored and written to disk.\n\tOtherwise only the image for the next tracking will be colored and written.\n\t", writeAllImages);
+	arguments.new_flag('D', "derotate", "\n\tSet this flag if you want images to be derotated before comparison.\n\t", derotate);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
@@ -79,15 +81,18 @@ int main(int argc, const char **argv)
 		regions.push_back(getRegions(images[s]));
 	}
 
-	//We use the colors of the first image as a reference
-	for (unsigned r = 0; r < regions[0].size(); ++r)
-	{
-		regions[0][r]->setColor((long unsigned)images[0]->pixel(regions[0][r]->FirstPixel()));
-		// If the color is bigger than the newColor we increase newColor
-		if(newColor < regions[0][r]->Color())
-			newColor = regions[0][r]->Color();
+	//We use the colors of the overlap images as a reference
+	for (unsigned s = 0; s < overlap && s < images.size(); ++s)
+    	{
+	    for (unsigned r = 0; r < regions[s].size(); ++r)
+	    {
+		   regions[s][r]->setColor((long unsigned)images[s]->pixel(regions[s][r]->FirstPixel()));
+		   // If the color is bigger than the newColor we increase newColor
+		   if(newColor < regions[s][r]->Color())
+		       newColor = regions[s][r]->Color();
+	    }
 	}
-	
+
 	#if DEBUG >= 2
 	// We output the regions found
 	ouputRegions(regions, "regions_premodification.txt");
@@ -110,31 +115,53 @@ int main(int argc, const char **argv)
 	// if they overlay and
 	// if there is not already a path between them
 
-	
 	for (unsigned d = 1; d < images.size(); ++d)
 	{	
 		for (unsigned s1 = 0; d + s1 < images.size(); ++s1)
 		{
 			unsigned s2 = s1 + d;
 			//If the time difference between the 2 images is too big, we don't need to continue
-			if (unsigned(difftime(images[s2]->ObservationTime(),images[s1]->ObservationTime())) > delta_time)
+			unsigned delta_t = unsigned(difftime(images[s2]->ObservationTime(),images[s1]->ObservationTime()));
+			if (delta_t > max_delta_t)
 			{
 				break;						  
 			}	
+			
+			#if DEBUG >= 2
+			if(derotate)
+			{
+				SunImage * rotated = images[s1]->rotated_like(images[s2]);
+				rotated->writeFitsImage("rotated_"+ stripSuffix(stripPath(imagesFilenames[s1])) + "_to_" + stripSuffix(stripPath(imagesFilenames[s2]))+".fits");
+				delete rotated;
+			}
+			#endif
 			for (unsigned r1 = 0; r1 < regions[s1].size(); ++r1)
 			{
 				for (unsigned r2 = 0; r2 < regions[s2].size(); ++r2)
-				{
-					unsigned intersectPixels = overlay(images[s1], regions[s1][r1], images[s2], regions[s2][r2]);
-					if(intersectPixels > 0 && !path(tracking_graph.get_node(regions[s1][r1]), regions[s2][r2]))
-					{
-						tracking_graph.insert_edge(intersectPixels, regions[s1][r1], regions[s2][r2]);
+				{			
+					if(!path(tracking_graph.get_node(regions[s1][r1]), regions[s2][r2]))
+					{		
+						unsigned intersectPixels = 0;
+						if(derotate)
+						{
+							intersectPixels = overlay_derotate(images[s1], regions[s1][r1], images[s2], regions[s2][r2]);
+						}
+						else
+						{
+							intersectPixels = overlay(images[s1], regions[s1][r1], images[s2], regions[s2][r2]);
+						}
+						if(intersectPixels > 0)
+						{
+							tracking_graph.insert_edge(intersectPixels, regions[s1][r1], regions[s2][r2]);
+						}
 					}
 				}
 
 			}
 		}
 	}
+
+	
 
 	// To gain some memory space we can delete all images but the one used for the next tracking
 	unsigned firstImageNextTracking = images.size() - overlap > 0 ? images.size() - overlap : 0;
@@ -180,15 +207,20 @@ int main(int argc, const char **argv)
 	}
 	else //We color the image used for the next tracking
 	{
-		recolorFromRegions(images[firstImageNextTracking], regions[firstImageNextTracking]);
-		images[firstImageNextTracking]->writeFitsImage(outputFileName + imagesFilenames[firstImageNextTracking]);
-		delete images[firstImageNextTracking];
+		for (unsigned s = firstImageNextTracking; s < images.size(); ++s)
+		{
+			recolorFromRegions(images[firstImageNextTracking], regions[firstImageNextTracking]);
+			images[firstImageNextTracking]->writeFitsImage(outputFileName + imagesFilenames[firstImageNextTracking]);
+			delete images[firstImageNextTracking];
+		}
 	}
-	
+
 
 	#ifndef HEK
 	cout<<"Last color assigned: "<<newColor<<endl;	
 	#else
+	
+	// This is for outputting the regions relations for the HEK
 	
 	//We output the number of Active Events and the last color assigned
 	cout<<regions[regions.size() - 1].size()<<" "<<newColor<<endl;

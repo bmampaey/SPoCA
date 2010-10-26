@@ -44,7 +44,7 @@ int main(int argc, const char **argv)
 	// Option for the size of the neighboorhood
 	unsigned neighboorhoodRadius = 1;
 
-	string programDescription = "This Program generates neigboorhood stats fits files.\n";
+	string programDescription = "This Program is for testing image operations.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
@@ -69,40 +69,25 @@ int main(int argc, const char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	SunImage stat;
 
-	for (unsigned p = 0; p< imagesFilenames.size(); ++p)
+	vector<SunImage*> images = getImagesFromFiles(imageType, imagesFilenames, false);
+	for (unsigned p = 0; p < images.size(); ++p)
 	{
-
-		SunImage* image  = getImageFromFile(imageType, imagesFilenames[p]);
-		image->preprocessing(preprocessingSteps,radiusRatio);
-		
-		stat.copyKeywords(image);
-		
-		outputFileName = stripSuffix(imagesFilenames[p]) + ".N" + itos(neighboorhoodRadius) + ".";
-		
-		stat.neighboorhoodMean(image, neighboorhoodRadius);
-		stat.writeFitsImage(outputFileName + "neighboorhoodMean.fits");
-		
-		stat.neighboorhoodVariance(image, neighboorhoodRadius);
-		stat.writeFitsImage(outputFileName + "neighboorhoodVariance.fits");
-		
-		stat.neighboorhoodSkewness(image, neighboorhoodRadius);
-		stat.writeFitsImage(outputFileName + "neighboorhoodSkewness.fits");
-		
-		stat.neighboorhoodKurtosis(image, neighboorhoodRadius);
-		stat.writeFitsImage( outputFileName + "neighboorhoodKurtosis.fits");
-		
-		stat.sobel(image, neighboorhoodRadius);
-		stat.writeFitsImage( outputFileName + "sobel.fits");
-		
-		stat.sobel_approx(image, neighboorhoodRadius);
-		stat.writeFitsImage( outputFileName + "sobel_approx.fits");
-		
-		delete image;
-	
+		images[p]->preprocessing("NAR", 1);
+		images[p]->writeFitsImage(stripPath(imagesFilenames[p]) );
 
 	}
-
+	SunImage test;
+	unsigned t2 = images[1]->ObservationTime();
+	unsigned t1 = images[0]->ObservationTime();
+	unsigned delta_t = t2 - t1;
+	test.diff_rot( delta_t, images[0], images[1]->B0());
+	test.writeFitsImage("rotated.fits");
+	Real longitude, latitude;
+	images[0]->longlat(Coordinate(400,400), longitude, latitude);
+	cout<<imagesFilenames[0]<<" center [x,y] ["<<400<<","<<400<<"] [long,lat] ["<<longitude<<","<<latitude<<"]"<<endl;
+	images[1]->longlat(images[1]->SunCenter(), longitude, latitude);
+	cout<<imagesFilenames[1]<<" center [x,y] ["<<images[1]->SunCenter().x<<","<<images[1]->SunCenter().y<<"] [long,lat] ["<<longitude<<","<<latitude<<"]"<<endl;
+	
 	return EXIT_SUCCESS;
 }

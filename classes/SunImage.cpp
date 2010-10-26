@@ -1,5 +1,9 @@
 #include "SunImage.h"
 
+const double PI = 3.14159265358979323846;
+const double MIPI = 1.57079632679489661923;
+const double BIPI = 6.28318530717958647692;
+
 using namespace std;
 
 
@@ -9,12 +13,14 @@ SunImage::~SunImage()
 }
 
 SunImage::SunImage(const long xAxes, const long yAxes)
-:Image<PixelType>(xAxes,yAxes)
+:Image<PixelType>(xAxes,yAxes),radius(0),wavelength(0),observationTime(0),cdelt1(0),cdelt2(0),median(0),datap01(0), datap95(numeric_limits<PixelType>::max()), exposureTime(0), b0(0)
 {
+	suncenter.x = xAxes/2;
+	suncenter.y = yAxes/2;
 }
 
 SunImage::SunImage(const long xAxes, const long yAxes,  const Coordinate suncenter, const double radius, const double cdelt1, const double cdelt2, const double wavelength)
-:Image<PixelType>(xAxes,yAxes),radius(radius),wavelength(wavelength),observationTime(0),suncenter(suncenter),cdelt1(cdelt1),cdelt2(cdelt2),median(0),datap01(0), datap95(numeric_limits<PixelType>::max()), exposureTime(0)
+:Image<PixelType>(xAxes,yAxes),radius(radius),wavelength(wavelength),observationTime(0),suncenter(suncenter),cdelt1(cdelt1),cdelt2(cdelt2),median(0),datap01(0), datap95(numeric_limits<PixelType>::max()), exposureTime(0), b0(0)
 {
 
 }
@@ -28,13 +34,13 @@ SunImage::SunImage(const string& filename)
 
 
 SunImage::SunImage(const SunImage& i)
-:Image<PixelType>(i),radius(i.radius),wavelength(i.wavelength),observationTime(i.observationTime),suncenter(i.suncenter),cdelt1(i.cdelt1),cdelt2(i.cdelt2),median(i.median),datap01(i.datap01),datap95(i.datap95),date_obs(i.date_obs),exposureTime(i.exposureTime),header(i.header)
+:Image<PixelType>(i),radius(i.radius),wavelength(i.wavelength),observationTime(i.observationTime),suncenter(i.suncenter),cdelt1(i.cdelt1),cdelt2(i.cdelt2),median(i.median),datap01(i.datap01),datap95(i.datap95),date_obs(i.date_obs),exposureTime(i.exposureTime),b0(i.b0),header(i.header)
 {
 }
 
 
 SunImage::SunImage(const SunImage* i)
-:Image<PixelType>(i),radius(i->radius),wavelength(i->wavelength),observationTime(i->observationTime),suncenter(i->suncenter),cdelt1(i->cdelt1),cdelt2(i->cdelt2),median(i->median),datap01(i->datap01),datap95(i->datap95), date_obs(i->date_obs), exposureTime(i->exposureTime),header(i->header)
+:Image<PixelType>(i),radius(i->radius),wavelength(i->wavelength),observationTime(i->observationTime),suncenter(i->suncenter),cdelt1(i->cdelt1),cdelt2(i->cdelt2),median(i->median),datap01(i->datap01),datap95(i->datap95), date_obs(i->date_obs), exposureTime(i->exposureTime),b0(i->b0),header(i->header)
 {
 
 }
@@ -96,6 +102,9 @@ Coordinate SunImage::SunCenter() const
 {return suncenter;}
 double SunImage::SunRadius() const
 {return radius;}
+double SunImage::B0() const
+{return b0;}
+
 time_t SunImage::ObservationTime()const
 {
 	if(observationTime != 0)
@@ -784,16 +793,13 @@ void SunImage::copyKeywords(const SunImage* i)
 	cdelt2 = i->cdelt2;
 	date_obs =  i->date_obs;
 	exposureTime = i->exposureTime;
+	b0 = i->b0;
 	
 }
 
-
-
-/*
-
-//calculates the differential solar rotation speed for a given pixel
-// Formula coming from Wikipedia, should be verified
-inline Real SunImage::angularSpeed(Real latitude)
+// Calculates the differential solar rotation speed for a given pixel
+// Formula coming from Rotation of Doppler features in the solar photosphere by	Snodgrass, Herschel B. and Ulrich, Roger K.
+inline Real SunImage::angularSpeed(Real latitude) const
 {
 	const Real A = 14.713;
 	const Real B = -2.396;
@@ -803,72 +809,193 @@ inline Real SunImage::angularSpeed(Real latitude)
 	return result * (PI / (24. * 3600. * 180.));
 }
 
-
-inline unsigned SunImage::newPos(Real x, Real y, const Real t)
+// Rotate an image by delta_t seconds
+void SunImage::rotate(const int delta_t)
 {
-	x = suncenter.x - x;
-	y = suncenter.y - y;
-	Real latitude = y / radius;
-	Real omega = angularSpeed(latitude);
-	Real alpha = omega * t;
-	Real r = 1;
-	Real teta = asin(x / sqrt(x * x + r * r));
-	Real delta = r * sin(teta - alpha);
-	return suncenter.x - delta;
+	PixelType* new_pixels = new PixelType[numberPixels];
+	fill(new_pixels, new_pixels + numberPixels, nullvalue_);
+	
+	Real cos_b0 = cos(b0);
+	Real sin_b0 = sin(b0);
+
+	//Compute for each point of the new image what is the equivalent in the current image
+	
+	unsigned j = 0;
+	for(Real y = 0; y < Yaxes(); ++y)
+	{
+		Real ry = (y - suncenter.y) / radius;
+		for(Real x = 0; x < Xaxes(); ++x)
+		{
+			Real rx = (x - suncenter.x) / radius;
+			Real z = 1. - rx * rx - ry * ry;
+			// If we are within the disk
+			if(z >= 0)
+			{ 
+				z = sqrt(z);
+				Real cur_latitude = asin(cos_b0 * ry + sin_b0 * z); // The new latitude equals the current latitude
+				Real new_longitude = atan(rx / (cos_b0 * z - sin_b0 * ry));
+				Real cur_longitude = new_longitude - delta_t * angularSpeed(cur_latitude);
+				// We need to be sure that the current longitude is visible on the disk
+				if(cur_longitude > -MIPI &&  cur_longitude < MIPI)
+				{
+					unsigned cur_x = suncenter.x + radius * (cos(cur_latitude) * sin(cur_longitude));
+					unsigned cur_y = suncenter.y + radius * (cos_b0 * sin(cur_latitude) - sin_b0 * cos(cur_latitude) * cos(cur_longitude));
+					new_pixels[j] = pixel(cur_x, cur_y);
+				}
+			}
+ 			++j;
+		}
+	}
+	delete pixels;
+	pixels = new_pixels;
+}
+
+// Return a new image = to teh image rotated to be comparable to img
+SunImage* SunImage::rotated_like(const SunImage* img) const
+{
+	SunImage * rotated = new SunImage(img->Xaxes(), img->Yaxes());
+	rotated->copyKeywords(img);
+	rotated->nullvalue_ = img->nullvalue_;
+	rotated->zero(nullvalue_);
+	
+	int delta_t = difftime(img->ObservationTime(),ObservationTime());
+	
+	Real cos_b0 = cos(b0);
+	Real sin_b0 = sin(b0);
+	Real cos_newb0 = cos(rotated->b0);
+	Real sin_newb0 = sin(rotated->b0);
+	
+	//Compute for each point of the new image what is the equivalent in the current image
+	for(Real new_y = 0; new_y < rotated->Yaxes(); ++new_y)
+	{
+		Real ry = (new_y - rotated->suncenter.y) / rotated->radius;
+		for(Real new_x = 0; new_x < rotated->Xaxes(); ++new_x)
+		{
+			Real rx = (new_x - rotated->suncenter.x) / rotated->radius;
+			Real z = 1. - rx * rx - ry * ry;
+			// If we are within the disk
+			if(z >= 0)
+			{ 
+				z = sqrt(z);
+				Real cur_latitude = asin(cos_newb0 * ry + sin_newb0 * z); // The new latitude equals the current latitude
+				Real new_longitude = atan(rx / (cos_newb0 * z - sin_newb0 * ry));
+				Real cur_longitude = new_longitude - delta_t * angularSpeed(cur_latitude);
+				// We need to be sure that the current longitude is visible on the disk
+				if(cur_longitude > -MIPI &&  cur_longitude < MIPI)
+				{
+					unsigned cur_x = suncenter.x + radius * (cos(cur_latitude) * sin(cur_longitude));
+					unsigned cur_y = suncenter.y + radius * (cos_b0 * sin(cur_latitude) - sin_b0 * cos(cur_latitude) * cos(cur_longitude));
+					rotated->pixel(new_x,new_y) = pixel(cur_x, cur_y);
+				}
+ 			}
+ 			
+		}
+	}
+
+	return rotated;
+
+}
+
+// Rotate the image to be comparable to img
+void SunImage::rotate_like(const SunImage* img)
+{
+	SunImage * rotated = this->rotated_like(img);
+	axes[0] = rotated->axes[0];
+	axes[1] = rotated->axes[1];
+	numberPixels = rotated->numberPixels;
+	nullvalue_ = rotated->nullvalue_;
+	delete pixels;
+	pixels = rotated->pixels;
+
+}
+
+// Shift a point in the image by delta_t seconds
+Coordinate SunImage::shift(const Coordinate c, const int delta_t) const
+{
+
+	Real latitude, longitude;
+	longlat(c, longitude, latitude);
+	longitude += delta_t * angularSpeed(latitude);
+	
+	Coordinate newc;
+	newc.x = suncenter.x + radius * (cos(latitude) * sin(longitude));
+	newc.y = suncenter.y + radius * (sin(latitude) * cos(b0) - cos(latitude) * cos(longitude) * sin(b0));
+	
+	return newc;
+
+}
+
+// Shift a point in the image to the equivalant point in img
+Coordinate SunImage::shift_like(const Coordinate c, const SunImage* img) const
+{
+
+	int delta_t = difftime(img->ObservationTime(),ObservationTime());
+	Real latitude, longitude;
+	longlat(c, longitude, latitude);
+	longitude += delta_t * angularSpeed(latitude);
+	
+	Coordinate newc;
+	newc.x = img->suncenter.x + img->radius * (cos(latitude) * sin(longitude));
+	newc.y = img->suncenter.y + img->radius * (sin(latitude) * cos(img->b0) - cos(latitude) * cos(longitude) * sin(img->b0));
+	
+	return newc;
+
 }
 
 
-SunImage* SunImage::rotate(const unsigned t)
+void SunImage::longlat(const Coordinate c, Real& longitude, Real& latitude) const
 {
-	SunImage * img = new SunImage(axes[0], axes[1], radius, wavelength);
-	vector<Real> radiusAtLatitude (radius + 1, 0);
-	vector<unsigned> left ( radius, Xaxes());
-	vector<unsigned> right ( radius, 0);
-
-	Image<Real> Phi (Xaxes(), radius + 1);
-	Phi.zero(MIPI);
-	for (unsigned latitude = 0; latitude < radius; ++latitude)
+	Real cos_b0 = cos(b0);
+	Real sin_b0 = sin(b0);
+	Real rx = c.x ; 
+	Real ry = c.y;
+	rx = (rx - suncenter.x) / radius; 
+	ry = (ry - suncenter.y) / radius;
+	Real z = 1. - rx * rx - ry * ry;
+	if(z >= 0)
+	{ 
+		z = sqrt(z);
+		latitude = asin(cos_b0 * ry + sin_b0 * z);
+		longitude = atan(rx / (cos_b0 * z - sin_b0 * ry));
+	}
+	else
 	{
-		radiusAtLatitude[latitude] = sqrt((radius * radius) - (latitude * latitude));
-		left[latitude] = suncenter.x - radiusAtLatitude[latitude] ;
-		right[latitude] = suncenter.x + radiusAtLatitude[latitude];
-		for (int longitude = floor(1. - radiusAtLatitude[latitude]); longitude <=  ceil(radiusAtLatitude[latitude] - 1.); ++longitude)
-		{
-			Real r1 = Real(latitude) / Real(radius);
-			Phi.pixel(suncenter.x + longitude,latitude)=asin(Real(longitude) /(sqrt(1 - r1 * r1) * Real(radius)));
-		}
+		latitude = numeric_limits<PixelType>::quiet_NaN();
+		longitude = numeric_limits<PixelType>::quiet_NaN();
 	}
-	Phi.writeFitsImage("phi.fits");
-
-	cout<<"left\tright:"<<endl;
-	for (unsigned i = 0; i < left.size(); ++i)
-		cout<<left[i]<<"\t"<<right[i]<<endl;
-
-	Image<Real> PhiRotated (Xaxes(), radius + 1);
-	for (unsigned latitude = 0; latitude < radius; ++latitude)
-	{
-		for (unsigned longitude = left[latitude]; longitude <=  right[latitude]; ++longitude)
-		{
-			PhiRotated.pixel(longitude,latitude)=Phi.pixel(longitude,latitude) + angularSpeed(Real(latitude)/radius) * t;
-		}
-	}
-	PhiRotated.writeFitsImage("PhiRotated.fits");
-
-
-	img->zero();
-	Real newx;
-	for(int y = 0; y <= radius ; ++y)
-	{
-		for(int x = -radiusAtLatitude(y); x <= radiusAtLatitude(r); ++x)
-		{
-			newx = newPos(x,y,t);
-			img->pixel(x,y) = pixel(newx,y);
-			img->pixel(x,-y) = pixel(newx,-y);
-	}
-	}
-
-	return img;
-
 }
 
-*/
+void SunImage::longlat_map(vector<Real>& longitude_map, vector<Real>& latitude_map) const
+{
+
+	longitude_map.resize(numberPixels, 0);
+	latitude_map.resize(numberPixels, 0);
+	
+	Real cos_b0 = cos(b0);
+	Real sin_b0 = sin(b0);
+	
+	unsigned j = 0;
+	for(Real y = 0; y < Yaxes(); ++y)
+	{
+		Real ry = (y - suncenter.y) / radius;
+		for(Real x = 0; x < Xaxes(); ++x)
+		{
+			Real rx = (x - suncenter.x) / radius;
+			Real z = 1. - rx * rx - ry * ry;
+			if(z >= 0)
+			{ 
+				z = sqrt(z);
+				latitude_map[j] = asin(cos_b0 * ry + sin_b0 * z);
+				longitude_map[j] = atan(rx / (cos_b0 * z - sin_b0 * ry));
+ 			}
+ 			else
+			{
+				latitude_map[j] = numeric_limits<PixelType>::quiet_NaN();
+				longitude_map[j] = numeric_limits<PixelType>::quiet_NaN();
+			}
+			++j;
+		}
+	}
+
+
+}

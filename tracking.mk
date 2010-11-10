@@ -5,7 +5,7 @@ IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lX
 MAGICKLFLAGS=`Magick++-config --cppflags --cxxflags --ldflags --libs`
 MAGICKCFLAGS=-I /usr/include/ImageMagick/
 DFLAGS=
-LFLAGS=-lcfitsio  $(TRACKINGLFLAGS)
+LFLAGS=-lcfitsio  $(TRACKINGLFLAGS)  $(TRACKINGLFLAGS)
 
 all:bin/tracking.x
 clean: rm bin/tracking.x objects/tracking.o objects/trackable.o objects/gradient.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/Region.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o
@@ -14,7 +14,7 @@ clean: rm bin/tracking.x objects/tracking.o objects/trackable.o objects/gradient
 bin/tracking.x : tracking.mk objects/tracking.o objects/trackable.o objects/gradient.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/Region.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o
 	$(CC) $(CFLAGS) $(DFLAGS) objects/tracking.o objects/trackable.o objects/gradient.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/Region.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o $(LFLAGS) -o bin/tracking.x
 
-objects/tracking.o : tracking.mk programs/tracking.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/ColorMap.h classes/Region.h classes/trackable.h cgt/graph.h
+objects/tracking.o : tracking.mk programs/tracking.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/ColorMap.h classes/Region.h classes/trackable.h classes/TrackingRelation.h cgt/graph.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) programs/tracking.cpp -o objects/tracking.o
 
 objects/trackable.o : tracking.mk classes/trackable.cpp classes/tools.h classes/constants.h classes/SunImage.h classes/Region.h classes/gradient.h cgt/graph.h

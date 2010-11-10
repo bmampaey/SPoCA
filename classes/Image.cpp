@@ -781,6 +781,8 @@ unsigned Image<T>::propagateColor(const T color, const unsigned firstPixel)
 	{
 		h = pixelList.back();
 		pixelList.pop_back();
+		if(pixels[h] != setValue)
+			continue;
 		pixels[h] = color;
 		++numberColoredPixels;
 		if(h+1 < numberPixels && pixels[h+1] == setValue)
@@ -816,7 +818,7 @@ unsigned Image<T>::tresholdConnectedComponents(const unsigned minSize, const T s
 		}
 	}
 	//We have to give back the original color
-	for (unsigned t = 0; t < treatedPixels.size(); ++ t)
+	for (unsigned t = 0; t < treatedPixels.size(); ++t)
 	{
 		propagateColor(setValue, treatedPixels[t]);
 	}

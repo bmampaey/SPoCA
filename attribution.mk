@@ -8,14 +8,20 @@ DFLAGS=
 LFLAGS=-lcfitsio
 
 all:bin/attribution.x
-clean: rm bin/attribution.x objects/attribution.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Coordinate.o objects/Classifier.o objects/Region.o objects/ColorMap.o objects/SunImage.o objects/FitsHeader.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+clean: rm bin/attribution.x objects/attribution.o objects/ActiveRegion.o objects/Coordinate.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Classifier.o objects/Region.o objects/ColorMap.o objects/SunImage.o objects/FitsHeader.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
 
 
-bin/attribution.x : attribution.mk objects/attribution.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Coordinate.o objects/Classifier.o objects/Region.o objects/ColorMap.o objects/SunImage.o objects/FitsHeader.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/attribution.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Coordinate.o objects/Classifier.o objects/Region.o objects/ColorMap.o objects/SunImage.o objects/FitsHeader.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/attribution.x
+bin/attribution.x : attribution.mk objects/attribution.o objects/ActiveRegion.o objects/Coordinate.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Classifier.o objects/Region.o objects/ColorMap.o objects/SunImage.o objects/FitsHeader.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/attribution.o objects/ActiveRegion.o objects/Coordinate.o objects/ArgumentHelper.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Classifier.o objects/Region.o objects/ColorMap.o objects/SunImage.o objects/FitsHeader.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/attribution.x
 
-objects/attribution.o : attribution.mk programs/attribution.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/SunImage.h classes/ColorMap.h classes/Classifier.h classes/FCMClassifier.h classes/PCMClassifier.h classes/PCM2Classifier.h classes/SPoCAClassifier.h classes/SPoCA2Classifier.h classes/FeatureVector.h classes/ArgumentHelper.h
+objects/attribution.o : attribution.mk programs/attribution.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/SunImage.h classes/ColorMap.h classes/Classifier.h classes/FCMClassifier.h classes/PCMClassifier.h classes/PCM2Classifier.h classes/SPoCAClassifier.h classes/SPoCA2Classifier.h classes/FeatureVector.h classes/ArgumentHelper.h classes/ActiveRegion.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) programs/attribution.cpp -o objects/attribution.o
+
+objects/ActiveRegion.o : attribution.mk classes/ActiveRegion.cpp classes/FeatureVector.h classes/ColorMap.h classes/Coordinate.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ActiveRegion.cpp -o objects/ActiveRegion.o
+
+objects/Coordinate.o : attribution.mk classes/Coordinate.cpp 
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o
 
 objects/ArgumentHelper.o : attribution.mk classes/ArgumentHelper.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ArgumentHelper.cpp -o objects/ArgumentHelper.o
@@ -40,9 +46,6 @@ objects/FCMClassifier.o : attribution.mk classes/FCMClassifier.cpp classes/Image
 
 objects/Image.o : attribution.mk classes/Image.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Coordinate.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Image.cpp -o objects/Image.o
-
-objects/Coordinate.o : attribution.mk classes/Coordinate.cpp 
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o
 
 objects/Classifier.o : attribution.mk classes/Classifier.cpp classes/tools.h classes/constants.h classes/Image.h classes/SunImage.h classes/ColorMap.h classes/FeatureVector.h classes/Region.h classes/Coordinate.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Classifier.cpp -o objects/Classifier.o

@@ -8,17 +8,20 @@ DFLAGS=
 LFLAGS=-lcfitsio
 
 all:bin/classification.x
-clean: rm bin/classification.x objects/classification.o objects/ActiveRegion.o objects/ArgumentHelper.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/Coordinate.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/ColorMap.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+clean: rm bin/classification.x objects/classification.o objects/ActiveRegion.o objects/Coordinate.o objects/ArgumentHelper.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/ColorMap.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
 
 
-bin/classification.x : classification.mk objects/classification.o objects/ActiveRegion.o objects/ArgumentHelper.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/Coordinate.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/ColorMap.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/classification.o objects/ActiveRegion.o objects/ArgumentHelper.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/Coordinate.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/ColorMap.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/classification.x
+bin/classification.x : classification.mk objects/classification.o objects/ActiveRegion.o objects/Coordinate.o objects/ArgumentHelper.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/ColorMap.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/classification.o objects/ActiveRegion.o objects/Coordinate.o objects/ArgumentHelper.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Region.o objects/SunImage.o objects/FitsHeader.o objects/ColorMap.o objects/mainutilities.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/classification.x
 
 objects/classification.o : classification.mk programs/classification.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ColorMap.h classes/SunImage.h classes/Classifier.h classes/FCMClassifier.h classes/PCMClassifier.h classes/PCM2Classifier.h classes/SPoCAClassifier.h classes/SPoCA2Classifier.h classes/HistogramFCMClassifier.h classes/HistogramPCM2Classifier.h classes/HistogramPCMClassifier.h classes/FeatureVector.h classes/ArgumentHelper.h classes/ActiveRegion.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) programs/classification.cpp -o objects/classification.o
 
-objects/ActiveRegion.o : classification.mk classes/ActiveRegion.cpp classes/FeatureVector.h classes/SunImage.h
+objects/ActiveRegion.o : classification.mk classes/ActiveRegion.cpp classes/FeatureVector.h classes/SunImage.h classes/Coordinate.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ActiveRegion.cpp -o objects/ActiveRegion.o
+
+objects/Coordinate.o : classification.mk classes/Coordinate.cpp 
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o
 
 objects/ArgumentHelper.o : classification.mk classes/ArgumentHelper.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ArgumentHelper.cpp -o objects/ArgumentHelper.o
@@ -40,9 +43,6 @@ objects/HistogramClassifier.o : classification.mk classes/HistogramClassifier.cp
 
 objects/Image.o : classification.mk classes/Image.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Coordinate.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Image.cpp -o objects/Image.o
-
-objects/Coordinate.o : classification.mk classes/Coordinate.cpp 
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o
 
 objects/SPoCA2Classifier.o : classification.mk classes/SPoCA2Classifier.cpp classes/SunImage.h classes/FeatureVector.h classes/PCM2Classifier.h classes/SPoCAClassifier.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SPoCA2Classifier.cpp -o objects/SPoCA2Classifier.o

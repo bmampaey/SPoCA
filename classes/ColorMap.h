@@ -30,6 +30,10 @@ class ColorMap : public SunImage
 		//Routines to read and write the keywords from/to the header
 		void readHeader(fitsfile* fptr);
 		void writeHeader(fitsfile* fptr);
+		
+		//Routines to treshold regions by size
+		void tresholdRegionsByRawArea(const double minSize);
+		void tresholdRegionsByRealArea(const double minSize);
 
 };
 

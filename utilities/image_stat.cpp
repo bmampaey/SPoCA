@@ -93,10 +93,10 @@ int main(int argc, const char **argv)
 		stat.neighboorhoodKurtosis(image, neighboorhoodRadius);
 		stat.writeFitsImage( outputFileName + "neighboorhoodKurtosis.fits");
 		
-		stat.sobel(image, neighboorhoodRadius);
+		stat.sobel(image);
 		stat.writeFitsImage( outputFileName + "sobel.fits");
 		
-		stat.sobel_approx(image, neighboorhoodRadius);
+		stat.sobel_approx(image);
 		stat.writeFitsImage( outputFileName + "sobel_approx.fits");
 		
 		delete image;

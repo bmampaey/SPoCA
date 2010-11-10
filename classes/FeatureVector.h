@@ -88,6 +88,13 @@ class FeatureVector
 				result.v[p] = v[p] - fv.v[p];
 			return result;
 		}
+		FeatureVector<T, N> operator+(const FeatureVector<T, N>& fv) const
+		{
+			FeatureVector<T, N> result;
+			for (unsigned p = 0; p < N; ++p)
+				result.v[p] = v[p] + fv.v[p];
+			return result;
+		}
 		bool operator<(const FeatureVector<T, N>& fv) const
 		{
 			FeatureVector<T, N> zero = 0;

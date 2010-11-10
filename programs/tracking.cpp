@@ -1,4 +1,4 @@
-// This programm will do tracking of regions from color maps
+// This program will do tracking of regions from color maps
 // Written by Benjamin Mampaey on 15 July 2010
 
 #include <vector>
@@ -18,6 +18,7 @@
 #include "../classes/ColorMap.h"
 #include "../classes/Region.h"
 #include "../classes/trackable.h"
+#include "../classes/TrackingRelation.h"
 #include "../cgt/graph.h"
 
 
@@ -26,7 +27,6 @@ using namespace dsr;
 using namespace cgt;
 
 string outputFileName;
-
 
 int main(int argc, const char **argv)
 {
@@ -222,10 +222,10 @@ int main(int argc, const char **argv)
 	
 	// This is for outputting the regions relations for the HEK
 	
-	//We output the number of Active Events and the last color assigned
+	// We output the number of Active Events and the last color assigned
 	cout<<regions[regions.size() - 1].size()<<" "<<newColor<<endl;
 
-	// We output the relations between the AR of the last region map and the ones from the previous last (i.e. the last from the previous call to tracking) 
+	// We need to output the relations between the AR of the last region map and the ones from the previous last (i.e. the last from the previous call to tracking) 
 	
 	/* First we recolor the graph top to bottom by giving to any child the color of its biggest parent
 	map[previous_last] 	(== overlap - 1)
@@ -258,7 +258,7 @@ int main(int argc, const char **argv)
 	
 	
 	// Now we create for each region of map[last] the list of parents that have a color existing in map[previous_last]
-
+	vector<TrackingRelation> relations;
 	for (unsigned r = 0; r < regions[last].size(); ++r)
 	{
 		const RegionGraph::node* n = tracking_graph.get_node(regions[last][r]);
@@ -278,16 +278,16 @@ int main(int argc, const char **argv)
 					
 
 		}
-		// Now that I know the list of my ancestors_color, I can output the relations
+		// Now that I know the list of my ancestors_color, I can create the relations
 		if(ancestors_color.size() == 0)
 		{
 			// I have no ancestors, so I am a new color 
-			cout<< regions[last][r]->Color() << " new " << 0 <<endl;
+			relations.push_back(TrackingRelation(regions[last][r]->Color(),"new",0));
 		}
 		else if(ancestors_color.size() == 1 && ancestors_color[0] != regions[last][r]->Color())
 		{
 			// I have one ancestor of a different color, I am a split from him
-			cout<< regions[last][r]->Color() << " splits_from " <<  ancestors_color[0]<<endl;
+			relations.push_back(TrackingRelation(regions[last][r]->Color(),"splits_from",ancestors_color[0]));
 		}
 		else
 		{
@@ -296,18 +296,31 @@ int main(int argc, const char **argv)
 			{
 				if(ancestors_color[a] == regions[last][r]->Color())
 				{
-					cout<<  regions[last][r]->Color() << " follows " <<  ancestors_color[a] <<endl;
+					relations.push_back(TrackingRelation(regions[last][r]->Color(),"follows",ancestors_color[a]));
 				}
 				else
 				{
-					cout<<  regions[last][r]->Color() << " merges_from " << ancestors_color[a] <<endl;
+					relations.push_back(TrackingRelation(regions[last][r]->Color(),"merges_from",ancestors_color[a]));
 				}
 			}
 		}
 				
 	}
 	
+	// We need to remove the duplicates
+	sort(relations.begin(), relations.end());
+	relations.erase(unique(relations.begin(), relations.end()), relations.end());
+	
+	// We output the relations
+	for (unsigned r = 0; r < relations.size(); ++r)
+	{
+		cout<<relations[r].past_color<<" "<<relations[r].type<<" "<<relations[r].present_color<<endl;
+	}
+						
 	#endif
 	
 	return EXIT_SUCCESS;
 }
+
+
+

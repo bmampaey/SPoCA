@@ -414,27 +414,28 @@ void SunImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 	maxLimbRadius *= radius;
 	Real minLimbRadius2 = minLimbRadius*minLimbRadius;
 	Real maxLimbRadius2 = maxLimbRadius*maxLimbRadius;
-	const Real deltaR = 1.0;	//This means that we consider the width of an annulus to be the size of a third of a pixel
+	const Real deltaR = 1.0;	//This is the width of an annulus in pixel
 	vector<Real> annulusMean(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 	vector<unsigned> annulusNbrPixels(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 
-	PixelType* pixelValue;
+	PixelType* pixelValue = pixels;
+	const int xmax = Xaxes() - suncenter.x;
+	const int ymax = Yaxes() - suncenter.y;
 	Real pixelRadius2 = 0;
 	unsigned indice = 0;
 	if (median == 0) // I don't know the median value yet
 	{
 		vector<PixelType> onDiscList;
 		onDiscList.reserve(numberValidPixelsEstimate());
-		for (unsigned y=0; y < Yaxes(); ++y)
+
+	
+		for (int y = - suncenter.y; y < ymax; ++y)
 		{
-			for (unsigned x=0; x < Xaxes(); ++x)
+			for (int x = - suncenter.x ; x < xmax; ++x)
 			{
-
-				pixelValue = &pixel(x,y);
-
 				if ((*pixelValue) != nullvalue_)
 				{
-					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
+					pixelRadius2 = x*x + y*y;
 
 					if (pixelRadius2 <=  minLimbRadius2)
 					{
@@ -443,11 +444,12 @@ void SunImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 					else if (pixelRadius2 <=  maxLimbRadius2)
 					{
 						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) = annulusMean.at(indice) + (*pixelValue);
-						annulusNbrPixels.at(indice) = annulusNbrPixels.at(indice) + 1;
+						annulusMean.at(indice) += (*pixelValue);
+						annulusNbrPixels.at(indice) += 1;
 					}
 
 				}
+				++pixelValue;
 			}
 		}
 
@@ -458,23 +460,23 @@ void SunImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 	}
 	else
 	{
-		for (unsigned y=0; y < Yaxes(); ++y)
+		for (int y = - suncenter.y; y < ymax; ++y)
 		{
-			for (unsigned x=0; x < Xaxes(); ++x)
+			for (int x = - suncenter.x ; x < xmax; ++x)
 			{
-				pixelValue = &pixel(x,y);
 				if ((*pixelValue) != nullvalue_)
 				{
-					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
+					pixelRadius2 = x*x + y*y;
 
 					if (pixelRadius2 >  minLimbRadius2 && pixelRadius2 <=  maxLimbRadius2)
 					{
 						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) = annulusMean.at(indice) + (*pixelValue);
-						annulusNbrPixels.at(indice) = annulusNbrPixels.at(indice) + 1;
+						annulusMean.at(indice) += (*pixelValue);
+						annulusNbrPixels.at(indice) += 1;
 					}
 
 				}
+				++pixelValue;
 			}
 		}
 	}
@@ -486,19 +488,19 @@ void SunImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 			annulusMean.at(i) = annulusMean.at(i) / Real(annulusNbrPixels.at(i));
 	}
 	// We correct the limb
-	for (unsigned y=0; y < Yaxes(); ++y)
+	pixelValue = pixels;
+	for (int y = - suncenter.y; y < ymax; ++y)
 	{
-		for (unsigned x=0; x < Xaxes(); ++x)
+		for (int x = - suncenter.x ; x < xmax; ++x)
 		{
-			pixelValue = &pixel(x,y);
 			if ((*pixelValue) != nullvalue_)
 			{
-				pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
+				pixelRadius2 = x*x + y*y;
 				if (maxLimbRadius2 < pixelRadius2)
 				{
 					(*pixelValue) = nullvalue_;
 				}
-				else if (pixelRadius2 > minLimbRadius2)	  //We correct the limb
+				else if (pixelRadius2 > minLimbRadius2)	  //We are in the limb
 				{
 					Real pixelRadius = sqrt(pixelRadius2);
 					Real fraction = percentCorrection(pixelRadius/radius);
@@ -506,8 +508,8 @@ void SunImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 					(*pixelValue) = (1. - fraction) * (*pixelValue) + (fraction * (*pixelValue) * median) / annulusMean.at(indice);
 
 				}
-
 			}
+			++pixelValue;
 		}
 	}
 
@@ -519,26 +521,28 @@ void SunImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 	maxLimbRadius *= radius;
 	Real minLimbRadius2 = minLimbRadius*minLimbRadius;
 	Real maxLimbRadius2 = maxLimbRadius*maxLimbRadius;
-	const Real deltaR = 1.0;	//This means that we consider the width of an annulus to be the size of a third of a pixel
+	const Real deltaR = 1.0;	//This is the width of an annulus in pixel
 	vector<Real> annulusMean(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 	vector<unsigned> annulusNbrPixels(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 
-	PixelType* pixelValue;
+	PixelType* pixelValue = pixels;
+	const int xmax = Xaxes() - suncenter.x;
+	const int ymax = Yaxes() - suncenter.y;
 	Real pixelRadius2 = 0;
 	unsigned indice = 0;
 	if (median == 0) // I don't know the median value yet
 	{
 		vector<PixelType> onDiscList;
 		onDiscList.reserve(numberValidPixelsEstimate());
-		for (unsigned y=0; y < Yaxes(); ++y)
-		{
-			for (unsigned x=0; x < Xaxes(); ++x)
-			{
 
-				pixelValue = &pixel(x,y);
+	
+		for (int y = - suncenter.y; y < ymax; ++y)
+		{
+			for (int x = - suncenter.x ; x < xmax; ++x)
+			{
 				if ((*pixelValue) != nullvalue_)
 				{
-					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
+					pixelRadius2 = x*x + y*y;
 
 					if (pixelRadius2 <=  minLimbRadius2)
 					{
@@ -547,11 +551,12 @@ void SunImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 					else if (pixelRadius2 <=  maxLimbRadius2)
 					{
 						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) = annulusMean.at(indice) + (*pixelValue);
-						annulusNbrPixels.at(indice) = annulusNbrPixels.at(indice) + 1;
+						annulusMean.at(indice) += (*pixelValue);
+						annulusNbrPixels.at(indice) += 1;
 					}
 
 				}
+				++pixelValue;
 			}
 		}
 
@@ -562,23 +567,23 @@ void SunImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 	}
 	else
 	{
-		for (unsigned y=0; y < Yaxes(); ++y)
+		for (int y = - suncenter.y; y < ymax; ++y)
 		{
-			for (unsigned x=0; x < Xaxes(); ++x)
+			for (int x = - suncenter.x ; x < xmax; ++x)
 			{
-				pixelValue = &pixel(x,y);
 				if ((*pixelValue) != nullvalue_)
 				{
-					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
+					pixelRadius2 = x*x + y*y;
 
 					if (pixelRadius2 >  minLimbRadius2 && pixelRadius2 <=  maxLimbRadius2)
 					{
 						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) = annulusMean.at(indice) + (*pixelValue);
-						annulusNbrPixels.at(indice) = annulusNbrPixels.at(indice) + 1;
+						annulusMean.at(indice) += (*pixelValue);
+						annulusNbrPixels.at(indice) += 1;
 					}
 
 				}
+				++pixelValue;
 			}
 		}
 	}
@@ -590,19 +595,19 @@ void SunImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 			annulusMean.at(i) = annulusMean.at(i) / Real(annulusNbrPixels.at(i));
 	}
 	// We correct the limb
-	for (unsigned y=0; y < Yaxes(); ++y)
+	pixelValue = pixels;
+	for (int y = - suncenter.y; y < ymax; ++y)
 	{
-		for (unsigned x=0; x < Xaxes(); ++x)
+		for (int x = - suncenter.x ; x < xmax; ++x)
 		{
-			pixelValue = &pixel(x,y);
 			if ((*pixelValue) != nullvalue_)
 			{
-				pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
+				pixelRadius2 = x*x + y*y;
 				if (maxLimbRadius2 < pixelRadius2)
 				{
 					(*pixelValue) = nullvalue_;
 				}
-				else if (pixelRadius2 > minLimbRadius2)	  //We correct the limb
+				else if (pixelRadius2 > minLimbRadius2)	  //We are in the limb
 				{
 					Real pixelRadius = sqrt(pixelRadius2);
 					Real fraction = percentCorrection(pixelRadius/radius);
@@ -614,8 +619,8 @@ void SunImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 				{
 					(*pixelValue) = (*pixelValue) / median;
 				}
-
 			}
+			++pixelValue;
 		}
 	}
 
@@ -627,7 +632,7 @@ void SunImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 	maxLimbRadius *= radius;
 	Real minLimbRadius2 = minLimbRadius*minLimbRadius;
 	Real maxLimbRadius2 = maxLimbRadius*maxLimbRadius;
-	const Real deltaR = 1.0;	//This means that we consider the width of an annulus to be the size of a third of a pixel
+	const Real deltaR = 1.0;	//This is the width of an annulus in pixel
 	vector<Real> annulusMean(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 	vector<unsigned> annulusNbrPixels(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 
@@ -635,22 +640,25 @@ void SunImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 	const Real binSize = 5;
 	vector<unsigned> histo(1024, 0);
 
-	PixelType* pixelValue;
+
+	PixelType* pixelValue = pixels;
+	const int xmax = Xaxes() - suncenter.x;
+	const int ymax = Yaxes() - suncenter.y;
 	Real pixelRadius2 = 0;
 	unsigned indice = 0;
 	if (median == 0) // I don't know the median value yet
 	{
 		vector<PixelType> onDiscList;
 		onDiscList.reserve(numberValidPixelsEstimate());
-		for (unsigned y=0; y < Yaxes(); ++y)
-		{
-			for (unsigned x=0; x < Xaxes(); ++x)
-			{
 
-				pixelValue = &pixel(x,y);
+	
+		for (int y = - suncenter.y; y < ymax; ++y)
+		{
+			for (int x = - suncenter.x ; x < xmax; ++x)
+			{
 				if ((*pixelValue) != nullvalue_)
 				{
-					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
+					pixelRadius2 = x*x + y*y;
 
 					if (pixelRadius2 <=  minLimbRadius2)
 					{
@@ -663,11 +671,12 @@ void SunImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 					else if (pixelRadius2 <=  maxLimbRadius2)
 					{
 						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) = annulusMean.at(indice) + (*pixelValue);
-						annulusNbrPixels.at(indice) = annulusNbrPixels.at(indice) + 1;
+						annulusMean.at(indice) += (*pixelValue);
+						annulusNbrPixels.at(indice) += 1;
 					}
 
 				}
+				++pixelValue;
 			}
 		}
 
@@ -678,14 +687,13 @@ void SunImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 	}
 	else
 	{
-		for (unsigned y=0; y < Yaxes(); ++y)
+		for (int y = - suncenter.y; y < ymax; ++y)
 		{
-			for (unsigned x=0; x < Xaxes(); ++x)
+			for (int x = - suncenter.x ; x < xmax; ++x)
 			{
-				pixelValue = &pixel(x,y);
 				if ((*pixelValue) != nullvalue_)
 				{
-					pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
+					pixelRadius2 = x*x + y*y;
 
 					if (pixelRadius2 <=  minLimbRadius2)
 					{
@@ -697,14 +705,16 @@ void SunImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 					else if (pixelRadius2 <=  maxLimbRadius2)
 					{
 						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) = annulusMean.at(indice) + (*pixelValue);
-						annulusNbrPixels.at(indice) = annulusNbrPixels.at(indice) + 1;
+						annulusMean.at(indice) += (*pixelValue);
+						annulusNbrPixels.at(indice) += 1;
 					}
 
 				}
+				++pixelValue;
 			}
 		}
 	}
+
 
 	// We search for the mode
 	unsigned max = 0;
@@ -728,22 +738,23 @@ void SunImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 		if(annulusNbrPixels.at(i)>0)
 			annulusMean.at(i) = annulusMean.at(i) / Real(annulusNbrPixels.at(i));
 	}
-
-	for (unsigned y=0; y < Yaxes(); ++y)
+	// We correct the limb
+	pixelValue = pixels;
+	for (int y = - suncenter.y; y < ymax; ++y)
 	{
-		for (unsigned x=0; x < Xaxes(); ++x)
+		for (int x = - suncenter.x ; x < xmax; ++x)
 		{
-			pixelValue = &pixel(x,y);
+			
 			if ((*pixelValue) != nullvalue_)
 			{
-				pixelRadius2 = (x-suncenter.x)*(x-suncenter.x) + (y-suncenter.y)*(y-suncenter.y);
+				pixelRadius2 = x*x + y*y;
 				if (maxLimbRadius2 < pixelRadius2)
 				{
 					(*pixelValue) = nullvalue_;
 				}
 				else
 				{
-					if (pixelRadius2 > minLimbRadius2)	  //We correct the limb
+					if (pixelRadius2 > minLimbRadius2)	  //We are in the limb
 					{
 						Real pixelRadius = sqrt(pixelRadius2);
 						Real fraction = percentCorrection(pixelRadius/radius);
@@ -753,8 +764,8 @@ void SunImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 					}
 					(*pixelValue) /= mode;
 				}
-
 			}
+			++pixelValue;
 		}
 	}
 
@@ -850,7 +861,7 @@ void SunImage::rotate(const int delta_t)
 	pixels = new_pixels;
 }
 
-// Return a new image = to teh image rotated to be comparable to img
+// Return a new image = to the image rotated to be comparable to img
 SunImage* SunImage::rotated_like(const SunImage* img) const
 {
 	SunImage * rotated = new SunImage(img->Xaxes(), img->Yaxes());

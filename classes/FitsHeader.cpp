@@ -176,6 +176,7 @@ string FitsHeader::get<string>(const string& key) const
 	if(it == header.end())
 	{
 		cerr<<"Warning : No such key in header "<<key<<endl;
+		return "";
 	}
 	return it->second;
 }
@@ -187,6 +188,7 @@ string FitsHeader::get<string>(const char* key) const
 	if(it == header.end())
 	{
 		cerr<<"Warning : No such key in header "<<key<<endl;
+		return "";
 	}
 	return it->second;
 }

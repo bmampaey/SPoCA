@@ -92,3 +92,92 @@ bool isColorMap(const FitsHeader& header)
 	return header.get<bool>("INSTRUME") && header.get<string>("INSTRUME").find("SPoCA") != string::npos;	
 }
 
+
+
+void ColorMap::tresholdRegionsByRawArea(const double minSize)
+{
+	const double pixelarea = PixelArea();
+	
+	//First we compute the area for each color
+	vector<double> areas(100, 0);
+
+	PixelType* p = pixels;
+	
+	for (int y = 0; y < Yaxes(); ++y)
+	{
+		for (int x = 0 ; x < Xaxes(); ++x)
+		{
+			if(*p != nullvalue_)
+			{
+				if(areas.size() < *p + 1)
+				{
+					areas.resize(*p + 1, 0);
+				}
+
+				areas[*p] += pixelarea;
+			}
+			++p;
+		}
+	}
+	
+	//Now we nullify those that are too small
+	p = pixels;
+	
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if(*p != nullvalue_ && areas[*p] < minSize)
+		{
+			*p = nullvalue_;
+		}
+		++p;
+	}
+
+}
+
+void ColorMap::tresholdRegionsByRealArea(const double minSize)
+{
+	const double R0 = radius * PixelArea();
+	const double R2 = radius * radius;
+	
+	//First we compute the area for each color
+	vector<double> areas(100, 0);
+
+	PixelType* p = pixels;
+	
+	const int xmax = Xaxes() - suncenter.x;
+	const int ymax = Yaxes() - suncenter.y;
+	
+	for (int y = - suncenter.y; y < ymax; ++y)
+	{
+		for (int x = - suncenter.x ; x < xmax; ++x)
+		{
+			if(*p != nullvalue_)
+			{
+				if(areas.size() < *p + 1)
+				{
+					areas.resize(*p + 1, 0);
+				}
+
+				double pixelArea2 = R2 - (x * x) - (y * y);			
+				if(pixelArea2 > 0)
+					areas[*p] += R0 / sqrt(pixelArea2);
+				else
+					areas[*p] = numeric_limits<double>::infinity();
+			}
+			++p;
+		}
+	}
+	
+	//Now we nullify those that are too small
+	p = pixels;
+	
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if(*p != nullvalue_ && areas[*p] < minSize)
+		{
+			*p = nullvalue_;
+		}
+		++p;
+	}
+
+}

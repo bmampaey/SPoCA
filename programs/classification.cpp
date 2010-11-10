@@ -145,7 +145,7 @@ int main(int argc, const char **argv)
 	// If none as been provided as a program argument, we set it to the current directory + type of classifier
 	if(outputFileName.empty())
 	{
-		outputFileName = "./" + classifierType;
+		outputFileName = "./" + classifierType + "." + segmentation;
 	}
 	outputFileName += ".";
 	
@@ -313,8 +313,9 @@ int main(int argc, const char **argv)
 		{
 			vector<RealFeature> newB = F->getB();
 			sort(newB.begin(), newB.end());
-			//We compare if the 2 lastclass centers are different enough
-			if(d(newB[numberClasses-1]/newB[numberClasses-2], RealFeature(0)) < MIN_QUOTIENT_FACTOR)
+			//We compare if the 2 last class centers are within boudaries
+			Real quotientFactor = d(newB[numberClasses-1]/newB[numberClasses-2], RealFeature(0));
+			if(quotientFactor < MIN_QUOTIENT_FACTOR || quotientFactor > MAX_QUOTIENT_FACTOR)
 			{
 				// In that case we use the old centers to do an attribution
 				F->initB(B, wavelengths);
@@ -424,7 +425,7 @@ int main(int argc, const char **argv)
 	}
 	else 
 	{
-		ActiveRegionMap(segmentedMap, 2);
+		ActiveRegionMap(segmentedMap, 3);
 	}
 	
 	segmentedMap->writeFitsImage(outputFileName + "ARmap.fits");

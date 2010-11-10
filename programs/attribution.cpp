@@ -27,7 +27,7 @@
 #include "../classes/FeatureVector.h"
 #include "../classes/ArgumentHelper.h"
 
-
+#include "../classes/ActiveRegion.h"
 
 using namespace std;
 using namespace dsr;
@@ -258,6 +258,10 @@ int main(int argc, const char **argv)
 	// We have all the information we need, we can do the attribution
 	F->attribution();
 	
+	#if DEBUG >= 4
+	// We save all the results, this should only be for advanced debugging
+	F->saveAllResults(segmentedMap);
+	#endif
 	
 	// We do the segmentation
 	if (segmentation == "max")
@@ -320,6 +324,19 @@ int main(int argc, const char **argv)
 	delete F;
 
 	segmentedMap->writeFitsImage(outputFileName + "segmented.fits");
+	
+	// We save the map of AR
+	if (segmentation == "max" || segmentation == "closest" || segmentation == "limits")
+	{
+		ActiveRegionMap(segmentedMap, ARclass(F->getB()));
+	}
+	else 
+	{
+		ActiveRegionMap(segmentedMap, 3);
+	}
+	
+	segmentedMap->writeFitsImage(outputFileName + "ARmap.fits");
+
 	/*HACK for maps with AR and CH
 	for (unsigned j=0; j < segmentedMap->NumberPixels(); ++j)
 	{

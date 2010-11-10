@@ -57,6 +57,11 @@ class Coordinate
 			Coordinate result(*this);
 			return result-=(c);
 		}
+		
+		Coordinate operator*(const unsigned& value) const
+		{
+			return Coordinate(x * value, y * value);
+		}
 		double d2(const Coordinate& c) const
 		{
 			return (x - c.x) * (x - c.x) + (y - c.y) * (y - c.y);

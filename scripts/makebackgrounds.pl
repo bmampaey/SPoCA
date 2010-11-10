@@ -54,7 +54,7 @@ sub parse_arguments
 	
 	if ($help == 1)
 	{
-		print STDERR "Usage: makeset.pl -w wavelenght1,wavelengt2 [-s size] [-p number_of_threads] [-r repository_path] image1.fits image2.fits ... \n";
+		print STDERR "Usage: makebackgrounds.pl -w wavelenght1,wavelengt2 [-s size] [-p number_of_threads] [-r repository_path] image1.fits image2.fits ... \n";
 		print STDERR "This script creates background png pictures.\n";
 		print STDERR "The repository where the pictures be created can be specified using the -r option, by default it is the current working directory\n";
 		print STDERR "The number of threads can be specified with the -p options\n";

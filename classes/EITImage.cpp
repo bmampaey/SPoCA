@@ -26,19 +26,32 @@ EITImage::EITImage(const string& filename)
 			pixels[j] = nullvalue_;
 		}
 	}
-
+	sineCorrectionParameters[0] = EIT_SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = EIT_SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = EIT_SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = EIT_SINE_CORR_R4 / 100.;
 }
 
 
 
 EITImage::EITImage(const SunImage& i)
 :SunImage(i)
-{}
+{
+	sineCorrectionParameters[0] = EIT_SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = EIT_SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = EIT_SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = EIT_SINE_CORR_R4 / 100.;
+}
 
 
 EITImage::EITImage(const SunImage* i)
 :SunImage(i)
-{}
+{
+	sineCorrectionParameters[0] = EIT_SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = EIT_SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = EIT_SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = EIT_SINE_CORR_R4 / 100.;
+}
 
 
 void EITImage::readHeader(fitsfile* fptr)
@@ -85,31 +98,6 @@ void EITImage::writeHeader(fitsfile* fptr)
 }
 
 
-inline Real EITImage::percentCorrection(const Real r)const
-{
-
-	const Real r1 = EIT_SINE_CORR_R1 / 100.;
-	const Real r2 = EIT_SINE_CORR_R2 / 100.;
-	const Real r3 = EIT_SINE_CORR_R3 / 100.;
-	const Real r4 = EIT_SINE_CORR_R4 / 100.;
-	if (r <= r1 || r >= r4)
-		return 0;
-	else if (r >= r2 && r <= r3)
-		return 1;
-	else if (r <= r2)
-	{
-		Real T = - 2*(r1-r2);
-		Real phi = MIPI*(r1+r2)/(r1-r2);
-		return (sin((BIPI/T)*r + phi) + 1)/2;
-	}
-	else // (r => r3)
-	{
-		Real T = 2*(r3-r4);
-		Real phi = - MIPI*(r3+r4)/(r3-r4);
-		return (sin((BIPI/T)*r + phi) + 1)/2;
-	}
-
-}
 
 bool isEIT(const FitsHeader& header)
 {

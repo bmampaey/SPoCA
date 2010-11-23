@@ -159,7 +159,7 @@ int main(int argc, const char **argv)
 		image->preprocessing(preprocessingSteps, radiusRatio);
 		
 		//We output the middle line of the image
-		lineFile.open((filename + ".preprocessed.line.txt").c_str());
+		lineFile.open((filename + "preprocessed.line.txt").c_str());
 		if (lineFile)
 		{
 			unsigned y = image->Yaxes() / 2;
@@ -185,7 +185,7 @@ int main(int argc, const char **argv)
 					image->pixel(x,y) = image->nullvalue();				
 			}
 		}
-		image->writeFitsImage(filename + ".preprocessed.fits");
+		image->writeFitsImage(filename + "preprocessed.fits");
 		delete image;
 	}
 	

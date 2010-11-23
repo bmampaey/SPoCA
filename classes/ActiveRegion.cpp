@@ -23,7 +23,7 @@ unsigned ARclass(const vector<RealFeature>& B)
 
 // Function that saves the AR map for tracking
 // You pass it a ColorMap that has already all the keywords correctly set
-ColorMap* ActiveRegionMap(ColorMap* segmentedMap, unsigned ARclass)
+ColorMap* ActiveRegionMap(ColorMap* segmentedMap, unsigned ARclass, bool tresholdRawArea)
 {
 	segmentedMap->setNullvalue(0);
 
@@ -56,10 +56,11 @@ ColorMap* ActiveRegionMap(ColorMap* segmentedMap, unsigned ARclass)
 	segmentedMap->nullifyAboveRadius(1.); 
 
 	// We erase small regions
-	double minSize = MIN_AR_SIZE / segmentedMap->PixelArea();
-	
-	segmentedMap->tresholdRegionsByRawArea(minSize);
-
+	if(tresholdRawArea)
+		segmentedMap->tresholdRegionsByRawArea(MIN_AR_SIZE);
+	else
+		segmentedMap->tresholdRegionsByRealArea(MIN_AR_SIZE);
+	 
 
 	return segmentedMap;
 

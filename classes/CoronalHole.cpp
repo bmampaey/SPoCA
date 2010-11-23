@@ -56,9 +56,7 @@ ColorMap* CoronalHoleMap(ColorMap* segmentedMap, unsigned CHclass)
 	segmentedMap->nullifyAboveRadius(1.); 
 
 	// We erase small regions
-	double minSize = MIN_CH_SIZE / segmentedMap->PixelArea();
-	
-	segmentedMap->tresholdRegionsByRawArea(minSize);
+	segmentedMap->tresholdRegionsByRawArea(MIN_CH_SIZE);
 
 
 	return segmentedMap;

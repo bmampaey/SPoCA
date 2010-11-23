@@ -124,7 +124,7 @@ int main(int argc, const char **argv)
 			unsigned delta_t = unsigned(difftime(images[s2]->ObservationTime(),images[s1]->ObservationTime()));
 			if (delta_t > max_delta_t)
 			{
-				break;						  
+				continue;						  
 			}	
 			
 			#if DEBUG >= 2
@@ -307,14 +307,14 @@ int main(int argc, const char **argv)
 				
 	}
 	
-	// We need to remove the duplicates
+	// We remove the duplicate relations
 	sort(relations.begin(), relations.end());
 	relations.erase(unique(relations.begin(), relations.end()), relations.end());
 	
 	// We output the relations
-	for (unsigned r = 0; r < relations.size(); ++r)
+	for (vector<TrackingRelation>::iterator it = relations.begin(); it!=relations.end(); ++it)
 	{
-		cout<<relations[r].past_color<<" "<<relations[r].type<<" "<<relations[r].present_color<<endl;
+		cout<<it->past_color<<" "<<it->type<<" "<<it->present_color<<endl;
 	}
 						
 	#endif

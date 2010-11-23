@@ -17,12 +17,19 @@ SunImage::SunImage(const long xAxes, const long yAxes)
 {
 	suncenter.x = xAxes/2;
 	suncenter.y = yAxes/2;
+	sineCorrectionParameters[0] = SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = SINE_CORR_R4 / 100.;
 }
 
 SunImage::SunImage(const long xAxes, const long yAxes,  const Coordinate suncenter, const double radius, const double cdelt1, const double cdelt2, const double wavelength)
 :Image<PixelType>(xAxes,yAxes),radius(radius),wavelength(wavelength),observationTime(0),suncenter(suncenter),cdelt1(cdelt1),cdelt2(cdelt2),median(0),datap01(0), datap95(numeric_limits<PixelType>::max()), exposureTime(0), b0(0)
 {
-
+	sineCorrectionParameters[0] = SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = SINE_CORR_R4 / 100.;
 }
 
 
@@ -30,6 +37,10 @@ SunImage::SunImage(const string& filename)
 :Image<PixelType>(),median(0),datap01(0), datap95(numeric_limits<PixelType>::max()), exposureTime(0)
 {
 	readFitsImage(filename);
+	sineCorrectionParameters[0] = SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = SINE_CORR_R4 / 100.;
 }
 
 
@@ -42,7 +53,6 @@ SunImage::SunImage(const SunImage& i)
 SunImage::SunImage(const SunImage* i)
 :Image<PixelType>(i),radius(i->radius),wavelength(i->wavelength),observationTime(i->observationTime),suncenter(i->suncenter),cdelt1(i->cdelt1),cdelt2(i->cdelt2),median(i->median),datap01(i->datap01),datap95(i->datap95), date_obs(i->date_obs), exposureTime(i->exposureTime),b0(i->b0),header(i->header)
 {
-
 }
 
 
@@ -277,10 +287,10 @@ progressive correction following the descending phase of the sine between r3 and
 inline Real SunImage::percentCorrection(const Real r)const
 {
 
-	const Real r1 = SINE_CORR_R1 / 100.;
-	const Real r2 = SINE_CORR_R2 / 100.;
-	const Real r3 = SINE_CORR_R3 / 100.;
-	const Real r4 = SINE_CORR_R4 / 100.;
+	const Real r1 = sineCorrectionParameters[0];
+	const Real r2 = sineCorrectionParameters[1];
+	const Real r3 = sineCorrectionParameters[2];
+	const Real r4 = sineCorrectionParameters[3];
 	if (r <= r1 || r >= r4)
 		return 0;
 	else if (r >= r2 && r <= r3)

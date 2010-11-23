@@ -27,7 +27,6 @@ const double HIGGINS_FACTOR = 16;
 
 void RegionStats::add(const Coordinate& pixelCoordinate, const PixelType& pixelIntensity, const Coordinate sunCenter, const bool atBorder, const double R)
 {
-	//Test to see if including the pixel intensity in the center is better
 	Region::add(pixelCoordinate);
 	m1 += pixelIntensity;
 	if( maxIntensity < pixelIntensity )
@@ -91,10 +90,10 @@ const double rad2arcsec = 206264.806247096;
 
 Coordinate RegionStats::Barycenter() const
 {
-	if (numberPixels > 0)
+	if (! isnan(totalIntensity) && ! isinf(totalIntensity) & totalIntensity > 0)
 		return Coordinate(barycenter_x/totalIntensity, barycenter_y/totalIntensity);
 	else
-		return Coordinate::Max;
+		return Center();
 }
 
 Real RegionStats::CenterxError() const

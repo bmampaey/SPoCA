@@ -31,9 +31,11 @@ class SunImage : public Image<PixelType>
 		std::string date_obs;
 		double exposureTime;
 		double b0;
+		
+		Real sineCorrectionParameters[4];
 	
 		virtual Real MINRADIUS()
-		{ return SINE_CORR_R1 / 100.; }
+		{ return sineCorrectionParameters[0]; }
 		
 	public :
 		FitsHeader header;
@@ -73,7 +75,7 @@ class SunImage : public Image<PixelType>
 		void annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius);
 		void ALCDivMedian(Real maxLimbRadius, Real minLimbRadius);
 		void ALCDivMode(Real maxLimbRadius, Real minLimbRadius);
-		virtual Real percentCorrection(const Real r) const;
+		Real percentCorrection(const Real r) const;
 
 		//Various routines to work on SunImages
 		void recenter(const Coordinate& newCenter);

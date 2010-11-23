@@ -17,18 +17,32 @@ EUVIImage::EUVIImage(const string& filename)
 	readFitsImage(filename);
 	if(!isEUVI(header))
 		cerr<<"Error : "<<filename<<" is not EUVI!"<<endl;
+	sineCorrectionParameters[0] = EUVI_SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = EUVI_SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = EUVI_SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = EUVI_SINE_CORR_R4 / 100.;
 }
 
 
 
 EUVIImage::EUVIImage(const SunImage& i)
 :SunImage(i)
-{}
+{	
+	sineCorrectionParameters[0] = EUVI_SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = EUVI_SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = EUVI_SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = EUVI_SINE_CORR_R4 / 100.;
+}
 
 
 EUVIImage::EUVIImage(const SunImage* i)
 :SunImage(i)
-{}
+{	
+	sineCorrectionParameters[0] = EUVI_SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = EUVI_SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = EUVI_SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = EUVI_SINE_CORR_R4 / 100.;
+}
 
 
 void EUVIImage::readHeader(fitsfile* fptr)
@@ -77,31 +91,6 @@ void EUVIImage::writeHeader(fitsfile* fptr)
 	header.writeKeywords(fptr);
 }
 
-inline Real EUVIImage::percentCorrection(const Real r)const
-{
-
-	const Real r1 = EUVI_SINE_CORR_R1 / 100.;
-	const Real r2 = EUVI_SINE_CORR_R2 / 100.;
-	const Real r3 = EUVI_SINE_CORR_R3 / 100.;
-	const Real r4 = EUVI_SINE_CORR_R4 / 100.;
-	if (r <= r1 || r >= r4)
-		return 0;
-	else if (r >= r2 && r <= r3)
-		return 1;
-	else if (r <= r2)
-	{
-		Real T = - 2*(r1-r2);
-		Real phi = MIPI*(r1+r2)/(r1-r2);
-		return (sin((BIPI/T)*r + phi) + 1)/2;
-	}
-	else // (r => r3)
-	{
-		Real T = 2*(r3-r4);
-		Real phi = - MIPI*(r3+r4)/(r3-r4);
-		return (sin((BIPI/T)*r + phi) + 1)/2;
-	}
-
-}
 
 bool isEUVI(const FitsHeader& header)
 {

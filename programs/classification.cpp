@@ -84,6 +84,8 @@ int main(int argc, const char **argv)
 	// Options for the treshold segmentation
 	string treshold;
 	
+	// Options for the ARmap
+	bool tresholdRawArea = false;
 
 	// We parse the arguments
 
@@ -113,6 +115,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('q',"qs","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Quiet Sun.\n\t", quietSun);
 	arguments.new_named_string('a',"ar","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Active Region.\n\t", activeRegion);
 	arguments.new_named_string('t',"tr","coma separated list of positive integer (no spaces)", "\n\tOnly for treshold segmentation.\n\tThe parameter of the treshold segmentation.\n\tMust be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership\n\t", treshold);	
+	arguments.new_flag('w', "tresholdRawArea", "\n\tSet this flag if you want the Active Regions to be tresholded according to their Raw area instead of their center area.\n\t", tresholdRawArea);
 	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
@@ -421,11 +424,11 @@ int main(int argc, const char **argv)
 	
 	if (segmentation == "max" || segmentation == "closest" || segmentation == "limits")
 	{
-		ActiveRegionMap(segmentedMap, ARclass(F->getB()));
+		ActiveRegionMap(segmentedMap, ARclass(F->getB()), tresholdRawArea);
 	}
 	else 
 	{
-		ActiveRegionMap(segmentedMap, 3);
+		ActiveRegionMap(segmentedMap, 3, tresholdRawArea);
 	}
 	
 	segmentedMap->writeFitsImage(outputFileName + "ARmap.fits");

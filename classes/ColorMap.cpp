@@ -19,12 +19,14 @@ ColorMap::ColorMap(const string& filename)
 		cerr<<"Error : "<<filename<<" is not a SPoCA ColorMap!"<<endl;
 	
 	nullvalue_ = 0;
+
 }
 
 ColorMap::ColorMap(const long xAxes, const long yAxes)
 :SunImage(xAxes, yAxes)
 {
 	nullvalue_ = 0;
+
 }
 
 
@@ -32,6 +34,7 @@ ColorMap::ColorMap(const SunImage& i)
 :SunImage(i)
 {
 	nullvalue_ = 0;
+
 }
 
 
@@ -39,6 +42,7 @@ ColorMap::ColorMap(const SunImage* i)
 :SunImage(i)
 {
 	nullvalue_ = 0;
+
 }
 
 

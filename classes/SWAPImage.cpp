@@ -17,18 +17,32 @@ SWAPImage::SWAPImage(const string& filename)
 	readFitsImage(filename);
 	if(!isSWAP(header))
 		cerr<<"Error : "<<filename<<" is not SWAP!"<<endl;
+	sineCorrectionParameters[0] = SWAP_SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = SWAP_SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = SWAP_SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = SWAP_SINE_CORR_R4 / 100.;
 }
 
 
 
 SWAPImage::SWAPImage(const SunImage& i)
 :SunImage(i)
-{}
+{	
+	sineCorrectionParameters[0] = SWAP_SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = SWAP_SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = SWAP_SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = SWAP_SINE_CORR_R4 / 100.;
+}
 
 
 SWAPImage::SWAPImage(const SunImage* i)
 :SunImage(i)
-{}
+{	
+	sineCorrectionParameters[0] = SWAP_SINE_CORR_R1 / 100.;
+	sineCorrectionParameters[1] = SWAP_SINE_CORR_R2 / 100.;
+	sineCorrectionParameters[2] = SWAP_SINE_CORR_R3 / 100.;
+	sineCorrectionParameters[3] = SWAP_SINE_CORR_R4 / 100.;
+}
 
 
 void SWAPImage::readHeader(fitsfile* fptr)
@@ -72,31 +86,6 @@ void SWAPImage::writeHeader(fitsfile* fptr)
 	header.writeKeywords(fptr);
 }
 
-inline Real SWAPImage::percentCorrection(const Real r)const
-{
-
-	const Real r1 = SWAP_SINE_CORR_R1 / 100.;
-	const Real r2 = SWAP_SINE_CORR_R2 / 100.;
-	const Real r3 = SWAP_SINE_CORR_R3 / 100.;
-	const Real r4 = SWAP_SINE_CORR_R4 / 100.;
-	if (r <= r1 || r >= r4)
-		return 0;
-	else if (r >= r2 && r <= r3)
-		return 1;
-	else if (r <= r2)
-	{
-		Real T = - 2*(r1-r2);
-		Real phi = MIPI*(r1+r2)/(r1-r2);
-		return (sin((BIPI/T)*r + phi) + 1)/2;
-	}
-	else // (r => r3)
-	{
-		Real T = 2*(r3-r4);
-		Real phi = - MIPI*(r3+r4)/(r3-r4);
-		return (sin((BIPI/T)*r + phi) + 1)/2;
-	}
-
-}
 
 bool isSWAP(const FitsHeader& header)
 {

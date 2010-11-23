@@ -17,8 +17,6 @@
 class SWAPImage : public SunImage
 {
 
-	Real MINRADIUS()
-	{ return SWAP_SINE_CORR_R1 / 100.; }
 	
 	public :
 		
@@ -33,9 +31,7 @@ class SWAPImage : public SunImage
 		//Routines to read and write the keywords from/to the header
 		void readHeader(fitsfile* fptr);
 		void writeHeader(fitsfile* fptr);
-		
-		//Routines for the preprocessing on SunImages
-		Real percentCorrection(const Real r) const;
+
 
 };
 

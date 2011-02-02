@@ -104,6 +104,13 @@ class Image
 		Image<T>* convolution(const Image<T> * img, const float kernel[5][5]);
 		Image<T>* sobel_approx(const Image<T> * img);
 		Image<T>* sobel(const Image<T> * img);
+		
+		// For the optical flow
+		Image<T>* convolveHoriz(const Image<T>* img,  const std::vector<float>& kernel);
+		Image<T>* convolveVert(const Image<T>* img,  const std::vector<float>& kernel);
+		Image<T>* convolveSeparate(const Image<T>* img, const std::vector<float>& horiz_kernel, const std::vector<float>& vert_kernel);
+		T interpolate(const float x, const float y) const;
+
 };
 
 void fillRandomDots(Image<PixelType>* image, unsigned numberClasses, const std::vector<Real>& classesFeatures, const std::vector<Real>& backgroundFeatures);

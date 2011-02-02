@@ -562,7 +562,7 @@ Image<T>* Image<T>::erodeCircular(const unsigned size, const T unsetValue)
 		for(unsigned x = size; x < Xaxes() - size; ++x)
 		{
 			
-			if(pixels[j] != unsetValue && (pixels[j-1] == unsetValue || pixels[j+1] == unsetValue || pixels[j-Xaxes()] == unsetValue || pixels[j+Xaxes()] == unsetValue))
+			if(pixels[j] != unsetValue && (pixels[j-1] != pixels[j] || pixels[j+1] != pixels[j] || pixels[j-Xaxes()] != pixels[j] || pixels[j+Xaxes()] != pixels[j]))
 			{
 				newPixels[j] = unsetValue;
 				for(unsigned s = 0; s < shape.size(); ++s)
@@ -670,9 +670,9 @@ Image<T>* Image<T>::drawExternContours(const unsigned width, const T unsetValue)
 template<class T>
 Image<T>* Image<T>::drawContours(const unsigned width, const T unsetValue)
 {
-	unsigned size = width / 2;
+	unsigned size = width/2;
 	T * newPixels = new T[numberPixels];
-	fill(newPixels, newPixels + numberPixels, unsetValue);
+	memcpy(newPixels, pixels, numberPixels * sizeof(T));
 	vector<unsigned> shape;
 	shape.reserve(size*size*3);
 	for(unsigned x = 1; x <= size; ++x)
@@ -689,10 +689,13 @@ Image<T>* Image<T>::drawContours(const unsigned width, const T unsetValue)
 		j = 	y * Xaxes() + size;
 		for(unsigned x = size; x < Xaxes() - size; ++x)
 		{
-			
-			if(pixels[j] != unsetValue && (pixels[j-1] == unsetValue || pixels[j+1] == unsetValue || pixels[j-Xaxes()] == unsetValue || pixels[j+Xaxes()] == unsetValue))
+			T maxColor = pixels[j-1];
+			maxColor = pixels[j+1] > maxColor ? pixels[j+1] : maxColor;
+			maxColor = pixels[j-Xaxes()] > maxColor ? pixels[j-Xaxes()] : maxColor;
+			maxColor = pixels[j+Xaxes()] > maxColor ? pixels[j+Xaxes()] : maxColor;
+			if(pixels[j] != maxColor)
 			{
-				newPixels[j] = pixels[j];
+				newPixels[j] = maxColor;
 				for(unsigned s = 0; s < shape.size(); ++s)
 				{
 					#if DEBUG >= 1
@@ -702,8 +705,13 @@ Image<T>* Image<T>::drawContours(const unsigned width, const T unsetValue)
 							exit(EXIT_FAILURE);
 						}	
 					#endif
-					newPixels[j + shape[s]] = newPixels[j - shape[s]] = pixels[j];
+					newPixels[j + shape[s]] = newPixels[j - shape[s]] = maxColor;
 				}
+				
+			}
+			else
+			{
+				newPixels[j] = unsetValue;
 			}
 			++j;
 		}
@@ -712,7 +720,6 @@ Image<T>* Image<T>::drawContours(const unsigned width, const T unsetValue)
 	delete[] pixels;
 	pixels = newPixels;
 	return this;
-
 }
 
 template<class T>
@@ -1314,6 +1321,164 @@ Image<T>* Image<T>::sobel(const Image<T> * img)
 	}
 	return this;
 }
+
+template<class T>
+Image<T>* Image<T>::convolveHoriz(const Image<T>* img,  const vector<float>& kernel)
+{
+
+	const T* ptrrow = img->pixels;
+	const T* ppp;	
+	T* ptrout;
+	
+	// I can't convolve myself
+	if(img != this)
+	{
+		resize(img->Xaxes(), img->Yaxes());
+		ptrout = pixels;
+	}
+	else
+	{
+		ptrout = new T[img->NumberPixels()];
+	}
+	
+
+	const unsigned radius = kernel.size() / 2;
+
+	/* Kernel width must be odd */
+	if(kernel.size() % 2 != 1)
+	{
+		cerr<<"Kernel width must be odd"<<endl;
+		exit(EXIT_FAILURE);
+	}
+
+	/* For each row, do ... */
+
+	for (unsigned y = 0 ; y < img->Yaxes() ; y++)
+	{
+		unsigned x = 0;
+		/* Zero leftmost columns */
+		for ( ; x < radius ; x++)
+			*ptrout++ = 0.0;
+
+		/* Convolve middle columns with kernel */
+		for ( ; x < img->Xaxes() - radius ; x++)
+		{
+			ppp = ptrrow + x - radius;
+			register T sum = 0.0;
+			for (int k = kernel.size()-1 ; k >= 0 ; k--)
+				sum += *ppp++ * kernel[k];
+			*ptrout++ = sum;
+		}
+
+		/* Zero rightmost columns */
+		for ( ; x < img->Xaxes(); x++)
+			*ptrout++ = 0.0;
+
+		ptrrow += img->Xaxes();
+	}
+	if(img == this)
+	{
+		delete[] pixels;
+		pixels = ptrout;
+	}
+	return this;
+}
+
+
+
+template<class T>
+Image<T>* Image<T>::convolveVert(const Image<T>* img, const vector<float>& kernel)
+{
+
+	
+	const T* ptrcol = img->pixels;	 			
+	const T* ppp;												 
+	T* ptrout;
+	
+	// I can't convolve myself
+	if(img != this)
+	{
+		resize(img->Xaxes(), img->Yaxes());
+		ptrout = pixels;
+	}
+	else
+	{
+		ptrout = new T[img->NumberPixels()];
+	}
+
+	const unsigned radius = kernel.size() / 2;
+
+	/* Kernel width must be odd */
+	if(kernel.size() % 2 != 1)
+	{
+		cerr<<"Kernel width must be odd"<<endl;
+		exit(EXIT_FAILURE);
+	}
+
+	/* For each column, do ... */
+
+	for (unsigned x = 0 ; x < img->Xaxes(); x++)
+	{
+		unsigned y = 0;
+		/* Zero leftmost columns */
+		for ( ; y < radius ; y++)
+		{
+			*ptrout = 0.0;
+			ptrout += img->Xaxes();
+		}
+
+		/* Convolve middle rows with kernel */
+		for ( ; y < img->Yaxes() - radius ; y++)
+		{
+			ppp = ptrcol + img->Xaxes()* (y - radius);
+			register T sum = 0.0;
+			for (int k = kernel.size()-1 ; k >= 0 ; k--)
+			{
+				sum += *ppp * kernel[k];
+				ppp += img->Xaxes();
+			}
+			*ptrout = sum;
+			ptrout += img->Xaxes();
+		}
+
+		/* Zero rightmost columns */
+		for ( ; y < img->Yaxes() ; y++)
+		{
+			*ptrout = 0.0;
+			ptrout += img->Xaxes();
+		}
+
+		ptrcol++;
+		ptrout -= img->Yaxes() * img->Xaxes()- 1;
+	}
+	if(img == this)
+	{
+		delete[] pixels;
+		pixels = ptrout;
+	}
+	return this;
+}
+
+template<class T>
+Image<T>* Image<T>::convolveSeparate(const Image<T>* img,  const vector<float>& horiz_kernel, const vector<float>& vert_kernel)
+{
+
+	Image<T> imgtmp;
+	imgtmp.convolveHoriz(img, horiz_kernel);
+	convolveVert(&imgtmp, vert_kernel);
+	return this;
+}
+
+template<class T>
+T Image<T>::interpolate(const float x, const float y) const
+{
+	int xt = (int) x;							  /* coordinates of top-left corner */
+	int yt = (int) y;
+	float ax = x - xt;
+	float ay = y - yt;
+	return ( (1-ax)*(1-ay)*pixel(x,y) + ax*(1-ay)*pixel(x+1,y) + (1-ax)*ay*pixel(x,y+1) + ax*ay*pixel(x+1,y+1));
+}
+
 
 /* We create the code for the template class we need
    See constants.h */

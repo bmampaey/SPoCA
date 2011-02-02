@@ -20,6 +20,7 @@ my @filenames;
 my $max_threads = 1;
 my $resize;
 my $pointsize;
+my $overwrite_existing = 0;
 
 sub parse_arguments
 {
@@ -36,6 +37,7 @@ sub parse_arguments
 	            "w:s"=>\$wavelengthlist,
 	            "p:i"=>\$max_threads,
 	            "s:s"=>\$resize,
+	            "o:i"=>\$overwrite_existing,
 	            "h"=>\$help,
 		);
 	}
@@ -173,15 +175,20 @@ foreach my $filename (@filenames)
 		$date_obs =~ m#(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)# or die "DATE-OBS of file $filename is incorrect : $date_obs";
 		my $date_format = "$1$2$3_$4$5$6";
 		my $name = "$repository.$wavelnth/$date_format.background.png";
+		if( -f $name && !$overwrite_existing)
+		{
+			print "$name exists, skipping.\n" ;
+			next ;
+		}
 		my $string = "$wavelnth $date_format";
 		my $preprocess;
 		if ($resize)
 		{
-			$preprocess = "$convert $filename $processing -resize '$resize' -fill white -pointsize $pointsize -gravity northwest -undercolor black -annotate 0 '$string' -depth 8 $name";
+			$preprocess = "$convert $filename $processing -resize '$resize' -fill white -pointsize $pointsize -gravity northwest -undercolor black -annotate 0 '$string'  $name";
 		}
 		else
 		{
-			$preprocess = "$convert $filename $processing -fill white -pointsize $pointsize -gravity northwest -undercolor black -annotate 0 '$string' -depth 8 $name";
+			$preprocess = "$convert $filename $processing -fill white -pointsize $pointsize -gravity northwest -undercolor black -annotate 0 '$string'  $name";
 		}
 		print "\nAbout to do : \n\t$preprocess\nIs it ok ? [yes/no/all/none] :";
 		$answer = <STDIN>;
@@ -279,15 +286,20 @@ sub do_execute
 	}
 	
 	my $name = "$repository.$wavelnth/$date_format.background.png";
+	if( -f $name && !$overwrite_existing)
+	{
+		print "$name exists, skipping.\n" ;
+		return "";
+	}
 	my $string = "$wavelnth $date_format";
 	my $preprocess;
 	if ($resize)
 	{
-		$preprocess = "$convert $filename $processing -resize '$resize' -fill white -pointsize $pointsize -gravity northwest -undercolor black -annotate 0 '$string' -depth 8 $name";
+		$preprocess = "$convert $filename $processing -resize '$resize' -fill white -pointsize $pointsize -gravity northwest -undercolor black -annotate 0 '$string'  $name";
 	}
 	else
 	{
-		$preprocess = "$convert $filename $processing -fill white -pointsize $pointsize -gravity northwest -undercolor black -annotate 0 '$string' -depth 8 $name";
+		$preprocess = "$convert $filename $processing -fill white -pointsize $pointsize -gravity northwest -undercolor black -annotate 0 '$string'  $name";
 	}
 	
 	print "$preprocess\n";

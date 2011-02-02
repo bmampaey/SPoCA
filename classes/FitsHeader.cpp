@@ -38,13 +38,13 @@ FitsHeader::FitsHeader(const FitsHeader* i)
 	header = i->header;
 }
 
-
+/*
 bool FitsHeader::readKeywords(fitsfile* fptr)
 {
 	int   status  = 0;
 	char key[81];
 	char value[81];
-	char* comment = NULL;					  /**<By specifying NULL we say that we don't want the comments	*/
+	char* comment = NULL;					  // <By specifying NULL we say that we don't want the comments
 
 	const char* exclist[] = {"SIMPLE", "BITPIX", "NAXIS", "EXTEND", "Z", "XTENSION", "TTYPE1", "TFORM1", "PCOUNT", "GCOUNT", "TFIELDS", "END"};
 
@@ -101,7 +101,90 @@ bool FitsHeader::readKeywords(fitsfile* fptr)
 	#endif
 	return status == KEY_OUT_BOUNDS;
 }
+*/
 
+bool FitsHeader::readKeywords(fitsfile* fptr)
+{
+	int status = 0;
+	char card[81];
+	char value[81];
+	char key[81];
+	int keylength = 0;
+	char* comment = NULL;					  /**<By specifying NULL we say that we don't want the comments	*/
+
+	const int exclude_keywords_class[] = {TYP_STRUC_KEY, TYP_CMPRS_KEY, TYP_HDUID_KEY,TYP_CKSUM_KEY, TYP_COMM_KEY};
+	const unsigned ekc_size = sizeof(exclude_keywords_class) / sizeof(exclude_keywords_class[0]);
+
+	//We first need to reset the fptr to the beginning
+	if( fits_read_record (fptr, 0, key, &status))
+	{
+		cerr<<"Error reseting the fits pointer to the beginning of the header for file "<<fptr->Fptr->filename<<" :"<< status <<endl;			
+		fits_report_error(stderr, status);
+		status = 0;
+	}
+
+
+	int i = 0;
+	while(status != KEY_OUT_BOUNDS)
+	{
+		status = 0;
+		if(fits_read_record(fptr, ++i, card, &status))
+		{
+			if(status != KEY_OUT_BOUNDS)
+			{
+				cerr<<"Error reading keyword from file "<<fptr->Fptr->filename<<" :"<< status <<endl;
+				fits_report_error(stderr, status);
+				status = 0;
+			}
+		}
+		else
+		{
+			// We need to verify the keyword must not be excluded
+			
+			bool excluded = false;
+			int keyword_class = fits_get_keyclass(card);
+			for(unsigned i = 0; i < ekc_size && !excluded; ++i)
+			{
+				excluded = (keyword_class == exclude_keywords_class[i]);
+			}
+			if(!excluded)
+			{
+				if(fits_get_keyname(card, key, &keylength, &status))
+				{
+					cerr<<"Error parsing keyword from file "<<fptr->Fptr->filename<<" card : "<< card <<" : "<< status <<endl;
+					fits_report_error(stderr, status);
+					status = 0;
+					continue;
+				}
+				if(fits_parse_value(card, value, comment, &status))
+				{
+					cerr<<"Error parsing value from file "<<fptr->Fptr->filename<<" card : "<< card <<" : "<< status <<endl;
+					fits_report_error(stderr, status);
+					status = 0;
+					continue;
+				}
+				//Sometimes string values are surrounded by '  ' therefore we must remove them
+				if(value[0] == '\'')
+				{
+					*(strrchr(value, '\'')) = '\0';
+					header[key]=value+1;
+				}
+				else
+				{
+					header[key]=value;
+				}
+			}
+		}
+	} 
+	#if DEBUG >= 3
+	cout<<"Header for file "<<fptr->Fptr->filename<<endl; 
+	for ( map<string,string>::iterator i = header.begin(); i != header.end(); ++i )
+	{
+		cout<<i->first<<":\t"<<i->second<<endl;
+	}
+	#endif
+	return status == KEY_OUT_BOUNDS;
+}
 
 bool FitsHeader::writeKeywords(fitsfile* fptr)
 {

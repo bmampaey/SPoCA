@@ -14,8 +14,8 @@ my $CFLAGS = 'CFLAGS=-Wall -fkeep-inline-functions';
 my $LFLAGS = 'LFLAGS=-lcfitsio';
 my $DFLAGS = 'DFLAGS=';
 my $TRACKINGLFLAGS = 'TRACKINGLFLAGS=-lpthread';
-my $MAGICKLFLAGS = 'MAGICKLFLAGS=`Magick++-config --cppflags --cxxflags --ldflags --libs`';
-my $MAGICKCFLAGS = 'MAGICKCFLAGS=-I /usr/include/ImageMagick/';
+my $MAGICKLFLAGS = 'MAGICKLFLAGS=`Magick++-config --cppflags --ldflags --libs`';
+my $MAGICKCFLAGS = 'MAGICKCFLAGS=`Magick++-config --cppflags`';
 my $IDLLFLAGS = 'IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lXpm -lXmu -lXext -lXt -lSM -lICE  -lXinerama -lX11 -ldl -ltermcap -lrt -lm /usr/lib/libXm.a';
 
 

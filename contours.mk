@@ -1,11 +1,12 @@
 CC=g++
-CFLAGS=-Wall -fkeep-inline-functions -O3
+
 TRACKINGLFLAGS=-lpthread
 IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lXpm -lXmu -lXext -lXt -lSM -lICE  -lXinerama -lX11 -ldl -ltermcap -lrt -lm /usr/lib/libXm.a
-MAGICKLFLAGS=`Magick++-config --cppflags --cxxflags --ldflags --libs`
-MAGICKCFLAGS=-I /usr/include/ImageMagick/
-DFLAGS=$(MAGICKCFLAGS)
+MAGICKLFLAGS=`Magick++-config --cppflags --ldflags --libs`
+MAGICKCFLAGS=`Magick++-config --cppflags`
+DFLAGS=
 LFLAGS=-lcfitsio $(MAGICKLFLAGS)
+CFLAGS=-Wall -fkeep-inline-functions -O3  $(MAGICKCFLAGS)
 
 all:bin/contours.x
 clean: rm bin/contours.x objects/contours.o objects/gradient.o objects/ArgumentHelper.o objects/ColorMap.o objects/SunImage.o objects/FitsHeader.o objects/Coordinate.o objects/Image.o objects/tools.o

@@ -47,6 +47,11 @@
 #define AR_AGGREGATION 31.44 // Equivalent to 12 EIT pixels
 #endif
 
+// The aggregation factor for CH in (arc/sec)square (dilation)
+#if ! defined(CH_AGGREGATION)
+#define CH_AGGREGATION 150 // Equivalent to 60 EIT pixels
+#endif
+
 // If the computaion of eta is to be fixed or not
 // Acceptables values are TRUE or FALSE
 #define FIXETA FALSE

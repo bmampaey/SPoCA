@@ -10,7 +10,7 @@
 
 extern std::string outputFileName;
 
-ColorMap* CoronalHoleMap(ColorMap* segmentedMap, unsigned CHclass);
+ColorMap* CoronalHoleMap(ColorMap* segmentedMap, unsigned CHclass, bool tresholdRawArea);
 unsigned CHclass(const std::vector<RealFeature>& B);
 void blobsIntoCH (ColorMap* ARmap);
 

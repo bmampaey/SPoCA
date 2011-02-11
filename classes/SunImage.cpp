@@ -126,7 +126,7 @@ time_t SunImage::ObservationTime()const
 		tm time;
 		double seconds;
 		int month;
-		if (fits_str2time(const_cast<char *>(date_obs.c_str()), &(time.tm_year), &(month), &(time.tm_mday), &(time.tm_hour), &(time.tm_min), &seconds, &status))
+		if (fits_str2time(const_cast<char *>(date_obs.c_str()), &(time.tm_year), &(time.tm_mon), &(time.tm_mday), &(time.tm_hour), &(time.tm_min), &seconds, &status))
 		{
 			cerr<<"Error converting date_obs to time : "<< status <<endl;
 			fits_report_error(stderr, status);
@@ -134,7 +134,8 @@ time_t SunImage::ObservationTime()const
 		else
 		{
 			time.tm_sec = int(seconds);
-			time.tm_mon = month -1;	//Because stupid c++ standard lib has the month going from 0-11
+			time.tm_mon -= 1;	//Because stupid c++ standard lib has the month going from 0-11
+			time.tm_year -= 1900;	//Because stupid c++ standard lib has decided to change this
 			time.tm_isdst = 0;
 		}
 		return timegm(&time);

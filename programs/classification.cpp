@@ -29,7 +29,7 @@
 #include "../classes/FeatureVector.h"
 #include "../classes/ArgumentHelper.h"
 #include "../classes/ActiveRegion.h"
-
+#include "../classes/CoronalHole.h"
 
 
 using namespace std;
@@ -84,7 +84,7 @@ int main(int argc, const char **argv)
 	// Options for the treshold segmentation
 	string treshold;
 	
-	// Options for the ARmap
+	// Options for the ARmap and CHmap
 	bool tresholdRawArea = false;
 
 	// We parse the arguments
@@ -115,7 +115,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('q',"qs","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Quiet Sun.\n\t", quietSun);
 	arguments.new_named_string('a',"ar","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Active Region.\n\t", activeRegion);
 	arguments.new_named_string('t',"tr","coma separated list of positive integer (no spaces)", "\n\tOnly for treshold segmentation.\n\tThe parameter of the treshold segmentation.\n\tMust be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership\n\t", treshold);	
-	arguments.new_flag('w', "tresholdRawArea", "\n\tSet this flag if you want the Active Regions to be tresholded according to their Raw area instead of their center area.\n\t", tresholdRawArea);
+	arguments.new_flag('w', "tresholdRawArea", "\n\tSet this flag if you want the Active Regions and Coronal Holes to be tresholded according to their Raw area instead of their center area.\n\t", tresholdRawArea);
 	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
@@ -420,6 +420,8 @@ int main(int argc, const char **argv)
 	segmentedMap->writeFitsImage(outputFileName + "segmented.fits");
 	#endif
 	
+	ColorMap* CHMap = new ColorMap(segmentedMap);
+	
 	// We save the map of AR
 	
 	if (segmentation == "max" || segmentation == "closest" || segmentation == "limits")
@@ -432,6 +434,19 @@ int main(int argc, const char **argv)
 	}
 	
 	segmentedMap->writeFitsImage(outputFileName + "ARmap.fits");
+
+	// We save the map of CH
+	
+	if (segmentation == "max" || segmentation == "closest" || segmentation == "limits")
+	{
+		ActiveRegionMap(CHMap, CHclass(F->getB()), tresholdRawArea);
+	}
+	else 
+	{
+		ActiveRegionMap(CHMap, 1, tresholdRawArea);
+	}
+	
+	CHMap->writeFitsImage(outputFileName + "CHmap.fits");
 	
 	//We save the centers for the next run (for PCM and derivatives, must be done before classification)
 	if (!centersFileName.empty())

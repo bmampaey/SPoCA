@@ -74,7 +74,7 @@ string Region::ObservationDate() const
 	tm* date_obs;
 	date_obs = gmtime(&observationTime);
 	ostringstream ss;
-	ss<<setfill('0')<<setw(4)<<date_obs->tm_year<<"-"<<setw(2)<<date_obs->tm_mon + 1<<"-"<<setw(2)<<date_obs->tm_mday<<"T"<<setw(2)<<date_obs->tm_hour<<":"<<setw(2)<<date_obs->tm_min<<":"<<setw(2)<<date_obs->tm_sec;
+	ss<<setfill('0')<<setw(4)<<date_obs->tm_year+1900<<"-"<<setw(2)<<date_obs->tm_mon + 1<<"-"<<setw(2)<<date_obs->tm_mday<<"T"<<setw(2)<<date_obs->tm_hour<<":"<<setw(2)<<date_obs->tm_min<<":"<<setw(2)<<date_obs->tm_sec;
 	return ss.str();
 }
 
@@ -106,7 +106,7 @@ string Region::HekLabel() const
 	tm* date_obs;
 	date_obs = gmtime(&observationTime);
 	ostringstream ss;
-	ss<<setfill('0')<<setw(4)<<date_obs->tm_year<<setw(2)<<date_obs->tm_mon + 1<<setw(2)<<date_obs->tm_mday<<"T"<<setw(2)<<date_obs->tm_hour<<setw(2)<<date_obs->tm_min<<setw(2)<<date_obs->tm_sec<<"_"<<id;
+	ss<<setfill('0')<<setw(4)<<date_obs->tm_year+1900<<setw(2)<<date_obs->tm_mon + 1<<setw(2)<<date_obs->tm_mday<<"T"<<setw(2)<<date_obs->tm_hour<<setw(2)<<date_obs->tm_min<<setw(2)<<date_obs->tm_sec<<"_"<<id;
 	return ss.str();
 }
 
@@ -115,7 +115,7 @@ string Region::Visu3DLabel() const
 	tm* date_obs;
 	date_obs = gmtime(&observationTime);
 	ostringstream ss;
-	ss<<setfill('0')<<setw(4)<<date_obs->tm_year<<setw(2)<<date_obs->tm_mon + 1<<setw(2)<<date_obs->tm_mday<<setw(2)<<date_obs->tm_hour<<setw(2)<<date_obs->tm_min;
+	ss<<setfill('0')<<setw(4)<<date_obs->tm_year+1900<<setw(2)<<date_obs->tm_mon + 1<<setw(2)<<date_obs->tm_mday<<setw(2)<<date_obs->tm_hour<<setw(2)<<date_obs->tm_min;
 	return ss.str();
 }
 

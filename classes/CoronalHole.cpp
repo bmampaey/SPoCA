@@ -23,7 +23,7 @@ unsigned CHclass(const vector<RealFeature>& B)
 
 // Function that saves the CH map for tracking
 // You pass it a ColorMap that has already all the keywords correctly set
-ColorMap* CoronalHoleMap(ColorMap* segmentedMap, unsigned CHclass)
+ColorMap* CoronalHoleMap(ColorMap* segmentedMap, unsigned CHclass, bool tresholdRawArea)
 {
 	segmentedMap->setNullvalue(0);
 
@@ -56,7 +56,10 @@ ColorMap* CoronalHoleMap(ColorMap* segmentedMap, unsigned CHclass)
 	segmentedMap->nullifyAboveRadius(1.); 
 
 	// We erase small regions
-	segmentedMap->tresholdRegionsByRawArea(MIN_CH_SIZE);
+	if(tresholdRawArea)
+		segmentedMap->tresholdRegionsByRawArea(MIN_CH_SIZE);
+	else
+		segmentedMap->tresholdRegionsByRealArea(MIN_CH_SIZE);
 
 
 	return segmentedMap;

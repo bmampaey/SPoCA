@@ -95,6 +95,8 @@ inline SunImage* getImageFromFile(const string imageType, const string imageFile
 		image = new AIAImage(imageFilename);
 	else if (imageType == "SWAP")
 		image = new SWAPImage(imageFilename);
+	else if (imageType == "HMI")
+		image = new HMIImage(imageFilename);
 	else if (imageType == "ColorMap")
 		image = new ColorMap(imageFilename);
 	else if (imageType == "SunImage")
@@ -110,6 +112,8 @@ inline SunImage* getImageFromFile(const string imageType, const string imageFile
 			image = new AIAImage(imageFilename);
 		else if (isSWAP(header))
 			image = new SWAPImage(imageFilename);
+		else if (isHMI(header))
+			image = new HMIImage(imageFilename);
 		else if (isColorMap(header))
 			image = new ColorMap(imageFilename);
 		else

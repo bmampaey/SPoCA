@@ -2,35 +2,22 @@
 #ifndef AIAImage_H
 #define AIAImage_H
 
-#include <iostream>
-#include <limits>
-#include <typeinfo>
-#include <vector>
-#include <cmath>
-#include <string>
-#include <ctime>
+#include "EUVImage.h"
+#include "Header.h"
 
-#include "fitsio.h"
-#include "longnam.h"
-#include "SunImage.h"
-
-class AIAImage : public SunImage
+class AIAImage : public EUVImage
 {
 	public :
-		
 		//Constructors and destructors
-		AIAImage(const std::string& filename);
-		AIAImage(const SunImage& i);
-		AIAImage(const SunImage* i);
+		AIAImage();
+		AIAImage(const EUVImage& i);
+		AIAImage(const EUVImage* i);
 		~AIAImage();
 		
 		//Routines to read and write the keywords from/to the header
-		void readHeader(fitsfile* fptr);
-		void writeHeader(fitsfile* fptr);
-
-		
-
+		void postRead();
+		void preWrite();
 };
 
-bool isAIA(const FitsHeader& header);
+bool isAIA(const Header& header);
 #endif

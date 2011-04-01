@@ -3,176 +3,19 @@
 using namespace std;
 
 template<class T>
-Image<T>::~Image()
-{
-	delete[] pixels;
-}
-
-
-template<class T>
 Image<T>::Image(const long xAxes, const long yAxes)
-:naxis(2),numberPixels(xAxes * yAxes),pixels(NULL),nullvalue_(numeric_limits<T>::has_infinity?numeric_limits<T>::infinity():numeric_limits<T>::max())
+:xAxes(xAxes),yAxes(yAxes),numberPixels(xAxes * yAxes),pixels(NULL)
 {
-
-	axes[0] = xAxes;
-	axes[1] = yAxes;
-
-	if(typeid(T) == typeid(double))
-		datatype = TDOUBLE;
-	else if(typeid(T) == typeid(float))
-		datatype = TFLOAT;
-	else if(typeid(T) == typeid(long))
-		datatype = TLONG;
-	else if(typeid(T) == typeid(unsigned long))
-		datatype = TLONG;
-	else if(typeid(T) == typeid(short))
-		datatype = TSHORT;
-	else if(typeid(T) == typeid(unsigned short))
-		datatype = TSHORT;						  //Because imagemagick does not understand BSCALE and BZERO
-	//	datatype = TUSHORT;
-	else if(typeid(T) == typeid(int))
-		datatype = TINT;
-	else if(typeid(T) == typeid(unsigned int))
-		datatype = TINT;						  //Because imagemagick does not understand BSCALE and BZERO
-	//	datatype = TUINT;
-	else if(typeid(T) == typeid(char))
-		datatype = TBYTE;
-	else if(typeid(T) == typeid(signed char))
-		datatype = TSBYTE;
-	else
-		datatype = TDOUBLE;
-
-	switch(datatype)
-	{
-		case TDOUBLE:
-			bitpix = DOUBLE_IMG;
-			break;
-		case TFLOAT:
-			bitpix = FLOAT_IMG;
-			break;
-		case TLONG:
-			bitpix = LONGLONG_IMG;
-			break;
-		case TULONG:
-			bitpix = ULONG_IMG;					  //There is no ULONGLONG_IMG
-			break;
-		case TINT:
-			bitpix = LONGLONG_IMG;
-			break;
-		case TUINT:
-			bitpix = ULONG_IMG;
-			break;
-		case TSHORT:
-			bitpix = SHORT_IMG;
-			break;
-		case TUSHORT:
-			bitpix = SHORT_IMG;
-			break;
-		case TBYTE:
-			bitpix = BYTE_IMG;
-			break;
-		case TSBYTE:
-			bitpix = SBYTE_IMG;
-			break;
-		default:
-			bitpix = DOUBLE_IMG;
-
-	}
-
+	nullvalue_ = numeric_limits<T>::has_infinity?numeric_limits<T>::infinity():numeric_limits<T>::max();
 	if(numberPixels > 0)
 		pixels = new T[numberPixels];
 
 }
 
 template<class T>
-Image<T>::Image(const string& filename)
-:nullvalue_(numeric_limits<T>::has_infinity?numeric_limits<T>::infinity():numeric_limits<T>::max())
-{
-
-	//We determine the datatype from the template
-
-	if(typeid(T) == typeid(double))
-		datatype = TDOUBLE;
-	else if(typeid(T) == typeid(float))
-		datatype = TFLOAT;
-	else if(typeid(T) == typeid(long))
-		datatype = TLONG;
-	else if(typeid(T) == typeid(unsigned long))
-		datatype = TLONG;
-	else if(typeid(T) == typeid(short))
-		datatype = TSHORT;
-	else if(typeid(T) == typeid(unsigned short))
-		datatype = TSHORT;					  //Because imagemagick does not understand BSCALE and BZERO
-	//	datatype = TUSHORT;
-	else if(typeid(T) == typeid(int))
-		datatype = TINT;
-	else if(typeid(T) == typeid(unsigned int))
-		datatype = TINT;					  //Because imagemagick does not understand BSCALE and BZERO
-	//	datatype = TUINT;
-	else if(typeid(T) == typeid(char))
-		datatype = TBYTE;
-	else if(typeid(T) == typeid(signed char))
-		datatype = TSBYTE;
-	else
-		datatype = TDOUBLE;
-
-	//We read the image from the fits file
-
-	readFitsImage(filename);
-	
-	#if DEBUG >= 1
-	// We check that there is no lost of precision
-
-	switch(bitpix)
-	{
-
-		case BYTE_IMG:
-			if(datatype != TBYTE)				  //Can't put a unsigned into a signed of same size
-				break;
-		case USHORT_IMG:
-												  //Can't put a unsigned into a signed of same size or smaller
-			if(datatype != TBYTE && datatype != TSHORT)
-				break;
-		case ULONG_IMG:
-												  //Can't put a unsigned into a signed of same size or smaller
-			if(datatype != TBYTE && datatype != TSHORT && datatype != TLONG && datatype != TINT)
-				break;
-		case SBYTE_IMG:
-		case SHORT_IMG:
-			if(datatype == TSHORT)
-				break;
-		case LONG_IMG:
-			if(datatype == TLONG || datatype == TINT)
-				break;
-		case LONGLONG_IMG:
-			if(datatype == TLONGLONG)
-				break;
-		case FLOAT_IMG:
-			if(datatype == TFLOAT)
-				break;
-		case DOUBLE_IMG:
-			if(datatype != TDOUBLE)
-			{
-				cerr<<"Warning : Fits File image data type and Image data type mismatch, you may lose precision or sign."<<endl;
-			}
-			break;
-		default:
-			cerr<<"Error : Unknown fits File image data type."<<endl;
-
-	}
-	
-	#endif
-	
-
-}
-
-
-template<class T>
 Image<T>::Image(const Image<T>& i)
-:naxis(i.naxis),numberPixels(i.numberPixels),datatype(i.datatype),anynull(i.anynull),bitpix(i.bitpix),nullvalue_(i.nullvalue_)
+:xAxes(i.xAxes),yAxes(i.yAxes),numberPixels(i.numberPixels),nullvalue_(i.nullvalue_)
 {
-	axes[0] = i.axes[0];
-	axes[1] = i.axes[1];
 	pixels = new T[numberPixels];
 	memcpy(pixels, i.pixels, numberPixels * sizeof(T));
 }
@@ -180,23 +23,31 @@ Image<T>::Image(const Image<T>& i)
 
 template<class T>
 Image<T>::Image(const Image<T>* i)
-:naxis(i->naxis),numberPixels(i->numberPixels),datatype(i->datatype),anynull(i->anynull),bitpix(i->bitpix),nullvalue_(i->nullvalue_)
+:xAxes(i->xAxes),yAxes(i->yAxes),numberPixels(i->numberPixels),nullvalue_(i->nullvalue_)
 {
-	axes[0] = i->axes[0];
-	axes[1] = i->axes[1];
 	pixels = new T[numberPixels];
 	memcpy(pixels, i->pixels, numberPixels * sizeof(T));
 }
 
 
 template<class T>
-inline unsigned Image<T>::Xaxes() const{return unsigned(axes[0]);}
+Image<T>::~Image()
+{
+	delete[] pixels;
+	pixels = NULL;
+	#if DEBUG >= 3
+		cerr<<"Destructor for Image called (pixels = "<<pixels<<" to "<< numberPixels * sizeof(T)<<")"<<endl;
+	#endif
+}
+
 template<class T>
-inline unsigned Image<T>::Yaxes() const{return unsigned(axes[1]);}
+inline unsigned Image<T>::Xaxes() const{return xAxes;}
+template<class T>
+inline unsigned Image<T>::Yaxes() const{return yAxes;}
 template<class T>
 inline unsigned Image<T>::NumberPixels() const{return numberPixels;}
 template<class T>
-inline Coordinate Image<T>::coordinate (const unsigned j)const{return Coordinate(j%Xaxes(), unsigned(j/Xaxes()));}
+inline Coordinate Image<T>::coordinate (const unsigned j)const{return Coordinate(j%xAxes, unsigned(j/xAxes));}
 template<class T>
 inline T& Image<T>::pixel(const unsigned& j)
 {return pixels[j];}
@@ -205,172 +56,31 @@ inline const T& Image<T>::pixel(const unsigned& j)const
 {return pixels[j];}
 template<class T>
 inline T& Image<T>::pixel(const unsigned& x, const unsigned& y)
-{return pixels[x+(y*Xaxes())];}
+{return pixels[x+(y*xAxes)];}
 template<class T>
 inline const T& Image<T>::pixel(const unsigned& x, const unsigned& y)const
-{return pixels[x+(y*Xaxes())];}
+{return pixels[x+(y*xAxes)];}
 template<class T>
 inline T& Image<T>::pixel(const Coordinate& c)
-{return pixels[c.x+(c.y*Xaxes())];};
+{return pixels[c.x+(c.y*xAxes)];};
 template<class T>
 inline const T& Image<T>::pixel(const Coordinate& c)const
-{return pixels[c.x+(c.y*Xaxes())];};
-
-
-template<class T>
-int Image<T>::readFitsImage(const std::string& filename)
-{
-
-	int   status  = 0;
-	fitsfile  *fptr;
-
-	if (fits_open_image(&fptr, filename.c_str(), READONLY, &status))
-	{
-		cerr<<"Error : opening file "<<filename<<" :"<< status <<endl;			
-		fits_report_error(stderr, status);
-		return status;
-	} 
-	int readStatus = readFitsImageP(fptr);
-	if ( fits_close_file(fptr, &status) )
-	{
-		cerr<<"Error : closing file "<<filename<<" :"<< status <<endl;			
-		fits_report_error(stderr, status);
-	} 
-	return readStatus;
-
-}
-
-template<class T>
-int Image<T>::readFitsImageP(fitsfile* fptr)
-{
-	int   status  = 0;
-	if (fits_get_img_param(fptr, 2, &bitpix, &naxis, axes, &status))
-	{
-		cerr<<"Error : reading image parameters from file "<<fptr->Fptr->filename<<" :"<< status <<endl;			
-		fits_report_error(stderr, status);
-		return status;
-	}
-	
-	numberPixels = Xaxes() * Yaxes();
-	pixels = new T[numberPixels];
-
-	if (fits_read_img(fptr, datatype, 1, numberPixels,const_cast<T*>(&nullvalue_),pixels,&anynull, &status))
-	{
-		cerr<<"Error : reading image from file "<<fptr->Fptr->filename<<" :"<< status <<endl;			
-		fits_report_error(stderr, status);
-	} 
-	
-
-	return status;
-}
+{return pixels[c.x+(c.y*xAxes)];};
 
 
 
 
 template<class T>
-int Image<T>::writeFitsImage(const string& filename)
-{
-	fitsfile *fptr;
-	int status = 0;
-
-	remove(filename.c_str());
-	
-	if (fits_create_file(&fptr, filename.c_str(), &status))
-	{
-		cerr<<"Error : creating file "<<filename<<" :"<< status <<endl;			
-		fits_report_error(stderr, status);
-		return status;
-	} 
-	int writeSatus = writeFitsImageP(fptr);
-	if (fits_close_file(fptr, &status))
-	{
-		cerr<<"Error : closing file "<<filename<<" :"<< status <<endl;			
-		fits_report_error(stderr, status);
-	} 
-
-	return writeSatus;
-
-}
-
-template<class T>
-int Image<T>::writeFitsImageP(fitsfile *fptr)
-{
-	int status = 0;
-	//char* comment = NULL;
-
-	//We correct bitpix so we write with the correct type
-	
-	switch(datatype)
-	{
-		case TDOUBLE:
-			bitpix = DOUBLE_IMG;
-			break;
-		case TFLOAT:
-			bitpix = FLOAT_IMG;
-			break;
-		case TLONG:
-			bitpix = LONGLONG_IMG;
-			break;
-		case TULONG:
-			bitpix = ULONG_IMG;					  //There is no ULONGLONG_IMG
-			break;
-		case TINT:
-			bitpix = LONGLONG_IMG;
-			break;
-		case TUINT:
-			bitpix = ULONG_IMG;
-			break;
-		case TSHORT:
-			bitpix = SHORT_IMG;
-			break;
-		case TUSHORT:
-			bitpix = SHORT_IMG;
-			break;
-		case TBYTE:
-			bitpix = BYTE_IMG;
-			break;
-		case TSBYTE:
-			bitpix = SBYTE_IMG;
-			break;
-		default:
-			bitpix = DOUBLE_IMG;
-	}
-
-
-/*	if ( fits_set_compression_type(fptr, RICE_1, &status) )
-	{
-		cerr<<"Error : could not set image compression :"<< status <<endl;			
-		fits_report_error(stderr, status);
-		status = 0;
-	}*/
-	if ( fits_create_img(fptr,  bitpix, naxis, axes, &status) )
-	{
-		cerr<<"Error : creating image in file "<<fptr->Fptr->filename<<" :"<< status <<endl;			
-		fits_report_error(stderr, status);
-		return status;
-	} 
-
-	if ( fits_write_img(fptr, datatype, 1, numberPixels, pixels, &status) )
-	{
-		cerr<<"Error : writing pixels to file "<<fptr->Fptr->filename<<" :"<< status <<endl;			
-		fits_report_error(stderr, status);
-		return status;
-	} 
-
-	return status;
-
-}
-
-template<class T>
-Image<T>* Image<T>::resize(const long xAxes, const long yAxes)
+Image<T>* Image<T>::resize(const unsigned xAxes, const unsigned yAxes)
 {
 	if(xAxes * yAxes != numberPixels)
 	{
 		numberPixels = xAxes * yAxes;
-		pixels = (T *) realloc(pixels, sizeof(T) * numberPixels);
+		delete[] pixels;
+		pixels = new T[numberPixels];
 	}
-	axes[0] = xAxes;
-	axes[1] = yAxes;
+	this->xAxes = xAxes;
+	this->yAxes = yAxes;
 	
 	return this;
 }
@@ -387,47 +97,47 @@ template<class T>
 Image<T>* Image<T>::dilateDiamond(unsigned size, T pixelValueToDilate)
 {
 
-	unsigned *manthanDistance = new unsigned[Xaxes() * Yaxes()];
-	unsigned maxDistance = Xaxes() + Yaxes();
+	unsigned *manthanDistance = new unsigned[xAxes * yAxes];
+	unsigned maxDistance = xAxes + yAxes;
 
-	for (unsigned y=0; y < Yaxes(); ++y)
+	for (unsigned y=0; y < yAxes; ++y)
 	{
-		for (unsigned x=0; x < Xaxes(); ++x)
+		for (unsigned x=0; x < xAxes; ++x)
 		{
 			if (pixel(x,y) == pixelValueToDilate)
 			{
 
-				manthanDistance[x+y*Xaxes()] = 0;
+				manthanDistance[x+y*xAxes] = 0;
 			}
 			else
 			{
 
-				manthanDistance[x+y*Xaxes()] = maxDistance;
+				manthanDistance[x+y*xAxes] = maxDistance;
 
-				if (x>0) manthanDistance[x+y*Xaxes()] = manthanDistance[x+y*Xaxes()] < (manthanDistance[x-1+y*Xaxes()]+1) ? manthanDistance[x+y*Xaxes()] : (manthanDistance[x-1+y*Xaxes()]+1);
+				if (x>0) manthanDistance[x+y*xAxes] = manthanDistance[x+y*xAxes] < (manthanDistance[x-1+y*xAxes]+1) ? manthanDistance[x+y*xAxes] : (manthanDistance[x-1+y*xAxes]+1);
 
-				if (y>0) manthanDistance[x+y*Xaxes()] = manthanDistance[x+y*Xaxes()] < (manthanDistance[x+(y-1)*Xaxes()]+1) ? manthanDistance[x+y*Xaxes()] : (manthanDistance[x+(y-1)*Xaxes()]+1);
+				if (y>0) manthanDistance[x+y*xAxes] = manthanDistance[x+y*xAxes] < (manthanDistance[x+(y-1)*xAxes]+1) ? manthanDistance[x+y*xAxes] : (manthanDistance[x+(y-1)*xAxes]+1);
 			}
 		}
 	}
 
-	for (unsigned y=Yaxes(); y >0; )
+	for (unsigned y=yAxes; y >0; )
 	{
 		--y;
-		for (unsigned x=Xaxes(); x >0; )
+		for (unsigned x=xAxes; x >0; )
 		{
 
 			--x;
-			if (x+1<Xaxes()) manthanDistance[x+y*Xaxes()] = manthanDistance[x+y*Xaxes()] < (manthanDistance[x+1+y*Xaxes()]+1) ? manthanDistance[x+y*Xaxes()] : (manthanDistance[x+1+y*Xaxes()]+1);
+			if (x+1<xAxes) manthanDistance[x+y*xAxes] = manthanDistance[x+y*xAxes] < (manthanDistance[x+1+y*xAxes]+1) ? manthanDistance[x+y*xAxes] : (manthanDistance[x+1+y*xAxes]+1);
 
-			if (y+1<Yaxes()) manthanDistance[x+y*Xaxes()] = manthanDistance[x+y*Xaxes()] < (manthanDistance[x+(y+1)*Xaxes()]+1) ? manthanDistance[x+y*Xaxes()] : (manthanDistance[x+(y+1)*Xaxes()]+1);
+			if (y+1<yAxes) manthanDistance[x+y*xAxes] = manthanDistance[x+y*xAxes] < (manthanDistance[x+(y+1)*xAxes]+1) ? manthanDistance[x+y*xAxes] : (manthanDistance[x+(y+1)*xAxes]+1);
 
 		}
 	}
 
-	for (unsigned y=0; y < Yaxes(); ++y)
-		for (unsigned x=0; x < Xaxes(); ++x)
-			if(manthanDistance[x+y*Xaxes()] <= size) pixel(x,y) = pixelValueToDilate;
+	for (unsigned y=0; y < yAxes; ++y)
+		for (unsigned x=0; x < xAxes; ++x)
+			if(manthanDistance[x+y*xAxes] <= size) pixel(x,y) = pixelValueToDilate;
 
 	delete[] manthanDistance;
 	return this;
@@ -440,46 +150,46 @@ Image<T>* Image<T>::erodeDiamond(unsigned size, T pixelValueToErode)
 {
 
 	T fillPixelValue = nullvalue_;
-	unsigned *manthanDistance = new unsigned[Xaxes() * Yaxes()];
-	unsigned maxDistance = Xaxes() + Yaxes();
+	unsigned *manthanDistance = new unsigned[xAxes * yAxes];
+	unsigned maxDistance = xAxes + yAxes;
 
-	for (unsigned y=0; y < Yaxes(); ++y)
+	for (unsigned y=0; y < yAxes; ++y)
 	{
-		for (unsigned x=0; x < Xaxes(); ++x)
+		for (unsigned x=0; x < xAxes; ++x)
 		{
 			if (pixel(x,y) != pixelValueToErode)
 			{
 
-				manthanDistance[x+y*Xaxes()] = 0;
+				manthanDistance[x+y*xAxes] = 0;
 			}
 			else
 			{
 
-				manthanDistance[x+y*Xaxes()] = maxDistance;
+				manthanDistance[x+y*xAxes] = maxDistance;
 
-				if (x>0) manthanDistance[x+y*Xaxes()] = manthanDistance[x+y*Xaxes()] < (manthanDistance[x-1+y*Xaxes()]+1) ? manthanDistance[x+y*Xaxes()] : (manthanDistance[x-1+y*Xaxes()]+1);
+				if (x>0) manthanDistance[x+y*xAxes] = manthanDistance[x+y*xAxes] < (manthanDistance[x-1+y*xAxes]+1) ? manthanDistance[x+y*xAxes] : (manthanDistance[x-1+y*xAxes]+1);
 
-				if (y>0) manthanDistance[x+y*Xaxes()] = manthanDistance[x+y*Xaxes()] < (manthanDistance[x+(y-1)*Xaxes()]+1) ? manthanDistance[x+y*Xaxes()] : (manthanDistance[x+(y-1)*Xaxes()]+1);
+				if (y>0) manthanDistance[x+y*xAxes] = manthanDistance[x+y*xAxes] < (manthanDistance[x+(y-1)*xAxes]+1) ? manthanDistance[x+y*xAxes] : (manthanDistance[x+(y-1)*xAxes]+1);
 			}
 		}
 	}
 
-	for (unsigned y=Yaxes(); y >0; )
+	for (unsigned y=yAxes; y >0; )
 	{
 		--y;
-		for (unsigned x=Xaxes(); x >0;)
+		for (unsigned x=xAxes; x >0;)
 		{
 			--x;
-			if (x+1<Xaxes()) manthanDistance[x+y*Xaxes()] = manthanDistance[x+y*Xaxes()] < (manthanDistance[x+1+y*Xaxes()]+1) ? manthanDistance[x+y*Xaxes()] : (manthanDistance[x+1+y*Xaxes()]+1);
+			if (x+1<xAxes) manthanDistance[x+y*xAxes] = manthanDistance[x+y*xAxes] < (manthanDistance[x+1+y*xAxes]+1) ? manthanDistance[x+y*xAxes] : (manthanDistance[x+1+y*xAxes]+1);
 
-			if (y+1<Xaxes()) manthanDistance[x+y*Xaxes()] = manthanDistance[x+y*Xaxes()] < (manthanDistance[x+(y+1)*Xaxes()]+1) ? manthanDistance[x+y*Xaxes()] : (manthanDistance[x+(y+1)*Xaxes()]+1);
+			if (y+1<xAxes) manthanDistance[x+y*xAxes] = manthanDistance[x+y*xAxes] < (manthanDistance[x+(y+1)*xAxes]+1) ? manthanDistance[x+y*xAxes] : (manthanDistance[x+(y+1)*xAxes]+1);
 
 		}
 	}
 
-	for (unsigned y=0; y < Yaxes(); ++y)
-		for (unsigned x=0; x < Xaxes(); ++x)
-			pixel(x,y) = manthanDistance[x+y*Xaxes()] <= size? fillPixelValue : pixelValueToErode;
+	for (unsigned y=0; y < yAxes; ++y)
+		for (unsigned x=0; x < xAxes; ++x)
+			pixel(x,y) = manthanDistance[x+y*xAxes] <= size? fillPixelValue : pixelValueToErode;
 
 	delete[] manthanDistance;
 	return this;
@@ -499,21 +209,21 @@ Image<T>* Image<T>::dilateCircular(const unsigned size, const T unsetValue)
 	for(int x = -size; x <= int(size); ++x)
 		for(unsigned y = 1; y <= size; ++y)
 			if(sqrt(x * x + y *y) <= size)
-				shape.push_back(y * Xaxes() + x);
+				shape.push_back(y * xAxes + x);
 	
 				
 	int j;
 	unsigned y, x;
-	for(y = size; y < Yaxes() - size; ++y)
+	for(y = size; y < yAxes - size; ++y)
 	{		
-		j = 	y * Xaxes() + size;
-		for(x = size; x < Xaxes() - size; ++x)
+		j = 	y * xAxes + size;
+		for(x = size; x < xAxes - size; ++x)
 		{
 			
 			if(pixels[j] != unsetValue)
 			{
 				newPixels[j] = pixels[j];
-				if(pixels[j-1] == unsetValue || pixels[j+1] == unsetValue || pixels[j-Xaxes()] == unsetValue || pixels[j+Xaxes()] == unsetValue)
+				if(pixels[j-1] == unsetValue || pixels[j+1] == unsetValue || pixels[j-xAxes] == unsetValue || pixels[j+xAxes] == unsetValue)
 				{
 					
 					for(unsigned s = 0; s < shape.size(); ++s)
@@ -552,17 +262,17 @@ Image<T>* Image<T>::erodeCircular(const unsigned size, const T unsetValue)
 	for(int x = -size; x <= int(size); ++x)
 		for(unsigned y = 1; y <= size; ++y)
 			if(sqrt(x * x + y *y) <= size)
-				shape.push_back(y * Xaxes() + x);
+				shape.push_back(y * xAxes + x);
 	
 				
 	int j;
-	for(unsigned y = size; y < Yaxes() - size; ++y)
+	for(unsigned y = size; y < yAxes - size; ++y)
 	{		
-		j = 	y * Xaxes() + size;
-		for(unsigned x = size; x < Xaxes() - size; ++x)
+		j = 	y * xAxes + size;
+		for(unsigned x = size; x < xAxes - size; ++x)
 		{
 			
-			if(pixels[j] != unsetValue && (pixels[j-1] != pixels[j] || pixels[j+1] != pixels[j] || pixels[j-Xaxes()] != pixels[j] || pixels[j+Xaxes()] != pixels[j]))
+			if(pixels[j] != unsetValue && (pixels[j-1] != pixels[j] || pixels[j+1] != pixels[j] || pixels[j-xAxes] != pixels[j] || pixels[j+xAxes] != pixels[j]))
 			{
 				newPixels[j] = unsetValue;
 				for(unsigned s = 0; s < shape.size(); ++s)
@@ -593,12 +303,12 @@ template<class T>
 Image<T>* Image<T>::drawBox(const T color, Coordinate min, Coordinate max)
 {
 
-	if (min.x >= Xaxes() || min.y >= Yaxes())	  //The box is out of the picture
+	if (min.x >= xAxes || min.y >= yAxes)	  //The box is out of the picture
 		return this;
-	if (max.x >= Xaxes())
-		max.x = Xaxes() - 1;
-	if (max.y >= Yaxes())
-		max.y = Yaxes() - 1;
+	if (max.x >= xAxes)
+		max.x = xAxes - 1;
+	if (max.y >= yAxes)
+		max.y = yAxes - 1;
 
 	for (unsigned x=min.x; x <= max.x; ++x)
 	{
@@ -619,14 +329,14 @@ Image<T>* Image<T>::drawCross(const T color, Coordinate c, const unsigned size)
 {
 	unsigned min, max;
 	min = c.x < size + 1 ? 0 : c.x - size - 1;
-	max = c.x + size + 1 < Xaxes()  ? c.x + size + 1 : Xaxes() - 1;
+	max = c.x + size + 1 < xAxes  ? c.x + size + 1 : xAxes - 1;
 
 	for (unsigned x=min; x <= max; ++x)
 	{
 		pixel(x,c.y) = color;
 	}
 	min = c.y < size + 1 ? 0 : c.y - size - 1;
-	max = c.y + size + 1 < Yaxes()  ? c.y + size + 1 : Yaxes() - 1;
+	max = c.y + size + 1 < yAxes  ? c.y + size + 1 : yAxes - 1;
 	for (unsigned y=min; y <= max; ++y)
 	{
 		pixel(c.x,y) = color;
@@ -680,19 +390,19 @@ Image<T>* Image<T>::drawContours(const unsigned width, const T unsetValue)
 	for(int x = -size; x <= int(size); ++x)
 		for(unsigned y = 1; y <= size; ++y)
 			if(sqrt(x * x + y *y) <= size)
-				shape.push_back(y * Xaxes() + x);
+				shape.push_back(y * xAxes + x);
 	
 				
 	int j;
-	for(unsigned y = size; y < Yaxes() - size; ++y)
+	for(unsigned y = size; y < yAxes - size; ++y)
 	{		
-		j = 	y * Xaxes() + size;
-		for(unsigned x = size; x < Xaxes() - size; ++x)
+		j = 	y * xAxes + size;
+		for(unsigned x = size; x < xAxes - size; ++x)
 		{
 			T maxColor = pixels[j-1];
 			maxColor = pixels[j+1] > maxColor ? pixels[j+1] : maxColor;
-			maxColor = pixels[j-Xaxes()] > maxColor ? pixels[j-Xaxes()] : maxColor;
-			maxColor = pixels[j+Xaxes()] > maxColor ? pixels[j+Xaxes()] : maxColor;
+			maxColor = pixels[j-xAxes] > maxColor ? pixels[j-xAxes] : maxColor;
+			maxColor = pixels[j+xAxes] > maxColor ? pixels[j+xAxes] : maxColor;
 			if(pixels[j] != maxColor)
 			{
 				newPixels[j] = maxColor;
@@ -771,7 +481,7 @@ unsigned Image<T>::colorizeConnectedComponents(const T setValue)
 template<class T>
 unsigned Image<T>::propagateColor(const T color, const Coordinate& firstPixel)
 {
-	return propagateColor(color, firstPixel.x + firstPixel.y * Xaxes());
+	return propagateColor(color, firstPixel.x + firstPixel.y * xAxes);
 }
 
 
@@ -794,12 +504,12 @@ unsigned Image<T>::propagateColor(const T color, const unsigned firstPixel)
 		++numberColoredPixels;
 		if(h+1 < numberPixels && pixels[h+1] == setValue)
 			pixelList.push_back(h+1);
-		if(h+Xaxes() < numberPixels && pixels[h+Xaxes()] == setValue)
-			pixelList.push_back(h+Xaxes());
+		if(h+xAxes < numberPixels && pixels[h+xAxes] == setValue)
+			pixelList.push_back(h+xAxes);
 		if(h >= 1 && pixels[h-1] == setValue)
 			pixelList.push_back(h-1);
-		if(h >= Xaxes() && pixels[h-Xaxes()] == setValue)
-			pixelList.push_back(h-Xaxes());
+		if(h >= xAxes && pixels[h-xAxes] == setValue)
+			pixelList.push_back(h-xAxes);
 
 	}
 	return numberColoredPixels;
@@ -839,7 +549,7 @@ Image<T>* Image<T>::bitmap(const Image<T>* bitMap, T setValue)
 {
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-			pixels[j] = bitMap->pixel(j) == setValue ? 1 : 0;
+			pixels[j] = bitMap->pixel(j) == setValue ? 1 : nullvalue_;
 	}
 	return this;
 
@@ -972,9 +682,9 @@ void Image<T>::neighboorhoodMean(const Image<T>* image, int Nradius)
 		pixels = new T[image->numberPixels];
 		numberPixels = image->numberPixels;
 	}
-	naxis = image->naxis;
-	axes[0] = image->axes[0];
-	axes[1] = image->axes[1];
+
+	xAxes = image->xAxes;
+	yAxes = image->yAxes;
 
 	vector<unsigned> neigboorhood;
 	int Nradius2 = Nradius * Nradius;
@@ -984,7 +694,7 @@ void Image<T>::neighboorhoodMean(const Image<T>* image, int Nradius)
 		for (int x = -Nradius; x <= Nradius; ++x)
 		{
 			if((x * x) + (y * y) <= Nradius2)
-				neigboorhood.push_back(y * Xaxes() + x);
+				neigboorhood.push_back(y * xAxes + x);
 		}
 	}
 
@@ -1026,9 +736,8 @@ void Image<T>::neighboorhoodVariance(const Image<T>* image, int Nradius)
 		pixels = new T[image->numberPixels];
 		numberPixels = image->numberPixels;
 	}
-	naxis = image->naxis;
-	axes[0] = image->axes[0];
-	axes[1] = image->axes[1];
+	xAxes = image->xAxes;
+	yAxes = image->yAxes;
 
 	vector<unsigned> neigboorhood;
 	int Nradius2 = Nradius * Nradius;
@@ -1038,7 +747,7 @@ void Image<T>::neighboorhoodVariance(const Image<T>* image, int Nradius)
 		for (int x = -Nradius; x <= Nradius; ++x)
 		{
 			if((x * x) + (y * y) <= Nradius2)
-				neigboorhood.push_back(y * Xaxes() + x);
+				neigboorhood.push_back(y * xAxes + x);
 		}
 	}
 
@@ -1086,9 +795,8 @@ void Image<T>::neighboorhoodSkewness(const Image<T>* image, int Nradius)
 		pixels = new T[image->numberPixels];
 		numberPixels = image->numberPixels;
 	}
-	naxis = image->naxis;
-	axes[0] = image->axes[0];
-	axes[1] = image->axes[1];
+	xAxes = image->xAxes;
+	yAxes = image->yAxes;
 
 	vector<unsigned> neigboorhood;
 	int Nradius2 = Nradius * Nradius;
@@ -1098,7 +806,7 @@ void Image<T>::neighboorhoodSkewness(const Image<T>* image, int Nradius)
 		for (int x = -Nradius; x <= Nradius; ++x)
 		{
 			if((x * x) + (y * y) <= Nradius2)
-				neigboorhood.push_back(y * Xaxes() + x);
+				neigboorhood.push_back(y * xAxes + x);
 		}
 	}
 
@@ -1154,9 +862,8 @@ void Image<T>::neighboorhoodKurtosis(const Image<T>* image, int Nradius)
 		pixels = new T[image->numberPixels];
 		numberPixels = image->numberPixels;
 	}
-	naxis = image->naxis;
-	axes[0] = image->axes[0];
-	axes[1] = image->axes[1];
+	xAxes = image->xAxes;
+	yAxes = image->yAxes;
 
 	vector<unsigned> neigboorhood;
 	int Nradius2 = Nradius * Nradius;
@@ -1166,7 +873,7 @@ void Image<T>::neighboorhoodKurtosis(const Image<T>* image, int Nradius)
 		for (int x = -Nradius; x <= Nradius; ++x)
 		{
 			if((x * x) + (y * y) <= Nradius2)
-				neigboorhood.push_back(y * Xaxes() + x);
+				neigboorhood.push_back(y * xAxes + x);
 		}
 	}
 
@@ -1250,16 +957,16 @@ void fillRandomDots(Image<PixelType>* image, unsigned numberClasses, const vecto
 template<class T>
 Image<T>* Image<T>::convolution(const Image<T> * img, const float kernel[3][3])
 {
-	resize(img->Xaxes(), img->Xaxes());
-	unsigned j = Xaxes() + 1;
+	resize(img->xAxes, img->yAxes);
+	unsigned j = xAxes + 1;
 
 	T* p0 = img->pixels;
-	T* p1 = p0+Xaxes();
-	T* p2 = p1+Xaxes();
+	T* p1 = p0+xAxes;
+	T* p2 = p1+xAxes;
 
-	for(unsigned y = 1; y < Yaxes()-1; ++y)
+	for(unsigned y = 1; y < yAxes-1; ++y)
 	{
-		for(unsigned x = 1; x < Xaxes()-1; ++x)
+		for(unsigned x = 1; x < xAxes-1; ++x)
 		{
 			pixels[j++] =	kernel[0][0] * p0[0] + kernel[0][1] * p0[1] + kernel[0][2] * p0[2] +
 						kernel[1][0] * p1[0] + kernel[1][1] * p1[1] + kernel[1][2] * p1[2] +
@@ -1276,23 +983,26 @@ Image<T>* Image<T>::convolution(const Image<T> * img, const float kernel[3][3])
 template<class T>
 Image<T>* Image<T>::convolution(const Image<T> * img, const float kernel[5][5])
 {
-	resize(img->Xaxes(), img->Xaxes());
+	resize(img->xAxes, img->yAxes);
 	return this;
 }
+
+unsigned abs(unsigned x)
+{return x;}
 
 template<class T>
 Image<T>* Image<T>::sobel_approx(const Image<T> * img)
 {
-	resize(img->Xaxes(), img->Xaxes());
+	resize(img->xAxes, img->yAxes);
 	unsigned j = 0;
 
 	T* p0 = img->pixels;
-	T* p1 = p0+Xaxes();
-	T* p2 = p1+Xaxes();
+	T* p1 = p0+xAxes;
+	T* p2 = p1+xAxes;
 
-	for(unsigned y = 0; y < Yaxes()-2; ++y)
+	for(unsigned y = 0; y < yAxes-2; ++y)
 	{
-		for(unsigned x = 0; x < Xaxes()-2; ++x)
+		for(unsigned x = 0; x < xAxes-2; ++x)
 		{
 			pixels[j++] = ( abs((p0[0] + 2*p0[1] + p0[2]) - (p2[0] + 2*p2[1]+ p2[2])) + abs((p0[2] + 2*p1[2] + p2[2]) - (p0[0] + 2*p1[0] + p2[0])) ) / 6;
 			++p0;
@@ -1307,12 +1017,12 @@ Image<T>* Image<T>::sobel_approx(const Image<T> * img)
 template<class T>
 Image<T>* Image<T>::sobel(const Image<T> * img)
 {
-	resize(img->Xaxes(), img->Xaxes());
+	resize(img->xAxes, img->yAxes);
 	const float sobel_kernelx[3][3] = {{1, 0, -1}, {2, 0, -2}, {1, 0, -1}};
 	const float sobel_kernely[3][3] = {{1, 2, 1}, {0, 0, 0}, {-1, -2, -1}};
 
-	Image<T> Cx (img->Xaxes(), img->Xaxes());
-	Image<T> Cy (img->Xaxes(), img->Xaxes());
+	Image<T> Cx (img->xAxes, img->xAxes);
+	Image<T> Cy (img->xAxes, img->xAxes);
 	Cx.convolution(img, sobel_kernelx);
 	Cy.convolution(img, sobel_kernely);
 	for (unsigned j= 0; j < numberPixels; ++j) 
@@ -1333,7 +1043,7 @@ Image<T>* Image<T>::convolveHoriz(const Image<T>* img,  const vector<float>& ker
 	// I can't convolve myself
 	if(img != this)
 	{
-		resize(img->Xaxes(), img->Yaxes());
+		resize(img->xAxes, img->yAxes);
 		ptrout = pixels;
 	}
 	else
@@ -1353,7 +1063,7 @@ Image<T>* Image<T>::convolveHoriz(const Image<T>* img,  const vector<float>& ker
 
 	/* For each row, do ... */
 
-	for (unsigned y = 0 ; y < img->Yaxes() ; y++)
+	for (unsigned y = 0 ; y < img->yAxes ; y++)
 	{
 		unsigned x = 0;
 		/* Zero leftmost columns */
@@ -1361,7 +1071,7 @@ Image<T>* Image<T>::convolveHoriz(const Image<T>* img,  const vector<float>& ker
 			*ptrout++ = 0.0;
 
 		/* Convolve middle columns with kernel */
-		for ( ; x < img->Xaxes() - radius ; x++)
+		for ( ; x < img->xAxes - radius ; x++)
 		{
 			ppp = ptrrow + x - radius;
 			register T sum = 0.0;
@@ -1371,10 +1081,10 @@ Image<T>* Image<T>::convolveHoriz(const Image<T>* img,  const vector<float>& ker
 		}
 
 		/* Zero rightmost columns */
-		for ( ; x < img->Xaxes(); x++)
+		for ( ; x < img->xAxes; x++)
 			*ptrout++ = 0.0;
 
-		ptrrow += img->Xaxes();
+		ptrrow += img->xAxes;
 	}
 	if(img == this)
 	{
@@ -1398,7 +1108,7 @@ Image<T>* Image<T>::convolveVert(const Image<T>* img, const vector<float>& kerne
 	// I can't convolve myself
 	if(img != this)
 	{
-		resize(img->Xaxes(), img->Yaxes());
+		resize(img->xAxes, img->yAxes);
 		ptrout = pixels;
 	}
 	else
@@ -1417,39 +1127,39 @@ Image<T>* Image<T>::convolveVert(const Image<T>* img, const vector<float>& kerne
 
 	/* For each column, do ... */
 
-	for (unsigned x = 0 ; x < img->Xaxes(); x++)
+	for (unsigned x = 0 ; x < img->xAxes; x++)
 	{
 		unsigned y = 0;
 		/* Zero leftmost columns */
 		for ( ; y < radius ; y++)
 		{
 			*ptrout = 0.0;
-			ptrout += img->Xaxes();
+			ptrout += img->xAxes;
 		}
 
 		/* Convolve middle rows with kernel */
-		for ( ; y < img->Yaxes() - radius ; y++)
+		for ( ; y < img->yAxes - radius ; y++)
 		{
-			ppp = ptrcol + img->Xaxes()* (y - radius);
+			ppp = ptrcol + img->xAxes* (y - radius);
 			register T sum = 0.0;
 			for (int k = kernel.size()-1 ; k >= 0 ; k--)
 			{
 				sum += *ppp * kernel[k];
-				ppp += img->Xaxes();
+				ppp += img->xAxes;
 			}
 			*ptrout = sum;
-			ptrout += img->Xaxes();
+			ptrout += img->xAxes;
 		}
 
 		/* Zero rightmost columns */
-		for ( ; y < img->Yaxes() ; y++)
+		for ( ; y < img->yAxes ; y++)
 		{
 			*ptrout = 0.0;
-			ptrout += img->Xaxes();
+			ptrout += img->xAxes;
 		}
 
 		ptrcol++;
-		ptrout -= img->Yaxes() * img->Xaxes()- 1;
+		ptrout -= img->yAxes * img->xAxes- 1;
 	}
 	if(img == this)
 	{
@@ -1472,20 +1182,238 @@ Image<T>* Image<T>::convolveSeparate(const Image<T>* img,  const vector<float>& 
 template<class T>
 T Image<T>::interpolate(const float x, const float y) const
 {
-	int xt = (int) x;							  /* coordinates of top-left corner */
+	int xt = (int) x;/* coordinates of top-left corner */
 	int yt = (int) y;
 	float ax = x - xt;
 	float ay = y - yt;
-	return ( (1-ax)*(1-ay)*pixel(x,y) + ax*(1-ay)*pixel(x+1,y) + (1-ax)*ay*pixel(x,y+1) + ax*ay*pixel(x+1,y+1));
+	return ( (1-ax)*(1-ay)*pixel(xt,yt) + ax*(1-ay)*pixel(xt+1,yt) + (1-ax)*ay*pixel(xt,yt+1) + ax*ay*pixel(xt+1,yt+1));
+}
+
+
+template<class T>
+vector<Coordinate> Image<T>::chainCode(const Coordinate firstPixel, const unsigned max_points) const
+{
+	vector<Coordinate> chain;
+	chain.reserve(1000);
+	
+	// We list all the directions
+	int directions[] = {	0 + xAxes, //Norh
+				1 + xAxes, //NE
+				1 + 0, //East
+				1 - xAxes, //SE
+				0 - xAxes, //South
+				-1 - xAxes, //SW
+				-1 + 0, //West
+				-1 + xAxes, //NW
+				//We repeat for simplicity 
+				0 + xAxes, 1 + xAxes, 1 + 0, 1 - xAxes, 0 - xAxes, -1 - xAxes, -1 + 0, -1 + xAxes
+			};
+	
+	// We start at the first pixel, and we search for the first direction
+	chain.push_back(firstPixel);
+	unsigned cur_p = firstPixel.x + firstPixel.y * xAxes;
+	int first_direction = 0;
+	bool found = false;
+	for (unsigned i = 0; i <= 8; ++i)
+	{
+		int next_p = cur_p + directions[first_direction];
+		if(next_p >= 0 && next_p < int(numberPixels))
+		{
+			if(pixels[next_p] == nullvalue_)
+			{
+				found=true;
+			}
+			else if (found)
+			{
+				break;
+			}
+		}
+		++first_direction;
+	}
+	// If we are a single pixel, we return
+	if(!found)
+	{
+		return chain;
+	}
+
+	// We create a classical chaincode of all pixels locations along the boundary
+	// until we come back to the first pixel, with the same direction
+	Coordinate current_pixel = firstPixel;
+	int next_direction = first_direction;
+	
+	// At the same time I search for the pixel the furthest away from the first_pixel
+	// See below
+	Real biggest_distance = 0.;
+	unsigned furthest_pixel_indice = 0;
+	
+	do
+	{
+		// We move the current pixel into the next direction
+		cur_p = cur_p + directions[next_direction];
+		// I add the current pixel to the chain
+		current_pixel.x = cur_p%xAxes;
+		current_pixel.y = unsigned(cur_p/xAxes);
+		chain.push_back(current_pixel);
+		// I check if it is the furthest pixel
+		Real distance = firstPixel.d2(current_pixel);
+		if(distance > biggest_distance)
+		{
+			biggest_distance = distance;
+			furthest_pixel_indice = chain.size() - 1;
+		}
+		// We search the direction of the following pixel on the border by looking at all directions
+		// Starting at the opposite direction +1
+		next_direction = (next_direction + 5) % 8;
+		for (unsigned i = 0; i < 8; ++i)
+		{
+			int next_p = cur_p + directions[next_direction];
+			if(next_p >= 0 && next_p < int(numberPixels) && pixels[next_p] != nullvalue_)
+			{
+				break;
+			}
+			++next_direction;
+		}
+		next_direction %= 8;
+		
+	}while (!((firstPixel == current_pixel) && (next_direction == first_direction)));
+
+
+	if(chain.size() <= max_points)
+	{
+		return chain;
+	}
+
+	// Now we reduce the chain code to max_points
+	// The good_indices is a sorted list of the indices of most important points in the chain code
+	vector<unsigned> good_indices;
+	good_indices.reserve(max_points);
+	good_indices.push_back(0);
+	// The tmp_indices is a list of the indices of some important points in the chain code
+	// The corresponding distances list specify for each tmp_indice the distance to the current reduced chain code 
+	vector<unsigned> tmp_indices;
+	vector<Real> distances;
+	tmp_indices.reserve(max_points);
+	distances.reserve(max_points);
+	tmp_indices.push_back(furthest_pixel_indice);
+	distances.push_back(biggest_distance);
+	while(good_indices.size() < max_points)
+	{
+		// I search in the tmp_indices for the worst point, i.e. with the biggest distance
+		unsigned worst_indice = 0;
+		Real max_distance = distances[worst_indice];
+		for(unsigned i = 1; i < tmp_indices.size(); ++i)
+		{
+			if(max_distance < distances[i])
+			{
+				max_distance = distances[i];
+				worst_indice = i;
+			}
+		}
+		
+		// I remove the worst point from the tmp_indices
+		unsigned worst_point_indice = tmp_indices[worst_indice];
+		tmp_indices.erase(tmp_indices.begin()+worst_indice);
+		distances.erase(distances.begin()+worst_indice);
+		// I add the worst point indice to the good_indices
+		vector<unsigned>::iterator it;
+		for(it = good_indices.begin(); it != good_indices.end() && worst_point_indice > *it; ++it){}
+		it = good_indices.insert(it, worst_point_indice);
+
+		// I search for the worst point between the worst_point_indice and the previous point from the good_indices
+		unsigned previous_indice = *(it-1);
+		// We compute the line equation ax+by+c=0 passing between points chain[previous_indice] and chain[worst_point_indice]
+		Real a = Real(chain[worst_point_indice].y) - chain[previous_indice].y;
+		Real b = Real(chain[previous_indice].x) - chain[worst_point_indice].x;
+		Real c = - (b * chain[previous_indice].y + a * chain[previous_indice].x);
+		// We search the pixel in the chain that is the furthest to the line
+		max_distance = 0;
+		worst_indice = previous_indice+1;
+		for(unsigned i = previous_indice+1; i < worst_point_indice; ++i)
+		{
+			Real d =  abs(a * chain[i].x + b * chain[i].y + c);
+			if(d >= max_distance)
+			{
+				max_distance = d;
+				worst_indice = i;
+			}
+		}
+		max_distance/=sqrt(a*a+b*b);
+		// We add that new worst point to the tmp_indices
+		if(worst_indice != worst_point_indice)
+		{
+			tmp_indices.push_back(worst_indice);
+			distances.push_back(max_distance);
+		}
+		// I search for the worst point between the worst_point_indice and the next point from the good_indices
+		unsigned next_indice = (it+1 != good_indices.end()) ? *(it+1) : chain.size()-1;
+		// We compute the line equation ax+by+c=0 passing between points chain[worst_point_indice] and chain[next_indice]
+		a = Real(chain[next_indice].y) - chain[worst_point_indice].y;
+		b = Real(chain[worst_point_indice].x) - chain[next_indice].x;
+		c = - (b * chain[worst_point_indice].y + a * chain[worst_point_indice].x);
+		// We search the pixel in the chain that is the furthest to the line
+		max_distance = 0;
+		worst_indice = worst_point_indice+1;
+		for(unsigned i = worst_point_indice+1; i < next_indice; ++i)
+		{
+			Real d =  abs(a * chain[i].x + b * chain[i].y + c);
+			if(d >= max_distance)
+			{
+				max_distance = d;
+				worst_indice = i;
+			}
+		}
+		max_distance/=sqrt(a*a+b*b);
+		// We add that new worst point to the tmp_indices
+		if(worst_indice != next_indice)
+		{
+			tmp_indices.push_back(worst_indice);
+			distances.push_back(max_distance);
+		}
+	}
+	// I compute the reduced chain by using the good_indices
+	vector<Coordinate> reduced_chain(good_indices.size());
+	for(unsigned i=0; i < good_indices.size(); ++i)
+	{
+		reduced_chain[i]=chain[good_indices[i]];
+	}
+	return reduced_chain;
+}
+
+
+template<class T>
+FitsFile& Image<T>::writeFits(FitsFile& file, int mode)
+{
+	return file.writeImage(pixels, xAxes, yAxes, mode);
+}
+
+template<class T>
+FitsFile& Image<T>::readFits(FitsFile& file)
+{
+	file.readImage(pixels, xAxes, yAxes, &(nullvalue_));
+	numberPixels = xAxes * yAxes;
+	return file;
+}
+
+template<class T>
+bool Image<T>::writeFits(const std::string& filename, int mode)
+{
+	FitsFile file(filename, FitsFile::overwrite);
+	this->writeFits(file, mode);
+	return file.isGood();
+}
+
+template<class T>
+bool Image<T>::readFits(const std::string& filename)
+{
+	FitsFile file(filename);
+	this->readFits(file);
+	return file.isGood();
 }
 
 
 /* We create the code for the template class we need
    See constants.h */
 
-template class Image<Real>;
-//template class Image<unsigned>;
-
-#if PIXELTYPE!=REALTYPE && PIXELTYPE!=TUINT
 template class Image<PixelType>;
-#endif
+template class Image<unsigned>;
+

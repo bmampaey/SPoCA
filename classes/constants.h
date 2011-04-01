@@ -2,23 +2,28 @@
 #ifndef Constants_H
 #define Constants_H
 
-#include "fitsio.h"
 
 /* Definition of constants*/
 /* Modify the following to adapt to your program */
 
 // The precision you want for the float numbers
 // Acceptable values are TFLOAT (fast) TDOUBLE (more precise)
-#if ! defined(REALTYPE)
-#define REALTYPE TDOUBLE
+#if ! defined(REAL)
+#define REAL float
 #endif
 
 // The type of the pixel values of the images. 
-// Acceptable values are TBYTE TSBYTE TUSHORT TSHORT TUINT TINT TULONG TLONG TFLOAT TLONGLONG TDOUBLE
 // Be carrefull that depending on the type of the image you may loose precision.
 #if ! defined(PIXELTYPE)
-#define PIXELTYPE TFLOAT
+#define PIXELTYPE float
 #endif
+
+//Cfitsio defines additional unsigned type that are not part of the strict FITS standart data format
+// If you want to read and manipulate Fits files with software not written with the cfitsio (e.g. ImageMagick and IDL), you should set STRICTFITS
+#ifndef STRICTFITS
+#define STRICTFITS
+#endif
+
 // The number of wavelength, or images to process in parralel
 #if ! defined(NUMBERWAVELENGTH)
 #define NUMBERWAVELENGTH 2
@@ -44,7 +49,7 @@
 
 // The aggregation factor for AR in (arc/sec)square (dilation)
 #if ! defined(AR_AGGREGATION)
-#define AR_AGGREGATION 31.44 // Equivalent to 12 EIT pixels
+#define AR_AGGREGATION 32 // Equivalent to 12 EIT pixels
 #endif
 
 // The aggregation factor for CH in (arc/sec)square (dilation)
@@ -127,53 +132,51 @@
 #define MIN_QUOTIENT_FACTOR 5
 
 // The maximum quotient factor 
-#define MAX_QUOTIENT_FACTOR 13
+#define MAX_QUOTIENT_FACTOR 10
 
+// Parameters to compute the area at disk center
+//The radius of the sun in Mmeters (R0)
+#define SUNRADIUS 695.508
+//Something. CIS, what is it ?
+#define DR0 0.026
+//Something else.
+#define DR 2.
+//The higgins_factor
+#define HIGGINS_FACTOR  16
+
+// Parameters for the region stats
+#define distance_observer_sun 149597.871
+#define earth_orbit_eccentricity 0.0167
+#define yearly_maximal_error (distance_observer_sun * earth_orbit_eccentricity)
+#define rad2arcsec 206264.806247096
+#define RADEG 57.295779513
+#define DEGRA 0.017453293
 
 /*---------------- Do NOT modify below please ------------------*/
 
 
-#if ! defined(REALTYPE)
-#warning "REALTYPE not defined, using default type double"
-#define REALTYPE TDOUBLE
-#endif
-
-#if REALTYPE==TFLOAT
+#if REAL==float
 #define Real float
+#elif REAL==double
+#define Real double
 #else
+#warning "REAL not defined or badly defined, using default type double"
 #define Real double
 #endif
 
-
-
-#if ! defined(PIXELTYPE)
-#warning "PIXELTYPE not defined, using default TDOUBLE"
-#define PIXELTYPE TDOUBLE
-#endif
-
-#if PIXELTYPE==TBYTE
-#define PixelType signed char
-#elif PIXELTYPE==TSBYTE
-#define PixelType unsigned char
-#elif PIXELTYPE==TSHORT
-#define PixelType short
-#elif PIXELTYPE==TUSHORT
-#define PixelType unsigned short
-#elif PIXELTYPE==TINT
-#define PixelType int
-#elif PIXELTYPE==TUINT
-#define PixelType unsigned int
-#elif PIXELTYPE==TLONG
-#define PixelType long
-#elif PIXELTYPE==TULONG
-#define PixelType unsigned long
-#elif PIXELTYPE==TLONGLONG
-#define PixelType long long
-#elif PIXELTYPE==TFLOAT
+#if PIXELTYPE==float
 #define PixelType float
-#elif PIXELTYPE==TDOUBLE
+#elif PIXELTYPE==double
+#define PixelType double
+#else
+#warning "PIXELTYPE not defined or badly defined, using default type double"
 #define PixelType double
 #endif
 
+
+
+#define PI 3.14159265358979323846
+#define MIPI 1.57079632679489661923
+#define BIPI 6.28318530717958647692
 
 #endif

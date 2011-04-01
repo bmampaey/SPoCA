@@ -10,77 +10,59 @@
 #include <string>
 #include <ctime>
 
-#include "fitsio.h"
-#include "longnam.h"
 #include "Image.h"
 #include "Coordinate.h"
-#include "FitsHeader.h"
+#include "Header.h"
+#include "FitsFile.h"
 
-
-class SunImage : public Image<PixelType>
+template<class T>
+class SunImage : public Image<T>
 {
-
 	protected :
-	
+		// Common parameters of a sun image
 		double radius;
-		double wavelength;
 		time_t observationTime;
 		Coordinate suncenter;
 		double cdelt1, cdelt2;
-		PixelType median, mode, datap01, datap95;
 		std::string date_obs;
-		double exposureTime;
 		double b0;
-		
-		Real sineCorrectionParameters[4];
 	
-		virtual Real MINRADIUS()
-		{ return sineCorrectionParameters[0]; }
-		
-	public :
-		FitsHeader header;
-
+	public:
+		Header header;
+	
 	public :
 		
 		//Constructors and destructors
-		SunImage(const long xAxes = 0, const long yAxes = 0);
-		SunImage(const long xAxes, const long yAxes, const Coordinate suncenter, const double radius, const double cdelt1, const double cdelt2, const double wavelength = 0.);
-		SunImage(const std::string& filename);
+		SunImage(const unsigned xAxes = 0, const unsigned yAxes = 0);
+		SunImage(const unsigned xAxes, const unsigned yAxes, const Coordinate suncenter, const double radius);
+		SunImage(const Header& header);
 		SunImage(const SunImage& i);
 		SunImage(const SunImage* i);
 		~SunImage();
 		
-		//Routines to read and write a fits file
-          int writeFitsImageP(fitsfile* fptr);
-          int readFitsImageP(fitsfile* fptr);
-          
-          //Routines to read and write the keywords from/to the header
-		virtual void readHeader(fitsfile* fptr);
-		virtual void writeHeader(fitsfile* fptr);
-		
 		//Accessors
-		double Wavelength() const;
-		double Median() const;
 		Coordinate SunCenter() const;
 		double SunRadius() const;
 		double B0() const;
 		time_t ObservationTime() const;
 		std::string ObservationDate() const;
+		double PixelLength() const;
+		double PixelWidth() const;
 		double PixelArea() const;
 		unsigned numberValidPixelsEstimate() const;
+		template<class T2>
+		void copyKeywords(const SunImage<T2>* i);
 
-		//Routines for the preprocessing on SunImages
-		void preprocessing(std::string preprocessingList, const Real radiusRatio = 1.0);
+		//Routines to read and write the keywords from/to the header
+		virtual void postRead(){};
+		virtual void preWrite(){};
+		Header& getHeader();
+
+		//Routine to set the pixels above a certain radius ration to nullvalue
 		void nullifyAboveRadius(const Real radiusRatio = 1.0);
-		void annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius);
-		void ALCDivMedian(Real maxLimbRadius, Real minLimbRadius);
-		void ALCDivMode(Real maxLimbRadius, Real minLimbRadius);
-		Real percentCorrection(const Real r) const;
 
 		//Various routines to work on SunImages
 		void recenter(const Coordinate& newCenter);
-		void copyKeywords(const SunImage* i);
-		
 		
 		//Routines to derotate an image 
 		Real angularSpeed(Real latitude) const;
@@ -92,7 +74,12 @@ class SunImage : public Image<PixelType>
 		void longlat(const Coordinate c, Real& longitude, Real& latitude) const;
 		void longlat_map(std::vector<Real>& longitude_map, std::vector<Real>& latitude_map) const;
 		
-		
+		//Routines to read/write fits files
+		FitsFile& writeFits(FitsFile& file, int mode = 0);
+		FitsFile& readFits(FitsFile& file);
+		bool writeFits(const std::string& filename, int mode = 0);
+		bool readFits(const std::string& filename);
+
 };
 
 #endif

@@ -12,10 +12,8 @@
 #include "constants.h"
 #include "Coordinate.h"
 #include "ColorMap.h"
+#include "FitsFile.h"
 
-#ifdef COCO
-#include "CoordinateConvertor.h"
-#endif
 
 class Region
 {
@@ -33,7 +31,7 @@ class Region
 
 	public :
 		//Constructors
-		Region();
+		Region(const unsigned id = 0);
 		Region(const time_t& observationTime);
 		Region(const time_t& observationTime, const unsigned id, const unsigned long color = 0);
 
@@ -53,19 +51,17 @@ class Region
 		std::string HekLabel() const;
 		std::string Visu3DLabel() const;
 		// Output a region as a string
-		std::string toString() const;
-		#ifdef CoordinateConvertor_H
-		std::string toString(const CoordinateConvertor& coco) const;
-		#endif
-		
+		std::string toString(const std::string& separator, bool header = false) const;
 
 	public :
-
-		static const std::string header;
-		friend std::vector<Region*> getRegions(const SunImage* colorizedComponentsMap);
+		friend std::vector<Region*> getRegions(const ColorMap* colorizedComponentsMap);
+		friend FitsFile& writeRegions(FitsFile& file, const std::vector<Region*>& regions);
+		friend FitsFile& readRegions(FitsFile& file, std::vector<Region*>& regions);
 
 };
 
-std::vector<Region*> getRegions(const SunImage* colorizedComponentsMap);
-
+std::vector<Region*> getRegions(const ColorMap* colorizedComponentsMap);
+FitsFile& writeRegions(FitsFile& file, const std::vector<Region*>& regions);
+FitsFile& readRegions(FitsFile& file, std::vector<Region*>& regions);
 #endif
+

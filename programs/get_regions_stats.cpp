@@ -11,16 +11,15 @@
 #include "../classes/ArgumentHelper.h"
 
 #include "../classes/ColorMap.h"
-#include "../classes/SunImage.h"
+#include "../classes/EUVImage.h"
 
 
 #include "../classes/RegionStats.h"
+#include "../classes/ActiveRegionStats.h"
+#include "../classes/CoronalHoleStats.h"
 #include "../classes/Coordinate.h"
 #include "../classes/FeatureVector.h"
 
-#ifdef COCO
-#include "../classes/CoordinateConvertor.h"
-#endif
 
 using namespace std;
 using namespace dsr;
@@ -33,19 +32,26 @@ int main(int argc, const char **argv)
 {
 	cout<<setiosflags(ios::fixed);
 	
+	// Program version
+	const char * version = "0.7";
+	
 	// The list of names of the sun images to process
 	string imageType = "UNKNOWN";
 	vector<string> imagesFilenames;
 
 	// Options for the preprocessing of images
-	string preprocessingSteps = "NAR";
-	double radiusRatio = 0.95;
+	double regionStatsRadiusRatio = 0.95;
+	string regionStatsPreprocessing = "NAR";
 	
 	// Options for the type of coordinate
 	string coordinateType;
 
 	// The map of colored regions
-	string colorizedComponentsMapFileName;
+	string colorizedMapFileName;
+	
+	// Option for the output
+	string separator = "\t";
+	string desiredStats;
 	
 	
 	string programDescription = "This Programm output regions info and statistics.\n";
@@ -57,70 +63,107 @@ int main(int argc, const char **argv)
 
 	ArgumentHelper arguments;
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP, HMI\n\t", imageType);
-	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
-	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
-	arguments.new_named_string('M',"colorizedComponentsMap","file name", "\n\tA colorized Components Map of regions (i.e. each one must have a different color).\n\t", colorizedComponentsMapFileName);
-	arguments.new_named_string('C', "coordinateType", "string", "\n\tThe type of coordinates to output positions.\n\tPossible values are : HG, HGC, HPC, HPR, HCC, HCR\n\t", coordinateType);
+	arguments.new_named_double('R', "regionStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",regionStatsRadiusRatio);
+	arguments.new_named_string('G', "regionStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",regionStatsPreprocessing);
+	arguments.new_named_string('M',"colorizedMap","file name", "\n\tA colorized Map of regions (i.e. each one must have a different color).\n\t", colorizedMapFileName);
+	arguments.new_named_string('C', "coordinateType", "string", "\n\tThe type of coordinates to output positions.\n\tPossible values are : HGS, HGC, HPC, HPR, HCC, HCR\n\t", coordinateType);
+	arguments.new_named_string('s', "separator", "string", "\n\tThe separator to put between columns.\n\t", separator);
+	arguments.new_named_string('S', "stats", "comma separated list of char (no spaces)", "\n\tThe kind of stats to generate.\n\tPossible values :\n\t\tA (Active Region)\n\t\tC (Coronal Hole)\n\t\tR (Regular)\n\t", desiredStats);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "The name of the fits files containing the images of the sun.", imagesFilenames);
 
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
-	arguments.set_version("1.0");
+	arguments.set_version(version);
 	arguments.process(argc, argv);
 
 
-	if(imagesFilenames.size() < 1 )
+	if(imagesFilenames.size() < 1)
 	{
 		cerr<<"No fits image file given as parameter!"<<endl;
 		return EXIT_FAILURE;
 	}
 		
-	ColorMap* colorizedComponentsMap = dynamic_cast<ColorMap*> (getImageFromFile("ColorMap", colorizedComponentsMapFileName));
-	colorizedComponentsMap->nullifyAboveRadius(1);		
-	Coordinate sunCenter = colorizedComponentsMap->SunCenter();
-	double sunRadius = colorizedComponentsMap->SunRadius();
+		
+	bool getARStats = (desiredStats.find_first_of("Aa")!=string::npos);
+	bool getCHStats = (desiredStats.find_first_of("Cc")!=string::npos);
+	bool getRegularStats = (desiredStats.find_first_of("Rr")!=string::npos);
+		
+	ColorMap* colorizedMap = dynamic_cast<ColorMap*> (getImageFromFile("ColorMap", colorizedMapFileName));
+	colorizedMap->nullifyAboveRadius(1);
+	Coordinate sunCenter = colorizedMap->SunCenter();
+	double sunRadius = colorizedMap->SunRadius();
 
 
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 	
 		//We read and preprocess the sun image
-		SunImage* image = getImageFromFile(imageType, imagesFilenames[p]);
-		image->preprocessing(preprocessingSteps, radiusRatio);
+		EUVImage* image = getImageFromFile(imageType, imagesFilenames[p]);
+		image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
 		#if DEBUG >= 2
 		image->writeFitsImage(outputFileName + "preprocessed." +  stripPath(imagesFilenames[p]) );
 		#endif
 	
 		if( sunCenter.d2(image->SunCenter()) > 2 )
 		{
-			cerr<<"Warning : Image "<<imagesFilenames[p]<<" will be recentered to have the same sun centre than image "<<colorizedComponentsMapFileName<<endl;
+			cerr<<"Warning : Image "<<imagesFilenames[p]<<" will be recentered to have the same sun centre than image "<<colorizedMapFileName<<endl;
 			image->recenter(sunCenter);
 		}
 		if( abs(1. - (image->SunRadius() / sunRadius)) > 0.01 )
 		{
-			cerr<<"Error : Image "<<imagesFilenames[p]<<" does not have the same sun radius than image "<<colorizedComponentsMapFileName<<endl;
+			cerr<<"Error : Image "<<imagesFilenames[p]<<" does not have the same sun radius than image "<<colorizedMapFileName<<endl;
 			exit(EXIT_FAILURE);
 		}
 		
-		// We get the regions stats and output them
-		vector<RegionStats*> regions = getRegions(colorizedComponentsMap, image);
-		#ifdef CoordinateConvertor_H
-		CoordinateConvertor coco(image, coordinateType);
-		#endif
-
-		for (unsigned r = 0; r < regions.size(); ++r)
+		if(getARStats)
 		{
-			#ifdef CoordinateConvertor_H
-			cout<<regions[r]->toString(coco)<<endl;
-			#else
-			cout<<regions[r]->toString()<<endl;
-			#endif
-			delete regions[r];
+			// We get the regions stats and output them
+			vector<ActiveRegionStats*> regions = getActiveRegionStats(colorizedMap, image);
+			cout<<"ActiveRegion statistics for file "<<stripPath(imagesFilenames[p])<<endl;
+			if(regions.size() > 0)
+				cout<<regions[0]->toString(separator, true)<<endl;
+			else
+				cout<<"Empty"<<endl;
+			for (unsigned r = 0; r < regions.size(); ++r)
+			{
+				cout<<regions[r]->toString(separator)<<endl;
+				delete regions[r];
+			}
+		}
+		if(getCHStats)
+		{
+			// We get the regions stats and output them
+			vector<CoronalHoleStats*> regions = getCoronalHoleStats(colorizedMap, image);
+			cout<<"CoronalHole statistics for file "<<stripPath(imagesFilenames[p])<<endl;
+			if(regions.size() > 0)
+				cout<<regions[0]->toString(separator, true)<<endl;
+			else
+				cout<<"Empty"<<endl;
+			for (unsigned r = 0; r < regions.size(); ++r)
+			{
+				cout<<regions[r]->toString(separator)<<endl;
+				delete regions[r];
+			}
+		}
+		if(getRegularStats)
+		{
+			// We get the regions stats and output them
+			vector<RegionStats*> regions = getRegionStats(colorizedMap, image);
+			cout<<"Region statistics for file "<<stripPath(imagesFilenames[p])<<endl;
+			if(regions.size() > 0)
+				cout<<regions[0]->toString(separator, true)<<endl;
+			else
+				cout<<"Empty"<<endl;
+			for (unsigned r = 0; r < regions.size(); ++r)
+			{
+				cout<<regions[r]->toString(separator)<<endl;
+				delete regions[r];
+			}
 		}
 		delete image;
-		delete colorizedComponentsMap;
 	}
+	delete colorizedMap;
 	return EXIT_SUCCESS;
 	
 }

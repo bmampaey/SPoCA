@@ -2,37 +2,22 @@
 #ifndef EUVIImage_H
 #define EUVIImage_H
 
-#include <iostream>
-#include <limits>
-#include <typeinfo>
-#include <vector>
-#include <cmath>
-#include <string>
-#include <ctime>
+#include "EUVImage.h"
+#include "Header.h"
 
-#include "fitsio.h"
-#include "longnam.h"
-#include "SunImage.h"
-
-class EUVIImage : public SunImage
+class EUVIImage : public EUVImage
 {
-
 	public :
-		
 		//Constructors and destructors
-		EUVIImage(const std::string& filename);
-		EUVIImage(const long xAxes = 0, const long yAxes = 0, const double radius = 0., const double wavelength = 0.);
-		EUVIImage(const SunImage& i);
-		EUVIImage(const SunImage* i);
+		EUVIImage();
+		EUVIImage(const EUVImage& i);
+		EUVIImage(const EUVImage* i);
 		~EUVIImage();
 		
-		
 		//Routines to read and write the keywords from/to the header
-		void readHeader(fitsfile* fptr);
-		void writeHeader(fitsfile* fptr);
-		
-
+		void postRead();
+		void preWrite();
 };
 
-bool isEUVI(const FitsHeader& header);
+bool isEUVI(const Header& header);
 #endif

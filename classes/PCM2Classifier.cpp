@@ -26,7 +26,7 @@ void PCM2Classifier::computeU()
 			}
 			else
 			{
-				U[i*numberValidPixels+j] = pow( U[i*numberValidPixels+j] , 2./(fuzzifier-1.) ) ;
+				U[i*numberValidPixels+j] = pow( U[i*numberValidPixels+j] , Real(2./(fuzzifier-1.))) ;
 			}
 				
 			U[i*numberValidPixels+j] = 1. / (1. + U[i*numberValidPixels+j] ) ;

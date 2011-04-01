@@ -10,7 +10,7 @@
 #include <string>
 #include <list>
 
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "FeatureVector.h"
 #include "PCM2Classifier.h"
 #include "SPoCAClassifier.h"

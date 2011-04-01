@@ -10,7 +10,7 @@
 #include <string>
 
 #include "Image.h"
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "FeatureVector.h"
 #include "Classifier.h"
 

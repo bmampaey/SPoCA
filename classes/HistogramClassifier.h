@@ -12,7 +12,7 @@
 #include <fenv.h>
 #include <iomanip>
 
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "HistogramFeatureVector.h"
 #include "FeatureVector.h"
 

@@ -42,10 +42,10 @@ inline bool readbinSize(RealFeature& binSize, const string& sbinSize)
 	return true;
 }
 
-inline vector<SunImage*> getImagesFromFiles(const string imageType, const vector<string>& imagesFilenames, bool align)
+inline vector<EUVImage*> getImagesFromFiles(const string imageType, const vector<string>& imagesFilenames, bool align)
 {
 
-	vector<SunImage*> images;
+	vector<EUVImage*> images;
 
 	// We read the files
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
@@ -64,10 +64,10 @@ inline vector<SunImage*> getImagesFromFiles(const string imageType, const vector
 			{
 				cerr<<"Warning : Image "<<imagesFilenames[p]<<" will be recentered to have the same sun centre than image "<<imagesFilenames[0]<<endl;
 				images[p]->recenter(sunCenter);
-				#if DEBUG >= 2
+				#if DEBUG >= 3
 				string filename = outputFileName + "recentered.";
 				filename +=  stripPath(imagesFilenames[p]);
-				images[p]->writeFitsImage(filename);
+				images[p]->writeFits(filename);
 				#endif
 			}
 		}
@@ -75,10 +75,10 @@ inline vector<SunImage*> getImagesFromFiles(const string imageType, const vector
 	return images;
 }
 
-inline SunImage* getImageFromFile(const string imageType, const string imageFilename)
+inline EUVImage* getImageFromFile(const string imageType, const string imageFilename)
 {
 
-	SunImage* image;
+	EUVImage* image;
 
 	#if DEBUG >= 1
 	if(imageFilename.find(".fits")==string::npos && imageFilename.find(".fts")==string::npos)
@@ -87,44 +87,56 @@ inline SunImage* getImageFromFile(const string imageType, const string imageFile
 	}
 	#endif
 		
+	FitsFile file(imageFilename);
 	if (imageType == "EIT")
-		image = new EITImage(imageFilename);
+		image = new EITImage();
 	else if (imageType == "EUVI")
-		image = new EUVIImage(imageFilename);
+		image = new EUVIImage();
 	else if (imageType == "AIA")
-		image = new AIAImage(imageFilename);
+		image = new AIAImage();
 	else if (imageType == "SWAP")
-		image = new SWAPImage(imageFilename);
+		image = new SWAPImage();
 	else if (imageType == "HMI")
-		image = new HMIImage(imageFilename);
-	else if (imageType == "ColorMap")
-		image = new ColorMap(imageFilename);
-	else if (imageType == "SunImage")
-		image = new SunImage(imageFilename);
+		image = new HMIImage();
 	else
 	{
-		FitsHeader header(imageFilename);
+		Header header;
+		file.readHeader(header);
 		if(isEIT(header))
-			image = new EITImage(imageFilename);
+			image = new EITImage();
 		else if (isEUVI(header))
-			image = new EUVIImage(imageFilename);
+			image = new EUVIImage();
 		else if (isAIA(header))
-			image = new AIAImage(imageFilename);
+			image = new AIAImage();
 		else if (isSWAP(header))
-			image = new SWAPImage(imageFilename);
+			image = new SWAPImage();
 		else if (isHMI(header))
-			image = new HMIImage(imageFilename);
-		else if (isColorMap(header))
-			image = new ColorMap(imageFilename);
+			image = new HMIImage();
 		else
 		{
 			cerr<<"Error: Unknown instrument for "<<imageFilename<<endl;
-			image = NULL;
+			image = new EUVImage();
 		}
 	}
+	image->readFits(file);
 	return image;
 }
 
+inline ColorMap* getImageFromFile(const string imageFilename)
+{
+
+	#if DEBUG >= 1
+	if(imageFilename.find(".fits")==string::npos && imageFilename.find(".fts")==string::npos)
+	{
+		cerr<<imageFilename<<" is not a fits file! (must end in .fits or .fts)"<<endl;
+	}
+	#endif
+	ColorMap* image = new ColorMap();
+	FitsFile file(imageFilename);
+	image->readFits(file);
+	return image;
+
+}
 
 
 inline bool fileExists(const string& filename)

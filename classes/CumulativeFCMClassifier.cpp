@@ -23,7 +23,7 @@ CumulativeFCMClassifier::CumulativeFCMClassifier(const std::string& histogramFil
 }
 
 
-void CumulativeFCMClassifier::addImages(std::vector<SunImage*>& images)
+void CumulativeFCMClassifier::addImages(std::vector<EUVImage*> images)
 {
 
 	for (unsigned p = 0; p <  NUMBERWAVELENGTH; ++p)

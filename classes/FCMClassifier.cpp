@@ -78,7 +78,7 @@ void FCMClassifier::computeU()
 					if (fuzzifier == 2)
 						sum += (d2XjB[i]/d2XjB[ii]);
 					else
-						sum += pow(d2XjB[i]/d2XjB[ii],1./(fuzzifier-1.));
+						sum += pow(d2XjB[i]/d2XjB[ii],Real(1./(fuzzifier-1.)));
 
 				}
 				U[i*numberValidPixels+j] = 1./sum;

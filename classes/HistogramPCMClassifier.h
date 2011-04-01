@@ -10,7 +10,7 @@
 #include <string>
 #include <limits>
 
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "FeatureVector.h"
 #include "HistogramFCMClassifier.h"
 #include "PCMClassifier.h"

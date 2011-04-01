@@ -23,46 +23,45 @@ unsigned ARclass(const vector<RealFeature>& B)
 
 // Function that saves the AR map for tracking
 // You pass it a ColorMap that has already all the keywords correctly set
-ColorMap* ActiveRegionMap(ColorMap* segmentedMap, unsigned ARclass, bool tresholdRawArea)
+ColorMap* ActiveRegionMap(const ColorMap* segmentedMap, unsigned ARclass, bool tresholdRawArea)
 {
-	segmentedMap->setNullvalue(0);
+	ColorMap* ARMap = new ColorMap(segmentedMap);
 
 	//We create a map of the class ARclass
-	segmentedMap->bitmap(segmentedMap, ARclass);
+	ARMap->bitmap(segmentedMap, ARclass);
 
 	#if DEBUG >= 2
-	segmentedMap->writeFitsImage(outputFileName + "ARmap.pure.fits");
+	ARMap->writeFits(outputFileName + "ARmap.pure.fits");
 	#endif
 
 	// We clean the colormap to remove very small components (like protons)
-	segmentedMap->erodeCircular(2,0)->dilateCircular(2,0);
+	ARMap->erodeCircular(2,0)->dilateCircular(2,0);
 	
 	#if DEBUG >= 2
-	segmentedMap->writeFitsImage(outputFileName + "ARmap.opened.fits");
+	ARMap->writeFits(outputFileName + "ARmap.opened.fits");
 	#endif
 	
 	
 	// We remove the parts off limb (Added by Cis to avoid large off-limbs to combine 2 well separated AR on-disk regions to be aggregated as one)
-	segmentedMap->nullifyAboveRadius(1.);
+	ARMap->nullifyAboveRadius(1.);
 	
 	// We agregate the blobs together
-	blobsIntoAR(segmentedMap);
+	blobsIntoAR(ARMap);
 	
 	#if DEBUG >= 2
-	segmentedMap->writeFitsImage(outputFileName + "ARmap.aggregated.fits");
+	ARMap->writeFits(outputFileName + "ARmap.aggregated.fits");
 	#endif
 	
 	// We don't need the AR post limb
-	segmentedMap->nullifyAboveRadius(1.); 
+	ARMap->nullifyAboveRadius(1.); 
 
 	// We erase small regions
 	if(tresholdRawArea)
-		segmentedMap->tresholdRegionsByRawArea(MIN_AR_SIZE);
+		ARMap->tresholdRegionsByRawArea(MIN_AR_SIZE);
 	else
-		segmentedMap->tresholdRegionsByRealArea(MIN_AR_SIZE);
-	 
-
-	return segmentedMap;
+		ARMap->tresholdRegionsByRealArea(MIN_AR_SIZE);
+		
+	return ARMap;
 
 }
 
@@ -74,6 +73,9 @@ void blobsIntoAR (ColorMap* ARmap)
 	ColorMap* dilated = new ColorMap(ARmap);
 	dilated->dilateCircular(dilateFactor,ARmap->nullvalue());
 	dilated->colorizeConnectedComponents(1);
+	#if DEBUG >= 2
+	dilated->writeFits(outputFileName + "ARmap.dilated.fits");
+	#endif
 	
 	//We color the blobs using the dilated map 
 	for (unsigned j=0; j < ARmap->NumberPixels(); ++j)

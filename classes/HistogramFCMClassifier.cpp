@@ -27,7 +27,7 @@ void HistogramFCMClassifier::attribution()
 	FCMClassifier::computeU();
 }
 
-void HistogramFCMClassifier::addImages(std::vector<SunImage*>& images)
+void HistogramFCMClassifier::addImages(std::vector<EUVImage*> images)
 {
 
 	for (unsigned p = 0; p <  NUMBERWAVELENGTH; ++p)
@@ -128,7 +128,7 @@ void HistogramFCMClassifier::computeU()
 			if (d2XjB[i] < precision)
 				break;
 		}
-		if(i < numberClasses)					  // The pixel is very close to B[i]
+		if(i < numberClasses)	// The pixel is very close to B[i]
 		{
 			for (unsigned ii = 0 ; ii < numberClasses ; ++ii)
 			{
@@ -146,7 +146,7 @@ void HistogramFCMClassifier::computeU()
 					if (fuzzifier == 2)
 						sum += (d2XjB[i]/d2XjB[ii]);
 					else
-						sum += pow(d2XjB[i]/d2XjB[ii],1./(fuzzifier-1.));
+						sum += pow(d2XjB[i]/d2XjB[ii],Real(1./(fuzzifier-1.)));
 
 				}
 				U[i*numberBins+j] = 1./sum;

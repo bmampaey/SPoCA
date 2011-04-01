@@ -11,7 +11,7 @@
 #include <fstream>
 
 #include "Image.h"
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "HistogramFeatureVector.h"
 #include "FeatureVector.h"
 #include "FCMClassifier.h"
@@ -35,7 +35,9 @@ class HistogramFCMClassifier : public virtual FCMClassifier, public HistogramCla
 		HistogramFCMClassifier(Real fuzzifier = 2.);
 		HistogramFCMClassifier(const RealFeature& binSize, Real fuzzifier = 2.);
 		HistogramFCMClassifier(const std::string& histogramFilename, Real fuzzifier = 2.);
-		virtual void addImages(std::vector<SunImage*>& images);
+		
+		//Function to add images to the Histogram
+		virtual void addImages(std::vector<EUVImage*> images);
 
 		//Classification functions
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);

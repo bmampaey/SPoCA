@@ -39,7 +39,7 @@ sub parse_arguments
 	            "p:s"=>\$prefix,
 	            "l:s"=>\$directory,
 	            "h"=>\$help,
-	            "b"=>\$interactive,
+	            "b"=>\$batch,
 	            "c:i"=>\$number_process,
 		);
 	}

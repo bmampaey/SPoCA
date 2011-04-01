@@ -2,38 +2,22 @@
 #ifndef SWAPImage_H
 #define SWAPImage_H
 
-#include <iostream>
-#include <limits>
-#include <typeinfo>
-#include <vector>
-#include <cmath>
-#include <string>
-#include <ctime>
+#include "EUVImage.h"
+#include "Header.h"
 
-#include "fitsio.h"
-#include "longnam.h"
-#include "SunImage.h"
-
-class SWAPImage : public SunImage
+class SWAPImage : public EUVImage
 {
-
-	
 	public :
-		
 		//Constructors and destructors
-		SWAPImage(const std::string& filename);
-		SWAPImage(const long xAxes = 0, const long yAxes = 0, const double radius = 0., const double wavelength = 0.);
-		SWAPImage(const SunImage& i);
-		SWAPImage(const SunImage* i);
+		SWAPImage();
+		SWAPImage(const EUVImage& i);
+		SWAPImage(const EUVImage* i);
 		~SWAPImage();
 		
-		
 		//Routines to read and write the keywords from/to the header
-		void readHeader(fitsfile* fptr);
-		void writeHeader(fitsfile* fptr);
-
-
+		void postRead();
+		void preWrite();
 };
 
-bool isSWAP(const FitsHeader& header);
+bool isSWAP(const Header& header);
 #endif

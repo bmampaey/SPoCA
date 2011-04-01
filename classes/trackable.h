@@ -15,7 +15,7 @@
 
 #include "tools.h"
 #include "constants.h"
-#include "SunImage.h"
+#include "ColorMap.h"
 #include "Region.h"
 #include "gradient.h"
 #include "../cgt/graph.h"
@@ -26,14 +26,16 @@ extern unsigned long newColor;
 typedef cgt::graph<Region*, int> RegionGraph;
 
 //Ordonate the images according to time
-void ordonate(std::vector<SunImage*>& images);
+void ordonate(std::vector<ColorMap*>& images);
 
+// Return a vector of indices of the images vector ordonated according to time
+std::vector<unsigned> imageOrder(const std::vector<ColorMap*>& images);
 
 // Compute the number of pixels common to 2 regions from 2 images, with derotation
-unsigned overlay_derotate(SunImage* image1, const Region* region1, SunImage* image2, const Region* region2);
+unsigned overlay_derotate(ColorMap* image1, const Region* region1, ColorMap* image2, const Region* region2);
 
 // Compute the number of pixels common to 2 regions from 2 images
-unsigned overlay(SunImage* image1, const Region* region1, SunImage* image2, const Region* region2);
+unsigned overlay(ColorMap* image1, const Region* region1, ColorMap* image2, const Region* region2);
 
 
 // Find the biggest parrent of a node (the one I have the biggest intersection with)
@@ -49,10 +51,10 @@ void colorize(RegionGraph::node& me);
 bool path(const RegionGraph::node* n, const Region* r);
 
 // Output a graph in the dot format
-void ouputGraph(const RegionGraph& g, const std::vector<std::vector<Region*> >& regions, const std::string graphName);
+void ouputGraph(const RegionGraph& g, const std::vector<std::vector<Region*> >& regions, const std::string graphName, bool isColored = true);
 
 // Output regions in the region format
 void ouputRegions(const std::vector<std::vector<Region*> >& regions, std::string filename);
 
-void recolorFromRegions(SunImage* image, const std::vector<Region*>& regions);
+void recolorFromRegions(ColorMap* image, const std::vector<Region*>& regions);
 #endif

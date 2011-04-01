@@ -13,6 +13,9 @@
 #include "../classes/SunImage.h"
 #include "../classes/ArgumentHelper.h"
 #include "../classes/mainutilities.h"
+#include "../classes/Region.h"
+#include "../classes/Coordinate.h"
+
 
 #ifndef Real
 #define Real float
@@ -70,24 +73,17 @@ int main(int argc, const char **argv)
 	}
 	
 
-	vector<SunImage*> images = getImagesFromFiles(imageType, imagesFilenames, false);
-	for (unsigned p = 0; p < images.size(); ++p)
+	SunImage* image = getImageFromFile(imageType, imagesFilenames[0]);
+	image->dilateCircular(image->Xaxes()/50,0);
+	vector<Region*> regions = getRegions(image);
+	for (unsigned r = 0; r < regions.size(); ++r)
 	{
-		images[p]->preprocessing("NAR", 1);
-		images[p]->writeFitsImage(stripPath(imagesFilenames[p]) );
-
+		vector<Coordinate> chain_code = image->chainCode(regions[r]->FirstPixel(), 20);
+		for (unsigned i=0; i < chain_code.size(); ++i)
+		{
+			image->drawCross(30, chain_code[i]);
+		}
 	}
-	SunImage test;
-	unsigned t2 = images[1]->ObservationTime();
-	unsigned t1 = images[0]->ObservationTime();
-	unsigned delta_t = t2 - t1;
-	test.diff_rot( delta_t, images[0], images[1]->B0());
-	test.writeFitsImage("rotated.fits");
-	Real longitude, latitude;
-	images[0]->longlat(Coordinate(400,400), longitude, latitude);
-	cout<<imagesFilenames[0]<<" center [x,y] ["<<400<<","<<400<<"] [long,lat] ["<<longitude<<","<<latitude<<"]"<<endl;
-	images[1]->longlat(images[1]->SunCenter(), longitude, latitude);
-	cout<<imagesFilenames[1]<<" center [x,y] ["<<images[1]->SunCenter().x<<","<<images[1]->SunCenter().y<<"] [long,lat] ["<<longitude<<","<<latitude<<"]"<<endl;
-	
+	image->writeFitsImage(stripPath(stripSuffix(imagesFilenames[0])) + ".chain_coded.fits");
 	return EXIT_SUCCESS;
 }

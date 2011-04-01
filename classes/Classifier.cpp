@@ -6,7 +6,7 @@ Classifier::Classifier()
 :numberClasses(0),numberValidPixels(0),Xaxes(0),Yaxes(0),channels(0)
 {}
 
-void Classifier::checkImages(const vector<SunImage*>& images)
+void Classifier::checkImages(const vector<EUVImage*>& images)
 {
 
 	#if DEBUG >= 1
@@ -26,7 +26,6 @@ void Classifier::checkImages(const vector<SunImage*>& images)
 		if( abs(1. - (images[p]->SunRadius() / images[0]->SunRadius())) > 0.01 )
 		{
 			cerr<<"Warning : Image "<<images[p]->Wavelength()<<" does not have the same sun radius than image "<<images[0]->Wavelength()<<endl;
-			//exit(EXIT_FAILURE);
 		}
 	}
 	#endif
@@ -34,7 +33,7 @@ void Classifier::checkImages(const vector<SunImage*>& images)
 }
 
 
-void Classifier::addImages(vector<SunImage*>& images)
+void Classifier::addImages(vector<EUVImage*> images)
 {
 
 	checkImages(images);
@@ -137,7 +136,7 @@ unsigned Classifier::sursegmentation(unsigned Cmin)
 		#if DEBUG >= 2
 		ColorMap segmentedMap;
 		segmentedMap_maxUij(&segmentedMap);
-		segmentedMap.writeFitsImage(outputFileName + "segmented." + itos(numberClasses) + "classes.fits");
+		segmentedMap.writeFits(outputFileName + "segmented." + itos(numberClasses) + "classes.fits");
 		#endif
 		
 		#if DEBUG >= 3
@@ -396,14 +395,6 @@ ColorMap* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowe
 	
 	--middleClass;
 	
-
-
-	
-	#if DEBUG >= 2
-	fuzzyMap(middleClass,segmentedMap);
-	segmentedMap->writeFitsImage(outputFileName + "fuzzymap.fits");
-	#endif
-	
 	if(segmentedMap)
 	{
 		segmentedMap->resize(Xaxes, Yaxes);
@@ -444,7 +435,7 @@ ColorMap* Classifier::segmentedMap_limits(vector<RealFeature>& limits,ColorMap* 
 	segmentedMap_maxUij(segmentedMap);
 	
 	#if DEBUG >= 2
-	segmentedMap->writeFitsImage(outputFileName + "max.segmented.fits");
+	segmentedMap->writeFits(outputFileName + "max.segmented.fits");
 	#endif
 
 	//We create a vector of transformation telling wich class must be merged to what class
@@ -472,7 +463,7 @@ ColorMap* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>&
 	segmentedMap_maxUij(segmentedMap);
 
 	#if DEBUG >= 2
-	segmentedMap->writeFitsImage(outputFileName + "max.segmented.fits");
+	segmentedMap->writeFits(outputFileName + "max.segmented.fits");
 	#endif
 
 	//We create a vector of transformation telling wich class must be merged to what class
@@ -497,7 +488,7 @@ ColorMap* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>&
 
 
 
-ColorMap* Classifier::fuzzyMap(const unsigned i, ColorMap* fuzzyMap)
+EUVImage* Classifier::fuzzyMap(const unsigned i, EUVImage* fuzzyMap)
 {
 	if(fuzzyMap)
 	{
@@ -505,7 +496,7 @@ ColorMap* Classifier::fuzzyMap(const unsigned i, ColorMap* fuzzyMap)
 	}
 	else
 	{
-		fuzzyMap = new ColorMap(Xaxes, Yaxes);
+		fuzzyMap = new EUVImage(Xaxes, Yaxes);
 	}
 	
 	fuzzyMap->zero();
@@ -517,7 +508,7 @@ ColorMap* Classifier::fuzzyMap(const unsigned i, ColorMap* fuzzyMap)
 }
 
 
-ColorMap* Classifier::normalizedFuzzyMap(const unsigned i, ColorMap* fuzzyMap)
+EUVImage* Classifier::normalizedFuzzyMap(const unsigned i, EUVImage* fuzzyMap)
 {
 	if(fuzzyMap)
 	{
@@ -525,7 +516,7 @@ ColorMap* Classifier::normalizedFuzzyMap(const unsigned i, ColorMap* fuzzyMap)
 	}
 	else
 	{
-		fuzzyMap = new ColorMap(Xaxes, Yaxes);
+		fuzzyMap = new EUVImage(Xaxes, Yaxes);
 	}
 	
 	fuzzyMap->zero();
@@ -542,134 +533,6 @@ ColorMap* Classifier::normalizedFuzzyMap(const unsigned i, ColorMap* fuzzyMap)
 	}
 
 	return fuzzyMap;
-}
-
-
-// Function that saves all results possible
-// It is not very efficient, can output a LOT of big files, and is only for research and testing
-// You pass it a ColorMap that has already all the keywords correctly set
-void Classifier::saveAllResults(ColorMap* outImage)
-{
-
-	ColorMap* segmentedMap = segmentedMap_maxUij();
-	segmentedMap->writeFitsImage(outputFileName + "segmented." + itos(numberClasses) + "classes.fits");
-	
-	outImage->resize(Xaxes, Yaxes);
-	
-	unsigned minSize = unsigned(MIN_AR_SIZE / outImage->PixelArea());
-	
-	for (unsigned i = 1; i <= numberClasses; ++i)
-	{
-		
-		outImage->zero();
-
-		//We create a map of the class i
-		outImage->bitmap(segmentedMap, i);
-		string baseName = outputFileName + "class" + itos(i) + ".";
-		
-		outImage->writeFitsImage(baseName + "uncleaned.fits");
-
-		//We smooth the edges
-		outImage->dilateCircular(2,outImage->nullvalue())->erodeCircular(2,outImage->nullvalue());
-
-		outImage->writeFitsImage(baseName + "smoothed.uncleaned.fits");
-
-		//Let's find the connected regions
-		unsigned numberRegions = outImage->colorizeConnectedComponents(0);
-
-		outImage->writeFitsImage( baseName + "blobs.uncleaned.fits");
-
-
-		//Let's get the connected regions info
-		vector<Region*> regions = getRegions(outImage);
-		ofstream uncleanedResultsFile((baseName + "regions.uncleaned.txt").c_str());
-		if (uncleanedResultsFile.good())
-		{
-			uncleanedResultsFile<<Region::header<<endl;
-			for(unsigned r = 0; r < regions.size() && uncleanedResultsFile.good(); ++r)
-			{
-				uncleanedResultsFile<<regions[r]->toString()<<endl;
-				delete regions[r];
-			}
-		}
-		uncleanedResultsFile.close();
-
-
-
-		//Let's draw the contours
-		outImage->drawContours(3, outImage->nullvalue());
-
-		outImage->writeFitsImage(baseName + "contours.uncleaned.fits");
-
-
-		//Let's cleanup by removing the small regions (i.e. assimilated to bright points )
-		outImage->zero();
-		outImage->bitmap(segmentedMap, i);
-
-		//We smooth the edges
-		outImage->dilateCircular(2,outImage->nullvalue())->erodeCircular(2,outImage->nullvalue());
-		outImage->tresholdConnectedComponents(minSize, 0);
-		outImage->writeFitsImage(baseName + "fits");
-
-
-		//Let's find the connected regions
-		numberRegions = outImage->colorizeConnectedComponents(0);
-		outImage->writeFitsImage(baseName + "blobs.fits");
-
-
-		//Let's get the connected regions info
-		regions = getRegions(outImage);
-		ofstream resultsFile((baseName + "regions.txt").c_str());
-		if (resultsFile.good())
-		{
-			resultsFile<<Region::header<<endl;
-			for(unsigned r = 0; r < regions.size() && resultsFile.good(); ++r)
-			{
-				resultsFile<<regions[r]->toString()<<endl;
-			}
-		}
-		resultsFile.close();
-		
-
-		//Let's draw the contours
-		outImage->drawContours(3, outImage->nullvalue());
-		outImage->writeFitsImage(baseName + "contours.fits");
-
-
-
-		//Let's draw the boxes
-		outImage->zero();
-		for (unsigned r = 1; r < regions.size(); ++r)
-		{
-			outImage->drawBox(regions[r]->Id(), regions[r]->Boxmin(), regions[r]->Boxmax());
-		}
-		outImage->writeFitsImage(baseName + "boxes.fits");
-
-
-		//Let's draw the centers
-		outImage->zero();
-		for (unsigned r = 1; r < regions.size(); ++r)
-		{
-			outImage->drawCross(regions[r]->Id(), regions[r]->Center(), 5);
-		}
-		outImage->writeFitsImage(baseName + "centers.fits");
-
-
-		//We cleanup
-		for(unsigned r = 0; r < regions.size(); ++r)
-			delete regions[r];
-
-		//Let's get the fuzzyMaps
-		fuzzyMap(i-1, outImage);
-		outImage->writeFitsImage(baseName + "fuzzy.fits");
-
-		//Let's get the normalized fuzzyMaps
-		normalizedFuzzyMap(i-1,outImage);
-		outImage->writeFitsImage(baseName + "fuzzy.normalized.fits");
-
-	}
-	delete segmentedMap;
-
 }
 
 
@@ -711,12 +574,15 @@ vector<RealFeature> Classifier::getB()
 	return B;
 }
 
+RealFeature Classifier::getChannels()
+{
+	return channels;
+}
 
-
-SunImage* Classifier::getImage(unsigned p)
+EUVImage* Classifier::getImage(unsigned p)
 {
 
-	SunImage* image = new SunImage(Xaxes, Yaxes);
+	EUVImage* image = new EUVImage(Xaxes, Yaxes);
 	image->zero();
 	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
 	{
@@ -765,7 +631,7 @@ void Classifier::initB(const vector<RealFeature>& B, const RealFeature& channels
 	this->channels = channels;
 }
 
-void Classifier::ordonateImages(vector<SunImage*>& images)
+void Classifier::ordonateImages(vector<EUVImage*>& images)
 {
 	if(channels)
 	{
@@ -778,7 +644,7 @@ void Classifier::ordonateImages(vector<SunImage*>& images)
 					++pp;
 				if(pp < NUMBERWAVELENGTH)
 				{
-					SunImage* temp = images[pp];
+					EUVImage* temp = images[pp];
 					images[pp] = images[p];
 					images[p] = temp;
 				}
@@ -836,7 +702,10 @@ Classifier::~Classifier()
 
 void Classifier::stepinit(const string filename)
 {
-	stepfile.open(filename.c_str());
+	if(stepfile.is_open())
+		stepfile.close();
+	
+	stepfile.open(filename.c_str(), ios_base::app);
 	if(!stepfile)
 	{
 		cerr<<"Error : could not open iterations file "<<outputFileName<<"iterations.txt !"<<endl;

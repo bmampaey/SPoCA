@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <string>
 
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "FeatureVector.h"
 #include "PCMClassifier.h"
 
@@ -43,7 +43,7 @@ class SPoCAClassifier : public virtual PCMClassifier
 		SPoCAClassifier(unsigned neighboorhoodRadius = 1, Real fuzzifier = 2);
 
 		//Functions to add images
-		void addImages(std::vector<SunImage*>& images);
+		void addImages(std::vector<EUVImage*> images);
 
 		//Classification functions
 		using PCMClassifier::classification;

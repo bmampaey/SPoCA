@@ -16,7 +16,7 @@
 #include "tools.h"
 #include "constants.h"
 #include "Image.h"
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "ColorMap.h"
 #include "FeatureVector.h"
 #include "Region.h"
@@ -75,9 +75,9 @@ class Classifier
 		virtual ~Classifier();
 
 		//Functions to add and check images
-		void checkImages(const std::vector<SunImage*>& images);
-		void ordonateImages(std::vector<SunImage*>& images);
-		virtual void addImages (std::vector<SunImage*>& images);
+		void checkImages(const std::vector<EUVImage*>& images);
+		void ordonateImages(std::vector<EUVImage*>& images);
+		virtual void addImages (std::vector<EUVImage*> images);
 
 		//Classification functions
 		virtual void classification(Real precision = 1., unsigned maxNumberIteration = 100) = 0;
@@ -93,21 +93,21 @@ class Classifier
 		virtual ColorMap* segmentedMap_classTreshold(unsigned i, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, ColorMap* segmentedMap = NULL);
 		virtual ColorMap* segmentedMap_limits(std::vector<RealFeature>& limits, ColorMap* segmentedMap = NULL);
 		virtual ColorMap* segmentedMap_fixed(std::vector<unsigned>& ch, std::vector<unsigned>& qs, std::vector<unsigned>& ar, ColorMap* segmentedMap = NULL);
-		virtual ColorMap* fuzzyMap(const unsigned i, ColorMap* fuzzyMap = NULL);
-		virtual ColorMap* normalizedFuzzyMap(const unsigned i, ColorMap* fuzzyMap = NULL);
+		virtual EUVImage* fuzzyMap(const unsigned i, EUVImage* fuzzyMap = NULL);
+		virtual EUVImage* normalizedFuzzyMap(const unsigned i, EUVImage* fuzzyMap = NULL);
 		
 		//Sursegmentation functions
 		unsigned sursegmentation(std::vector<RealFeature>& B, unsigned C = 0);
 		unsigned sursegmentation(unsigned C = 0);
 
 		//Utilities function for outputing results
-		virtual void saveAllResults(ColorMap* outImage);
 		void saveB(const std::string& filename);
 		virtual std::vector<RealFeature> classAverage() const;
 		
 		//Accessors
-		SunImage* getImage(unsigned p);
+		EUVImage* getImage(unsigned p);
 		std::vector<RealFeature> getB();
+		RealFeature getChannels();
 		std::vector<PixelFeature> percentiles(std::vector<Real> percentileValues);
 
 };

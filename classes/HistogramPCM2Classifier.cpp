@@ -50,7 +50,7 @@ void HistogramPCM2Classifier::computeU()
 			}
 			else
 			{
-				U[i*numberBins+j] = pow( U[i*numberBins+j] , 2./(fuzzifier-1.) ) ;
+				U[i*numberBins+j] = pow( U[i*numberBins+j] , Real(2./(fuzzifier-1.))) ;
 			}
 				
 			U[i*numberBins+j] = 1. / (1. + U[i*numberBins+j] ) ;

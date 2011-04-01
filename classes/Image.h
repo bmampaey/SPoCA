@@ -10,39 +10,28 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "fitsio.h"
-#include "longnam.h"
 #include "tools.h"
 #include "constants.h"
 #include "Coordinate.h"
+#include "FitsFile.h"
+
 
 template<class T>
 class Image
 {
 
 	protected :
-		int naxis;
-		long axes[2];
+		unsigned xAxes, yAxes;
 		unsigned  numberPixels;
 		T * pixels;
-		int datatype;
-		int anynull, bitpix;
 		T nullvalue_;  //nullvalue is the value of a non significatif pixel, it is set to the max. May be a problem if the picture is saturated
-		
 
 	public :
 		//Constructors and destructors
-		Image(const std::string& filename);
 		Image(const long xAxes = 0, const long yAxes = 0);
 		Image(const Image<T>& i);
 		Image(const Image<T>* i);
 		virtual ~Image();
-		
-		//Routines to read and write a fits file
-		virtual int writeFitsImage(const std::string& filename);
-		virtual int writeFitsImageP(fitsfile* fptr);
-		virtual int readFitsImage(const std::string& filename);
-		virtual int readFitsImageP(fitsfile* fptr);
 
 		//Accessors
 		unsigned Xaxes() const;
@@ -59,11 +48,10 @@ class Image
 		{return nullvalue_;}
 		void setNullvalue(T nullvalue)
 		{nullvalue_ = nullvalue;}
-						 
 
 
 		//Various routines to work on images
-		Image<T>* resize(const long xAxes, const long yAxes = 1);
+		Image<T>* resize(const unsigned xAxes, const unsigned yAxes = 1);
 		Image<T>* zero(T value = 0);
 		Image<T>* drawBox(const T color, Coordinate min, Coordinate max);
 		Image<T>* drawCross(const T color, Coordinate c, const unsigned size = 5);
@@ -82,7 +70,8 @@ class Image
 		unsigned tresholdConnectedComponents(const unsigned minSize, const T setValue = 0);
 		Image<T>* bitmap(const Image<T>* bitMap, T setValue = 1);
 		Image<T>* removeHoles(T unusedColor = std::numeric_limits<T>::max() - 1);
-
+		std::vector<Coordinate> chainCode(const Coordinate firstPixel, const unsigned max_points) const;
+		
 		//Return the mean value of the image
 		Real mean() const;
 		//Return the variance value of the image
@@ -110,6 +99,12 @@ class Image
 		Image<T>* convolveVert(const Image<T>* img,  const std::vector<float>& kernel);
 		Image<T>* convolveSeparate(const Image<T>* img, const std::vector<float>& horiz_kernel, const std::vector<float>& vert_kernel);
 		T interpolate(const float x, const float y) const;
+		
+		//Routines to read/write fits files
+		virtual FitsFile& writeFits(FitsFile& file, int mode = 0);
+		virtual FitsFile& readFits(FitsFile& file);
+		bool writeFits(const std::string& filename, int mode = 0);
+		bool readFits(const std::string& filename);
 
 };
 

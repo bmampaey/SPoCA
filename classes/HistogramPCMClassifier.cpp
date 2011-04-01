@@ -42,7 +42,7 @@ void HistogramPCMClassifier::computeU()
 			}
 			else if(fuzzifier != 2)
 			{
-				U[i*numberBins+j] = pow( U[i*numberBins+j] , 1./(fuzzifier-1.) );
+				U[i*numberBins+j] = pow( U[i*numberBins+j] , Real(1./(fuzzifier-1.)));
 			}
 			
 			U[i*numberBins+j] = 1. / (1. + U[i*numberBins+j]);
@@ -303,19 +303,6 @@ void HistogramPCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration
 	//We initialise eta
 	computeEta();
 	
-	// We output the FCM segementation for comparison with PCM 
-	#if DEBUG >= 2
-	attribution();
-	string tempName = outputFileName;	
-	outputFileName += "HFCM.";
-	SunImage* segmentedMap = segmentedMap_maxUij();
-	segmentedMap->writeFitsImage(outputFileName + "segmented." + itos(numberClasses) + "classes.fits");
-	#if DEBUG >= 4
-	saveAllResults(segmentedMap);
-	#endif
-	delete segmentedMap;
-	outputFileName = tempName;
-	#endif
 
 	#ifdef ETA_BEN
 	//This is just a test

@@ -65,12 +65,13 @@ int main(int argc, const char **argv)
 	    background.alphaQuantum(0);
 	}
 
-
+	ColorMap image;
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		ColorMap* image = new ColorMap(imagesFilenames[p]);
-		unsigned Xaxes = image->Xaxes();
-		unsigned Yaxes = image->Yaxes();
+		
+		image.readFits(imagesFilenames[p]);
+		unsigned Xaxes = image.Xaxes();
+		unsigned Yaxes = image.Yaxes();
 
 		Magick::Image pngImage( Geometry(Xaxes, Yaxes), background );
 		//pngImage.type(Magick::TrueColorMatteType);
@@ -79,9 +80,9 @@ int main(int argc, const char **argv)
 		{
 		    for (unsigned x = 0; x < Xaxes; ++x)
 		    {	
-				if(image->pixel(x, y) != image->nullvalue() )
+				if(image.pixel(x, y) != image.nullvalue())
 				{
-					unsigned indice = (unsigned(image->pixel(x, y)) % gradientMax) + 1 ;
+					unsigned indice = (unsigned(image.pixel(x, y)) % gradientMax) + 1 ;
 					if(colorize)
 					{
 						pngImage.pixelColor(x, Yaxes - y - 1, Color(magick_gradient[indice]));
@@ -96,7 +97,7 @@ int main(int argc, const char **argv)
 
 		outputFileName =  stripSuffix(imagesFilenames[p]);
 		pngImage.write(outputFileName + ".png");
-		delete image;
 	}
 	return EXIT_SUCCESS;
 }
+

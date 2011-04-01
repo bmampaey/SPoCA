@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <string>
 
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "HistogramFeatureVector.h"
 #include "CumulativePCMClassifier.h"
 #include "HistogramPCM2Classifier.h"

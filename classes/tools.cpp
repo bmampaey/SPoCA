@@ -10,7 +10,7 @@ ostream& operator<<(ostream& out, const vector<Real>& v)
 	{
 		out<<v.at(0);
 		for (unsigned i = 1 ; i < v.size() ; ++i)
-			out<<"\t"<<v.at(i);
+			out<<" "<<v.at(i);
 
 	}
 	else
@@ -44,7 +44,7 @@ ostream& operator<<(ostream& out, const vector<unsigned>& v)
 	{
 		out<<v.at(0);
 		for (unsigned i = 1 ; i < v.size() ; ++i)
-			out<<"\t"<<v.at(i);
+			out<<" "<<v.at(i);
 
 	}
 	else
@@ -73,17 +73,23 @@ istream& operator>>(istream& in, vector<unsigned>& v)
 }
 
 
-string itos(const int& i)
+string itos(const int& i, const int size)
 {
 	ostringstream ss;
-	ss << i;
+	if (size > 0)
+		ss << setw( size ) << setfill( '0' ) << i;
+	else
+		ss << i;
 	return ss.str();
 }
 
-string dtos(const double& i)
+string dtos(const double& i, const int size)
 {
 	ostringstream ss;
-	ss << i;
+	if (size > 0)
+		ss << setw( size ) << setfill( '0' ) << i;
+	else
+		ss << i;
 	return ss.str();
 }
 
@@ -98,4 +104,16 @@ string stripSuffix(const string &name)
 	return  pos != string::npos ? name.substr(0,pos) : name;
 }
 
+bool isDir(const string path)
+{
+	struct stat statbuf;
+	return (stat(path.c_str(), &statbuf) != -1) && (S_ISDIR(statbuf.st_mode));
+}
+
+string time2string(const time_t time)
+{
+	char datetime_string[100];
+	strftime(datetime_string, 100, "%Y%m%d_%H%M%S", gmtime(&time));
+	return string(datetime_string);
+}
 

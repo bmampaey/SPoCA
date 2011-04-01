@@ -12,8 +12,9 @@
 #include "../classes/tools.h"
 #include "../classes/constants.h"
 #include "../classes/mainutilities.h"
+#include "../classes/ArgumentHelper.h"
 
-#include "../classes/SunImage.h"
+#include "../classes/EUVImage.h"
 #include "../classes/ColorMap.h"
 
 #include "../classes/Classifier.h"
@@ -25,9 +26,12 @@
 
 
 #include "../classes/FeatureVector.h"
-#include "../classes/ArgumentHelper.h"
-
+#include "../classes/RegionStats.h"
 #include "../classes/ActiveRegion.h"
+#include "../classes/ActiveRegionStats.h"
+#include "../classes/CoronalHole.h"
+#include "../classes/CoronalHoleStats.h"
+#include "../classes/FitsFile.h"
 
 using namespace std;
 using namespace dsr;
@@ -41,6 +45,8 @@ int main(int argc, const char **argv)
 
 	cout<<setiosflags(ios::fixed);
 
+	// Program version
+	const char * version = "0.7";
 
 	// The list of names of the sun images to process
 	string imageType = "UNKNOWN";
@@ -81,13 +87,21 @@ int main(int argc, const char **argv)
 	
 	// Options for the treshold segmentation
 	string treshold;
-	
-	// Options for the ARmap
+
+	// Options for the ARmap and CHmap
 	bool tresholdRawArea = false;
+	double regionStatsRadiusRatio = 0.95;
+	string regionStatsPreprocessing = "NAR";
+
+	// option for the output directory
+	string outputDirectory = ".";
+	
+	// Options for the desired outputs
+	string desiredMaps;
 
 	// We parse the arguments
 
-	string programDescription = "This Programm does classification and segmentation.\n";
+	string programDescription = "This Programm does attribution (or fix classification) and segmentation.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
@@ -104,6 +118,9 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP\n\t", imageType);
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
 	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
+	arguments.new_named_string('M', "maps", "comma separated list of char (no spaces)", "\n\tThe kind of maps to generate.\n\tPossible values :\n\t\tA (Active Region)\n\t\tC (Coronal Hole)\n\t\tS (Segmented)\n\t\tM (Mix i.e. AR map and CH map in one)\n\t", desiredMaps);
+	arguments.new_named_double('R', "regionStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",regionStatsRadiusRatio);
+	arguments.new_named_string('G', "regionStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images (see preprocessingSteps for possible values).\n\t",regionStatsPreprocessing);
 	arguments.new_named_string('E',"etaFile","file name", "\n\tThe name of the file containing eta.\n\tBe carefull that the order of the eta must be the same than the order of the centers in the centersFile!\n\tIf it it not provided the eta will be computed with a FCM (then it is not a real attribution).\n\t", etaFileName);
 	arguments.new_named_unsigned_int('N', "neighboorhoodRadius", "positive integer", "\n\tOnly for spatial classifiers like SPoCA.\n\tThe neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.\n\t", neighboorhoodRadius);
 	arguments.new_named_string('S', "segmentation", "string", "\n\tThe segmentation type.\n\tPossible values :\n\t\tmax (Maximum of Uij)\n\t\tclosest (Closest center)\n\t\ttreshold (Treshold on Uij)\n\t\tlimits (Merge on centers value limits)\n\t\tfix (Merge on fix CH QS AR)\n\t", segmentation);
@@ -199,7 +216,7 @@ int main(int argc, const char **argv)
 	
 		
 	// We read and preprocess the sun images
-	vector<SunImage*> images = getImagesFromFiles(imageType, imagesFilenames, true);
+	vector<EUVImage*> images = getImagesFromFiles(imageType, imagesFilenames, true);
 	for (unsigned p = 0; p < images.size(); ++p)
 	{
 		images[p]->preprocessing(preprocessingSteps, radiusRatio);
@@ -261,11 +278,6 @@ int main(int argc, const char **argv)
 	// We have all the information we need, we can do the attribution
 	F->attribution();
 	
-	#if DEBUG >= 4
-	// We save all the results, this should only be for advanced debugging
-	F->saveAllResults(segmentedMap);
-	#endif
-	
 	// We do the segmentation
 	if (segmentation == "max")
 	{
@@ -323,36 +335,251 @@ int main(int argc, const char **argv)
 		cerr<<"Error : "<<segmentation<<" is not a known segmentation!"<<endl;
 		return EXIT_FAILURE;
 	}
+
+	// We add information about the classification to the segmentedMap 
+	
+	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
+	{
+		segmentedMap->header.set<string>(string("IMAGE")+itos(p+1,3), imagesFilenames[p]);
+	}
+
+	segmentedMap->header.set<string>("CVERSION", version, "SPoCA Version");
+	segmentedMap->header.set<string>("CPREPROC", preprocessingSteps, "Preprocessing Steps");
+	segmentedMap->header.set<double>("CRADRATI", radiusRatio, "Radius Ratio");
+	segmentedMap->header.set<string>("CLASTYPE", classifierType, "Classifier Type");
+	segmentedMap->header.set<int>("CNBRCLAS", numberClasses, "Number Classes");
+	segmentedMap->header.set<double>("CFUZFIER", fuzzifier, "Classifier Fuzzifier");
+	segmentedMap->header.set<string>("RPREPROC", regionStatsPreprocessing, "Region Stats Preprocesing");
+	segmentedMap->header.set<double>("RRADRATI", regionStatsRadiusRatio, "Region Stats Radius Ratio");
+
+	segmentedMap->header.set<string>("SEGMTYPE", segmentation, "Segmentation type");
+	if(! activeRegion.empty())
+		segmentedMap->header.set<string>("SFIXAR", activeRegion);
+	if(! quietSun.empty())
+		segmentedMap->header.set<string>("SFIXQS", quietSun);
+	if(! coronalHole.empty())
+		segmentedMap->header.set<string>("SFIXCH", coronalHole);
+	if(! treshold.empty())
+		segmentedMap->header.set<string>("STRSHLD", treshold);
+	segmentedMap->header.set<int>("MRAWTRSH", tresholdRawArea, "Region Size Treshold on Raw Area");
+	
+	ostringstream ss;
+	ss<<F->getChannels()<<" "<<B;
+	segmentedMap->header.set<string>("CCENTER", ss.str(), "Classification Center");
+	
+	if(classifierIsPossibilistic)
+	{
+		ostringstream ss;
+		ss<<dynamic_cast<PCMClassifier*>(F)->getEta();
+		segmentedMap->header.set<string>("CETA", ss.str(), "Classification eta");
+	}
 	
 	delete F;
-
-	segmentedMap->writeFitsImage(outputFileName + "segmented.fits");
 	
-	// We save the map of AR
+	// We generate the requested maps
+	
+	bool getARMap = (desiredMaps.find_first_of("Aa")!=string::npos);
+	bool getCHMap = (desiredMaps.find_first_of("Cc")!=string::npos);
+	bool getSegmentedMap = (desiredMaps.find_first_of("Ss")!=string::npos);
+	bool getMixMap = (desiredMaps.find_first_of("Mm")!=string::npos);
+	
+	#if DEBUG >= 1
+	if(!(getARMap || getCHMap || getSegmentedMap))
+	{
+		cerr<<"Warning: No maps has been requested"<<endl;
+		delete segmentedMap;
+		return EXIT_SUCCESS;
+	}
+	#endif
+	
+	// I need the first image for the region stats
+	EUVImage* image = getImageFromFile(imageType, imagesFilenames[0]);
+	image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
+	
+	// We get the class of AR
+	unsigned ARClassNumber = 3;
 	if (segmentation == "max" || segmentation == "closest" || segmentation == "limits")
 	{
-		ActiveRegionMap(segmentedMap, ARclass(F->getB()), tresholdRawArea);
-	}
-	else 
-	{
-		ActiveRegionMap(segmentedMap, 3, tresholdRawArea);
+		ARClassNumber = ARclass(B);
 	}
 	
-	segmentedMap->writeFitsImage(outputFileName + "ARmap.fits");
-
-	/*HACK for maps with AR and CH
-	for (unsigned j=0; j < segmentedMap->NumberPixels(); ++j)
+	if(getARMap)
 	{
-		if (segmentedMap->pixel(j) == 2 || segmentedMap->pixel(j) == 0)
-			segmentedMap->pixel(j) = segmentedMap->nullvalue();
+		// We get the map of AR
+		ColorMap* ARMap = ActiveRegionMap(segmentedMap, ARClassNumber, tresholdRawArea);
+	
+		// We write the map of AR to a fits file
+		FitsFile file(outputFileName + "ARmap.fits", FitsFile::overwrite);
+		ARMap->writeFits(file, FitsFile::compress);
+	
+		// We get the AR Stats
+		vector<ActiveRegionStats*> ARStats = getActiveRegionStats(ARMap, image);
+		// We write the AR Stats into the fits
+		file.writeTable("ActiveRegionStats");
+		writeRegions(file, ARStats);
+		delete ARMap;
+		#if DEBUG>= 3
+		cerr<<"ActiveRegionStats Table"<<endl;
+		if(ARStats.size() > 0)
+			cerr<<ARStats[0]->toString("|", true)<<endl;
+		else
+			cerr<<"Empty"<<endl;
+		for (unsigned r = 0; r < ARStats.size(); ++r)
+		{
+			cerr<<ARStats[r]->toString("|")<<endl;
+		}
+		#endif
+		for (unsigned r = 0; r < ARStats.size(); ++r)
+		{
+			delete ARStats[r];
+		}
 	}
-	segmentedMap->dilateCircular(8,segmentedMap->nullvalue())->erodeCircular(8,segmentedMap->nullvalue())->dilateCircular(1,segmentedMap->nullvalue());
-	unsigned minSize = 80;
-	segmentedMap->tresholdConnectedComponents(20000, 1);
-	segmentedMap->tresholdConnectedComponents(4166, 3);
-	segmentedMap->writeFitsImage(outputFileName + "cleaned.segmented.fits");
-	*/
-	delete segmentedMap;	
-          
+
+
+	// We get the class of CH
+	unsigned CHClassNumber = 1;
+	if (segmentation == "max" || segmentation == "closest" || segmentation == "limits")
+	{
+		CHClassNumber = CHclass(B);
+	}
+	if(getCHMap)
+	{
+		// We get the map of CH
+		ColorMap* CHMap = CoronalHoleMap(segmentedMap, CHClassNumber, tresholdRawArea);
+	
+		// We write the map of CH to a fits file
+		FitsFile file(outputFileName + "CHmap.fits", FitsFile::overwrite);
+		CHMap->writeFits(file, FitsFile::compress);
+	
+		// We get the CH Stats
+		vector<CoronalHoleStats*> CHStats = getCoronalHoleStats(CHMap, image);
+		// We write the CH Stats into the fits
+		file.writeTable("CoronalHoleStats");
+		writeRegions(file, CHStats);
+		#if DEBUG>= 3
+		cerr<<"CoronalHoleStats Table"<<endl;
+		if(CHStats.size() > 0)
+			cerr<<CHStats[0]->toString("|", true)<<endl;
+		else
+			cerr<<"Empty"<<endl;
+		for (unsigned r = 0; r < CHStats.size(); ++r)
+		{
+			cerr<<CHStats[r]->toString("|")<<endl;
+		}
+		#endif
+		//We get the CH chaincode and write them to the CH map
+		file.writeTable("CoronalHoleChaincode");
+		unsigned chaincode_nbr_points = 20;
+		for (unsigned r = 0; r < CHStats.size(); ++r)
+		{
+			vector<Coordinate> CH_chaincode = CHMap->chainCode(CHStats[r]->FirstPixel(), chaincode_nbr_points);
+			vector<unsigned> xdata(CH_chaincode.size(),0);
+			vector<unsigned> ydata(CH_chaincode.size(),0);
+			for(unsigned c = 0; c < CH_chaincode.size(); ++c)
+			{
+				xdata[c] = CH_chaincode[c].x;
+				ydata[c] = CH_chaincode[c].y;
+			}
+			file.writeColumn("X"+itos(r,7), xdata);
+			file.writeColumn("Y"+itos(r,7), ydata);
+			#if DEBUG>= 3
+			cerr<<"CoronalHole Chaincode for region id "<<CHStats[r]->Id()<<endl;
+			cerr<<CH_chaincode<<endl;
+			#endif
+		}
+		delete CHMap;
+		for (unsigned r = 0; r < CHStats.size(); ++r)
+		{
+			delete CHStats[r];
+		}
+	}
+
+	if(getSegmentedMap)
+	{
+		// We set the class info into the segmentedMap
+		segmentedMap->header.set("ARCLASS", ARClassNumber, "Color of the Active Region class");
+		segmentedMap->header.set("CHCLASS", CHClassNumber, "Color of the Coronal Hole class");
+	
+		// We write the segmentedMap to a fits file
+		FitsFile file(outputFileName + "SegmentedMap.fits", FitsFile::overwrite);
+		segmentedMap->writeFits(file, FitsFile::compress);
+		// We get the RegionStats
+		vector<RegionStats*> regionStats = getRegionStats(segmentedMap, image);
+		// We write the RegionStats into the fits
+		file.writeTable("RegionStats");
+		writeRegions(file, regionStats);
+		#if DEBUG>= 3
+		cerr<<"RegionStats Table"<<endl;
+		if(regionStats.size() > 0)
+			cerr<<regionStats[0]->toString("|", true)<<endl;
+		else
+			cerr<<"Empty"<<endl;
+		for (unsigned r = 0; r < regionStats.size(); ++r)
+		{
+			cerr<<regionStats[r]->toString("|")<<endl;
+		}
+		#endif
+		for (unsigned r = 0; r < regionStats.size(); ++r)
+		{
+			delete regionStats[r];
+		}
+	}
+	
+	if(getMixMap)
+	{
+		// We get the map of AR
+		ColorMap* ARMap = ActiveRegionMap(segmentedMap, ARClassNumber, tresholdRawArea);
+		// We get the map of CH
+		ColorMap* CHMap = CoronalHoleMap(segmentedMap, CHClassNumber, tresholdRawArea);
+		//We combine them into 1
+		for (unsigned j=0; j < ARMap->NumberPixels(); ++j)
+		{
+			if (ARMap->pixel(j) != ARMap->nullvalue())
+				ARMap->pixel(j) = 2;
+			else if (CHMap->pixel(j) != CHMap->nullvalue())
+				ARMap->pixel(j) = 1;
+			else
+				ARMap->pixel(j) = 0;
+		}
+		delete CHMap;
+		
+		/* A few hacks if you want good looking mix maps
+		// More smooth 
+		ARMap->dilateCircular(8,ARMap->nullvalue())->erodeCircular(8,ARMap->nullvalue())->dilateCircular(1,ARMap->nullvalue());
+		// Remove small CH
+		ARMap->tresholdConnectedComponents(20000, 1);
+		// Remove small AR
+		ARMap->tresholdConnectedComponents(4166, 2);
+		*/
+		
+		// We write the MixMap to a fits file
+		FitsFile file(outputFileName + "MixMap.fits", FitsFile::overwrite);
+		ARMap->writeFits(file, FitsFile::compress);
+		// We get the RegionStats
+		vector<RegionStats*> regionStats = getRegionStats(ARMap, image);;
+		// We write the RegionStats into the fits
+		file.writeTable("RegionStats");
+		writeRegions(file, regionStats);
+		#if DEBUG>= 3
+		cerr<<"RegionStats Table"<<endl;
+		if(regionStats.size() > 0)
+			cerr<<regionStats[0]->toString("|", true)<<endl;
+		else
+			cerr<<"Empty"<<endl;
+		for (unsigned r = 0; r < regionStats.size(); ++r)
+		{
+			cerr<<regionStats[r]->toString("|")<<endl;
+		}
+		#endif
+		delete ARMap;
+		for (unsigned r = 0; r < regionStats.size(); ++r)
+		{
+			delete regionStats[r];
+		}
+	}
+	delete segmentedMap;
+	delete image;
+
+
 	return EXIT_SUCCESS;
 }

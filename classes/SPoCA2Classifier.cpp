@@ -33,7 +33,7 @@ void SPoCA2Classifier::computeU()
 			if(fuzzifier == 2)
 				U[i*numberValidPixels+j] = sumNeighboors / eta[i] ;
 			else
-				U[i*numberValidPixels+j] = pow( sumNeighboors / eta[i], 1./(fuzzifier-1.) );
+				U[i*numberValidPixels+j] = pow( sumNeighboors / eta[i], Real(1./(fuzzifier-1.)));
 
 			U[i*numberValidPixels+j] *= U[i*numberValidPixels+j];
 			U[i*numberValidPixels+j] = 1. / (1. + U[i*numberValidPixels+j]);

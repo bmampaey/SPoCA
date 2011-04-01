@@ -25,6 +25,18 @@ class HistogramFeatureVector : public FeatureVector<T, N>
 			++c;
 			return *this;
 		}
+		
+		bool operator<(const HistogramFeatureVector<T, N>& fv) const
+		{
+			for (unsigned p = 0; p < NUMBERWAVELENGTH; ++p)
+			{
+				if(this->v[p] < fv.v[p])
+					return true;
+				if(this->v[p] > fv.v[p])
+					return false;
+			}
+			return false;
+		}
 
 };
 
@@ -42,4 +54,5 @@ inline int compare(const HistoPixelFeature& x1, const HistoPixelFeature& x2)
 	}
 	return 0;
 }
+
 #endif

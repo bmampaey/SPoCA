@@ -63,7 +63,7 @@ ostream& operator<<(ostream& out, const vector<FeatureVector<T, N> >& v)
 	{
 		out<<v.at(0);
 		for (unsigned i = 1 ; i < v.size() ; ++i)
-			out<<"\t"<<v.at(i);
+			out<<" "<<v.at(i);
 
 	}
 	else
@@ -106,7 +106,7 @@ template FeatureVector<Real, NUMBERWAVELENGTH> sqrt<Real, NUMBERWAVELENGTH>(cons
 template ostream& operator<< <Real, NUMBERWAVELENGTH>(ostream& out, const vector<FeatureVector<Real, NUMBERWAVELENGTH> >& v);
 template istream& operator>> <Real, NUMBERWAVELENGTH>(istream& in, vector<FeatureVector <Real, NUMBERWAVELENGTH> >& v);
 
-#if PIXELTYPE!=REALTYPE
+#if PIXELTYPE!=REAL
 template class FeatureVector<PixelType, NUMBERWAVELENGTH>;
 
 template Real d2<PixelType, Real, NUMBERWAVELENGTH>(const FeatureVector<PixelType, NUMBERWAVELENGTH>& pixel, const FeatureVector<Real, NUMBERWAVELENGTH>& centre);

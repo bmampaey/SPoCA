@@ -9,7 +9,7 @@ CumulativeSPoCAClassifier::CumulativeSPoCAClassifier(unsigned neighboorhoodRadiu
 	this->Nradius = neighboorhoodRadius;
 }
 
-void CumulativeSPoCAClassifier::addImages(vector<SunImage*>& images)
+void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 {
 
 	checkImages(images);
@@ -123,7 +123,7 @@ void CumulativeSPoCAClassifier::addImages(vector<SunImage*>& images)
 		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
 			image.pixel(coordinates[j]) = smoothedX[j].v[p];
 
-		image.writeFitsImage(outputFileName + "smoothed." + itos(int(images[p]->Wavelength())) + ".fits");
+		image.writeFits(outputFileName + "smoothed." + itos(int(images[p]->Wavelength())) + ".fits");
 
 	}
 	#endif

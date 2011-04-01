@@ -20,7 +20,7 @@ void PCMClassifier::computeU()
 			}
 			else if(fuzzifier != 2)
 			{
-				U[i*numberValidPixels+j] = pow( U[i*numberValidPixels+j] , 1./(fuzzifier-1.) );
+				U[i*numberValidPixels+j] = pow( U[i*numberValidPixels+j] , Real(1./(fuzzifier-1.)));
 			}
 			U[i*numberValidPixels+j] = 1. / (1. + U[i*numberValidPixels+j]);
 		}
@@ -306,15 +306,6 @@ void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FC
 	fuzzifier = temp;
 	//We initialise eta
 	computeEta();
-
-	// We output the FCM segementation for comparison with PCM 
-	#if DEBUG >= 2
-	string tempName = outputFileName;
-	outputFileName += "FCM.";
-	saveAllResults(NULL);
-	outputFileName = tempName;
-	#endif
-
 
 	#ifdef ETA_BEN
 	//This is just a test

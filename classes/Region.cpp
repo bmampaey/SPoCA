@@ -1,9 +1,10 @@
 #include "Region.h"
+#include <map>
 
 using namespace std;
 
-Region::Region()
-:id(0),observationTime(0),color(0), first(Coordinate::Max), boxmin(Coordinate::Max), boxmax(0), center(0), numberPixels(0)
+Region::Region(const unsigned id)
+:id(id),observationTime(0),color(0), first(Coordinate::Max), boxmin(Coordinate::Max), boxmax(0), center(0), numberPixels(0)
 {}
 
 Region::Region(const time_t& observationTime)
@@ -120,40 +121,26 @@ string Region::Visu3DLabel() const
 }
 
 
-const string Region::header = "Id\tColor\tObservationDate\t(Center.x,Center.y)\t(Boxmin.x,Boxmin.y)\t(Boxmax.x,Boxmax.y)\tNumberPixels";
-
-string Region::toString() const
+string Region::toString(const string& separator, bool header) const
 {
-	ostringstream out;
-	out<<setiosflags(ios::fixed)<<Id()<<"\t"<<Color()<<"\t"<<ObservationDate()<<"\t"<<Center()<<"\t"<<Boxmin()<<"\t"<<Boxmax()<<"\t"<<NumberPixels();
-	return out.str();
+	string result;
+	if (header)
+	{
+		result = "Id"+separator+"Color"+separator+"ObservationDate"+separator+"Center"+separator+"Boxmin"+separator+"Boxmax"+separator+"NumberPixels";
+	}
+	else
+	{
+		ostringstream out;
+		out<<setiosflags(ios::fixed)<<Id()<<separator<<Color()<<separator<<ObservationDate()<<separator<<Center()<<separator<<Boxmin()<<separator<<Boxmax()<<separator<<NumberPixels();
+		result = out.str();
+	}
+	return result;
 }
-
-#ifdef CoordinateConvertor_H
-string Region::toString(const CoordinateConvertor& coco) const
-{
-	ostringstream out;
-	out<<setiosflags(ios::fixed)<<Id()<<"\t"<<Color()<<"\t"<<ObservationDate();
-
-	float fx, fy;
-	out<<setiosflags(ios::fixed);
-	coco.convert(Center(), fx, fy);
-	out<<"\t"<<"("<<fx<<","<<fy<<")";
-	coco.convert(Boxmin(), fx, fy);
-	out<<"\t"<<"("<<fx<<","<<fy<<")";
-	coco.convert(Boxmax(), fx, fy);
-	out<<"\t"<<"("<<fx<<","<<fy<<")";
-	
-	out<<"\t"<<NumberPixels();
-	return out.str();
-}
-#endif
 
 // Extraction of the regions from a connected component colored Map
-vector<Region*> getRegions(const SunImage* colorizedComponentsMap)
+vector<Region*> getRegions(const ColorMap* colorizedComponentsMap)
 {
-	vector<Region*> regions;
-
+	map<unsigned,Region*> regions_table;
 	unsigned id = 0;
 	
 	//Let's get the connected regions
@@ -164,43 +151,217 @@ vector<Region*> getRegions(const SunImage* colorizedComponentsMap)
 			if(colorizedComponentsMap->pixel(x,y) != colorizedComponentsMap->nullvalue())
 			{
 				unsigned color = unsigned(colorizedComponentsMap->pixel(x,y));
-				
-				//We check the array size before
-				if(color >= regions.size())
-					regions.resize(color + 100, NULL);
-					
 				// If the regions does not yet exist we create it
-				if (!regions[color])
+				if (regions_table.count(color) == 0)
 				{
-					regions[color] = new Region(colorizedComponentsMap->ObservationTime(),id, 0);
+					regions_table[color] = new Region(colorizedComponentsMap->ObservationTime(),id, color);
 					++id;
 				}
 				
 				// We add the pixel to the region
-				regions[color]->add(Coordinate(x,y));
+				regions_table[color]->add(Coordinate(x,y));
 			}
 		}
 
 	}
 	
-
-	//We cleanup the null regions
-	vector<Region*>::iterator r1 = regions.begin();
-	while (r1 != regions.end())
-	{
-		if(!(*r1))
-		{
-			vector<Region*>::iterator r2 = r1;
-			while( r2 != regions.end() && !(*r2))
-				++r2;
-			r1 = regions.erase(r1,r2);
-		}
-		else
-			++r1;
-	}
-
+	//We create the vector of regions
+	vector<Region*> regions;
+	regions.reserve(regions_table.size());
+	for(map<unsigned,Region*>::const_iterator r = regions_table.begin(); r != regions_table.end(); ++r)
+		regions.push_back(r->second);
+	
 	return regions;
 
 }
 
+FitsFile& writeRegions(FitsFile& file, const vector<Region*>& regions)
+{
+	{
+		vector<unsigned> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Id();
+		file.writeColumn("ID", data);
+	}
+
+	{
+		vector<string> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->HekLabel();
+		file.writeColumn("HEKID", data);
+	}
+
+	{
+		vector<unsigned> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Color();
+		file.writeColumn("COLOR", data);
+	}
+
+	{
+		vector<string> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->ObservationDate();
+		file.writeColumn("DATE_OBS", data);
+	}
+
+	{
+		vector<Real> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Center().x + 1;
+		file.writeColumn("XCENTER", data);
+	}
+	
+	{
+		vector<Real> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Center().y + 1;
+		file.writeColumn("YCENTER", data);
+	}
+
+	{
+		vector<unsigned> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Boxmin().x + 1;
+		file.writeColumn("XBOXMIN", data);
+	}
+
+	{
+		vector<unsigned> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Boxmin().y + 1;
+		file.writeColumn("YBOXMIN", data);
+	}
+	
+	{
+		vector<unsigned> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Boxmax().x + 1;
+		file.writeColumn("XBOXMAX", data);
+	}
+	{
+		vector<unsigned> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Boxmax().y + 1;
+		file.writeColumn("YBOXMAX", data);
+	}
+
+	{
+		vector<unsigned> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->NumberPixels();
+		file.writeColumn("NUMBER_PIXELS", data);
+	}
+
+	{
+		vector<unsigned> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->FirstPixel().x + 1;
+		file.writeColumn("XFIRST", data);
+	}
+	{
+		vector<unsigned> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->FirstPixel().y + 1;
+		file.writeColumn("YFIRST", data);
+	}
+
+	return file;
+
+}
+
+FitsFile& readRegions(FitsFile& file, vector<Region*>& regions)
+{
+	// We augment the regions vector
+	int firstRegion = regions.size();
+	{
+		vector<unsigned> data;
+		file.readColumn("ID", data);
+		for(unsigned i = 0; i < data.size(); ++i)
+			regions.push_back(new Region(data[i]));
+		
+	}
+
+	{
+		vector<unsigned> data;
+		file.readColumn("COLOR", data);
+		for(unsigned r = firstRegion, i = 0; r < regions.size() && i < data.size(); ++r, ++i)
+			regions[r]->color = data[i];
+
+	}
+
+	{
+		vector<string> data;
+		file.readColumn("DATE_OBS", data);
+		for(unsigned r = firstRegion, i = 0; r < regions.size() && i < data.size(); ++r, ++i)
+			regions[r]->observationTime = iso2ctime(data[i]);
+	}
+
+	{
+		vector<Real> xdata;
+		vector<Real> ydata;
+		file.readColumn("XCENTER", xdata);
+		file.readColumn("YCENTER", ydata);
+		if(xdata.size() != ydata.size())
+		{
+			cerr<<"Error reading region center, number of x coordinate is different than y coordinate!"<<endl;
+		}
+
+		for(unsigned r = firstRegion, i = 0; r < regions.size() && i < xdata.size() && i < ydata.size(); ++r, ++i)
+			regions[r]->center = Coordinate(xdata[i]-1,ydata[i]-1);
+	}
+
+	{
+		vector<unsigned> xdata;
+		vector<unsigned> ydata;
+		file.readColumn("XBOXMIN", xdata);
+		file.readColumn("YBOXMIN", ydata);
+		if(xdata.size() != ydata.size())
+		{
+			cerr<<"Error reading region boxmin, number of x coordinate is different than y coordinate!"<<endl;
+		}
+
+		for(unsigned r = firstRegion, i = 0; r < regions.size() && i < xdata.size() && i < ydata.size(); ++r, ++i)
+			regions[r]->boxmin = Coordinate(xdata[i]-1,ydata[i]-1);
+	}
+
+	{
+		vector<unsigned> xdata;
+		vector<unsigned> ydata;
+		file.readColumn("XBOXMAX", xdata);
+		file.readColumn("YBOXMAX", ydata);
+		if(xdata.size() != ydata.size())
+		{
+			cerr<<"Error reading region boxmax, number of x coordinate is different than y coordinate!"<<endl;
+		}
+
+		for(unsigned r = firstRegion, i = 0; r < regions.size() && i < xdata.size() && i < ydata.size(); ++r, ++i)
+			regions[r]->boxmax = Coordinate(xdata[i]-1,ydata[i]-1);
+	}
+
+
+	{
+		vector<unsigned> data;
+		file.readColumn("NUMBER_PIXELS", data);
+		for(unsigned r = firstRegion, i = 0; r < regions.size() && i < data.size(); ++r, ++i)
+			regions[r]->numberPixels = data[i];
+	}
+
+	{
+		vector<unsigned> xdata;
+		vector<unsigned> ydata;
+		file.readColumn("XFIRST", xdata);
+		file.readColumn("YFIRST", ydata);
+		if(xdata.size() != ydata.size())
+		{
+			cerr<<"Error reading region first, number of x coordinate is different than y coordinate!"<<endl;
+		}
+
+		for(unsigned r = firstRegion, i = 0; r < regions.size() && i < xdata.size() && i < ydata.size(); ++r, ++i)
+			regions[r]->first = Coordinate(xdata[i]-1,ydata[i]-1);
+	}
+
+	return file;
+
+}
 

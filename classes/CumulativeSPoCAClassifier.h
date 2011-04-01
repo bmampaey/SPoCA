@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <string>
 
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "FeatureVector.h"
 #include "CumulativeClassifier.h"
 #include "SPoCAClassifier.h"
@@ -28,7 +28,7 @@ class CumulativeSPoCAClassifier : public virtual SPoCAClassifier, public Cumulat
 
 	public :
 		CumulativeSPoCAClassifier(unsigned neighboorhoodRadius = 1, Real fuzzifier = 2);
-		void addImages(std::vector<SunImage*>& images);
+		void addImages(std::vector<EUVImage*> images);
 
 		//Classification functions
 		using SPoCAClassifier::classification;

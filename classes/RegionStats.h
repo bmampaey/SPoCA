@@ -8,8 +8,9 @@
 #include "constants.h"
 #include "Region.h"
 #include "Coordinate.h"
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "ColorMap.h"
+#include "FitsFile.h"
 
 class RegionStats : public Region
 {
@@ -17,19 +18,19 @@ class RegionStats : public Region
 	private :
 		Real m1, m2, m3, m4, minIntensity, maxIntensity, totalIntensity, centerxError, centeryError, area_Raw, area_RawUncert, area_AtDiskCenter, area_AtDiskCenterUncert, numberContourPixels;
 		Real barycenter_x, barycenter_y;
+		std::vector<PixelType> intensities;
 	private :
 		//Update routines
 		void add(const Coordinate& pixelCoordinate, const PixelType& pixelIntensity, const Coordinate sunCenter, const bool atBorder, const double R);
-		void update(const PixelType& pixelIntensity);
-
+		void computeMoments();
 
 	public :
 		//Constructors
 		RegionStats();
 		RegionStats(const time_t& observationTime);
 		RegionStats(const time_t& observationTime, const unsigned id, const unsigned long color = 0);
-
-
+		
+		// Accessors
 		Real Mean() const;
 		Real Variance() const;
 		Real Skewness() const;
@@ -46,18 +47,17 @@ class RegionStats : public Region
 		Coordinate Barycenter() const;
 				
 		// Output a region as a string
-		std::string toString() const;
-		#ifdef CoordinateConvertor_H
-		std::string toString(const CoordinateConvertor& coco) const;
-		#endif
+		std::string toString(const std::string& separator, bool header = false) const;
+
 
 
 	public :
-		static const std::string header;
-		friend std::vector<RegionStats*> getRegions(const SunImage* colorizedComponentsMap, const SunImage* image);
+		friend std::vector<RegionStats*> getRegionStats(const ColorMap* colorizedComponentsMap, const EUVImage* image);
+		friend FitsFile& writeRegions(FitsFile& file, const std::vector<RegionStats*>& regionStats);
 
 };
 
-std::vector<RegionStats*> getRegions(const SunImage* colorizedComponentsMap, const SunImage* image);
+std::vector<RegionStats*> getRegionStats(const ColorMap* colorizedComponentsMap, const EUVImage* image);
+FitsFile& writeRegions(FitsFile& file, const std::vector<RegionStats*>& regionStats);
 
 #endif

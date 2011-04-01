@@ -6,7 +6,7 @@ SPoCAClassifier::SPoCAClassifier(unsigned neighboorhoodRadius, Real fuzzifier)
 :PCMClassifier(fuzzifier), Nradius(neighboorhoodRadius)
 {}
 
-void SPoCAClassifier::addImages(vector<SunImage*>& images)
+void SPoCAClassifier::addImages(vector<EUVImage*> images)
 {
 	checkImages(images);
 	ordonateImages(images);
@@ -108,7 +108,7 @@ void SPoCAClassifier::addImages(vector<SunImage*>& images)
 		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
 			image.pixel(coordinates[j]) = smoothedX[j].v[p];
 
-		image.writeFitsImage(outputFileName + "smoothed." + itos(int(images[p]->Wavelength())) + ".fits");
+		image.writeFits(outputFileName + "smoothed." + itos(int(images[p]->Wavelength())) + ".fits");
 
 	}
 	#endif
@@ -187,7 +187,7 @@ void SPoCAClassifier::computeU()
 				U[i*numberValidPixels+j] *= U[i*numberValidPixels+j];
 			}
 			else
-				U[i*numberValidPixels+j] = pow( sumNeighboors / eta[i], 1./(fuzzifier-1.) );
+				U[i*numberValidPixels+j] = pow( sumNeighboors / eta[i], Real(1./(fuzzifier-1.)));
 
 			U[i*numberValidPixels+j] = 1. / (1. + U[i*numberValidPixels+j]);
 
@@ -293,7 +293,7 @@ Real SPoCAClassifier::assess(vector<Real>& V)
 			if(fuzzifier == 2)
 				sum2 += (1. - U[i*numberValidPixels+j]) * (1. - U[i*numberValidPixels+j]);
 			else
-				sum2 += pow(1. - U[i*numberValidPixels+j],fuzzifier);
+				sum2 += pow(Real(1. - U[i*numberValidPixels+j]),fuzzifier);
 
 		}
 		V[i] += eta[i] * sum2;

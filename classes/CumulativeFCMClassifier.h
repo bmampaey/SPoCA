@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <string>
 
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "HistogramFeatureVector.h"
 #include "HistogramFCMClassifier.h"
 #include "CumulativeClassifier.h"
@@ -27,7 +27,7 @@ class CumulativeFCMClassifier : public virtual HistogramFCMClassifier, public Cu
 		CumulativeFCMClassifier(Real fuzzifier = 2.);
 		CumulativeFCMClassifier(const RealFeature& binSize, Real fuzzifier = 2.);
 		CumulativeFCMClassifier(const std::string& histogramFilename, Real fuzzifier = 2.);
-		void addImages(std::vector<SunImage*>& images);	
+		void addImages(std::vector<EUVImage*> images);	
 
 		//Classification functions
 		using HistogramFCMClassifier::classification;

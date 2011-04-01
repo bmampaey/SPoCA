@@ -2,37 +2,22 @@
 #ifndef EITImage_H
 #define EITImage_H
 
-#include <iostream>
-#include <limits>
-#include <typeinfo>
-#include <vector>
-#include <cmath>
-#include <string>
-#include <ctime>
+#include "EUVImage.h"
+#include "Header.h"
 
-#include "fitsio.h"
-#include "longnam.h"
-#include "SunImage.h"
-
-class EITImage : public SunImage
+class EITImage : public EUVImage
 {
-
 	public :
-		
 		//Constructors and destructors
-		EITImage(const std::string& filename);
-		EITImage(const long xAxes = 0, const long yAxes = 0, const double radius = 0., const double wavelength = 0.);
-		EITImage(const SunImage& i);
-		EITImage(const SunImage* i);
+		EITImage();
+		EITImage(const EUVImage& i);
+		EITImage(const EUVImage* i);
 		~EITImage();
 		
-		
 		//Routines to read and write the keywords from/to the header
-		void readHeader(fitsfile* fptr);
-		void writeHeader(fitsfile* fptr);
-
-
+		void postRead();
+		void preWrite();
 };
 
-bool isEIT(const FitsHeader& header);
+bool isEIT(const Header& header);
 #endif

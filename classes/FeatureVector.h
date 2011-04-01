@@ -22,14 +22,14 @@ class FeatureVector
 				v[p] = value;
 		}
 		template<class T2>
-			FeatureVector<T, N>& operator=(const FeatureVector<T2, N>& fv)
+		FeatureVector<T, N>& operator=(const FeatureVector<T2, N>& fv)
 		{
 			for (unsigned p = 0; p < N; ++p)
 				v[p] = (T)fv.v[p];
 			return *this;
 		}
 		template<class T2>
-			FeatureVector(const FeatureVector<T2, N>& fv)
+		FeatureVector(const FeatureVector<T2, N>& fv)
 		{
 			for (unsigned p = 0; p < N; ++p)
 				v[p] = (T)fv.v[p];
@@ -45,7 +45,7 @@ class FeatureVector
 			Real sum = 0;
 			for (unsigned p = 0; p < N; ++p)
 			{
-				d = v[p] - centre.v[p];
+				d = (Real)v[p] - (Real)centre.v[p];
 				sum += d * d;
 			}
 			return sum;
@@ -54,7 +54,7 @@ class FeatureVector
 		{
 			FeatureVector<Real, N> result;
 			for (unsigned p = 0; p < N; ++p)
-				result.v[p] = v[p] * value;
+				result.v[p] = (Real)v[p] * value;
 			return result;
 		}
 		//Multiplication element by element
@@ -69,7 +69,7 @@ class FeatureVector
 		{
 			FeatureVector<Real, N> result;
 			for (unsigned p = 0; p < N; ++p)
-				result.v[p] = v[p] / value;
+				result.v[p] = (Real)v[p] / value;
 			return result;
 		}
 		//Division element by element
@@ -77,7 +77,7 @@ class FeatureVector
 		{
 			FeatureVector<Real, N> result;
 			for (unsigned p = 0; p < N; ++p)
-				result.v[p] = v[p] / fv.v[p];
+				result.v[p] = (Real)v[p] / fv.v[p];
 			return result;
 		}
 

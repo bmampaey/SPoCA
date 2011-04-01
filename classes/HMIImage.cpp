@@ -1,47 +1,37 @@
 #include "HMIImage.h"
 
-const double PI = 3.14159265358979323846;
-const double MIPI = 1.57079632679489661923;
-const double BIPI = 6.28318530717958647692;
-
 using namespace std;
-
 
 HMIImage::~HMIImage()
 {}
 
 
-HMIImage::HMIImage(const string& filename)
-:SunImage()
+HMIImage::HMIImage()
+:EUVImage()
 {
-	readFitsImage(filename);
-	if(!isHMI(header))
-		cerr<<"Error : "<<filename<<" is not HMI!"<<endl;
 
 }
 
-HMIImage::HMIImage(const SunImage& i)
-:SunImage(i)
+HMIImage::HMIImage(const EUVImage& i)
+:EUVImage(i)
 {
 
 }
 
 
-HMIImage::HMIImage(const SunImage* i)
-:SunImage(i)
+HMIImage::HMIImage(const EUVImage* i)
+:EUVImage(i)
 {
 
 }
 
 
 
-void HMIImage::readHeader(fitsfile* fptr)
+void HMIImage::postRead()
 {
-
-	header.readKeywords(fptr);
 	wavelength = 0;
-	suncenter.x = header.get<int>("CRPIX1");
-	suncenter.y = header.get<int>("CRPIX2");
+	suncenter.x = header.get<int>("CRPIX1") - 1;
+	suncenter.y = header.get<int>("CRPIX2") - 1;
 	cdelt1 = header.get<double>("CDELT1");
 	cdelt2 = header.get<double>("CDELT2");
 	
@@ -64,27 +54,25 @@ void HMIImage::readHeader(fitsfile* fptr)
 	//Sometimes the date is appended with a z
 	if(date_obs.find_first_of("Zz") != string::npos)
 		date_obs.erase(date_obs.find_first_of("Zz"));
-	observationTime = ObservationTime();
-	
+	observationTime = iso2ctime(date_obs);
 }
 
-void HMIImage::writeHeader(fitsfile* fptr)
-{
 
+void HMIImage::preWrite()
+{
 	header.set<double>("WAVELNTH", wavelength);
-	header.set<int>("CRPIX1", suncenter.x);
-	header.set<int>("CRPIX2", suncenter.y);
+	header.set<int>("CRPIX1", suncenter.x + 1);
+	header.set<int>("CRPIX2", suncenter.y + 1);
 	header.set<double>("CDELT1", cdelt1);
 	header.set<double>("CDELT2",cdelt2);
 	header.set<string>("T_OBS", date_obs);
 	header.set<double>("R_SUN", radius);
 	header.set<double>("DATAMEDN", median);
 	header.set<double>("CRLT_OBS", (b0 * 180)/PI);
-	header.writeKeywords(fptr);
 }
 
 
-bool isHMI(const FitsHeader& header)
+bool isHMI(const Header& header)
 {
 	return header.get<bool>("INSTRUME") && header.get<string>("INSTRUME").find("HMI") != string::npos;	
 }

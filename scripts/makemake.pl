@@ -10,7 +10,7 @@ my $objectdir = 'objects';
 my $bindir = 'bin';
 
 my $CC = 'CC=g++';
-my $CFLAGS = 'CFLAGS=-Wall -fkeep-inline-functions';
+my $CFLAGS = 'CFLAGS=-Wall -fkeep-inline-functions -g';
 my $LFLAGS = 'LFLAGS=-lcfitsio';
 my $DFLAGS = 'DFLAGS=';
 my $TRACKINGLFLAGS = 'TRACKINGLFLAGS=-lpthread';
@@ -92,14 +92,11 @@ sub parse_arguments
 		$DFLAGS .= $defines;
 	}
 	print $debug . "\n";
-	if ($debug)
-	{
-		$CFLAGS .= ' -g';
-	}
-	else
+	if (! $debug)
 	{
 		$CFLAGS .= ' -O3';
 	}
+
 	if (! defined $executable)
 	{
 		$executable = fileparse($main, @suffixes);

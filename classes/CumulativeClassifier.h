@@ -13,7 +13,7 @@
 #include "tools.h"
 #include "constants.h"
 
-#include "SunImage.h"
+#include "EUVImage.h"
 #include "FeatureVector.h"
 
 class CumulativeClassifier 

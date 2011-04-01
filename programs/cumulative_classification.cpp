@@ -12,7 +12,7 @@
 #include "../classes/constants.h"
 #include "../classes/mainutilities.h"
 
-#include "../classes/SunImage.h"
+#include "../classes/EUVImage.h"
 
 #include "../classes/CumulativeClassifier.h"
 #include "../classes/CumulativeFCMClassifier.h"
@@ -213,8 +213,8 @@ int main(int argc, const char **argv)
 	
 	string outputFileNameBase = outputFileName;
 	bool firstinit = true;
-	unsigned M = imagesFilenames.size() / NUMBERWAVELENGTH;
-	vector<string> subSunImagesFileNames(NUMBERWAVELENGTH);
+	unsigned M = unsigned(imagesFilenames.size() / NUMBERWAVELENGTH);
+	vector<string> imagesFileNameSet(NUMBERWAVELENGTH);
 	
 	ofstream outputFile((outputFileName + "cumulative_output.txt").c_str());
 	
@@ -223,11 +223,11 @@ int main(int argc, const char **argv)
 		// We set the outputFileName
 		outputFileName = outputFileNameBase + "m" + itos(m + 1) + ".";
 
-		// We read and preprocess a tuple sun images
+		// We read and preprocess a set of images
 		for (unsigned p = 0; p <  NUMBERWAVELENGTH; ++p)
-			subSunImagesFileNames[p] = imagesFilenames[m * NUMBERWAVELENGTH + p];
+			imagesFileNameSet[p] = imagesFilenames[m * NUMBERWAVELENGTH + p];
 			
-		vector<SunImage*> images = getImagesFromFiles(imageType, subSunImagesFileNames, true);
+		vector<EUVImage*> images = getImagesFromFiles(imageType, imagesFileNameSet, true);
 		
 		for (unsigned p = 0; p < images.size(); ++p)
 		{
@@ -241,7 +241,7 @@ int main(int argc, const char **argv)
 		// We save the names of the files added
 		outputFile<<"Adding images: ";
 		for (unsigned p = 0; p< NUMBERWAVELENGTH; ++p)
-			outputFile<<subSunImagesFileNames[p]<<" ";
+			outputFile<<imagesFileNameSet[p]<<" ";
 		outputFile<<endl;
 
 
@@ -274,7 +274,7 @@ int main(int argc, const char **argv)
 				}	
 			}
 	
-			// Everything s ready, we do the classification
+			// Everything is ready, we do the classification
 			F->classification(precision, maxNumberIteration);
 			// We save the centers
 			outputFile<<"m: "<< m + 1<<"\tB: "<<F->getB();

@@ -1,4 +1,5 @@
 #include "trackable.h"
+#include <map>
 
 using namespace std;
 using namespace cgt;
@@ -7,11 +8,11 @@ using namespace cgt;
 unsigned long newColor;
 
 // Compute the number of pixels common to 2 regions from 2 images, with derotation
-unsigned overlay_derotate(SunImage* image1, const Region* region1, SunImage* image2, const Region* region2)
+unsigned overlay_derotate(ColorMap* image1, const Region* region1, ColorMap* image2, const Region* region2)
 {
 	unsigned intersectPixels = 0;
-	PixelType setValue1 = image1->pixel(region1->FirstPixel());
-	PixelType setValue2 = image2->pixel(region2->FirstPixel());
+	unsigned setValue1 = image1->pixel(region1->FirstPixel());
+	unsigned setValue2 = image2->pixel(region2->FirstPixel());
 	
 	
 	// We are going to project the image1 into the coordinate of image2	
@@ -22,9 +23,9 @@ unsigned overlay_derotate(SunImage* image1, const Region* region1, SunImage* ima
 
 	//The projection of the box of region1 may lie outside of the sundisc ==> the projection is null 
 
-	if(r1_boxmin == Coordinate(0))
+	if(r1_boxmin == Coordinate::Max)
 		 r1_boxmin = r2_boxmin;
-	if(r1_boxmax == Coordinate(0))
+	if(r1_boxmax == Coordinate::Max)
 		 r1_boxmax = r2_boxmax;		
 
 
@@ -44,7 +45,7 @@ unsigned overlay_derotate(SunImage* image1, const Region* region1, SunImage* ima
 			// We project back the coordinate of image2 into the coordinate of image1
 			c1 = image2->shift_like(c2, image1);
 			// There is overlay between the two regions									  
-			if(image1->pixel(c1) == setValue1 && image2->pixel(c2) == setValue2)
+			if(c1 != Coordinate::Max && image1->pixel(c1) == setValue1 && image2->pixel(c2) == setValue2)
 				++intersectPixels;
 		}
 	}
@@ -56,11 +57,11 @@ unsigned overlay_derotate(SunImage* image1, const Region* region1, SunImage* ima
 
 
 // Compute the number of pixels common to 2 regions from 2 images
-unsigned overlay(SunImage* image1, const Region* region1, SunImage* image2, const Region* region2)
+unsigned overlay(ColorMap* image1, const Region* region1, ColorMap* image2, const Region* region2)
 {
 	unsigned intersectPixels = 0;
-	PixelType setValue1 = image1->pixel(region1->FirstPixel());
-	PixelType setValue2 = image2->pixel(region2->FirstPixel());
+	unsigned setValue1 = image1->pixel(region1->FirstPixel());
+	unsigned setValue2 = image2->pixel(region2->FirstPixel());
 	
 	Coordinate r1_boxmin = region1->Boxmin();
 	Coordinate r1_boxmax = region1->Boxmax();
@@ -174,7 +175,7 @@ bool path(const RegionGraph::node* n, const Region* r)
 
 
 // Output a graph in the dot format
-void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, const string graphName)
+void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, const string graphName, bool isColored)
 {
 
 	ofstream graphFile((outputFileName + graphName + ".dot").c_str());
@@ -191,7 +192,7 @@ void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, c
 			{
 				rank += " \"" + regions[s][r]->HekLabel() + "\"";
 				graphFile <<"\""<< regions[s][r]->HekLabel()<<"\"";
-				if(regions[s][r]->Color() != 0)
+				if(isColored)
 					graphFile<<dot_gradient[ (int(regions[s][r]->Color()) % gradientMax) + 1 ] << endl;
 				else
 					graphFile<<" [color="<< (s%12) + 1 <<"];" << endl;
@@ -224,12 +225,13 @@ void ouputRegions(const vector<vector<Region*> >& regions, string filename)
 	ofstream regionFile(filename.c_str());
 	if (regionFile.good())
 	{
-		regionFile<<Region::header<<endl<<endl;
+		if(regions.size() > 0 && regions[0].size() > 0)
+			regionFile<<regions[0][0]->toString("|", true)<<endl<<endl;
 		for (unsigned s = 0; s < regions.size(); ++s)
 		{
 			for (unsigned r = 0; r < regions[s].size(); ++r)
 			{
-				regionFile<<regions[s][r]->toString()<<endl;
+				regionFile<<regions[s][r]->toString("|")<<endl;
 			}
 			regionFile<<endl;
 		}
@@ -238,20 +240,20 @@ void ouputRegions(const vector<vector<Region*> >& regions, string filename)
 }
 
 // Comparison of 2 images according to time (for sorting)
-inline bool compare(const SunImage* a, const SunImage* b)
+inline bool compare(const ColorMap* a, const ColorMap* b)
 {
 	return a->ObservationTime() < b->ObservationTime();
 }
 
 //Ordonate the images according to time
-void ordonate(vector<SunImage*>& images)
+inline void ordonate(vector<ColorMap*>& images)
 {
 	sort(images.begin(), images.end(), compare);
 
 	#if DEBUG >= 1
 	//We remove the ones that have duplicate time
-	vector<SunImage*>::iterator s1 = images.begin();
-	vector<SunImage*>::iterator s2 = images.begin() + 1;
+	vector<ColorMap*>::iterator s1 = images.begin();
+	vector<ColorMap*>::iterator s2 = images.begin() + 1;
 	while (s2 != images.end())
 	{
 		if (unsigned(difftime((*s2)->ObservationTime(),(*s1)->ObservationTime())) == 0)
@@ -267,14 +269,32 @@ void ordonate(vector<SunImage*>& images)
 	#endif
 }
 
-void recolorFromRegions(SunImage* image, const vector<Region*>& regions)
+// Return a vector of indices of the images vector ordonated according to time
+inline vector<unsigned> imageOrder(const vector<ColorMap*>& images)
 {
-	vector<unsigned> colorTransfo(regions.size() + 1);
+	vector<unsigned> indices(images.size(),0);
+	vector<ColorMap*> images_copy = images;
+	ordonate(images_copy);
+	for(unsigned i = 0; i < images_copy.size(); ++i)
+	{
+		for(unsigned j = 0; j < images.size(); ++j)
+		{
+			if(images_copy[i] == images[j])
+			{
+				indices[i] = j;
+				break;
+			}
+		}
+	}
+	return indices;
+}
+
+void recolorFromRegions(ColorMap* image, const vector<Region*>& regions)
+{
+	map<unsigned,unsigned> colorTransfo;
 	for (unsigned r = 0; r < regions.size(); ++r)
 	{
 		unsigned pixelcolor = unsigned(image->pixel(regions[r]->FirstPixel()));
-		if(pixelcolor >= colorTransfo.size())
-			colorTransfo.resize(pixelcolor + 100);
 		colorTransfo[pixelcolor] = regions[r]->Color();
 
 	}

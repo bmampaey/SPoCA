@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-Wall -fkeep-inline-functions -O3 -g
+CFLAGS=-Wall -fkeep-inline-functions -O3
 TRACKINGLFLAGS=-lpthread
 IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lXpm -lXmu -lXext -lXt -lSM -lICE  -lXinerama -lX11 -ldl -ltermcap -lrt -lm /usr/lib/libXm.a
 MAGICKLFLAGS=`Magick++-config --cppflags --ldflags --libs`
@@ -43,4 +43,3 @@ objects/Header.o : fits2png.mk classes/Header.cpp
 
 objects/tools.o : fits2png.mk classes/tools.cpp classes/constants.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/tools.cpp -o objects/tools.o
-

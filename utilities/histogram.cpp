@@ -10,7 +10,7 @@
 #include <iomanip>
 # include <algorithm>
 
-#include "../classes/SunImage.h"
+#include "../classes/EUVImage.h"
 #include "../classes/ArgumentHelper.h"
 #include "../classes/mainutilities.h"
 #include "../classes/HistogramFeatureVector.h"
@@ -64,7 +64,7 @@ bool cmp (const HistoPixelFeature& x1, const HistoPixelFeature& x2)
 	return compare(x1,x2) < 0 ? true : false; 
 }
 
-void histogram(const vector<SunImage*>& images, RealFeature binSize)
+void histogram(const vector<EUVImage*>& images, RealFeature binSize)
 {
 	HistoX.reserve(images[0]->numberValidPixelsEstimate());
 	HistoPixelFeature xj;
@@ -166,7 +166,7 @@ int main(int argc, const char **argv)
 		return EXIT_FAILURE;
 	}
 
-	vector<SunImage*> images = getImagesFromFiles(imageType, imagesFilenames, true);
+	vector<EUVImage*> images = getImagesFromFiles(imageType, imagesFilenames, true);
 	for (unsigned p = 0; p < images.size(); ++p)
 	{
 		images[p]->preprocessing(preprocessingSteps, radiusRatio);

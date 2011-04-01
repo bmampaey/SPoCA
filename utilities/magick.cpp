@@ -11,7 +11,7 @@
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
-#include "../classes/SunImage.h"
+#include "../classes/EUVImage.h"
 #include "../classes/gradient.h"
 #include "../classes/ArgumentHelper.h"
 #include "../classes/mainutilities.h"
@@ -49,11 +49,11 @@ int main(int argc, const char **argv)
 	arguments.set_version("1.0");
 	arguments.process(argc, argv);
 
-	SunImage* image = NULL;
+	EUVImage* image = NULL;
 
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		image = new SunImage(imagesFilenames[p]);
+		image = new EUVImage(imagesFilenames[p]);
 
 		for (unsigned j = 0; j < image->NumberPixels(); ++j)
 		{
@@ -73,7 +73,7 @@ int main(int argc, const char **argv)
 		image->pixel(0) = 0;
 		image->pixel(1) = gradientMax;
 		outputFileName =  stripSuffix(imagesFilenames[p]);
-		image->writeFitsImage(outputFileName + ".magick.fits");
+		image->writeFits(outputFileName + ".magick.fits");
 		delete image;
 	}
 	return EXIT_SUCCESS;

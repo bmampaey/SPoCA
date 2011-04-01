@@ -80,7 +80,7 @@ int main(int argc, const char **argv)
 		{
 		    for (unsigned x = 0; x < Xaxes; ++x)
 		    {	
-				if(image.pixel(x, y) != image.nullvalue())
+				if(image.pixel(x, y) != image.nullvalue() )
 				{
 					unsigned indice = (unsigned(image.pixel(x, y)) % gradientMax) + 1 ;
 					if(colorize)
@@ -100,4 +100,3 @@ int main(int argc, const char **argv)
 	}
 	return EXIT_SUCCESS;
 }
-

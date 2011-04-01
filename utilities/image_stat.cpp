@@ -10,7 +10,7 @@
 #include "../classes/constants.h"
 
 #include "../classes/Image.h"
-#include "../classes/SunImage.h"
+#include "../classes/EUVImage.h"
 #include "../classes/ArgumentHelper.h"
 #include "../classes/mainutilities.h"
 
@@ -69,12 +69,12 @@ int main(int argc, const char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	SunImage stat;
+	EUVImage stat;
 
 	for (unsigned p = 0; p< imagesFilenames.size(); ++p)
 	{
 
-		SunImage* image  = getImageFromFile(imageType, imagesFilenames[p]);
+		EUVImage* image  = getImageFromFile(imageType, imagesFilenames[p]);
 		image->preprocessing(preprocessingSteps,radiusRatio);
 		
 		stat.copyKeywords(image);
@@ -82,22 +82,22 @@ int main(int argc, const char **argv)
 		outputFileName = stripSuffix(imagesFilenames[p]) + ".N" + itos(neighboorhoodRadius) + ".";
 		
 		stat.neighboorhoodMean(image, neighboorhoodRadius);
-		stat.writeFitsImage(outputFileName + "neighboorhoodMean.fits");
+		stat.writeFits(outputFileName + "neighboorhoodMean.fits");
 		
 		stat.neighboorhoodVariance(image, neighboorhoodRadius);
-		stat.writeFitsImage(outputFileName + "neighboorhoodVariance.fits");
+		stat.writeFits(outputFileName + "neighboorhoodVariance.fits");
 		
 		stat.neighboorhoodSkewness(image, neighboorhoodRadius);
-		stat.writeFitsImage(outputFileName + "neighboorhoodSkewness.fits");
+		stat.writeFits(outputFileName + "neighboorhoodSkewness.fits");
 		
 		stat.neighboorhoodKurtosis(image, neighboorhoodRadius);
-		stat.writeFitsImage( outputFileName + "neighboorhoodKurtosis.fits");
+		stat.writeFits( outputFileName + "neighboorhoodKurtosis.fits");
 		
 		stat.sobel(image);
-		stat.writeFitsImage( outputFileName + "sobel.fits");
+		stat.writeFits( outputFileName + "sobel.fits");
 		
 		stat.sobel_approx(image);
-		stat.writeFitsImage( outputFileName + "sobel_approx.fits");
+		stat.writeFits( outputFileName + "sobel_approx.fits");
 		
 		delete image;
 	

@@ -10,7 +10,7 @@
 #include "../classes/constants.h"
 
 #include "../classes/Image.h"
-#include "../classes/SunImage.h"
+#include "../classes/EUVImage.h"
 #include "../classes/ArgumentHelper.h"
 #include "../classes/mainutilities.h"
 
@@ -63,24 +63,24 @@ int main(int argc, const char **argv)
 		cerr<<imagesFilenames.size()<<" fits image file given as parameter, at least 1 must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
-	SunImage* reference_image = NULL;
+	EUVImage* reference_image = NULL;
 	if(!reference.empty())
 	{
 		reference_image = getImageFromFile(imageType, reference);
 	}
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		SunImage* image  = getImageFromFile(imageType, imagesFilenames[p]);
+		EUVImage* image  = getImageFromFile(imageType, imagesFilenames[p]);
 		image->preprocessing("NAR", 1);
 		if(reference_image)
 		{
 			image->rotate_like(reference_image);
-			image->writeFitsImage(stripSuffix(stripPath(imagesFilenames[p])) + "_rotated2_" + stripSuffix(stripPath(reference))+".fits");
+			image->writeFits(stripSuffix(stripPath(imagesFilenames[p])) + "_rotated2_" + stripSuffix(stripPath(reference))+".fits");
 		}
 		else
 		{
 			image->rotate(delta_t);
-			image->writeFitsImage(stripSuffix(stripPath(imagesFilenames[p])) + "_rotatedby_" + itos(delta_t) +"s.fits");
+			image->writeFits(stripSuffix(stripPath(imagesFilenames[p])) + "_rotatedby_" + itos(delta_t) +"s.fits");
 		}
 		delete image;
 

@@ -43,4 +43,3 @@ objects/Header.o : contours.mk classes/Header.cpp
 
 objects/tools.o : contours.mk classes/tools.cpp classes/constants.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/tools.cpp -o objects/tools.o
-

@@ -9,7 +9,7 @@
 #include "../classes/tools.h"
 #include "../classes/constants.h"
 #include "../classes/Coordinate.h"
-#include "../classes/SunImage.h"
+#include "../classes/EUVImage.h"
 #include "../classes/ArgumentHelper.h"
 #include "../classes/mainutilities.h"
 
@@ -136,7 +136,7 @@ int main(int argc, const char **argv)
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 		// We read  the sun image
-		SunImage* image  = getImageFromFile(imageType, imagesFilenames[p]);
+		EUVImage* image  = getImageFromFile(imageType, imagesFilenames[p]);
 		image->nullifyAboveRadius(radiusRatio);
 		string filename = outputFileName + stripPath(stripSuffix(imagesFilenames[p])) + ".";
 		
@@ -185,12 +185,12 @@ int main(int argc, const char **argv)
 					image->pixel(x,y) = image->nullvalue();				
 			}
 		}
-		image->writeFitsImage(filename + "preprocessed.fits");
+		image->writeFits(filename + "preprocessed.fits");
 		delete image;
 	}
 	
 	//We create the function image
-	SunImage* image  = getImageFromFile(imageType, imagesFilenames[0]);
+	EUVImage* image  = getImageFromFile(imageType, imagesFilenames[0]);
 	image->zero();
 	double sunRadius = image->SunRadius();
 	Coordinate sunCenter = image->SunCenter();
@@ -207,7 +207,7 @@ int main(int argc, const char **argv)
 			
 		}
 	}
-	image->writeFitsImage(outputFileName + "function.fits");
+	image->writeFits(outputFileName + "function.fits");
 	
 	delete image;
 	return EXIT_SUCCESS;

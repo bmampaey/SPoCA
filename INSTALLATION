@@ -1,0 +1,57 @@
+
+/*!
+
+@page Installation Installation
+
+@section building_seq Building the software
+
+The programms has been develloped to run on linuxand has not been tested on any other plateform.
+
+To compile a program named program_name.x type "make -f program_name.mk -B", this will generate the corresponding executable in the bin directory.
+
+If there is no make file for a program you can always try to generate one with the command ./script/makemake.pl ./programs/program_name.cpp.
+It should generate a file ./program_name.mk
+
+You can always get help for a program or a script by calling it with the -h option 
+ 
+@section organistaion_sec Organisation of the software directory tree
+
+The directories are organized as follow :
+
+- spoca		: repository for the makefiles
+- spoca/programs	: repository for the main c++ files of programs
+- spoca/classes	: repository for the classes .h and .cpp files (classifiers, images, ...) written specifically for SPoCA
+- spoca/bin	: repository for executables
+- spoca/objects	: repository for temporary object files during compilation
+- spoca/cgt	: a library of graph class
+- spoca/script	: repository of scripts (mainly in perl) to help in running spoca and manipulating output (creation of movies, ...)
+- spoca/utilities	: repository for some utilities program
+
+There is also 1 directory for your convenience :
+
+- spoca/results
+
+@section reqandlib_sec Requisites and librairies
+
+@subsection req_sec Requisites
+- gcc version 4.4.3 or higher
+- GNU Make version 3.81
+
+@subsection lib_sec Librairies
+- cfitsio version 3.26
+- ImageMagick Magick++ version 6.6 (only for certain progams)
+- perl (only for the scripts)
+- perl modules such as fits, etc 
+
+@section compilation_sec Compilation options
+
+See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
+
+*/
+
+
+
+
+
+
+

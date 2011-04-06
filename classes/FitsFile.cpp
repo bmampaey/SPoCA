@@ -825,19 +825,22 @@ FitsFile& FitsFile::readColumn(const string &name, vector<T>& data)
 }
 
 
-template FitsFile& FitsFile::writeImage(unsigned* image, const unsigned X, const unsigned Y, int mode);
-template FitsFile& FitsFile::readImage(unsigned*& image, unsigned &X, unsigned& Y, unsigned* nullvalue);
+template FitsFile& FitsFile::writeImage(ColorType* image, const unsigned X, const unsigned Y, int mode);
+template FitsFile& FitsFile::readImage(ColorType*& image, unsigned &X, unsigned& Y, ColorType* nullvalue);
 
 template FitsFile& FitsFile::writeImage(PixelType* image, const unsigned X, const unsigned Y, int mode);
 template FitsFile& FitsFile::readImage(PixelType*& image, unsigned &X, unsigned& Y, PixelType* nullvalue);
 
 template FitsFile& FitsFile::writeColumn(const string &name, const vector<int>& array, const int mode);
 template FitsFile& FitsFile::writeColumn(const string &name, const vector<unsigned>& array, const int mode);
+template FitsFile& FitsFile::writeColumn(const string &name, const vector<unsigned short>& array, const int mode);
 template FitsFile& FitsFile::writeColumn(const string &name, const vector<float>& array, const int mode);
 template FitsFile& FitsFile::writeColumn(const string &name, const vector<double>& array, const int mode);
 
+
 template FitsFile& FitsFile::readColumn(const string &name,  vector<int>& array);
 template FitsFile& FitsFile::readColumn(const string &name,  vector<unsigned>& array);
+template FitsFile& FitsFile::readColumn(const string &name,  vector<unsigned short>& array);
 template FitsFile& FitsFile::readColumn(const string &name,  vector<float>& array);
 template FitsFile& FitsFile::readColumn(const string &name,  vector<double>& array);
 

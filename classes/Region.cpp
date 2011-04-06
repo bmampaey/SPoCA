@@ -11,7 +11,7 @@ Region::Region(const time_t& observationTime)
 :id(0),observationTime(observationTime),color(0),first(Coordinate::Max), boxmin(Coordinate::Max), boxmax(0), center(0), numberPixels(0)
 {}
 
-Region::Region(const time_t& observationTime, const unsigned id, const unsigned long color)
+Region::Region(const time_t& observationTime, const unsigned id, const ColorType color)
 :id(id),observationTime(observationTime),color(color),first(Coordinate::Max), boxmin(Coordinate::Max), boxmax(0), center(0), numberPixels(0)
 {}
 
@@ -24,13 +24,13 @@ unsigned  Region::Id() const
 void Region::setId(const unsigned& id)
 {this->id = id;}
 
-unsigned long Region::Color() const
+ColorType Region::Color() const
 {
 	return color;
 }
 
 
-void Region::setColor(const unsigned long& color)
+void Region::setColor(const ColorType& color)
 {
 	this->color = color;
 }
@@ -140,7 +140,7 @@ string Region::toString(const string& separator, bool header) const
 // Extraction of the regions from a connected component colored Map
 vector<Region*> getRegions(const ColorMap* colorizedComponentsMap)
 {
-	map<unsigned,Region*> regions_table;
+	map<ColorType,Region*> regions_table;
 	unsigned id = 0;
 	
 	//Let's get the connected regions
@@ -150,7 +150,7 @@ vector<Region*> getRegions(const ColorMap* colorizedComponentsMap)
 		{
 			if(colorizedComponentsMap->pixel(x,y) != colorizedComponentsMap->nullvalue())
 			{
-				unsigned color = unsigned(colorizedComponentsMap->pixel(x,y));
+				ColorType color = colorizedComponentsMap->pixel(x,y);
 				// If the regions does not yet exist we create it
 				if (regions_table.count(color) == 0)
 				{
@@ -168,7 +168,7 @@ vector<Region*> getRegions(const ColorMap* colorizedComponentsMap)
 	//We create the vector of regions
 	vector<Region*> regions;
 	regions.reserve(regions_table.size());
-	for(map<unsigned,Region*>::const_iterator r = regions_table.begin(); r != regions_table.end(); ++r)
+	for(map<ColorType,Region*>::const_iterator r = regions_table.begin(); r != regions_table.end(); ++r)
 		regions.push_back(r->second);
 	
 	return regions;
@@ -192,7 +192,7 @@ FitsFile& writeRegions(FitsFile& file, const vector<Region*>& regions)
 	}
 
 	{
-		vector<unsigned> data(regions.size());
+		vector<ColorType> data(regions.size());
 		for(unsigned r = 0; r < regions.size(); ++r)
 			data[r] = regions[r]->Color();
 		file.writeColumn("COLOR", data);

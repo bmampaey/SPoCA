@@ -15,6 +15,7 @@
 #include "Header.h"
 #include "FitsFile.h"
 
+
 template<class T>
 class SunImage : public Image<T>
 {

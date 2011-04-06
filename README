@@ -1,20 +1,36 @@
-General consideration:
-To make a program named program_name.x type "make -f program_name.mk -B", this will generate the corresponding executable in the bin directory.
-If there is no make file for a program you can always try to generate one with the command ./script/makemake.pl ./programs/program_name.cpp. It should generate a file ./program_name.mk
-You can always get help for a program by calling it with the -h option 
+/*!
 
-The directories are organized as follow :
-spoca		: repository for the makefiles
-spoca/programs	: repository for the main c++ files of programs
-spoca/classes	: repository for the classes .h and .cpp files (classifiers, images, ...) written specifically for SPoCA
-spoca/bin		: repository for executables
-spoca/objects	: repository for temporary object files during compilation
-spoca/cgt		: a library of graph class
-spoca/script	: repository of scripts (mainly in perl) to help in running spoca and manipulating output (creation of movies, ...)
-spoca/utilities: repository for some utilities program
+@mainpage SPoCA
 
-There are also 1 directory for your convenience :
-spoca/results
+@version 0.7
 
+@authors
+Benjamin Mampaey benjamin.mampaey@oma.be
+Cis Verbeeck cis.verbeeck@oma.be
+Veronique Delouille veronique.delouille@oma.be
 
+\section intro_sec Introduction
+
+SPoCA stands for Spatial Possibilistic Classification Algorithm.
+
+It is a multi-channel unsupervised spatially-constrained fuzzy clustering algorithm.
+
+It's purpose is to segment Extreme Ultra Violet (EUV) images of the sun into 3 categories: Quiet Sun (QS), Active Region (AR) and Coronal Hole (CH)
+
+\section history_sec History
+
+The software was first develloped by Vincent Barra in 2007.
+
+It has completely been rewritten by Benjamin Mampaey starting in 2009, and has been in developpement since.
+
+It received several improvements, with the help of Cis Verbeeck and Veronique Delouille.
+
+\section references_sec References
+
+- [1] Barra, V., Delouille, V., Hochedez, J.-F., & Chainais, P.:2005 `Segmentation of EIT Images Using Fuzzy Clustering: a Preliminary Study', ESA Special Publication, 600, 77.1.
+- [2] Barra V., Delouille V., Hochedez J.-F.:2008 `Segmentation of extreme ultraviolet solar images via multichannel fuzzy clustering', Advances in Space Research, 42, 917--925.
+- [3] Barra V., Delouille V., Kretzschmar M., Hochedez J.-F.:2009 `Fast and robust segmentation of solar EUV images: algorithm and results for solar cycle 23', A&A, 505(1), 2009, 361--371
+- [4] V. Barra, V. Delouille, and J.-F. Hochedez: 2009 `Segmentation, Tracking and Characterization of Solar Features from EIT Solar Corona Images', Lecture Notes in Computer Science, Volume 5575/2009, 199--208,
+
+*/
 

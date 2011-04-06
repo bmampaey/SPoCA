@@ -12,6 +12,7 @@
 #include "ColorMap.h"
 #include "FitsFile.h"
 
+namespace SPoCA {
 class ActiveRegionStats : public Region
 {
 
@@ -28,7 +29,7 @@ class ActiveRegionStats : public Region
 		//Constructors
 		ActiveRegionStats();
 		ActiveRegionStats(const time_t& observationTime);
-		ActiveRegionStats(const time_t& observationTime, const unsigned id, const unsigned long color = 0);
+		ActiveRegionStats(const time_t& observationTime, const unsigned id, const ColorType color = 0);
 		
 		// Accessors
 		Real Mean() const;

@@ -4,7 +4,7 @@
 using namespace std;
 
 #ifndef NAN
-#define NAN (numeric_limits<Real>.quiet_NaN())
+#define NAN (numeric_limits<Real>::quiet_NaN())
 #endif
 
 CoronalHoleStats::CoronalHoleStats()
@@ -15,7 +15,7 @@ CoronalHoleStats::CoronalHoleStats(const time_t& observationTime)
 :Region(observationTime), m1(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), barycenter_x(0), barycenter_y(0)
 {}
 
-CoronalHoleStats::CoronalHoleStats(const time_t& observationTime, const unsigned id, const unsigned long color)
+CoronalHoleStats::CoronalHoleStats(const time_t& observationTime, const unsigned id, const ColorType color)
 :Region(observationTime, id, color), m1(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), barycenter_x(0), barycenter_y(0)
 {}
 
@@ -257,7 +257,7 @@ string CoronalHoleStats::toString(const string& separator, bool header) const
 
 vector<CoronalHoleStats*> getCoronalHoleStats(const ColorMap* colorizedComponentsMap, const EUVImage* image)
 {
-	map<unsigned,CoronalHoleStats*> regions_table;
+	map<ColorType,CoronalHoleStats*> regions_table;
 	Coordinate sunCenter = colorizedComponentsMap->SunCenter();
 	double sunRadius = colorizedComponentsMap->SunRadius();
 	unsigned id = 0;
@@ -269,7 +269,7 @@ vector<CoronalHoleStats*> getCoronalHoleStats(const ColorMap* colorizedComponent
 		{
 			if(colorizedComponentsMap->pixel(x,y) != colorizedComponentsMap->nullvalue())
 			{
-				unsigned color = unsigned(colorizedComponentsMap->pixel(x,y));
+				ColorType color = colorizedComponentsMap->pixel(x,y);
 				
 				// If the regions does not yet exist we create it
 				if (regions_table.count(color) == 0)
@@ -292,121 +292,121 @@ vector<CoronalHoleStats*> getCoronalHoleStats(const ColorMap* colorizedComponent
 	//We create the vector of regions
 	vector<CoronalHoleStats*> regions;
 	regions.reserve(regions_table.size());
-	for(map<unsigned,CoronalHoleStats*>::const_iterator r = regions_table.begin(); r != regions_table.end(); ++r)
+	for(map<ColorType,CoronalHoleStats*>::const_iterator r = regions_table.begin(); r != regions_table.end(); ++r)
 		regions.push_back(r->second);
 	
 	return regions;
 
 }
 
-FitsFile& writeRegions(FitsFile& file, const vector<CoronalHoleStats*>& CoronalHoleStats)
+FitsFile& writeRegions(FitsFile& file, const vector<CoronalHoleStats*>& regionStats)
 {
 
-	vector<Region*> regions(CoronalHoleStats.begin(), CoronalHoleStats.end());
+	vector<Region*> regions(regionStats.begin(), regionStats.end());
 	writeRegions(file, regions);
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->Barycenter().x + 1;
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Barycenter().x + 1;
 		file.writeColumn("XBARYCENTER", data);
 	}
 	
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->Barycenter().y = 1;
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Barycenter().y = 1;
 		file.writeColumn("YBARYCENTER", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->MinIntensity();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->MinIntensity();
 		file.writeColumn("MIN_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->MaxIntensity();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->MaxIntensity();
 		file.writeColumn("MAX_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->Mean();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Mean();
 		file.writeColumn("MEAN_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->Variance();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Variance();
 		file.writeColumn("VARIANCE", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->Skewness();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Skewness();
 		file.writeColumn("SKEWNESS", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->Kurtosis();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Kurtosis();
 		file.writeColumn("KURTOSIS", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->TotalIntensity();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->TotalIntensity();
 		file.writeColumn("TOTAL_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->CenterxError();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->CenterxError();
 		file.writeColumn("XCENTER_ERROR", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->CenteryError();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->CenteryError();
 		file.writeColumn("YCENTER_ERROR", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->Area_Raw();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Area_Raw();
 		file.writeColumn("RAW_AREA", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->Area_RawUncert();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Area_RawUncert();
 		file.writeColumn("RAW_AREA_UNCERTAINITY", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->Area_AtDiskCenter();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Area_AtDiskCenter();
 		file.writeColumn("AREA_ATDISKCENTER", data);
 	}
 
 	{
-		vector<Real> data(CoronalHoleStats.size());
-		for(unsigned r = 0; r < CoronalHoleStats.size(); ++r)
-			data[r] = CoronalHoleStats[r]->Area_AtDiskCenterUncert();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Area_AtDiskCenterUncert();
 		file.writeColumn("AREA_ATDISKCENTER_UNCERTAINITY", data);
 	}
 

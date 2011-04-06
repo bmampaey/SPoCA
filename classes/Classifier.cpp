@@ -439,7 +439,7 @@ ColorMap* Classifier::segmentedMap_limits(vector<RealFeature>& limits,ColorMap* 
 	#endif
 
 	//We create a vector of transformation telling wich class must be merged to what class
-	vector<unsigned> transfo(numberClasses + 1, 1);
+	vector<ColorType> transfo(numberClasses + 1, 1);
 
 	sort(limits.begin(), limits.end());
 		
@@ -467,7 +467,7 @@ ColorMap* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>&
 	#endif
 
 	//We create a vector of transformation telling wich class must be merged to what class
-	vector<unsigned> transfo(numberClasses + 1, 0);
+	vector<ColorType> transfo(numberClasses + 1, 0);
 
 	for (unsigned i = 0; i < ch.size(); ++i)
 		transfo[ch[i]] = 1;

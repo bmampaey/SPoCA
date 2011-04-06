@@ -11,7 +11,7 @@ unsigned CHclass(const vector<RealFeature>& B)
 	
 	for (unsigned i = 1; i < B.size(); ++i)
 	{
-		if (minB > B[i])
+		if (B[i] < minB)
 		{
 			minB = B[i];
 			CHclass = i + 1;

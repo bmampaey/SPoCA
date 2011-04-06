@@ -92,7 +92,7 @@ int main(int argc, const char **argv)
 				{	
 					if(image.pixel(x, y) != image.nullvalue() )
 					{
-						unsigned indice = (unsigned(image.pixel(x, y)) % gradientMax) + 1 ;
+						ColorType indice = (image.pixel(x, y) % gradientMax) + 1 ;
 						pngImage.pixelColor(x, image.Yaxes() - y - 1, Color(magick_gradient[indice]));
 					}
 				}

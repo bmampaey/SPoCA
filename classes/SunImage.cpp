@@ -384,9 +384,9 @@ bool SunImage<T>::readFits(const std::string& filename)
 
 
 template class SunImage<PixelType>;
-template class SunImage<unsigned>;
+template class SunImage<ColorType>;
 template void SunImage<PixelType>::copyKeywords(const SunImage<PixelType>* i);
-template void SunImage<unsigned>::copyKeywords(const SunImage<unsigned>* i);
-template void SunImage<PixelType>::copyKeywords(const SunImage<unsigned>* i);
-template void SunImage<unsigned>::copyKeywords(const SunImage<PixelType>* i);
+template void SunImage<ColorType>::copyKeywords(const SunImage<ColorType>* i);
+template void SunImage<PixelType>::copyKeywords(const SunImage<ColorType>* i);
+template void SunImage<ColorType>::copyKeywords(const SunImage<PixelType>* i);
  

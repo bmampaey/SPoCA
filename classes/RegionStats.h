@@ -28,7 +28,7 @@ class RegionStats : public Region
 		//Constructors
 		RegionStats();
 		RegionStats(const time_t& observationTime);
-		RegionStats(const time_t& observationTime, const unsigned id, const unsigned long color = 0);
+		RegionStats(const time_t& observationTime, const unsigned id, const ColorType color = 0);
 		
 		// Accessors
 		Real Mean() const;

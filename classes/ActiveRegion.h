@@ -12,6 +12,7 @@
 
 extern std::string outputFileName;
 
+
 ColorMap* ActiveRegionMap(const ColorMap* segmentedMap, unsigned ARclass, bool tresholdRawArea = false);
 unsigned ARclass(const std::vector<RealFeature>& B);
 void blobsIntoAR (ColorMap* ARmap);

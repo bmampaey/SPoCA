@@ -1,5 +1,114 @@
-// This program will do attribution (fix center classification) and segmentation on sun images
-// Written by Benjamin Mampaey on 4 August 2010
+//! Program that does attribution (fix classification) and segmentation of EUV sun images
+/*!
+@defgroup attribution attribution.x
+
+ This program takes a tuple of EUV sun images in fits format, does the requested attribution and segmentation.
+ 
+ It outputs the maps and statistics of the  Active %Region (AR) and Coronal Holes (CH) 
+ 
+ It can also output the map and statistics about the 3 classes AR, CH and Quiet Sun (QS) in general.
+ 
+ It can also output the map of the AR map and CH map mixed together, and the statistics of AR and CH.
+ 
+ @section usage Usage
+ 
+ <tt> attribution.x -h </tt>
+ 
+ Calling the programs with -h will provide you with help 
+ 
+ <tt> attribution.x [-option optionvalue, ...] fitsFileName1 fitsFileName2 </tt>
+ 
+ You must provide exactly one fits file per channel.
+ The order of the fits files is important, as the first one will be used for the statistics of the regions.
+ 
+ 
+@param classifierType	The type of classifier to use for the classification.
+<BR> Possible values are : 
+ - FCM
+ - PCM
+ - PCM2
+ - SPOCA
+ - SPOCA2
+
+@param maxNumberIteration	The maximal number of iteration for the classification.
+ 
+@param precision	The precision to be reached to stop the classification.
+
+@param fuzzifier	The fuzzifier (m).
+
+@param numberClasses	The number of classes to classify the sun images into.
+
+@param centersFile	The name of the file containing the centers.
+ It i mandatory for attribution
+
+@param etaFile	The name of the file containing eta
+<BR>N.B. Be carefull that the order of the eta must be the same than the order of the centers in the centersFile!
+<BR>If it it not provided the eta will be computed with a FCM (then it is not a real attribution).
+
+
+
+
+@param imageType	The type of the images.
+<BR>Possible values are : 
+ - EIT
+ - EUVI
+ - AIA
+ - SWAP
+
+@param preprocessingSteps	The steps of preprocessing to apply to the sun images.
+<BR>Possible values :
+ - NAR (Nullify above radius)
+ - ALC (Annulus Limb Correction)
+ - DivMedian (Division by the median)
+ - TakeSqrt (Take the square root)
+ - TakeLog (Take the log)
+ - DivMode (Division by the mode)
+ - DivExpTime (Division by the Exposure Time)
+ 
+@param radiusratio	The ratio of the radius of the sun that will be processed.
+
+@param maps	The kind of maps to generate.
+<BR>Possible values :
+ - A (Active %Region)
+ - C (Coronal Hole)
+ - S (Segmented)
+ - M (Mix i.e. AR map and CH map in one)
+
+@param regionStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
+
+@param regionStatsPreprocessing	The steps of preprocessing to apply to the sun images (see preprocessingSteps for possible values).
+
+@param neighboorhoodRadius	The neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3. <BR>Only for spatial classifiers like SPoCA.
+
+@param segmentation	The segmentation type.
+<BR>Possible values :
+ - max (Maximum of Uij)
+ - closest (Closest center)
+ - treshold (Treshold on Uij)
+ - limits (Merge on centers value limits)
+ - fix (Merge on fix CH QS AR)
+
+@param maxLimitsFile	The name of the file containing the max limits. Only for limit segmentation.
+ 
+
+@param ch	The classes of the Coronal Hole. <BR>Only for fix segmentation.
+
+@param qs	The classes of the Quiet Sun. <BR>Only for fix segmentation.
+
+@param ar	The classes of the Active %Region. <BR>Only for fix segmentation.
+
+@param tr	The parameter of the treshold segmentation.
+Must be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership <BR>Only for treshold segmentation.
+ 
+
+@param tresholdRawArea	Set this flag if you want the Active Regions and Coronal Holes to be tresholded according to their Raw area instead of their center area
+
+@param outputDirectory	The name for the output directory.
+
+See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
+
+*/
+
 
 
 #include <vector>

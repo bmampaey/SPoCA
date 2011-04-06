@@ -14,6 +14,7 @@
 #include "HistogramFCMClassifier.h"
 #include "CumulativeClassifier.h"
 
+
 class CumulativeFCMClassifier : public virtual HistogramFCMClassifier, public CumulativeClassifier
 {
 	protected :

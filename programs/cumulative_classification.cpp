@@ -1,5 +1,77 @@
-// This programm will do cumulative classification on sun images
-// Written by Benjamin Mampaey on 14 July 2010
+//! Program that does cumulative classification of EUV sun images
+/*!
+@defgroup cumulative_classification cumulative_classification.x
+
+ This program takes a list of tuples of EUV sun images in fits format, does the requested classification.
+ 
+ It outputs only the centers of classes, and does not do segmentation.
+ 
+ 
+ @section usage Usage
+ 
+ <tt> cumulative_classification.x -h </tt>
+ 
+ Calling the programs with -h will provide you with help 
+ 
+ <tt> cumulative_classification.x [-option optionvalue, ...] fitsFileName1.1 fitsFileName1.2 fitsFileName2.1 fitsFileName2.2 ...</tt>
+ 
+ You must provide exactly the same number of fits file per channel.
+ The order of the fits files is important, you must group the tuples together.
+ 
+ 
+@param classifierType	The type of classifier to use for the classification.
+<BR> Possible values are : 
+ - FCM
+ - PCM
+ - PCM2
+ - SPOCA
+ - SPOCA2
+
+@param maxNumberIteration	The maximal number of iteration for the classification.
+ 
+@param precision	The precision to be reached to stop the classification.
+
+@param fuzzifier	The fuzzifier (m).
+
+@param numberClasses	The number of classes to classify the sun images into.
+
+@param centersFile	The name of the file containing the centers.
+ If it it not provided the centers will be initialized randomly.
+
+@param imageType	The type of the images.
+<BR>Possible values are : 
+ - EIT
+ - EUVI
+ - AIA
+ - SWAP
+
+@param preprocessingSteps	The steps of preprocessing to apply to the sun images.
+<BR>Possible values :
+ - NAR (Nullify above radius)
+ - ALC (Annulus Limb Correction)
+ - DivMedian (Division by the median)
+ - TakeSqrt (Take the square root)
+ - TakeLog (Take the log)
+ - DivMode (Division by the mode)
+ - DivExpTime (Division by the Exposure Time)
+ 
+@param radiusratio	The ratio of the radius of the sun that will be processed.
+
+@param neighboorhoodRadius	The neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3. <BR>Only for spatial classifiers like SPoCA.
+
+@param histogramFile	The name of a file containing an histogram.
+
+@param binSize	The size of the bins of the histogramm.
+<BR>N.B. Be carreful that the histogram is built after the preprocessing.
+
+@param classificationPeriodicity	The periodicity with wich we do the classification (0 means only classification at the end)
+@param reinitializeCenters	Set this flag if you want the centers to be reinitialized before each classification (For possibilistic classifiers this mean doing a FCM init again)
+
+@param outputFile	The name for the output file(s)
+
+See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
+
+*/
 
 #include <vector>
 #include <iostream>

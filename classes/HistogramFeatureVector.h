@@ -14,7 +14,7 @@ class HistogramFeatureVector : public FeatureVector<T, N>
 
 	public :
 		//The count of the histogramm
-		unsigned c;
+		mutable unsigned c;
 
 	public :
 		HistogramFeatureVector():FeatureVector<T, N>(),c(0){}

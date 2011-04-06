@@ -6,6 +6,7 @@
 #include <limits>
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 class Coordinate
 {
@@ -75,6 +76,8 @@ class Coordinate
 		static const Coordinate Max;
 		friend std::ostream& operator<<(std::ostream& out, const Coordinate& c);
 		friend std::istream& operator>>(std::istream& in, Coordinate& c);
+		friend std::ostream& operator<<(std::ostream& out, const std::vector<Coordinate>& v);
+		friend std::istream& operator>>(std::istream& in, std::vector<Coordinate>& v);
 
 };
 

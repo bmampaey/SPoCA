@@ -15,7 +15,7 @@ ActiveRegionStats::ActiveRegionStats(const time_t& observationTime)
 :Region(observationTime), m1(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), barycenter_x(0), barycenter_y(0)
 {}
 
-ActiveRegionStats::ActiveRegionStats(const time_t& observationTime, const unsigned id, const unsigned long color)
+ActiveRegionStats::ActiveRegionStats(const time_t& observationTime, const unsigned id, const ColorType color)
 :Region(observationTime, id, color), m1(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), barycenter_x(0), barycenter_y(0)
 {}
 
@@ -257,7 +257,7 @@ string ActiveRegionStats::toString(const string& separator, bool header) const
 
 vector<ActiveRegionStats*> getActiveRegionStats(const ColorMap* colorizedComponentsMap, const EUVImage* image)
 {
-	map<unsigned,ActiveRegionStats*> regions_table;
+	map<ColorType,ActiveRegionStats*> regions_table;
 	Coordinate sunCenter = colorizedComponentsMap->SunCenter();
 	double sunRadius = colorizedComponentsMap->SunRadius();
 	unsigned id = 0;
@@ -269,7 +269,7 @@ vector<ActiveRegionStats*> getActiveRegionStats(const ColorMap* colorizedCompone
 		{
 			if(colorizedComponentsMap->pixel(x,y) != colorizedComponentsMap->nullvalue())
 			{
-				unsigned color = unsigned(colorizedComponentsMap->pixel(x,y));
+				ColorType color = colorizedComponentsMap->pixel(x,y);
 				
 				// If the regions does not yet exist we create it
 				if (regions_table.count(color) == 0)
@@ -292,121 +292,121 @@ vector<ActiveRegionStats*> getActiveRegionStats(const ColorMap* colorizedCompone
 	//We create the vector of regions
 	vector<ActiveRegionStats*> regions;
 	regions.reserve(regions_table.size());
-	for(map<unsigned,ActiveRegionStats*>::const_iterator r = regions_table.begin(); r != regions_table.end(); ++r)
+	for(map<ColorType,ActiveRegionStats*>::const_iterator r = regions_table.begin(); r != regions_table.end(); ++r)
 		regions.push_back(r->second);
 	
 	return regions;
 
 }
 
-FitsFile& writeRegions(FitsFile& file, const vector<ActiveRegionStats*>& ActiveRegionStats)
+FitsFile& writeRegions(FitsFile& file, const vector<ActiveRegionStats*>& regionStats)
 {
 
-	vector<Region*> regions(ActiveRegionStats.begin(), ActiveRegionStats.end());
+	vector<Region*> regions(regionStats.begin(), regionStats.end());
 	writeRegions(file, regions);
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->Barycenter().x + 1;
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Barycenter().x + 1;
 		file.writeColumn("XBARYCENTER", data);
 	}
 	
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->Barycenter().y = 1;
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Barycenter().y = 1;
 		file.writeColumn("YBARYCENTER", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->MinIntensity();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->MinIntensity();
 		file.writeColumn("MIN_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->MaxIntensity();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->MaxIntensity();
 		file.writeColumn("MAX_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->Mean();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Mean();
 		file.writeColumn("MEAN_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->Variance();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Variance();
 		file.writeColumn("VARIANCE", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->Skewness();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Skewness();
 		file.writeColumn("SKEWNESS", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->Kurtosis();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Kurtosis();
 		file.writeColumn("KURTOSIS", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->TotalIntensity();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->TotalIntensity();
 		file.writeColumn("TOTAL_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->CenterxError();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->CenterxError();
 		file.writeColumn("XCENTER_ERROR", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->CenteryError();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->CenteryError();
 		file.writeColumn("YCENTER_ERROR", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->Area_Raw();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Area_Raw();
 		file.writeColumn("RAW_AREA", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->Area_RawUncert();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Area_RawUncert();
 		file.writeColumn("RAW_AREA_UNCERTAINITY", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->Area_AtDiskCenter();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Area_AtDiskCenter();
 		file.writeColumn("AREA_ATDISKCENTER", data);
 	}
 
 	{
-		vector<Real> data(ActiveRegionStats.size());
-		for(unsigned r = 0; r < ActiveRegionStats.size(); ++r)
-			data[r] = ActiveRegionStats[r]->Area_AtDiskCenterUncert();
+		vector<Real> data(regionStats.size());
+		for(unsigned r = 0; r < regionStats.size(); ++r)
+			data[r] = regionStats[r]->Area_AtDiskCenterUncert();
 		file.writeColumn("AREA_ATDISKCENTER_UNCERTAINITY", data);
 	}
 

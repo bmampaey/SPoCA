@@ -6,23 +6,23 @@ ColorMap::~ColorMap()
 {}
 
 ColorMap::ColorMap(const long xAxes, const long yAxes)
-:SunImage<unsigned>(xAxes, yAxes)
+:SunImage<ColorType>(xAxes, yAxes)
 {
 	nullvalue_ = 0;
 
 }
 
 
-ColorMap::ColorMap(const SunImage<unsigned>& i)
-:SunImage<unsigned>(i)
+ColorMap::ColorMap(const SunImage<ColorType>& i)
+:SunImage<ColorType>(i)
 {
 	nullvalue_ = 0;
 
 }
 
 
-ColorMap::ColorMap(const SunImage<unsigned>* i)
-:SunImage<unsigned>(i)
+ColorMap::ColorMap(const SunImage<ColorType>* i)
+:SunImage<ColorType>(i)
 {
 	nullvalue_ = 0;
 
@@ -30,7 +30,7 @@ ColorMap::ColorMap(const SunImage<unsigned>* i)
 
 
 ColorMap::ColorMap(const Header& header)
-:SunImage<unsigned>(header)
+:SunImage<ColorType>(header)
 {
 	postRead();
 }
@@ -79,7 +79,7 @@ void ColorMap::tresholdRegionsByRawArea(const double minSize)
 	//First we compute the area for each color
 	vector<double> areas(100, 0);
 
-	unsigned* p = pixels;
+	ColorType* p = pixels;
 	
 	for (unsigned y = 0; y < yAxes; ++y)
 	{
@@ -120,7 +120,7 @@ void ColorMap::tresholdRegionsByRealArea(const double minSize)
 	//First we compute the area for each color
 	vector<double> areas(100, 0);
 
-	unsigned* p = pixels;
+	ColorType* p = pixels;
 	
 	const int xmax = xAxes - suncenter.x;
 	const int ymax = yAxes - suncenter.y;

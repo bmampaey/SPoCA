@@ -1,5 +1,7 @@
 #include "Image.h"
 
+//!@file Image.cpp
+
 using namespace std;
 
 template<class T>
@@ -574,6 +576,23 @@ Image<T>* Image<T>::removeHoles(T unusedColor)
 	propagateColor(nullvalue_, 0);
 	return this;
 }
+
+template<class T>
+void Image<T>::minmax(T& min, T& max) const
+{
+	min = numeric_limits<T>::max();
+	max = 0;
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if(pixels[j] != nullvalue_)
+		{
+			min = pixels[j] < min ? pixels[j] : min;
+			max = pixels[j] > max ? pixels[j] : max;
+				
+		}
+	}
+}
+
 
 template<class T>
 Real Image<T>::mean() const
@@ -1189,7 +1208,13 @@ T Image<T>::interpolate(const float x, const float y) const
 	return ( (1-ax)*(1-ay)*pixel(xt,yt) + ax*(1-ay)*pixel(xt+1,yt) + (1-ax)*ay*pixel(xt,yt+1) + ax*ay*pixel(xt+1,yt+1));
 }
 
-
+/*!
+To extract the chain code of a connected component, we first list all the points along the boundary starting at the firstPixel.
+Once The list is made, it is reduced by trying to find the most relevant points.
+First we take the firstpixel point and it's furthest point in the list, and add them to the chain code.
+Then we search the point that is the furthest from the line passing by each pair of consecutive point in the chain code, and add it to the chain code.
+We repeat that last step until we have enough points  
+*/
 template<class T>
 vector<Coordinate> Image<T>::chainCode(const Coordinate firstPixel, const unsigned max_points) const
 {
@@ -1230,6 +1255,7 @@ vector<Coordinate> Image<T>::chainCode(const Coordinate firstPixel, const unsign
 		}
 		++first_direction;
 	}
+	first_direction%=8;
 	// If we are a single pixel, we return
 	if(!found)
 	{
@@ -1411,9 +1437,15 @@ bool Image<T>::readFits(const std::string& filename)
 }
 
 
-/* We create the code for the template class we need
-   See constants.h */
+/*! @file Image.cpp
+Instantiation of the template class Image for PixelType
+See @ref Compilation_Options constants.h */
 
 template class Image<PixelType>;
-template class Image<unsigned>;
+
+/*! @file Image.cpp
+Instantiation of the template class Image for ColorType
+See @ref Compilation_Options constants.h */
+
+template class Image<ColorType>;
 

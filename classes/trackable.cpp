@@ -5,14 +5,14 @@ using namespace std;
 using namespace cgt;
 
 
-unsigned long newColor;
+ColorType newColor;
 
 // Compute the number of pixels common to 2 regions from 2 images, with derotation
 unsigned overlay_derotate(ColorMap* image1, const Region* region1, ColorMap* image2, const Region* region2)
 {
 	unsigned intersectPixels = 0;
-	unsigned setValue1 = image1->pixel(region1->FirstPixel());
-	unsigned setValue2 = image2->pixel(region2->FirstPixel());
+	ColorType setValue1 = image1->pixel(region1->FirstPixel());
+	ColorType setValue2 = image2->pixel(region2->FirstPixel());
 	
 	
 	// We are going to project the image1 into the coordinate of image2	
@@ -60,8 +60,8 @@ unsigned overlay_derotate(ColorMap* image1, const Region* region1, ColorMap* ima
 unsigned overlay(ColorMap* image1, const Region* region1, ColorMap* image2, const Region* region2)
 {
 	unsigned intersectPixels = 0;
-	unsigned setValue1 = image1->pixel(region1->FirstPixel());
-	unsigned setValue2 = image2->pixel(region2->FirstPixel());
+	ColorType setValue1 = image1->pixel(region1->FirstPixel());
+	ColorType setValue2 = image2->pixel(region2->FirstPixel());
 	
 	Coordinate r1_boxmin = region1->Boxmin();
 	Coordinate r1_boxmax = region1->Boxmax();
@@ -291,25 +291,23 @@ inline vector<unsigned> imageOrder(const vector<ColorMap*>& images)
 
 void recolorFromRegions(ColorMap* image, const vector<Region*>& regions)
 {
-	map<unsigned,unsigned> colorTransfo;
+	map<ColorType,ColorType> colorTransfo;
 	for (unsigned r = 0; r < regions.size(); ++r)
 	{
-		unsigned pixelcolor = unsigned(image->pixel(regions[r]->FirstPixel()));
-		colorTransfo[pixelcolor] = regions[r]->Color();
-
+		colorTransfo[image->pixel(regions[r]->FirstPixel())] = regions[r]->Color();
 	}
 	for (unsigned j = 0; j < image->NumberPixels(); ++j)
 	{
 		if(image->pixel(j) != image->nullvalue())
 		{
 			#if DEBUG >= 1
-				if(unsigned(image->pixel(j)) > colorTransfo.size())
+				if(colorTransfo.count(image->pixel(j)) == 0)
 				{
 					cerr<<"ERROR trying to colorize image, pixel has no corresponding region"<<endl;
 					exit (EXIT_FAILURE); 
 				}
 			#endif
-			image->pixel(j) = colorTransfo[unsigned(image->pixel(j))];
+			image->pixel(j) = colorTransfo[image->pixel(j)];
 		}
 	}
 }

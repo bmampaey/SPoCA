@@ -21,7 +21,7 @@
 #include "../cgt/graph.h"
 
 extern std::string outputFileName;
-extern unsigned long newColor;
+extern ColorType newColor;
 
 typedef cgt::graph<Region*, int> RegionGraph;
 

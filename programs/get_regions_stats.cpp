@@ -1,3 +1,57 @@
+//! Program that computes the regions statistics of sun images
+/*!
+@defgroup get_region_stats get_region_stats.x
+
+ This program takes a colorized map in fits format as a mask of regions, and computes different statistics on the sun images provided
+ 
+ 
+ @section usage Usage
+ 
+ <tt> get_region_stats.x -h </tt>
+ 
+ Calling the programs with -h will provide you with help 
+ 
+ <tt> get_region_stats.x [-option optionvalue, ...] -M colorizeMap fitsFileName1 fitsFileName2 </tt>
+ 
+ You must provide exactly one colorized map.
+ But you can provide as many sun images as desired.
+ 
+
+@param imageType	The type of the images.
+<BR>Possible values are : 
+ - EIT
+ - EUVI
+ - AIA
+ - SWAP
+ - HMI
+
+@param colorizedMap	A colorized Map of regions (i.e. each one must have a different color).
+
+@param separator	The separator to put between columns.
+
+@param stats	The kind of stats to generate.
+<BR>Possible values :
+ - A (Active %Region)
+ - C (Coronal Hole)
+ - R (Regular)
+
+@param regionStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
+
+@param regionStatsPreprocessing	The steps of preprocessing to apply to the sun images
+<BR>Possible values :
+ - NAR (Nullify above radius)
+ - ALC (Annulus Limb Correction)
+ - DivMedian (Division by the median)
+ - TakeSqrt (Take the square root)
+ - TakeLog (Take the log)
+ - DivMode (Division by the mode)
+ - DivExpTime (Division by the Exposure Time)
+
+See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
+
+*/
+
+
 #include <vector>
 #include <iostream>
 #include <fstream>

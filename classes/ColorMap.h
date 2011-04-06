@@ -5,13 +5,14 @@
 #include "Header.h"
 #include "SunImage.h"
 
-class ColorMap : public SunImage<unsigned>
+
+class ColorMap : public SunImage<ColorType>
 {
 	public :
 		//Constructors and destructors
 		ColorMap(const long xAxes = 0, const long yAxes = 0);
-		ColorMap(const SunImage<unsigned>& i);
-		ColorMap(const SunImage<unsigned>* i);
+		ColorMap(const SunImage<ColorType>& i);
+		ColorMap(const SunImage<ColorType>* i);
 		ColorMap(const Header& header);
 		~ColorMap();
 		

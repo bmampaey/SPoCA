@@ -1,5 +1,36 @@
-// This program will do tracking of regions from color maps
-// Written by Benjamin Mampaey on 15 July 2010
+//! Program that does tracking of regions on the sun 
+/*!
+@defgroup tracking tracking.x
+
+ This program takes a colorized map in fits format as a mask of regions, and computes different statistics on the sun images provided
+ 
+ 
+ @section usage Usage
+ 
+ <tt> tracking.x -h </tt>
+ 
+ Calling the programs with -h will provide you with help 
+ 
+ <tt> tracking.x [-option optionvalue, ...] colorizeMap1 colorizeMap2 </tt>
+ 
+ You must provide at least one colorized map.
+ 
+@param newColor	The first color to give to a region
+
+@param max_delta_t	The maximal delta time between 2 tracked regions
+
+@param overlap	The number of images that overlap between 2 tracking run
+
+@param recolorImages	Set this flag if you want all images to be colored and written to disk.
+Otherwise only the region table is updated.
+
+@param derotate	Set this flag if you want images to be derotated before comparison.
+
+@param regionTableHdu	The name of the region table Hdu
+
+See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
+
+*/
 
 #include <vector>
 #include <iostream>
@@ -35,7 +66,7 @@ int main(int argc, const char **argv)
 	cout<<setiosflags(ios::fixed);
 
 	// Options for the tracking
-	newColor = 0;
+	unsigned newColorArg = 0;
 	unsigned max_delta_t = 3600;
 	unsigned overlap = 1;
 	bool recolorImages = false;
@@ -57,7 +88,7 @@ int main(int argc, const char **argv)
 
 	ArgumentHelper arguments;
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the maps of the regions to track.\n\t", imagesFilenames);
-	arguments.new_named_unsigned_long('n',"newColor","positive integer","\n\tThe last color given to active regions\n\t",newColor);
+	arguments.new_named_unsigned_int('n',"newColor","positive integer","\n\tThe first color to attribute to a region\n\t",newColorArg);
 	arguments.new_named_unsigned_int('d',"max_delta_t","positive integer","\n\tThe maximal delta time between 2 tracked regions\n\t",max_delta_t);
 	arguments.new_named_unsigned_int('o',"overlap","positive integer","\n\tThe number of images that overlap between 2 tracking run\n\t",overlap);
 	arguments.new_flag('A', "recolorImages", "\n\tSet this flag if you want all images to be colored and written to disk.\n\tOtherwise only the region table is updated.\n\t", recolorImages);
@@ -68,6 +99,8 @@ int main(int argc, const char **argv)
 	arguments.set_build_date(__DATE__);
 	arguments.set_version("2.0");
 	arguments.process(argc, argv);
+
+	newColor = newColorArg;
 
 	// We get the maps, regions and colors from the fits files
 	vector<vector<Region*> > regions;
@@ -91,7 +124,7 @@ int main(int argc, const char **argv)
 		if(tracking_info.get<bool>("TRACKED"))
 		{
 			//We get the tracked_colors from the table to update the regions color
-			vector<unsigned> tracked_colors;
+			vector<ColorType> tracked_colors;
 			file.readColumn("TRACKED_COLOR", tracked_colors);
 			if(tracked_colors.size() == tmp_regions.size())
 			{
@@ -106,7 +139,7 @@ int main(int argc, const char **argv)
 			}
 			if(tracking_info.get<bool>("TNEWCOLR"))
 			{
-				unsigned latest_color = tracking_info.get<unsigned>("TNEWCOLR");
+				ColorType latest_color = tracking_info.get<ColorType>("TNEWCOLR");
 				newColor = latest_color > newColor ? latest_color : newColor;
 			}
 		}
@@ -166,7 +199,7 @@ int main(int argc, const char **argv)
 			#if DEBUG >= 2
 			if(derotate)
 			{
-				SunImage<unsigned> * rotated = images[s1]->rotated_like(images[s2]);
+				SunImage<ColorType>* rotated = images[s1]->rotated_like(images[s2]);
 				rotated->writeFits("rotated_"+ stripSuffix(stripPath(imagesFilenames[s1])) + "_to_" + stripSuffix(stripPath(imagesFilenames[s2]))+".fits");
 				delete rotated;
 			}
@@ -243,7 +276,7 @@ int main(int argc, const char **argv)
 		
 		// We write a nice header with info on the tracking
 		Header tracking_info;
-		tracking_info.set<unsigned>("TNEWCOLR", newColor, "Tracking latest color");
+		tracking_info.set<ColorType>("TNEWCOLR", newColor, "Tracking latest color");
 		tracking_info.set<unsigned>("TMAXDELT", max_delta_t, "Tracking max_delta_t");
 		tracking_info.set<unsigned>("TOVERLAP", overlap, "Tracking overlap");
 		tracking_info.set<unsigned>("TDEROT", derotate?1:0, "Tracking derotate");
@@ -253,7 +286,7 @@ int main(int argc, const char **argv)
 		
 		// We update the table of regions with the new colors
 		// We assume that the regions are in the same order than in the fits file(i.e. same id)
-		vector<unsigned> tracked_colors(regions[s].size(),0);
+		vector<ColorType> tracked_colors(regions[s].size(),0);
 		for (unsigned r = 0; r < regions[s].size(); ++r)
 		{
 			tracked_colors[r] = regions[s][r]->Color();
@@ -322,7 +355,7 @@ int main(int argc, const char **argv)
 		const RegionGraph::node* n = tracking_graph.get_node(regions[last][r]);
 		const RegionGraph::adjlist &parentsList = n->iadjlist();
 		const RegionGraph::adjlist::const_iterator itadjEnd = parentsList.end();
-		vector<unsigned> ancestors_color;
+		vector<ColorType> ancestors_color;
 		for (RegionGraph::adjlist::const_iterator itadj = parentsList.begin(); itadj != itadjEnd; ++itadj)
 		{
 			for (unsigned r1 = 0; r1 < regions[previous_last_hek_map].size(); ++r1)
@@ -372,8 +405,8 @@ int main(int argc, const char **argv)
 	relations.erase(unique(relations.begin(), relations.end()), relations.end());
 	
 	// We write the relations in a table of the last file
-	vector<unsigned> past_colors(relations.size());
-	vector<unsigned> present_colors(relations.size());
+	vector<ColorType> past_colors(relations.size());
+	vector<ColorType> present_colors(relations.size());
 	vector<string> relations_type(relations.size());
 	for (unsigned r = 0; r < relations.size(); ++r)
 	{

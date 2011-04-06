@@ -33,14 +33,14 @@ class Region
 		//Constructors
 		Region(const unsigned id = 0);
 		Region(const time_t& observationTime);
-		Region(const time_t& observationTime, const unsigned id, const unsigned long color = 0);
+		Region(const time_t& observationTime, const unsigned id, const ColorType color = 0);
 
 		//accessor and operators
 		bool operator==(const Region& r)const;
 		unsigned  Id() const;
 		void setId(const unsigned& id);
-		unsigned long Color() const;
-		void setColor(const unsigned long& color);
+		ColorType Color() const;
+		void setColor(const ColorType& color);
 		Coordinate Boxmin() const;
 		Coordinate Boxmax() const;
 		Coordinate Center() const;

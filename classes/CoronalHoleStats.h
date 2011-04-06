@@ -28,7 +28,7 @@ class CoronalHoleStats : public Region
 		//Constructors
 		CoronalHoleStats();
 		CoronalHoleStats(const time_t& observationTime);
-		CoronalHoleStats(const time_t& observationTime, const unsigned id, const unsigned long color = 0);
+		CoronalHoleStats(const time_t& observationTime, const unsigned id, const ColorType color = 0);
 		
 		// Accessors
 		Real Mean() const;

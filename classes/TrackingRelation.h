@@ -5,11 +5,11 @@
 class TrackingRelation
 {
 	public:
-		unsigned long past_color;
+		ColorType past_color;
 		std::string type;
-		unsigned long present_color;
+		ColorType present_color;
 
-		TrackingRelation(const unsigned long& past_color, const std::string& type, const unsigned long& present_color)
+		TrackingRelation(const ColorType& past_color, const std::string& type, const ColorType& present_color)
 		:past_color(past_color), type(type), present_color(present_color){}
 		
 		bool operator<(const TrackingRelation& r) const

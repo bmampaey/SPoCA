@@ -15,7 +15,7 @@ RegionStats::RegionStats(const time_t& observationTime)
 :Region(observationTime), m1(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), barycenter_x(0), barycenter_y(0)
 {}
 
-RegionStats::RegionStats(const time_t& observationTime, const unsigned id, const unsigned long color)
+RegionStats::RegionStats(const time_t& observationTime, const unsigned id, const ColorType color)
 :Region(observationTime, id, color), m1(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), barycenter_x(0), barycenter_y(0)
 {}
 
@@ -257,7 +257,7 @@ string RegionStats::toString(const string& separator, bool header) const
 
 vector<RegionStats*> getRegionStats(const ColorMap* colorizedComponentsMap, const EUVImage* image)
 {
-	map<unsigned,RegionStats*> regions_table;
+	map<ColorType,RegionStats*> regions_table;
 	Coordinate sunCenter = colorizedComponentsMap->SunCenter();
 	double sunRadius = colorizedComponentsMap->SunRadius();
 	unsigned id = 0;
@@ -269,7 +269,7 @@ vector<RegionStats*> getRegionStats(const ColorMap* colorizedComponentsMap, cons
 		{
 			if(colorizedComponentsMap->pixel(x,y) != colorizedComponentsMap->nullvalue())
 			{
-				unsigned color = unsigned(colorizedComponentsMap->pixel(x,y));
+				ColorType color = colorizedComponentsMap->pixel(x,y);
 				
 				// If the regions does not yet exist we create it
 				if (regions_table.count(color) == 0)
@@ -292,7 +292,7 @@ vector<RegionStats*> getRegionStats(const ColorMap* colorizedComponentsMap, cons
 	//We create the vector of regions
 	vector<RegionStats*> regions;
 	regions.reserve(regions_table.size());
-	for(map<unsigned,RegionStats*>::const_iterator r = regions_table.begin(); r != regions_table.end(); ++r)
+	for(map<ColorType,RegionStats*>::const_iterator r = regions_table.begin(); r != regions_table.end(); ++r)
 		regions.push_back(r->second);
 	
 	return regions;

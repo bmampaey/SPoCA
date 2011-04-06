@@ -58,10 +58,10 @@ See constants.h for the actual value
 
 /*!
 @page Compilation_Options
-@param NUMBERWAVELENGTH The number of channels for the classifier.
+@param NUMBERCHANNELS The number of channels for the classifier.
 */
-#if ! defined(NUMBERWAVELENGTH)
-#define NUMBERWAVELENGTH 2
+#if ! defined(NUMBERCHANNELS)
+#define NUMBERCHANNELS 2
 #endif
 
 /*!

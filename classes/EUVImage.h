@@ -47,7 +47,7 @@ class EUVImage : public SunImage<PixelType>
 		double Wavelength() const;
 		double Median() const;
 		double ExposureTime() const;
-		void copyKeywords(const EUVImage* i);
+		void copySunParameters(const EUVImage* i);
 
 		//Routines for the preprocessing on EUVImages
 		void preprocessing(std::string preprocessingList, const Real radiusRatio = 1.0);

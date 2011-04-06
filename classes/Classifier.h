@@ -92,9 +92,6 @@ class Classifier
 		
 		//! Destructor
 		virtual ~Classifier();
-
-		//! Function to check that the images passed to the Classifier are similar
-		void checkImages(const std::vector<EUVImage*>& images);
 		
 		//! Function to ordonate the images according to the channels
 		void ordonateImages(std::vector<EUVImage*>& images);

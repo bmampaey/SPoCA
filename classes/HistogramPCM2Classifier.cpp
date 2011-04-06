@@ -35,9 +35,10 @@ void HistogramPCM2Classifier::computeU()
 	
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
-		for (unsigned j = 0 ; j < numberBins ; ++j)
+		unsigned j = 0;
+		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
 		{
-			U[i*numberBins+j] = d2(HistoX[j],B[i]) / eta[i];
+			U[i*numberBins+j] = d2(*xj,B[i]) / eta[i];
 			if(fuzzifier == 1.5)
 			{
 				U[i*numberBins+j] *= U[i*numberBins+j];

@@ -177,6 +177,6 @@ std::ostream& operator<<(std::ostream& out, const std::vector<FeatureVector<T, N
 template<class T, unsigned N>
 std::istream& operator>>(std::istream& in, std::vector<FeatureVector<T, N> >& v);
 
-typedef FeatureVector<Real, NUMBERWAVELENGTH> RealFeature;
-typedef FeatureVector<PixelType, NUMBERWAVELENGTH> PixelFeature;
+typedef FeatureVector<Real, NUMBERCHANNELS> RealFeature;
+typedef FeatureVector<PixelType, NUMBERCHANNELS> PixelFeature;
 #endif

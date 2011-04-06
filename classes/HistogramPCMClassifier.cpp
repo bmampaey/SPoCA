@@ -32,10 +32,11 @@ void HistogramPCMClassifier::computeU()
 	U.resize(numberBins * numberClasses);
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
-		for (unsigned j = 0 ; j < numberBins ; ++j)
+		unsigned j = 0;
+		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
 		{
 
-			U[i*numberBins+j] = d2(HistoX[j],B[i]) / eta[i] ;
+			U[i*numberBins+j] = d2(*xj,B[i]) / eta[i] ;
 			if(fuzzifier == 1.5)
 			{
 				U[i*numberBins+j] *=  U[i*numberBins+j];
@@ -64,16 +65,16 @@ void HistogramPCMClassifier::computeEta()
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
 		sum = 0;
-
-		for (unsigned j = 0 ; j < numberBins ; ++j)
+		unsigned j = 0;
+		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
 		{
 
 			if(fuzzifier == 2)
-				uij_m = U[i*numberBins+j] * HistoX[j].c * U[i*numberBins+j] ;
+				uij_m = U[i*numberBins+j] * xj->c * U[i*numberBins+j] ;
 			else
-				uij_m = pow(U[i*numberBins+j],fuzzifier) * HistoX[j].c;
+				uij_m = pow(U[i*numberBins+j],fuzzifier) * xj->c;
 
-			eta[i] += uij_m*d2(HistoX[j],B[i]);
+			eta[i] += uij_m*d2(*xj,B[i]);
 			sum += uij_m;
 
 		}
@@ -92,12 +93,13 @@ void HistogramPCMClassifier::computeEta(Real alpha)
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
 		sum = 0;
-		for (unsigned j = 0 ; j < numberBins ; ++j)
+		unsigned j = 0;
+		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
 		{
 			if (U[i*numberBins+j]>alpha)
 			{
-				eta[i] += d2(HistoX[j],B[i]) * HistoX[j].c;
-				sum +=  HistoX[j].c;
+				eta[i] += d2(*xj,B[i]) * xj->c;
+				sum +=  xj->c;
 			}
 
 		}
@@ -115,19 +117,19 @@ Real HistogramPCMClassifier::computeJ() const
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
 		Real sum1 = 0, sum2 = 0;
-
-		for (unsigned j = 0 ; j < numberBins ; ++j)
+		unsigned j = 0;
+		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
 		{
 
 			if(fuzzifier == 2)
-				sum1 +=  U[i*numberBins+j] * U[i*numberBins+j] * d2(HistoX[j],B[i]) * HistoX[j].c;
+				sum1 +=  U[i*numberBins+j] * U[i*numberBins+j] * d2(*xj,B[i]) * xj->c;
 			else
-				sum1 +=  pow(U[i*numberBins+j], fuzzifier) * d2(HistoX[j],B[i]) * HistoX[j].c;
+				sum1 +=  pow(U[i*numberBins+j], fuzzifier) * d2(*xj,B[i]) * xj->c;
 
 			if(fuzzifier == 2)
-				sum2 += (1 - U[i*numberBins+j]) * (1 - U[i*numberBins+j]) * HistoX[j].c;
+				sum2 += (1 - U[i*numberBins+j]) * (1 - U[i*numberBins+j]) * xj->c;
 			else
-				sum2 +=  pow(1 - U[i*numberBins+j], fuzzifier) * HistoX[j].c;
+				sum2 +=  pow(1 - U[i*numberBins+j], fuzzifier) * xj->c;
 
 		}
 		result += sum1 + (eta[i] * sum2);
@@ -239,19 +241,19 @@ Real HistogramPCMClassifier::assess(vector<Real>& V)
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
 		Real sum1 = 0, sum2 = 0;
-
-		for (unsigned j = 0 ; j < numberBins ; ++j)
+		unsigned j = 0;
+		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
 		{
 
 			if(fuzzifier == 2)
-				sum1 +=  U[i*numberBins+j] * U[i*numberBins+j] * d2(HistoX[j],B[i]) * HistoX[j].c;
+				sum1 +=  U[i*numberBins+j] * U[i*numberBins+j] * d2(*xj,B[i]) * xj->c;
 			else
-				sum1 +=  pow(U[i*numberBins+j], fuzzifier) * d2(HistoX[j],B[i]) * HistoX[j].c;
+				sum1 +=  pow(U[i*numberBins+j], fuzzifier) * d2(*xj,B[i]) * xj->c;
 
 			if(fuzzifier == 2)
-				sum2 += (1 - U[i*numberBins+j]) * (1 - U[i*numberBins+j]) * HistoX[j].c;
+				sum2 += (1 - U[i*numberBins+j]) * (1 - U[i*numberBins+j]) * xj->c;
 			else
-				sum2 +=  pow(1 - U[i*numberBins+j], fuzzifier) * HistoX[j].c;
+				sum2 +=  pow(1 - U[i*numberBins+j], fuzzifier) * xj->c;
 
 		}
 

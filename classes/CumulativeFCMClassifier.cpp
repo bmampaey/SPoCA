@@ -26,15 +26,7 @@ CumulativeFCMClassifier::CumulativeFCMClassifier(const std::string& histogramFil
 void CumulativeFCMClassifier::addImages(std::vector<EUVImage*> images)
 {
 
-	for (unsigned p = 0; p <  NUMBERWAVELENGTH; ++p)
-	{
-		if( binSize.v[p] == 0 )
-		{
-			cerr<<"binSize cannot be 0."<<endl;
-			exit(EXIT_FAILURE);
-		}
-	}
-	
+	// We must verify that the channels of the histogram are the same as the channels of the classifier
 	if(channels)
 	{
 		if(!histoChannels)
@@ -51,27 +43,29 @@ void CumulativeFCMClassifier::addImages(std::vector<EUVImage*> images)
 	{
 		if(!histoChannels)
 		{
-			for (unsigned p = 0; p< NUMBERWAVELENGTH; ++p)
+			for (unsigned p = 0; p< NUMBERCHANNELS; ++p)
 				histoChannels.v[p] = images[p]->Wavelength();
 		}
 		channels = histoChannels;
 	}
 
-
-	checkImages(images);
-	ordonateImages(images);
-
+	// We only consider the smallest common range of points from all images
 	unsigned xaxes = images[0]->Xaxes();
 	unsigned yaxes = images[0]->Yaxes();
-	for (unsigned p = 1; p <  NUMBERWAVELENGTH; ++p)
+	  
+	for (unsigned p = 1; p <  NUMBERCHANNELS; ++p)
 	{
 		xaxes = images[p]->Xaxes() < xaxes ? images[p]->Xaxes() : xaxes;
 		yaxes = images[p]->Yaxes() < yaxes ? images[p]->Yaxes() : yaxes;
 	}
+	
+	// If this is the first image that we add, we set the width
+	// The length shall be increased for each image we add later
 	if(Xaxes == 0)
 	{
-		Xaxes = xaxes;
+		Xaxes = Xaxes == 0 ? xaxes : Xaxes;
 	}
+	
 	#if DEBUG >= 1
 	if(xaxes != Xaxes)
 	{
@@ -80,37 +74,13 @@ void CumulativeFCMClassifier::addImages(std::vector<EUVImage*> images)
 	}
 	#endif
 
+	HistogramClassifier::addImages(images, xaxes, yaxes);
 
-	HistoPixelFeature xj;
-	bool validPixel;
-	for (unsigned y = 0; y < yaxes; ++y)
-	{
-		for (unsigned x = 0; x < xaxes; ++x)
-		{
-			validPixel = true;
-			for (unsigned p = 0; p <  NUMBERWAVELENGTH && validPixel; ++p)
-			{
-				xj.v[p] = images[p]->pixel(x, y);
-				if(xj.v[p] == images[p]->nullvalue())
-					validPixel=false;
-				else
-					xj.v[p] = (int(xj.v[p]/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
-			}
-			if(validPixel)
-			{
-				unsigned pos = insert(xj);
-				++HistoX[pos].c;
-			}
-
-		}
-	}
-
-	numberBins = HistoX.size();
 	Yaxes += yaxes;
 	++numberImages;
 
 	#if DEBUG >= 2
-	saveHistogram(outputFileName + itos(numberImages) + "image.histogram.txt");
+	saveHistogram(outputFileName + itos(numberImages) + "images.histogram.txt");
 	#endif
 
 }

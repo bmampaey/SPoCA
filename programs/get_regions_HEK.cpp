@@ -42,7 +42,7 @@ int main(int argc, const char **argv)
 	
 	string programDescription = "This Programm output regions info and statistics.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
+	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());

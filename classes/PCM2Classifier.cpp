@@ -80,7 +80,7 @@ void PCM2Classifier::reduceEta()
 			if (eta.at(indice[ii]) < eta.at(indice[i]))
 			{
 				Real min_Bi_above_Bii = B.at(indice[i]).v[0]/B.at(indice[ii]).v[0];
-				for(unsigned p = 1; p < NUMBERWAVELENGTH; ++p)
+				for(unsigned p = 1; p < NUMBERCHANNELS; ++p)
 					if (B.at(indice[i]).v[p]/B.at(indice[ii]).v[p] < min_Bi_above_Bii )
 						min_Bi_above_Bii = B.at(indice[i]).v[p]/B.at(indice[ii]).v[p];
 
@@ -222,7 +222,7 @@ void PCM2Classifier::computeEta(ofstream* iterationsFile)
 		for (j = i + 1; j < numberClasses; ++j)
 		{	
 			max = numeric_limits<Real>::min();
-			for(p = 0; p < NUMBERWAVELENGTH; ++p)
+			for(p = 0; p < NUMBERCHANNELS; ++p)
 				if (B[i].v[p]/B[j].v[p] > max)
 					max = B[i].v[p]/B[j].v[p];
 

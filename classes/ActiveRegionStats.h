@@ -12,7 +12,7 @@
 #include "ColorMap.h"
 #include "FitsFile.h"
 
-namespace SPoCA {
+
 class ActiveRegionStats : public Region
 {
 

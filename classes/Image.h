@@ -17,9 +17,11 @@
 
 //! Class image and base class of all other image classes
 /*!
-Simple mono channel 2 dimension image.
+Simple mono channel 2 dimensions image.
 
 It is implemented as a single dimension array of pixels.
+The pixels are ordonated from the first pixel in the lower left corner of the image until the last pixel in the uper right corner of the image, row by row.
+This is similar to the way fits files store the pixels.
 
 It implements also some common routines on images.
 */
@@ -30,10 +32,13 @@ class Image
 {
 
 	protected :
-		//! Size of the axes of the image
-		unsigned xAxes, yAxes;
+		//! Size of the X axes of the Image
+		unsigned xAxes;
 		
-		//! Number of pixels of the image
+		//! Size of the Y axes of the Image
+		unsigned yAxes;
+		
+		//! Number of pixels of the Image
 		unsigned  numberPixels;
 		
 		//! Pointer to the array of pixels
@@ -45,7 +50,7 @@ class Image
 		T nullvalue_;  
 
 	public :
-		//! Constructor for an image of size xAxes x yAxes
+		//! Constructor for an Image of size xAxes x yAxes
 		Image(const long xAxes = 0, const long yAxes = 0);
 		
 		//! Copy Constructor
@@ -98,7 +103,7 @@ class Image
 		void setNullvalue(T nullvalue)
 		{nullvalue_ = nullvalue;}
 
-		//! Routine to resize the image
+		//! Routine to resize the Image
 		Image<T>* resize(const unsigned xAxes, const unsigned yAxes = 1);
 		
 		//! Routine to set all pixels to a certain value
@@ -160,16 +165,16 @@ class Image
 		//! Routine that generate a chaincode for the connected component indicated by firstPixel
 		std::vector<Coordinate> chainCode(const Coordinate firstPixel, const unsigned max_points) const;
 		
-		//! Computes the min and max of the image
+		//! Computes the min and max of the Image
 		void minmax(T& min, T& max) const;
 		
-		//! Computes the mean value of the image
+		//! Computes the mean value of the Image
 		Real mean() const;
-		//! Computes the variance value of the image
+		//! Computes the variance value of the Image
 		Real variance() const;
-		//! Computes the skewness of the image
+		//! Computes the skewness of the Image
 		Real skewness() const;
-		//! Computes the kurtosis of the image
+		//! Computes the kurtosis of the Image
 		Real kurtosis() const;
 		
 		//! Routine that Replace each pixel by the mean of its neighboors (in circle of radius Nradius)
@@ -192,16 +197,16 @@ class Image
 		Image<T>* convolveSeparate(const Image<T>* img, const std::vector<float>& horiz_kernel, const std::vector<float>& vert_kernel);
 		T interpolate(const float x, const float y) const;
 		
-		//! Routine to write the image to a fits files
+		//! Routine to write the Image to a fits files
 		virtual FitsFile& writeFits(FitsFile& file, int mode = 0);
 		
-		//! Routine to read an image from fits files
+		//! Routine to read an Image from fits files
 		virtual FitsFile& readFits(FitsFile& file);
 		
-		//! Routine to write the image to a fits files
+		//! Routine to write the Image to a fits files
 		bool writeFits(const std::string& filename, int mode = 0);
 		
-		//! Routine to read an image from a fits files
+		//! Routine to read an Image from a fits files
 		bool readFits(const std::string& filename);
 
 };

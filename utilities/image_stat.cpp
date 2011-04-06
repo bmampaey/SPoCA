@@ -46,7 +46,7 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This Program generates neigboorhood stats fits files.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
+	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
@@ -77,7 +77,7 @@ int main(int argc, const char **argv)
 		EUVImage* image  = getImageFromFile(imageType, imagesFilenames[p]);
 		image->preprocessing(preprocessingSteps,radiusRatio);
 		
-		stat.copyKeywords(image);
+		stat.copySunParameters(image);
 		
 		outputFileName = stripSuffix(imagesFilenames[p]) + ".N" + itos(neighboorhoodRadius) + ".";
 		

@@ -16,43 +16,22 @@ HistogramClassifier::HistogramClassifier(const std::string& histogramFilename)
 	initHistogram(histogramFilename);
 }
 
-// Function to insert a new FeatureVector into HistoX, if it is necessary (no doublon)
-// Returns the position of insertion into the vector
-// It assumes that the vector is sorted
-inline unsigned HistogramClassifier::insert(const HistoPixelFeature& xj)
+// Function to insert a new HistoFeatureVector into HistoX
+inline void HistogramClassifier::insert(const HistoPixelFeature& xj)
 {
-	unsigned bsup = HistoX.size();
-	unsigned binf = 0;
-	unsigned pos = 0;
-	while(binf < bsup)
+	pair<set<HistoPixelFeature>::iterator,bool> ret = HistoX.insert(xj);
+	if(! ret.second)
 	{
-		pos = unsigned((bsup+binf)/2);
-		switch(compare(HistoX[pos], xj))
-		{
-			case -1 :
-				binf = pos + 1;
-				break;
-			case 1 :
-				bsup = pos;
-				break;
-			default :
-				return pos;
-
-		}
+		//The element existed already, I increase it's count
+		ret.first->c += xj.c;
 	}
-	if (bsup == HistoX.size())
-	{
-		HistoX.push_back(xj);
-	}
-	else
-	{
+}
 
-		vector<HistoPixelFeature>::iterator there = HistoX.begin();
-		there += bsup;
-		HistoX.insert(there,xj);
-	}
-	return bsup;
-
+// Function to insert a new FeatureVector into HistoX
+inline void HistogramClassifier::insert(const PixelFeature& xj)
+{
+	pair<set<HistoPixelFeature>::iterator,bool> ret = HistoX.insert(xj);
+	(ret.first)->c += 1;
 }
 
 
@@ -89,26 +68,24 @@ void HistogramClassifier::initHistogram(const std::string& histogramFilename, bo
 	histoStream>>binSize;
 	histoStream>>numberBins;
 	
-	HistoX.resize(numberBins);
-
+	HistoPixelFeature xj;
 	if (!reset)
 	{
 		for (unsigned j = 0; j < numberBins && histoStream.good(); ++j)
 		{
-			for (unsigned p = 0; p < NUMBERWAVELENGTH; ++p)
-				histoStream>>HistoX[j].v[p];
-			histoStream>>HistoX[j].c;
+			histoStream>>xj;
+			insert(xj);
 		}
 	}
 	else
 	{
-		unsigned garbage;
 		for (unsigned j = 0; j < numberBins && histoStream.good(); ++j)
 		{
-			for (unsigned p = 0; p < NUMBERWAVELENGTH; ++p)
-				histoStream>>HistoX[j].v[p];
-			histoStream>>garbage;
+			histoStream>>xj;
+			xj.c = 1;
+			insert(xj);
 		}
+		
 
 	}
 	
@@ -130,11 +107,9 @@ void HistogramClassifier::saveHistogram(const std::string& histogramFilename)
 		histoFile<<HistoX.size()<<endl;
 		
 		//We save the Histogram
-		for (unsigned j = 0; j < numberBins && histoFile.good(); ++j)
+		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end() && histoFile.good(); ++xj)
 		{
-			for (unsigned p = 0; p < NUMBERWAVELENGTH; ++p)
-				histoFile<<HistoX[j].v[p]<<" ";
-			histoFile<<HistoX[j].c<<endl;
+			histoFile<<*xj<<endl;
 		}
 
 	}
@@ -148,6 +123,79 @@ void HistogramClassifier::saveHistogram(const std::string& histogramFilename)
 	histoFile.close();
 }
 
+void HistogramClassifier::addFeatures(const vector<PixelFeature>& X)
+{
 
+	for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
+	{
+		if( binSize.v[p] == 0 )
+		{
+			cerr<<"binSize cannot be 0."<<endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+	
+	//TODO: test if it is faster to use the other insert
+	HistoPixelFeature xj;
+	xj.c = 1;
+	for (unsigned j = 0; j < X.size(); ++j)
+	{
+		for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
+		{
+			xj.v[p] = (int(X[j].v[p]/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
+		}
+
+		insert(xj);
+	}
+
+	numberBins = HistoX.size();
+	
+	#if DEBUG >= 2
+	saveHistogram(outputFileName + "histogram.txt");
+	#endif
+
+}
+
+
+void HistogramClassifier::addImages(vector<EUVImage*> images, const unsigned xaxes, const unsigned yaxes)
+{
+
+	for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
+	{
+		if( binSize.v[p] == 0 )
+		{
+			cerr<<"binSize cannot be 0."<<endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+
+
+	HistoPixelFeature xj;
+	xj.c = 1;
+	bool validPixel;
+	for (unsigned y = 0; y < yaxes; ++y)
+	{
+		for (unsigned x = 0; x < xaxes; ++x)
+		{
+			validPixel = true;
+			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
+			{
+				xj.v[p] = images[p]->pixel(x, y);
+				if(xj.v[p] == images[p]->nullvalue())
+					validPixel=false;
+				else
+					xj.v[p] = (int(xj.v[p]/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
+			}
+			if(validPixel)
+			{
+				insert(xj);
+			}
+
+		}
+	}
+
+	numberBins = HistoX.size();
+
+}
 
 

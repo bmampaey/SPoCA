@@ -77,9 +77,9 @@ double EUVImage::Median() const
 double EUVImage::ExposureTime() const
 {return exposureTime;}
 
-void EUVImage::copyKeywords(const EUVImage* i)
+void EUVImage::copySunParameters(const EUVImage* i)
 {
-	SunImage<PixelType>::copyKeywords(i);
+	SunImage<PixelType>::copySunParameters(i);
 	wavelength = i->wavelength;
 	median = i->median;
 	mode = i->mode;

@@ -12,12 +12,21 @@ CumulativeSPoCAClassifier::CumulativeSPoCAClassifier(unsigned neighboorhoodRadiu
 void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 {
 
-	checkImages(images);
+	if(images.size() < NUMBERCHANNELS)
+	{
+		cerr<<"Error : The number of images is not equal to "<<NUMBERCHANNELS<<endl;
+		exit(EXIT_FAILURE);
+	}
+	else if(images.size() > NUMBERCHANNELS)
+	{
+		cerr<<"Warning : The number of images is not equal to "<<NUMBERCHANNELS<<". Only using the first ones."<<endl;
+	}
+	
 	ordonateImages(images);
 	unsigned numberValidPixelsEstimate = images[0]->numberValidPixelsEstimate();
 	unsigned xaxes = images[0]->Xaxes();
 	unsigned yaxes = images[0]->Yaxes();
-	for (unsigned p = 1; p <  NUMBERWAVELENGTH; ++p)
+	for (unsigned p = 1; p <  NUMBERCHANNELS; ++p)
 	{
 		xaxes = images[p]->Xaxes() < xaxes ? images[p]->Xaxes() : xaxes;
 		yaxes = images[p]->Yaxes() < yaxes ? images[p]->Yaxes() : yaxes;
@@ -51,7 +60,7 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 		for (unsigned x = 0; x < xaxes; ++x)
 		{
 			validPixel = true;
-			for (unsigned p = 0; p <  NUMBERWAVELENGTH && validPixel; ++p)
+			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
 			{
 				xj.v[p] = images[p]->pixel(x,y);
 				if(xj.v[p] == images[p]->nullvalue())
@@ -116,7 +125,7 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 	// We write the fits file of smoothedX for verification
 	#if DEBUG >= 2
 	Image<PixelType> image(Xaxes,Yaxes);
-	for (unsigned p = 0; p <  NUMBERWAVELENGTH; ++p)
+	for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
 	{
 		image.zero();
 

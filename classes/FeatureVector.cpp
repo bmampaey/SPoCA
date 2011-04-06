@@ -96,32 +96,32 @@ istream& operator>>(istream& in, vector<FeatureVector <T, N> >& v)
 /* We create the code for the template class we need
    See constants.h */
 
-template class FeatureVector<Real, NUMBERWAVELENGTH>;
+template class FeatureVector<Real, NUMBERCHANNELS>;
 
-template Real d2<Real, Real, NUMBERWAVELENGTH>(const FeatureVector<Real, NUMBERWAVELENGTH>& pixel, const FeatureVector<Real, NUMBERWAVELENGTH>& centre);
-template Real d<Real, Real, NUMBERWAVELENGTH>(const FeatureVector<Real, NUMBERWAVELENGTH>& pixel, const FeatureVector<Real, NUMBERWAVELENGTH>& centre);
-template ostream& operator<< <Real, NUMBERWAVELENGTH>(ostream& out, const FeatureVector<Real, NUMBERWAVELENGTH>& fv);
-template istream& operator>> <Real, NUMBERWAVELENGTH>(istream& in, FeatureVector<Real, NUMBERWAVELENGTH>& fv);
-template FeatureVector<Real, NUMBERWAVELENGTH> sqrt<Real, NUMBERWAVELENGTH>(const FeatureVector<Real, NUMBERWAVELENGTH>& fv);
-template ostream& operator<< <Real, NUMBERWAVELENGTH>(ostream& out, const vector<FeatureVector<Real, NUMBERWAVELENGTH> >& v);
-template istream& operator>> <Real, NUMBERWAVELENGTH>(istream& in, vector<FeatureVector <Real, NUMBERWAVELENGTH> >& v);
+template Real d2<Real, Real, NUMBERCHANNELS>(const FeatureVector<Real, NUMBERCHANNELS>& pixel, const FeatureVector<Real, NUMBERCHANNELS>& centre);
+template Real d<Real, Real, NUMBERCHANNELS>(const FeatureVector<Real, NUMBERCHANNELS>& pixel, const FeatureVector<Real, NUMBERCHANNELS>& centre);
+template ostream& operator<< <Real, NUMBERCHANNELS>(ostream& out, const FeatureVector<Real, NUMBERCHANNELS>& fv);
+template istream& operator>> <Real, NUMBERCHANNELS>(istream& in, FeatureVector<Real, NUMBERCHANNELS>& fv);
+template FeatureVector<Real, NUMBERCHANNELS> sqrt<Real, NUMBERCHANNELS>(const FeatureVector<Real, NUMBERCHANNELS>& fv);
+template ostream& operator<< <Real, NUMBERCHANNELS>(ostream& out, const vector<FeatureVector<Real, NUMBERCHANNELS> >& v);
+template istream& operator>> <Real, NUMBERCHANNELS>(istream& in, vector<FeatureVector <Real, NUMBERCHANNELS> >& v);
 
 #if PIXELTYPE!=REAL
-template class FeatureVector<PixelType, NUMBERWAVELENGTH>;
+template class FeatureVector<PixelType, NUMBERCHANNELS>;
 
-template Real d2<PixelType, Real, NUMBERWAVELENGTH>(const FeatureVector<PixelType, NUMBERWAVELENGTH>& pixel, const FeatureVector<Real, NUMBERWAVELENGTH>& centre);
-template Real d2<Real, PixelType, NUMBERWAVELENGTH>(const FeatureVector<Real, NUMBERWAVELENGTH>& pixel, const FeatureVector<PixelType, NUMBERWAVELENGTH>& centre);
-template Real d2<PixelType, PixelType, NUMBERWAVELENGTH>(const FeatureVector<PixelType, NUMBERWAVELENGTH>& pixel, const FeatureVector<PixelType, NUMBERWAVELENGTH>& centre);
-template Real d<PixelType, Real, NUMBERWAVELENGTH>(const FeatureVector<PixelType, NUMBERWAVELENGTH>& pixel, const FeatureVector<Real, NUMBERWAVELENGTH>& centre);
-template Real d<Real, PixelType, NUMBERWAVELENGTH>(const FeatureVector<Real, NUMBERWAVELENGTH>& pixel, const FeatureVector<PixelType, NUMBERWAVELENGTH>& centre);
-template Real d<PixelType, PixelType, NUMBERWAVELENGTH>(const FeatureVector<PixelType, NUMBERWAVELENGTH>& pixel, const FeatureVector<PixelType, NUMBERWAVELENGTH>& centre);
-template ostream& operator<< <PixelType, NUMBERWAVELENGTH>(ostream& out, const FeatureVector<PixelType, NUMBERWAVELENGTH>& fv);
-template istream& operator>> <PixelType, NUMBERWAVELENGTH>(istream& in, FeatureVector<PixelType, NUMBERWAVELENGTH>& fv);
-template FeatureVector<Real, NUMBERWAVELENGTH> sqrt<PixelType, NUMBERWAVELENGTH>(const FeatureVector<PixelType, NUMBERWAVELENGTH>& fv);
-template ostream& operator<< <PixelType, NUMBERWAVELENGTH>(ostream& out, const vector<FeatureVector<PixelType, NUMBERWAVELENGTH> >& v);
-template istream& operator>> <PixelType, NUMBERWAVELENGTH>(istream& in, vector<FeatureVector <PixelType, NUMBERWAVELENGTH> >& v);
-template FeatureVector<PixelType, NUMBERWAVELENGTH>& FeatureVector<PixelType, NUMBERWAVELENGTH>::operator= (const FeatureVector<Real, NUMBERWAVELENGTH>& fv);
-template FeatureVector<Real, NUMBERWAVELENGTH>& FeatureVector<Real, NUMBERWAVELENGTH>::operator= (const FeatureVector<PixelType, NUMBERWAVELENGTH>& fv);
-template FeatureVector<PixelType, NUMBERWAVELENGTH>::FeatureVector (const FeatureVector<Real, NUMBERWAVELENGTH>& fv);
-template FeatureVector<Real, NUMBERWAVELENGTH>::FeatureVector  (const FeatureVector<PixelType, NUMBERWAVELENGTH>& fv);
+template Real d2<PixelType, Real, NUMBERCHANNELS>(const FeatureVector<PixelType, NUMBERCHANNELS>& pixel, const FeatureVector<Real, NUMBERCHANNELS>& centre);
+template Real d2<Real, PixelType, NUMBERCHANNELS>(const FeatureVector<Real, NUMBERCHANNELS>& pixel, const FeatureVector<PixelType, NUMBERCHANNELS>& centre);
+template Real d2<PixelType, PixelType, NUMBERCHANNELS>(const FeatureVector<PixelType, NUMBERCHANNELS>& pixel, const FeatureVector<PixelType, NUMBERCHANNELS>& centre);
+template Real d<PixelType, Real, NUMBERCHANNELS>(const FeatureVector<PixelType, NUMBERCHANNELS>& pixel, const FeatureVector<Real, NUMBERCHANNELS>& centre);
+template Real d<Real, PixelType, NUMBERCHANNELS>(const FeatureVector<Real, NUMBERCHANNELS>& pixel, const FeatureVector<PixelType, NUMBERCHANNELS>& centre);
+template Real d<PixelType, PixelType, NUMBERCHANNELS>(const FeatureVector<PixelType, NUMBERCHANNELS>& pixel, const FeatureVector<PixelType, NUMBERCHANNELS>& centre);
+template ostream& operator<< <PixelType, NUMBERCHANNELS>(ostream& out, const FeatureVector<PixelType, NUMBERCHANNELS>& fv);
+template istream& operator>> <PixelType, NUMBERCHANNELS>(istream& in, FeatureVector<PixelType, NUMBERCHANNELS>& fv);
+template FeatureVector<Real, NUMBERCHANNELS> sqrt<PixelType, NUMBERCHANNELS>(const FeatureVector<PixelType, NUMBERCHANNELS>& fv);
+template ostream& operator<< <PixelType, NUMBERCHANNELS>(ostream& out, const vector<FeatureVector<PixelType, NUMBERCHANNELS> >& v);
+template istream& operator>> <PixelType, NUMBERCHANNELS>(istream& in, vector<FeatureVector <PixelType, NUMBERCHANNELS> >& v);
+template FeatureVector<PixelType, NUMBERCHANNELS>& FeatureVector<PixelType, NUMBERCHANNELS>::operator= (const FeatureVector<Real, NUMBERCHANNELS>& fv);
+template FeatureVector<Real, NUMBERCHANNELS>& FeatureVector<Real, NUMBERCHANNELS>::operator= (const FeatureVector<PixelType, NUMBERCHANNELS>& fv);
+template FeatureVector<PixelType, NUMBERCHANNELS>::FeatureVector (const FeatureVector<Real, NUMBERCHANNELS>& fv);
+template FeatureVector<Real, NUMBERCHANNELS>::FeatureVector  (const FeatureVector<PixelType, NUMBERCHANNELS>& fv);
 #endif

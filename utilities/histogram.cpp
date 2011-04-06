@@ -75,7 +75,7 @@ void histogram(const vector<EUVImage*>& images, RealFeature binSize)
 		for (unsigned j = 0; j < images[0]->NumberPixels(); ++j)
 		{
 			validPixel = true;
-			for (unsigned p = 0; p <  NUMBERWAVELENGTH && validPixel; ++p)
+			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
 			{
 				xj.v[p] = images[p]->pixel(j);
 				if(xj.v[p] == images[p]->nullvalue())
@@ -98,7 +98,7 @@ void histogram(const vector<EUVImage*>& images, RealFeature binSize)
 		for (unsigned j = 0; j < images[0]->NumberPixels(); ++j)
 		{
 			validPixel = true;
-			for (unsigned p = 0; p <  NUMBERWAVELENGTH && validPixel; ++p)
+			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
 			{
 				xj.v[p] = images[p]->pixel(j);
 				if(xj.v[p] == images[p]->nullvalue())
@@ -140,7 +140,7 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This Program will generate the histogram file for the given images.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
+	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
@@ -160,9 +160,9 @@ int main(int argc, const char **argv)
 
 	RealFeature binSize(0);
 
-	if(imagesFilenames.size() != NUMBERWAVELENGTH)
+	if(imagesFilenames.size() != NUMBERCHANNELS)
 	{
-		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, "<<NUMBERWAVELENGTH<<" must be given!"<<endl;
+		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, "<<NUMBERCHANNELS<<" must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
 
@@ -185,7 +185,7 @@ int main(int argc, const char **argv)
 	}
 	
 	RealFeature histoChannels;
-	for (unsigned p = 0; p< NUMBERWAVELENGTH; ++p)
+	for (unsigned p = 0; p< NUMBERCHANNELS; ++p)
 			histoChannels.v[p] = images[p]->Wavelength();
 			
 			
@@ -202,7 +202,7 @@ int main(int argc, const char **argv)
 		//We save the Histogram
 		for (unsigned j = 0; j < HistoX.size() && histoFile.good(); ++j)
 		{
-			for (unsigned p = 0; p < NUMBERWAVELENGTH; ++p)
+			for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
 				histoFile<<HistoX[j].v[p]<<" ";
 			histoFile<<HistoX[j].c<<endl;
 		}

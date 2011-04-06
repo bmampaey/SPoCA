@@ -89,7 +89,7 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This Programm does classification and segmentation.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
+	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
@@ -134,9 +134,9 @@ int main(int argc, const char **argv)
 	// We process the arguments
 
 	// We assert that the number of sun images provided is correct
-	if(imagesFilenames.size() != NUMBERWAVELENGTH)
+	if(imagesFilenames.size() != NUMBERCHANNELS)
 	{
-		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, "<<NUMBERWAVELENGTH<<" must be given!"<<endl;
+		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, "<<NUMBERCHANNELS<<" must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
 
@@ -271,7 +271,7 @@ int main(int argc, const char **argv)
 		
 	// We declare the segmented map with the keywords of the first image
 	ColorMap* segmentedMap = new ColorMap();
-	segmentedMap->copyKeywords(images[0]);
+	segmentedMap->copySunParameters(images[0]);
 		
 	// We delete all images to gain memory space but the first one
 	SunImage* intensities = images[0];

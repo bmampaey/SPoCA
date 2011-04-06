@@ -120,7 +120,7 @@ void SunImage<T>::recenter(const Coordinate& newCenter)
 }
 
 template<class T> template<class T2>
-void SunImage<T>::copyKeywords(const SunImage<T2>* i)
+void SunImage<T>::copySunParameters(const SunImage<T2>* i)
 {
 
 	this->radius = i->SunRadius();
@@ -131,6 +131,25 @@ void SunImage<T>::copyKeywords(const SunImage<T2>* i)
 	this->date_obs =  i->ObservationDate();
 	this->b0 = i->B0();
 }
+
+
+template<class T> template<class T2>
+bool SunImage<T>::checkSimilar(const SunImage<T2>* image) const
+{
+	bool similar = true;
+	if( suncenter.d2(image->SunCenter()) > 2 )
+	{
+		cerr<<"Warning : images do not have the same sun centre!"<<endl;
+		similar = false;
+	}
+	if( abs(1. - (image->SunRadius() / radius)) > 0.01 )
+	{
+		cerr<<"Warning : images do not have the same sun radius!"<<endl;
+		similar = false;
+	}
+	return similar;
+}
+
 
 // Calculates the differential solar rotation speed for a given pixel
 // Formula coming from Rotation of Doppler features in the solar photosphere by	Snodgrass, Herschel B. and Ulrich, Roger K.
@@ -192,7 +211,7 @@ template<class T>
 SunImage<T>* SunImage<T>::rotated_like(const SunImage* img) const
 {
 	SunImage * rotated = new SunImage(img->xAxes, img->yAxes);
-	rotated->copyKeywords(img);
+	rotated->copySunParameters(img);
 	rotated->nullvalue_ = img->nullvalue_;
 	rotated->zero(this->nullvalue_);
 	
@@ -348,6 +367,7 @@ void SunImage<T>::longlat_map(vector<Real>& longitude_map, vector<Real>& latitud
 
 }
 
+
 template<class T>
 FitsFile& SunImage<T>::writeFits(FitsFile& file, int mode)
 {
@@ -385,8 +405,12 @@ bool SunImage<T>::readFits(const std::string& filename)
 
 template class SunImage<PixelType>;
 template class SunImage<ColorType>;
-template void SunImage<PixelType>::copyKeywords(const SunImage<PixelType>* i);
-template void SunImage<ColorType>::copyKeywords(const SunImage<ColorType>* i);
-template void SunImage<PixelType>::copyKeywords(const SunImage<ColorType>* i);
-template void SunImage<ColorType>::copyKeywords(const SunImage<PixelType>* i);
+template void SunImage<PixelType>::copySunParameters(const SunImage<PixelType>* i);
+template void SunImage<ColorType>::copySunParameters(const SunImage<ColorType>* i);
+template void SunImage<PixelType>::copySunParameters(const SunImage<ColorType>* i);
+template void SunImage<ColorType>::copySunParameters(const SunImage<PixelType>* i);
+template bool SunImage<PixelType>::checkSimilar(const SunImage<ColorType>* image) const;
+template bool SunImage<PixelType>::checkSimilar(const SunImage<PixelType>* image) const;
+template bool SunImage<ColorType>::checkSimilar(const SunImage<ColorType>* image) const;
+template bool SunImage<ColorType>::checkSimilar(const SunImage<PixelType>* image) const;
  

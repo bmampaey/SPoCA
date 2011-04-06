@@ -4,6 +4,8 @@
 
  This program takes a tuple of EUV sun images in fits format, does the requested classification and segmentation.
  
+ A tuple of images is a list of images that have different channels / wavelength but are similar.
+ 
  It outputs the maps and statistics of the Active %Region (AR) and Coronal Holes (CH) 
  
  It can also output the map and statistics about the 3 classes AR, CH and Quiet Sun (QS) in general.
@@ -215,7 +217,7 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This Programm does classification and segmentation.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
+	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
@@ -264,9 +266,9 @@ int main(int argc, const char **argv)
 	// We process the arguments
 
 	// We assert that the number of sun images provided is correct
-	if(imagesFilenames.size() != NUMBERWAVELENGTH)
+	if(imagesFilenames.size() != NUMBERCHANNELS)
 	{
-		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, "<<NUMBERWAVELENGTH<<" must be given!"<<endl;
+		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, "<<NUMBERCHANNELS<<" must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
 
@@ -391,7 +393,13 @@ int main(int argc, const char **argv)
 		#if DEBUG >= 2
 		images[p]->writeFits(outputDirectory + "/" + stripPath(stripSuffix(imagesFilenames[p])) + ".preprocessed.fits");
 		#endif
+		if(p > 0 && !(images[0]->checkSimilar(images[p])))
+		{
+			cerr<<"Warning: image "<<imagesFilenames[p]<<" is not similar to image "<<imagesFilenames[0]<<endl;
+		}
+			
 	}
+	
 	// We set the name of the output files prefix
 	// to the outputDirectory + the date_obs of the first image in the form YYYYMMDD_HHMMSS 
 	outputFileName = outputDirectory + "/" + time2string(images[0]->ObservationTime()) + ".";
@@ -401,7 +409,7 @@ int main(int argc, const char **argv)
 	
 	// We declare the segmented map with the keywords of the first image
 	ColorMap* segmentedMap = new ColorMap(images[0]->getHeader());
-	segmentedMap->copyKeywords(images[0]);
+	segmentedMap->copySunParameters(images[0]);
 	
 	// We delete all images to gain memory space
 	for (unsigned p = 0; p < images.size(); ++p)

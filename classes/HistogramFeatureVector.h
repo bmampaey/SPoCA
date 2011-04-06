@@ -28,7 +28,7 @@ class HistogramFeatureVector : public FeatureVector<T, N>
 		
 		bool operator<(const HistogramFeatureVector<T, N>& fv) const
 		{
-			for (unsigned p = 0; p < NUMBERWAVELENGTH; ++p)
+			for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
 			{
 				if(this->v[p] < fv.v[p])
 					return true;
@@ -40,12 +40,34 @@ class HistogramFeatureVector : public FeatureVector<T, N>
 
 };
 
-typedef HistogramFeatureVector<Real, NUMBERWAVELENGTH> HistoRealFeature;
-typedef HistogramFeatureVector<PixelType, NUMBERWAVELENGTH> HistoPixelFeature;
+typedef HistogramFeatureVector<Real, NUMBERCHANNELS> HistoRealFeature;
+typedef HistogramFeatureVector<PixelType, NUMBERCHANNELS> HistoPixelFeature;
+
+template<class T, unsigned N>
+inline std::ostream& operator<<(std::ostream& out, const HistogramFeatureVector<T, N>& fv)
+{
+	out<<fv.v[0];
+	for (unsigned p = 1; p < N; ++p)
+		out<<","<<fv.v[p];
+	out<<" "<<fv.c;
+	return out;
+}
+
+
+template<class T, unsigned N>
+inline std::istream& operator>>(std::istream& in, HistogramFeatureVector<T, N>& fv)
+{
+	char separator;
+	in>>fv.v[0];
+	for (unsigned p = 1; p < N && in.good(); ++p)
+		in>>separator>>fv.v[p];
+	in>>separator>>fv.c;
+	return in;
+}
 
 inline int compare(const HistoPixelFeature& x1, const HistoPixelFeature& x2)
 {
-	for (unsigned p = 0; p < NUMBERWAVELENGTH; ++p)
+	for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
 	{
 		if(x1.v[p] < x2.v[p])
 			return -1;
@@ -54,5 +76,7 @@ inline int compare(const HistoPixelFeature& x1, const HistoPixelFeature& x2)
 	}
 	return 0;
 }
+
+
 
 #endif

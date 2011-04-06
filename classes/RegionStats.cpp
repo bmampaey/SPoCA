@@ -7,6 +7,11 @@ using namespace std;
 #define NAN (numeric_limits<Real>::quiet_NaN())
 #endif
 
+#ifndef INF
+#define INF (numeric_limits<Real>::infinity())
+#endif
+
+
 RegionStats::RegionStats()
 :Region(), m1(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), barycenter_x(0), barycenter_y(0)
 {}
@@ -97,7 +102,7 @@ Real RegionStats::CenterxError() const
 	}
 	else
 	{
-		return numeric_limits<Real>::infinity();
+		return INF;
 	}
 }
 
@@ -109,7 +114,7 @@ Real RegionStats::CenteryError() const
 	}
 	else
 	{
-		return numeric_limits<Real>::infinity();
+		return INF;
 	}
 }
 

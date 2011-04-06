@@ -6,51 +6,34 @@ Classifier::Classifier()
 :numberClasses(0),numberValidPixels(0),Xaxes(0),Yaxes(0),channels(0)
 {}
 
-void Classifier::checkImages(const vector<EUVImage*>& images)
-{
-
-	#if DEBUG >= 1
-	if(images.size()!=NUMBERWAVELENGTH)
-	{
-		cerr<<"Error : The number of images to initialize the Classifier must be equal to "<<NUMBERWAVELENGTH<<endl;
-		exit(EXIT_FAILURE);
-	}
-	
-	Coordinate sunCenter = images[0]->SunCenter();
-	for (unsigned p = 1; p <  NUMBERWAVELENGTH; ++p)
-	{
-		if( sunCenter.d2(images[p]->SunCenter()) > 2 )
-		{
-			cerr<<"Warning : Image "<<images[p]->Wavelength()<<" does not have the same sun centre than image "<<images[0]->Wavelength()<<endl;
-		}
-		if( abs(1. - (images[p]->SunRadius() / images[0]->SunRadius())) > 0.01 )
-		{
-			cerr<<"Warning : Image "<<images[p]->Wavelength()<<" does not have the same sun radius than image "<<images[0]->Wavelength()<<endl;
-		}
-	}
-	#endif
-
-}
-
 
 void Classifier::addImages(vector<EUVImage*> images)
 {
 
-	checkImages(images);
+	if(images.size() < NUMBERCHANNELS)
+	{
+		cerr<<"Error : The number of images is not equal to "<<NUMBERCHANNELS<<endl;
+		exit(EXIT_FAILURE);
+	}
+	else if(images.size() > NUMBERCHANNELS)
+	{
+		cerr<<"Warning : The number of images is not equal to "<<NUMBERCHANNELS<<". Only using the first ones."<<endl;
+	}
+	
 	ordonateImages(images);
-	unsigned numberValidPixelsEstimate = images[0]->numberValidPixelsEstimate();
+	unsigned numberPixelsEstimate = images[0]->NumberPixels();
 	Xaxes = images[0]->Xaxes();
 	Yaxes = images[0]->Yaxes();
-	for (unsigned p = 1; p <  NUMBERWAVELENGTH; ++p)
+	for (unsigned p = 1; p < NUMBERCHANNELS; ++p)
 	{
 		Xaxes = images[p]->Xaxes() < Xaxes ? images[p]->Xaxes() : Xaxes;
 		Yaxes = images[p]->Yaxes() < Yaxes ? images[p]->Yaxes() : Yaxes;
-		numberValidPixelsEstimate = images[p]->numberValidPixelsEstimate() > numberValidPixelsEstimate ? images[p]->numberValidPixelsEstimate() : numberValidPixelsEstimate;
+		numberPixelsEstimate = images[p]->NumberPixels() > numberPixelsEstimate ? images[p]->NumberPixels() : numberPixelsEstimate;
 	}
 
 	//We initialise the valid pixels vector X
-	X.reserve(numberValidPixelsEstimate);
-	coordinates.reserve(numberValidPixelsEstimate);
+	X.reserve(numberPixelsEstimate);
+	coordinates.reserve(numberPixelsEstimate);
 
 	PixelFeature xj;
 	bool validPixel;
@@ -59,7 +42,7 @@ void Classifier::addImages(vector<EUVImage*> images)
 		for (unsigned x = 0; x < Xaxes; ++x)
 		{
 			validPixel = true;
-			for (unsigned p = 0; p <  NUMBERWAVELENGTH && validPixel; ++p)
+			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
 			{
 				xj.v[p] = images[p]->pixel(x, y);
 				if(xj.v[p] == images[p]->nullvalue())
@@ -635,14 +618,14 @@ void Classifier::ordonateImages(vector<EUVImage*>& images)
 {
 	if(channels)
 	{
-		for (unsigned p = 0; p < NUMBERWAVELENGTH; ++p)
+		for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
 		{
 			if(channels.v[p] != images[p]->Wavelength())
 			{
 				unsigned pp = p+1;
-				while(pp < NUMBERWAVELENGTH && channels.v[p] != images[pp]->Wavelength())
+				while(pp < NUMBERCHANNELS && channels.v[p] != images[pp]->Wavelength())
 					++pp;
-				if(pp < NUMBERWAVELENGTH)
+				if(pp < NUMBERCHANNELS)
 				{
 					EUVImage* temp = images[pp];
 					images[pp] = images[p];
@@ -659,7 +642,7 @@ void Classifier::ordonateImages(vector<EUVImage*>& images)
 	}
 	else
 	{
-		for (unsigned p = 0; p < NUMBERWAVELENGTH; ++p)
+		for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
 			channels.v[p] = images[p]->Wavelength();
 	}
 	

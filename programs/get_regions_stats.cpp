@@ -4,6 +4,7 @@
 
  This program takes a colorized map in fits format as a mask of regions, and computes different statistics on the sun images provided
  
+ The sun images should be similar to the colorized map.
  
  @section usage Usage
  
@@ -110,7 +111,7 @@ int main(int argc, const char **argv)
 	
 	string programDescription = "This Programm output regions info and statistics.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
+	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
@@ -159,15 +160,9 @@ int main(int argc, const char **argv)
 		image->writeFitsImage(outputFileName + "preprocessed." +  stripPath(imagesFilenames[p]) );
 		#endif
 	
-		if( sunCenter.d2(image->SunCenter()) > 2 )
+		if(!colorizedMap->checkSimilar(image))
 		{
-			cerr<<"Warning : Image "<<imagesFilenames[p]<<" will be recentered to have the same sun centre than image "<<colorizedMapFileName<<endl;
-			image->recenter(sunCenter);
-		}
-		if( abs(1. - (image->SunRadius() / sunRadius)) > 0.01 )
-		{
-			cerr<<"Error : Image "<<imagesFilenames[p]<<" does not have the same sun radius than image "<<colorizedMapFileName<<endl;
-			exit(EXIT_FAILURE);
+			cerr<<"Warning: image "<<imagesFilenames[p]<<" is not similar to the colorizedMap!"<<endl;
 		}
 		
 		if(getARStats)

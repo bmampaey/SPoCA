@@ -4,6 +4,8 @@
 
  This program takes a list of tuples of EUV sun images in fits format, does the requested classification.
  
+ A tuple of images is a list of images that have different channels / wavelength but are similar.
+ 
  It outputs only the centers of classes, and does not do segmentation.
  
  
@@ -141,7 +143,7 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This program does cumulative classification.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERWAVELENGTH: " + itos(NUMBERWAVELENGTH);
+	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
@@ -181,9 +183,9 @@ int main(int argc, const char **argv)
 	// We process the arguments
 
 	// We assert that the number of sun images provided is correct
-	if(imagesFilenames.size() % NUMBERWAVELENGTH != 0)
+	if(imagesFilenames.size() % NUMBERCHANNELS != 0)
 	{
-		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, a multiple of "<<NUMBERWAVELENGTH<<" must be given!"<<endl;
+		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, a multiple of "<<NUMBERCHANNELS<<" must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
 
@@ -285,8 +287,8 @@ int main(int argc, const char **argv)
 	
 	string outputFileNameBase = outputFileName;
 	bool firstinit = true;
-	unsigned M = unsigned(imagesFilenames.size() / NUMBERWAVELENGTH);
-	vector<string> imagesFileNameSet(NUMBERWAVELENGTH);
+	unsigned M = unsigned(imagesFilenames.size() / NUMBERCHANNELS);
+	vector<string> imagesFileNameSet(NUMBERCHANNELS);
 	
 	ofstream outputFile((outputFileName + "cumulative_output.txt").c_str());
 	
@@ -296,8 +298,8 @@ int main(int argc, const char **argv)
 		outputFileName = outputFileNameBase + "m" + itos(m + 1) + ".";
 
 		// We read and preprocess a set of images
-		for (unsigned p = 0; p <  NUMBERWAVELENGTH; ++p)
-			imagesFileNameSet[p] = imagesFilenames[m * NUMBERWAVELENGTH + p];
+		for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
+			imagesFileNameSet[p] = imagesFilenames[m * NUMBERCHANNELS + p];
 			
 		vector<EUVImage*> images = getImagesFromFiles(imageType, imagesFileNameSet, true);
 		
@@ -307,12 +309,15 @@ int main(int argc, const char **argv)
 			#if DEBUG >= 2
 			images[p]->writeFitsImage(outputFileNameBase + "preprocessed." + stripPath(imagesFilenames[p]) );
 			#endif
+			if(p > 0 && ! images[0]->checkSimilar(images[p]))
+			{
+				cerr<<"Warning: image "<<imagesFilenames[p]<<" is not similar to image "<<imagesFilenames[0]<<endl;
+			}
 		}
-		
 		
 		// We save the names of the files added
 		outputFile<<"Adding images: ";
-		for (unsigned p = 0; p< NUMBERWAVELENGTH; ++p)
+		for (unsigned p = 0; p< NUMBERCHANNELS; ++p)
 			outputFile<<imagesFileNameSet[p]<<" ";
 		outputFile<<endl;
 
@@ -321,7 +326,7 @@ int main(int argc, const char **argv)
 		F->addImages(images);
 
 		//We can save memory now by deleting the images
-		for (unsigned p = 0; p < NUMBERWAVELENGTH; ++p)
+		for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
 			delete images[p];
 
 		if( (classificationPeriodicity > 0 && (m%classificationPeriodicity == 0) ) || m == M - 1 || M == 1)

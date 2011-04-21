@@ -185,7 +185,7 @@
  * in which sizeof(short) is 2, sizeof(int) is 4, and both sizeof(long)
  * and machine pointers are 8 (64-bit). Microsoft Windows uses a different
  * approach: sizeof(long) remains at 4 while machine pointers move to 8,
- * and programmers use an explicitly defined type for 64-bit integers.
+ * and programers use an explicitly defined type for 64-bit integers.
  *
  * Note that although sizeof(long) generally tracks sizeof(machine pointer),
  * this relationship cannot be always be relied on, so both sizes must be
@@ -2528,7 +2528,7 @@ typedef struct {
  * and calculating the size of the item. There is room for human error in
  * all of these stages, many of which will go undetected at compile time
  * (and even at runtime). The macros will always get these issues right, leaving
- * the programmer the sole task of choosing the right one to use.
+ * the programer the sole task of choosing the right one to use.
  */
 #define IDL_BZERO(zero_var) bzero((char *) &(zero_var), sizeof(zero_var))
 #define IDL_BZERO_ARRAY(zero_arr) bzero((char *) (zero_arr), sizeof(zero_arr))

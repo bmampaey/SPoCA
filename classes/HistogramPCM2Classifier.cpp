@@ -25,6 +25,7 @@ HistogramPCM2Classifier::HistogramPCM2Classifier(const std::string& histogramFil
 
 void HistogramPCM2Classifier::attribution()
 {
+	PCM2Classifier::sortB();
 	PCM2Classifier::computeU();
 }
 
@@ -33,34 +34,41 @@ void HistogramPCM2Classifier::computeU()
 {
 	U.resize(numberBins * numberClasses);
 	
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
+	MembershipSet::iterator uij = U.begin();
+	if (fuzzifier == 1.5)
 	{
-		unsigned j = 0;
-		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
 		{
-			U[i*numberBins+j] = d2(*xj,B[i]) / eta[i];
-			if(fuzzifier == 1.5)
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				U[i*numberBins+j] *= U[i*numberBins+j];
-				U[i*numberBins+j] *= U[i*numberBins+j];
+				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij *= *uij;
+				*uij = 1. / (1. + *uij * *uij);
 			}
-			else if(fuzzifier == 2)
-			{
-				U[i*numberBins+j] *= U[i*numberBins+j];
-				
-			}
-			else
-			{
-				U[i*numberBins+j] = pow( U[i*numberBins+j] , Real(2./(fuzzifier-1.))) ;
-			}
-				
-			U[i*numberBins+j] = 1. / (1. + U[i*numberBins+j] ) ;
-
 		}
-
 	}
-
-
+	else if (fuzzifier == 2)
+	{
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = 1. / (1. + *uij * *uij);
+			}
+		}
+	}
+	else
+	{
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = 1. / (1. + pow(*uij , Real(2./(fuzzifier-1.))));
+			}
+		}
+	}
 }
 
 
@@ -85,7 +93,7 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 	#endif
 	
 	#if DEBUG >= 2
-		stepinit(outputFileName+"iterations.txt");
+		stepinit(filenamePrefix+"iterations.txt");
 		unsigned decimals = unsigned(1 - log10(precision));;
 	#endif
 
@@ -97,7 +105,7 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 	Real precisionReached = numeric_limits<Real>::max();
 	vector<RealFeature> oldB = B;
 	vector<Real> start_eta = eta;
-	bool recomputeEta = FIXETA != TRUE;
+	bool recomputeEta = FIXETA != true;
 	for (unsigned iteration = 0; iteration < maxNumberIteration && precisionReached > precision ; ++iteration)
 	{
 
@@ -127,11 +135,11 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 		
 		// avoid class cannibalism
 		if (precisionReached <= precision)
-		{    
-		   reduceEta();
-		   computeU();
-		   computeB();
-		} 
+		{
+			reduceEta();
+			computeU();
+			computeB();
+		}
 
 		oldB = B;
 

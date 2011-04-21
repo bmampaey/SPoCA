@@ -19,7 +19,7 @@
 using namespace std;
 using namespace dsr;
 
-string outputFileName;
+string filenamePrefix;
 
 int main(int argc, const char **argv)
 {
@@ -72,8 +72,8 @@ int main(int argc, const char **argv)
 		}
 		image->pixel(0) = 0;
 		image->pixel(1) = gradientMax;
-		outputFileName =  stripSuffix(imagesFilenames[p]);
-		image->writeFits(outputFileName + ".magick.fits");
+		filenamePrefix =  stripSuffix(imagesFilenames[p]);
+		image->writeFits(filenamePrefix + ".magick.fits");
 		delete image;
 	}
 	return EXIT_SUCCESS;

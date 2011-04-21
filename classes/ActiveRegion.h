@@ -3,18 +3,19 @@
 #define ActiveRegion_H
 
 #include <vector>
-
 #include "FeatureVector.h"
 #include "ColorMap.h"
-#include "EUVImage.h"
-#include "Coordinate.h"
-#include "ActiveRegionStats.h"
 
-extern std::string outputFileName;
+/*!
+@file ActiveRegion.h
+List of function to transform the results of the segmentation into a map of Active %Region (AR)
+*/
 
-
+//! Function that creates the map of AR
 ColorMap* ActiveRegionMap(const ColorMap* segmentedMap, unsigned ARclass, bool tresholdRawArea = false);
+//! Function that returns the class number corresponding to the AR
 unsigned ARclass(const std::vector<RealFeature>& B);
+//! Routine that aggregate blobs into AR
 void blobsIntoAR (ColorMap* ARmap);
 
 #endif

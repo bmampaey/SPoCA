@@ -14,11 +14,16 @@
 #include "FeatureVector.h"
 #include "Classifier.h"
 
+//! Fuzzy C-Means Classifier
+/*!
+The class implements a multi channel Fuzzy C-Means clustering algorithm.
+*/
+
+
 class FCMClassifier : public Classifier
 {
 	protected :
 		Real precision;
-		Real fuzzifier;
 
 		void computeB();
 		void computeU();

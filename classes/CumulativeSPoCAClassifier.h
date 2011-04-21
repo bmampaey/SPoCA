@@ -27,7 +27,7 @@ class CumulativeSPoCAClassifier : public virtual SPoCAClassifier, public Cumulat
 		using SPoCAClassifier::merge;
 
 	public :
-		CumulativeSPoCAClassifier(unsigned neighboorhoodRadius = 1, Real fuzzifier = 2);
+		CumulativeSPoCAClassifier(unsigned neighborhoodRadius = 1, Real fuzzifier = 2);
 		void addImages(std::vector<EUVImage*> images);
 
 		//Classification functions

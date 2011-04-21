@@ -27,9 +27,9 @@ void CumulativeFCMClassifier::addImages(std::vector<EUVImage*> images)
 {
 
 	// We must verify that the channels of the histogram are the same as the channels of the classifier
-	if(channels)
+	if(! channels.is_null())
 	{
-		if(!histoChannels)
+		if(histoChannels.is_null())
 		{
 			histoChannels = channels;
 		}
@@ -41,7 +41,7 @@ void CumulativeFCMClassifier::addImages(std::vector<EUVImage*> images)
 	}
 	else 
 	{
-		if(!histoChannels)
+		if(histoChannels.is_null())
 		{
 			for (unsigned p = 0; p< NUMBERCHANNELS; ++p)
 				histoChannels.v[p] = images[p]->Wavelength();
@@ -80,7 +80,7 @@ void CumulativeFCMClassifier::addImages(std::vector<EUVImage*> images)
 	++numberImages;
 
 	#if DEBUG >= 2
-	saveHistogram(outputFileName + itos(numberImages) + "images.histogram.txt");
+	saveHistogram(filenamePrefix + itos(numberImages) + "images.histogram.txt");
 	#endif
 
 }

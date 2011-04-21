@@ -1,6 +1,6 @@
 //! Program that does cumulative classification of EUV sun images
 /*!
-@defgroup cumulative_classification cumulative_classification.x
+@page cumulative_classification cumulative_classification.x
 
  This program takes a list of tuples of EUV sun images in fits format, does the requested classification.
  
@@ -103,7 +103,7 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 using namespace std;
 using namespace dsr;
 
-string outputFileName;
+string filenamePrefix;
 
 int main(int argc, const char **argv)
 {
@@ -149,7 +149,7 @@ int main(int argc, const char **argv)
 	programDescription+="\nReal: " + string(typeid(Real).name());
 
 	ArgumentHelper arguments;
-	arguments.new_named_string('T',"classifierType", "string", "\n\tThe type of classifier to use for the classification.\n\tPossible values are : FCM, PCM, PCM2, SPOCA, SPOCA2\n\t", classifierType);
+	arguments.new_named_string('T',"classifierType", "string", "\n\tThe type of classifier to use for the classification.\n\tPossible values are : FCM, PCM, PCM2, SPoCA, SPoCA2\n\t", classifierType);
 	arguments.new_named_unsigned_int('i', "maxNumberIteration", "positive integer", "\n\tThe maximal number of iteration for the classification.\n\t", maxNumberIteration);
 	arguments.new_named_double('p',"precision", "positive real", "\n\tThe precision to be reached to stop the classification.\n\t",precision);
 	arguments.new_named_double('f',"fuzzifier", "positive real", "\n\tThe fuzzifier (m).\n\t",fuzzifier);
@@ -163,7 +163,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogramm.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
 	arguments.new_named_unsigned_int('t', "classificationPeriodicity", "classificationPeriodicity", "The periodicity with wich we do the classification (0 means only classification at the end).\n\t", classificationPeriodicity);
 	arguments.new_flag('R', "reinitializeCenters", "\n\tSet this flag if you want the centers to be reinitialized before each classification (For possibilistic classifiers this mean doing a FCM init again.\n\t", reinit);
-	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
+	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", filenamePrefix);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
@@ -192,11 +192,11 @@ int main(int argc, const char **argv)
 
 	// We set the name of output files
 	// If none as been provided as a program argument, we set it to the current directory + type of classifier
-	if(outputFileName.empty())
+	if(filenamePrefix.empty())
 	{
-		outputFileName = "./Cumulative" + classifierType;
+		filenamePrefix = "./Cumulative" + classifierType;
 	}
-	outputFileName += ".";
+	filenamePrefix += ".";
 	
 	// We read the wavelengths and the initial centers from the centers file
 	if(readCentersFromFile(B, wavelengths, centersFileName))
@@ -225,7 +225,7 @@ int main(int argc, const char **argv)
 		{
 			F = new CumulativeFCMClassifier(histogramFile, fuzzifier);
 		}
-		else if(binSize)
+		else if(! binSize.has_null())
 		{
 			F = new CumulativeFCMClassifier(binSize, fuzzifier);
 		}
@@ -241,7 +241,7 @@ int main(int argc, const char **argv)
 		{
 			F = new CumulativePCMClassifier(histogramFile, fuzzifier);
 		}
-		else if(binSize)
+		else if(! binSize.has_null())
 		{
 			F = new CumulativePCMClassifier(binSize, fuzzifier);
 		}
@@ -258,7 +258,7 @@ int main(int argc, const char **argv)
 		{
 			F = new CumulativePCM2Classifier(histogramFile, fuzzifier);
 		}
-		else if(binSize)
+		else if(! binSize.has_null())
 		{
 			F = new CumulativePCM2Classifier(binSize, fuzzifier);
 		}
@@ -285,17 +285,17 @@ int main(int argc, const char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	string outputFileNameBase = outputFileName;
+	string filenamePrefixBase = filenamePrefix;
 	bool firstinit = true;
 	unsigned M = unsigned(imagesFilenames.size() / NUMBERCHANNELS);
 	vector<string> imagesFileNameSet(NUMBERCHANNELS);
 	
-	ofstream outputFile((outputFileName + "cumulative_output.txt").c_str());
+	ofstream outputFile((filenamePrefix + "cumulative_output.txt").c_str());
 	
 	for(unsigned m = 0 ; m < M; ++m )
 	{
-		// We set the outputFileName
-		outputFileName = outputFileNameBase + "m" + itos(m + 1) + ".";
+		// We set the filenamePrefix
+		filenamePrefix = filenamePrefixBase + "m" + itos(m + 1) + ".";
 
 		// We read and preprocess a set of images
 		for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
@@ -307,7 +307,7 @@ int main(int argc, const char **argv)
 		{
 			images[p]->preprocessing(preprocessingSteps, radiusRatio);
 			#if DEBUG >= 2
-			images[p]->writeFitsImage(outputFileNameBase + "preprocessed." + stripPath(imagesFilenames[p]) );
+			images[p]->writeFitsImage(filenamePrefixBase + "preprocessed." + stripPath(imagesFilenames[p]) );
 			#endif
 			if(p > 0 && ! images[0]->checkSimilar(images[p]))
 			{

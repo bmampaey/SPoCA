@@ -2,7 +2,9 @@
 
 using namespace std;
 
+extern std::string filenamePrefix;
 
+/*! Return the indice of the biggest class center */
 unsigned ARclass(const vector<RealFeature>& B)
 {
 	// The Active Regions class has the biggest center
@@ -21,85 +23,100 @@ unsigned ARclass(const vector<RealFeature>& B)
 }
 
 
-// Function that saves the AR map for tracking
-// You pass it a ColorMap that has already all the keywords correctly set
+/*!
+@param segmentedMap ColorMap of the segmentation that has already all the keywords correctly set
+@param ARclass The color in the segmentedMap that correspond to the class of AR
+@param tresholdRawArea If set, the treshold fro removing small AR will be computed onthe Raw Area. Otherwise on the Area at disc center
+*/
 ColorMap* ActiveRegionMap(const ColorMap* segmentedMap, unsigned ARclass, bool tresholdRawArea)
 {
 	ColorMap* ARMap = new ColorMap(segmentedMap);
 
-	//We create a map of the class ARclass
+	/*! Create a map of the class ARclass */
 	ARMap->bitmap(segmentedMap, ARclass);
 
 	#if DEBUG >= 2
-	ARMap->writeFits(outputFileName + "ARmap.pure.fits");
+	ARMap->writeFits(filenamePrefix + "ARmap.pure.fits");
 	#endif
 
-	// We clean the colormap to remove very small components (like protons)
-	ARMap->erodeCircular(2,0)->dilateCircular(2,0);
+	/*! Clean the colormap to remove very small components (like protons)*/
+	unsigned cleaningFactor = unsigned(AR_CLEANING / sqrt(ARMap->PixelArea() ));
+	ARMap->erodeCircular(cleaningFactor,0)->dilateCircular(cleaningFactor,0);
 	
 	#if DEBUG >= 2
-	ARMap->writeFits(outputFileName + "ARmap.opened.fits");
+	ARMap->writeFits(filenamePrefix + "ARmap.opened.fits");
 	#endif
 	
 	
-	// We remove the parts off limb (Added by Cis to avoid large off-limbs to combine 2 well separated AR on-disk regions to be aggregated as one)
+	/*! Remove the parts off limb (Added by Cis to avoid large off-limbs AR to combine 2 well separated AR on-disk to be aggregated as one)*/
 	ARMap->nullifyAboveRadius(1.);
 	
-	// We agregate the blobs together
+	/*! Aggregate the blobs together*/
 	blobsIntoAR(ARMap);
 	
 	#if DEBUG >= 2
-	ARMap->writeFits(outputFileName + "ARmap.aggregated.fits");
+	ARMap->writeFits(filenamePrefix + "ARmap.aggregated.fits");
 	#endif
 	
-	// We don't need the AR post limb
+	/*! Remove the AR post limb*/
 	ARMap->nullifyAboveRadius(1.); 
 
-	// We erase small regions
+	/*! Erase the small regions*/
 	if(tresholdRawArea)
 		ARMap->tresholdRegionsByRawArea(MIN_AR_SIZE);
 	else
 		ARMap->tresholdRegionsByRealArea(MIN_AR_SIZE);
-		
-	return ARMap;
 
+	return ARMap;
 }
 
-#if !defined(AGGREGATE_DILATE)
+#if !defined(AR_AGGREGATION_TYPE) || (AR_AGGREGATION_TYPE == AR_AGGREGATION_FRAGMENTED)
 void blobsIntoAR (ColorMap* ARmap)
 {
-	//We create  a map by dilation 
+	/*! Create a map by dilation */ 
 	unsigned dilateFactor = unsigned(AR_AGGREGATION  / sqrt(ARmap->PixelArea() ));
 	ColorMap* dilated = new ColorMap(ARmap);
 	dilated->dilateCircular(dilateFactor,ARmap->nullvalue());
 	dilated->colorizeConnectedComponents(1);
 	#if DEBUG >= 2
-	dilated->writeFits(outputFileName + "ARmap.dilated.fits");
+	dilated->writeFits(filenamePrefix + "ARmap.dilated.fits");
 	#endif
 	
-	//We color the blobs using the dilated map 
+	/*! Color the blobs using the dilated map */
 	for (unsigned j=0; j < ARmap->NumberPixels(); ++j)
 	{
 		if (ARmap->pixel(j) != ARmap->nullvalue())
 			ARmap->pixel(j) = dilated->pixel(j);
 	}
 	delete dilated;
-	
-}
-#else //defined(AGGREGATE_DILATE)
 
+}
+#elif AR_AGGREGATION_TYPE == AR_AGGREGATION_CLOSING
+/*! Aggregate the blobs together by closing */
 void blobsIntoAR (ColorMap* ARmap)
 {
+	unsigned dilateFactor = unsigned(AR_AGGREGATION  / sqrt(ARmap->PixelArea() ) );
+	
+	ARmap->dilateCircular(dilateFactor, 0)->erodeCircular(dilateFactor, 0);
+	
+	ARmap->colorizeConnectedComponents(1);
+}
 
-	// We agregate the blobs together by dilation 
+#elif AR_AGGREGATION_TYPE == AR_AGGREGATION_DILATE
+
+/*! Aggregate the blobs together by dilation */
+void blobsIntoAR (ColorMap* ARmap)
+{
 	unsigned dilateFactor = unsigned(AR_AGGREGATION  / sqrt(ARmap->PixelArea() ) );
 	
 	ARmap->dilateCircular(dilateFactor, 0);
 	
 	ARmap->colorizeConnectedComponents(1);
-	
 }
-#endif //defined(AGGREGATE_DILATE)
+
+#else
+#warning "Unknown AR_AGGREGATION_TYPE"
+#endif 
 
 
 

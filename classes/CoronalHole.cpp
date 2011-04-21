@@ -1,8 +1,9 @@
 #include "CoronalHole.h"
 
 using namespace std;
+extern std::string filenamePrefix;
 
-
+/*! Return the indice of the smallest class center */
 unsigned CHclass(const vector<RealFeature>& B)
 {
 	// The CoronalHole class has the smallest center
@@ -21,41 +22,46 @@ unsigned CHclass(const vector<RealFeature>& B)
 }
 
 
-// Function that saves the CH map for tracking
-// You pass it a ColorMap that has already all the keywords correctly set
+
+/*!
+@param segmentedMap ColorMap of the segmentation that has already all the keywords correctly set
+@param CHclass The color in the segmentedMap that correspond to the class of CH
+@param tresholdRawArea If set, the treshold fro removing small CH will be computed onthe Raw Area. Otherwise on the Area at disc center
+*/
 ColorMap* CoronalHoleMap(const ColorMap* segmentedMap, unsigned CHclass, bool tresholdRawArea)
 {
 	ColorMap* CHMap = new ColorMap(segmentedMap);
 
-	//We create a map of the class CHclass
+	/*! Create a map of the class CHclass */
 	CHMap->bitmap(segmentedMap, CHclass);
 
 	#if DEBUG >= 2
-	CHMap->writeFits(outputFileName + "CHmap.pure.fits");
+	CHMap->writeFits(filenamePrefix + "CHmap.pure.fits");
 	#endif
 
-	// We clean the colormap to remove very small components (like protons)
-	CHMap->erodeCircular(2,0)->dilateCircular(2,0);
+	/*! Clean the colormap to remove very small/thin components (like filaments)*/
+	unsigned cleaningFactor = unsigned(CH_CLEANING / sqrt(CHMap->PixelArea() ));
+	CHMap->erodeCircular(cleaningFactor,0)->dilateCircular(cleaningFactor,0);
 	
 	#if DEBUG >= 2
-	CHMap->writeFits(outputFileName + "CHmap.opened.fits");
+	CHMap->writeFits(filenamePrefix + "CHmap.opened.fits");
 	#endif
 	
 	
-	// We remove the parts off limb (Added by Cis to avoid large off-limbs CH to combine 2 well separated CH on-disk to be aggregated as one)
+	/*! Remove the parts off limb (Added by Cis to avoid large off-limbs CH to combine 2 well separated CH on-disk to be aggregated as one)*/
 	CHMap->nullifyAboveRadius(1.);
 	
-	// We agregate the blobs together
+	/*! Aggregate the blobs together*/
 	blobsIntoCH(CHMap);
 	
 	#if DEBUG >= 2
-	CHMap->writeFits(outputFileName + "CHmap.aggregated.fits");
+	CHMap->writeFits(filenamePrefix + "CHmap.aggregated.fits");
 	#endif
 	
-	// We don't need the CH post limb
+	/*! Remove the CH post limb*/
 	CHMap->nullifyAboveRadius(1.); 
 
-	// We erase small regions
+	/*! Erase the small regions*/
 	if(tresholdRawArea)
 		CHMap->tresholdRegionsByRawArea(MIN_CH_SIZE);
 	else
@@ -64,26 +70,19 @@ ColorMap* CoronalHoleMap(const ColorMap* segmentedMap, unsigned CHclass, bool tr
 	return CHMap;
 }
 
-/*
-		// I need the chain code
-		vector<Coordinate> chainCode = CHMap->chainCode(coronalHoles[i]->FirstPixel(), maxChainCodepoints);
-		// Oysh, I have only 70 chars to write the chaincode, each pair is taking up to 12 char
-		//CHMap->header.set<string>(id+"CHAIN", chainCode, "Coronal Hole Chain Code");
-	}
-*/
 
-/*
+#if !defined(CH_AGGREGATION_TYPE) || (CH_AGGREGATION_TYPE == CH_AGGREGATION_FRAGMENTED)
 void blobsIntoCH (ColorMap* CHmap)
 {
-	//We create  a map by dilation 
+	/*! Create a map by dilation */
 	unsigned dilateFactor = unsigned(CH_AGGREGATION  / sqrt(CHmap->PixelArea() ));
 	ColorMap* dilated = new ColorMap(CHmap);
 	dilated->dilateCircular(dilateFactor,CHmap->nullvalue());
 	dilated->colorizeConnectedComponents(1);
 	#if DEBUG >= 2
-	dilated->writeFits(outputFileName + "CHmap.dilated.fits");
+	dilated->writeFits(filenamePrefix + "CHmap.dilated.fits");
 	#endif
-	//We color the blobs using the dilated map 
+	/*! Color the blobs using the dilated map */
 	for (unsigned j=0; j < CHmap->NumberPixels(); ++j)
 	{
 		if (CHmap->pixel(j) != CHmap->nullvalue())
@@ -92,21 +91,31 @@ void blobsIntoCH (ColorMap* CHmap)
 	delete dilated;
 	
 }
-*/
 
+#elif CH_AGGREGATION_TYPE == CH_AGGREGATION_CLOSING
+/*! Aggregate the blobs together by closing */
 void blobsIntoCH (ColorMap* CHmap)
 {
-
-	// We agregate the blobs together by closing 
 	unsigned dilateFactor = unsigned(CH_AGGREGATION  / sqrt(CHmap->PixelArea() ) );
 	
 	CHmap->dilateCircular(dilateFactor, 0)->erodeCircular(dilateFactor, 0);
 	
 	CHmap->colorizeConnectedComponents(1);
-	
 }
 
+#elif CH_AGGREGATION_TYPE == CH_AGGREGATION_DILATE
 
+/*! Aggregate the blobs together by dilation */
+void blobsIntoCH (ColorMap* CHmap)
+{
+	unsigned dilateFactor = unsigned(CH_AGGREGATION  / sqrt(CHmap->PixelArea() ) );
+	
+	CHmap->dilateCircular(dilateFactor, 0);
+	
+	CHmap->colorizeConnectedComponents(1);
+}
 
-
+#else
+#warning "Unknown CH_AGGREGATION_TYPE"
+#endif
 

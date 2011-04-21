@@ -13,6 +13,15 @@
 #include "FeatureVector.h"
 #include "PCMClassifier.h"
 
+//! Modified Possibilistic C-Means Classifier
+/*!
+The class implements a modified version of the PCM clustering algorithm.
+
+The modification have been made by Vincent Barra and Cis Verbeeck, to reduce the coincident clusters
+problem and he derivation of the eta factors to zero.
+
+*/
+
 class PCM2Classifier : public virtual PCMClassifier
 {
 	protected :

@@ -1,6 +1,6 @@
 //! Program that does attribution (fix classification) and segmentation of EUV sun images
 /*!
-@defgroup attribution attribution.x
+@page attribution attribution.x
 
  This program takes a tuple of EUV sun images in fits format, does the requested attribution and segmentation.
  
@@ -149,7 +149,7 @@ using namespace dsr;
 
 
 
-string outputFileName;
+string filenamePrefix;
 
 int main(int argc, const char **argv)
 {
@@ -241,7 +241,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('a',"ar","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Active Region.\n\t", activeRegion);
 	arguments.new_named_string('t',"tr","coma separated list of positive integer (no spaces)", "\n\tOnly for treshold segmentation.\n\tThe parameter of the treshold segmentation.\n\tMust be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership\n\t", treshold);
 	arguments.new_flag('w', "tresholdRawArea", "\n\tSet this flag if you want the Active Regions to be tresholded according to their Raw area instead of their center area.\n\t", tresholdRawArea);
-	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
+	arguments.new_named_string('O', "outputDirectory","directory name", "\n\tThe name for the output directory.\n\t", outputDirectory);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
@@ -268,13 +268,17 @@ int main(int argc, const char **argv)
 	}
 
 
-	// We set the name of output files
-	// If none as been provided as a program argument, we set it to the current directory + type of classifier
-	if(outputFileName.empty())
+	// We check if the outputDirectory is a directory 
+	if (! isDir(outputDirectory))
 	{
-		outputFileName = "./" + classifierType + "." + segmentation;
+		filenamePrefix = outputDirectory+".";
+		outputDirectory = getPath(outputDirectory);
+		if (! isDir(outputDirectory))
+		{
+			cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
+			return EXIT_FAILURE;
+		}
 	}
-	outputFileName += ".";
 	
 	// We read the wavelengths and the initial centers from the centers file
 	if(readCentersFromFile(B, wavelengths, centersFileName))
@@ -332,13 +336,16 @@ int main(int argc, const char **argv)
 	{
 		images[p]->preprocessing(preprocessingSteps, radiusRatio);
 		#if DEBUG >= 2
-		images[p]->writeFitsImage(outputFileName + "preprocessed." + stripPath(imagesFilenames[p]) );
+		images[p]->writeFitsImage(outputDirectory + "/" + stripPath(stripSuffix(imagesFilenames[p])) + ".preprocessed.fits");
 		#endif
 		if(p > 0 && ! images[0]->checkSimilar(images[p]))
 		{
 			cerr<<"Warning: image "<<imagesFilenames[p]<<" is not similar to image "<<imagesFilenames[0]<<endl;
 		}
 	}
+
+	if(filenamePrefix.empty())
+		filenamePrefix = outputDirectory + "/" + time2string(images[0]->ObservationTime()) + ".";
 
 	// We add the images to the classifier
 	F->addImages(images);
@@ -523,7 +530,7 @@ int main(int argc, const char **argv)
 		ColorMap* ARMap = ActiveRegionMap(segmentedMap, ARClassNumber, tresholdRawArea);
 	
 		// We write the map of AR to a fits file
-		FitsFile file(outputFileName + "ARmap.fits", FitsFile::overwrite);
+		FitsFile file(filenamePrefix + "ARmap.fits", FitsFile::overwrite);
 		ARMap->writeFits(file, FitsFile::compress);
 	
 		// We get the AR Stats
@@ -562,7 +569,7 @@ int main(int argc, const char **argv)
 		ColorMap* CHMap = CoronalHoleMap(segmentedMap, CHClassNumber, tresholdRawArea);
 	
 		// We write the map of CH to a fits file
-		FitsFile file(outputFileName + "CHmap.fits", FitsFile::overwrite);
+		FitsFile file(filenamePrefix + "CHmap.fits", FitsFile::overwrite);
 		CHMap->writeFits(file, FitsFile::compress);
 	
 		// We get the CH Stats
@@ -615,7 +622,7 @@ int main(int argc, const char **argv)
 		segmentedMap->header.set("CHCLASS", CHClassNumber, "Color of the Coronal Hole class");
 	
 		// We write the segmentedMap to a fits file
-		FitsFile file(outputFileName + "SegmentedMap.fits", FitsFile::overwrite);
+		FitsFile file(filenamePrefix + "SegmentedMap.fits", FitsFile::overwrite);
 		segmentedMap->writeFits(file, FitsFile::compress);
 		// We get the RegionStats
 		vector<RegionStats*> regionStats = getRegionStats(segmentedMap, image);
@@ -667,7 +674,7 @@ int main(int argc, const char **argv)
 		*/
 		
 		// We write the MixMap to a fits file
-		FitsFile file(outputFileName + "MixMap.fits", FitsFile::overwrite);
+		FitsFile file(filenamePrefix + "MixMap.fits", FitsFile::overwrite);
 		ARMap->writeFits(file, FitsFile::compress);
 		// We get the RegionStats
 		vector<RegionStats*> regionStats = getRegionStats(ARMap, image);;

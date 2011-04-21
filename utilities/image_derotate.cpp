@@ -21,7 +21,7 @@
 using namespace std;
 using namespace dsr;
 
-string outputFileName;
+string filenamePrefix;
 
 extern template class Image<Real>;
 

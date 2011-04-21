@@ -31,13 +31,18 @@ For the same reason, it is not possible to do segmentation with the histogram cl
 The class is purely virtual as it does not define any classification method itself.
 */
 
+//! The type for the set of histogram feature vectors
+typedef std::set<HistoRealFeature> HistoFeatureVectorSet;
+
+//! The type for the set of feature vectors
+typedef std::vector<RealFeature> FeatureVectorSet;
 
 class HistogramClassifier
 {
 	protected :
 	
-		//! Histogram of the feature vector
-		std::set<HistoPixelFeature> HistoX;
+		//! Set of the histogram feature vector
+		HistoFeatureVectorSet HistoX;
 		
 		//! Size of the bin of the histogram
 		RealFeature binSize;
@@ -50,10 +55,10 @@ class HistogramClassifier
 
 	protected :
 		//! Function to insert a new HistoFeatureVector into HistoX
-		void insert(const HistoPixelFeature& xj);
+		void insert(const HistoRealFeature& xj);
 
 		//! Function to insert a new FeatureVector into HistoX
-		void insert(const PixelFeature& xj);
+		void insert(const RealFeature& xj);
 
 	public :
 		//! Constructor
@@ -62,6 +67,8 @@ class HistogramClassifier
 		HistogramClassifier(const RealFeature& binSize);
 		//! Constructor
 		HistogramClassifier(const std::string& histogramFilename);
+		//! Destructor
+		virtual ~HistogramClassifier(){}
 		
 		//! Routine to initialise the bin size
 		void initBinSize(const RealFeature& binSize);
@@ -77,6 +84,6 @@ class HistogramClassifier
 		virtual void addImages(std::vector<EUVImage*> images, const unsigned xaxes, const unsigned yaxes);
 		
 		//! Routine to add a vector of FeatureVector to the histogram
-		virtual void addFeatures(const std::vector<PixelFeature>& X);
+		virtual void addFeatures(const FeatureVectorSet& X);
 };
 #endif

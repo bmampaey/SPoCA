@@ -101,7 +101,25 @@ string stripPath(const string &name)
 string stripSuffix(const string &name) 
 {
 	size_t pos = name.rfind('.');
-	return  pos != string::npos ? name.substr(0,pos) : name;
+	return  pos != string::npos ? name.substr(0,pos-1) : name;
+}
+
+string getPath(const string &name) 
+{
+	size_t pos = name.rfind('/');
+	if (pos == string::npos)
+		return "./";
+	else
+		return  name.substr(0, pos+1);
+}
+
+string getSuffix(const string &name) 
+{
+	size_t pos = name.rfind('.');
+	if (pos == string::npos)
+		return "";
+	else
+		return  name.substr(pos);
 }
 
 bool isDir(const string path)

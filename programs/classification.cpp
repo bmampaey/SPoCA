@@ -1,6 +1,6 @@
 //! Program that does classification and segmentation of EUV sun images
 /*!
-@defgroup classification classification.x
+@page classification classification.x
 
  This program takes a tuple of EUV sun images in fits format, does the requested classification and segmentation.
  
@@ -131,6 +131,7 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 #include "../classes/Classifier.h"
 #include "../classes/FCMClassifier.h"
 #include "../classes/PCMClassifier.h"
+#include "../classes/PFCMClassifier.h"
 #include "../classes/PCM2Classifier.h"
 #include "../classes/SPoCAClassifier.h"
 #include "../classes/SPoCA2Classifier.h"
@@ -151,7 +152,7 @@ using namespace std;
 using namespace dsr;
 
 //! Prefix name for outputing intermediate result files
-string outputFileName;
+string filenamePrefix;
 
 int main(int argc, const char **argv)
 {
@@ -223,7 +224,7 @@ int main(int argc, const char **argv)
 	programDescription+="\nReal: " + string(typeid(Real).name());
 
 	ArgumentHelper arguments;
-	arguments.new_named_string('T',"classifierType", "string", "\n\tThe type of classifier to use for the classification.\n\tPossible values are : FCM, PCM, PCM2, SPOCA, SPOCA2, HFCM(Histogram FCM), HPCM(Histogram PCM), HPCM2(Histogram PCM2)\n\t", classifierType);
+	arguments.new_named_string('T',"classifierType", "string", "\n\tThe type of classifier to use for the classification.\n\tPossible values are : FCM, PCM, PCM2, SPoCA, SPoCA2, HFCM(Histogram FCM), HPCM(Histogram PCM), HPCM2(Histogram PCM2)\n\t", classifierType);
 	arguments.new_named_unsigned_int('i', "maxNumberIteration", "positive integer", "\n\tThe maximal number of iteration for the classification.\n\t", maxNumberIteration);
 	arguments.new_named_double('p',"precision", "positive real", "\n\tThe precision to be reached to stop the classification.\n\t",precision);
 	arguments.new_named_double('f',"fuzzifier", "positive real", "\n\tThe fuzzifier (m).\n\t",fuzzifier);
@@ -275,8 +276,13 @@ int main(int argc, const char **argv)
 	// We check if the outputDirectory is a directory 
 	if (! isDir(outputDirectory))
 	{
-		cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
-		return EXIT_FAILURE;
+		filenamePrefix = outputDirectory+".";
+		outputDirectory = getPath(outputDirectory);
+		if (! isDir(outputDirectory))
+		{
+			cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
+			return EXIT_FAILURE;
+		}
 	}
 	
 	// We read the wavelengths and the initial centers from the centers file
@@ -308,6 +314,11 @@ int main(int argc, const char **argv)
 		F = new PCMClassifier(fuzzifier);
 		classifierIsPossibilistic = true;
 	}
+	else if (classifierType == "PFCM")
+	{
+		F = new PFCMClassifier(fuzzifier, fuzzifier, 2, 6);
+		classifierIsPossibilistic = true;
+	}
 	else if (classifierType == "PCM2")
 	{
 		F = new PCM2Classifier(fuzzifier);
@@ -329,7 +340,7 @@ int main(int argc, const char **argv)
 		{
 			F = new HistogramFCMClassifier(histogramFile, fuzzifier);
 		}
-		else if(binSize)
+		else if(! binSize.has_null())
 		{
 			F = new HistogramFCMClassifier(binSize, fuzzifier);
 		}
@@ -347,7 +358,7 @@ int main(int argc, const char **argv)
 		{
 			F = new HistogramPCMClassifier(histogramFile, fuzzifier);
 		}
-		else if(binSize)
+		else if(! binSize.has_null())
 		{
 			F = new HistogramPCMClassifier(binSize, fuzzifier);
 		}
@@ -366,7 +377,7 @@ int main(int argc, const char **argv)
 		{
 			F = new HistogramPCM2Classifier(histogramFile, fuzzifier);
 		}
-		else if(binSize)
+		else if(! binSize.has_null())
 		{
 			F = new HistogramPCM2Classifier(binSize, fuzzifier);
 		}
@@ -402,7 +413,8 @@ int main(int argc, const char **argv)
 	
 	// We set the name of the output files prefix
 	// to the outputDirectory + the date_obs of the first image in the form YYYYMMDD_HHMMSS 
-	outputFileName = outputDirectory + "/" + time2string(images[0]->ObservationTime()) + ".";
+	if(filenamePrefix.empty())
+		filenamePrefix = outputDirectory + "/" + time2string(images[0]->ObservationTime()) + ".";
 	
 	// We add the images to the classifier
 	F->addImages(images);
@@ -434,7 +446,7 @@ int main(int argc, const char **argv)
 		dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
 		#if DEBUG >= 2
 		// We save the centers we found
-		F->saveB(outputFileName + "FCM.centers.txt");
+		F->saveB(filenamePrefix + "FCM.centers.txt");
 		#endif
 	}	
 	
@@ -444,6 +456,12 @@ int main(int argc, const char **argv)
 
 	// We have all the information we need, we can do the classification
 	F->classification(precision, maxNumberIteration);
+	
+	//TOBE REMOVED
+	B = F->getB();
+	sort(B.begin(), B.end());
+	cout<<classifierType<<": "<<B<<endl;
+	return EXIT_SUCCESS;
 
 	#ifdef HEK
 	// Hack asked by Veronique, to stabilize the centers
@@ -474,20 +492,15 @@ int main(int argc, const char **argv)
 					cout<<"The eta have been initialized to :"<<dynamic_cast<PCMClassifier*>(F)->getEta()<<endl;
 				}
 				#endif
-
-				// We have all the information we need, we can do the attribution
-				F->attribution();
-
-			
 			}
 		} 
 	#endif
 
-	// We need to use the value found for B to classify the normal images
-	if(classifierIsHistogram)
-	{
-		F->attribution();
-	}
+	// We always terminate by an attribution
+	// it sort the class centers
+	// it is needed when the Quotient Factor was bad
+	// or if the classifier is histogram
+	F->attribution();
 	
 	// We save the centers for the next run 
 	if (!centersFileName.empty())
@@ -496,17 +509,18 @@ int main(int argc, const char **argv)
 	}
 	else
 	{
-		F->saveB(outputFileName + "centers.txt");
+		F->saveB(filenamePrefix + "centers.txt");
 	}
 
-	// We save the histogram for the next run
+	// We save the histogram
 	if(classifierIsHistogram && !histogramFile.empty())
 	{
 		dynamic_cast<HistogramClassifier*>(F)->saveHistogram(histogramFile);
 	}
+	// We save the eta
 	if(classifierIsPossibilistic)
 	{
-		dynamic_cast<PCMClassifier*>(F)->saveEta(outputFileName + "eta.txt");
+		dynamic_cast<PCMClassifier*>(F)->saveEta(filenamePrefix + "eta.txt");
 	}
 	
 	// We do the segmentation
@@ -568,7 +582,6 @@ int main(int argc, const char **argv)
 	}
 	
 	//We add information about the classification to the segmentedMap 
-	
 	B = F->getB();
 	
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
@@ -644,7 +657,7 @@ int main(int argc, const char **argv)
 		ColorMap* ARMap = ActiveRegionMap(segmentedMap, ARClassNumber, tresholdRawArea);
 	
 		// We write the map of AR to a fits file
-		FitsFile file(outputFileName + "ARmap.fits", FitsFile::overwrite);
+		FitsFile file(filenamePrefix + "ARmap.fits", FitsFile::overwrite);
 		ARMap->writeFits(file, FitsFile::compress);
 	
 		// We get the AR Stats
@@ -683,7 +696,7 @@ int main(int argc, const char **argv)
 		ColorMap* CHMap = CoronalHoleMap(segmentedMap, CHClassNumber, tresholdRawArea);
 	
 		// We write the map of CH to a fits file
-		FitsFile file(outputFileName + "CHmap.fits", FitsFile::overwrite);
+		FitsFile file(filenamePrefix + "CHmap.fits", FitsFile::overwrite);
 		CHMap->writeFits(file, FitsFile::compress);
 	
 		// We get the CH Stats
@@ -736,7 +749,7 @@ int main(int argc, const char **argv)
 		segmentedMap->header.set("CHCLASS", CHClassNumber, "Color of the Coronal Hole class");
 	
 		// We write the segmentedMap to a fits file
-		FitsFile file(outputFileName + "segmentedMap.fits", FitsFile::overwrite);
+		FitsFile file(filenamePrefix + "segmentedMap.fits", FitsFile::overwrite);
 		segmentedMap->writeFits(file, FitsFile::compress);
 		// We get the RegionStats
 		vector<RegionStats*> regionStats = getRegionStats(segmentedMap, image);

@@ -9,13 +9,10 @@
 #include "../classes/tools.h"
 #include "../classes/constants.h"
 
-#include "../classes/Image.h"
-#include "../classes/SunImage.h"
+
+#include "../classes/EUVImage.h"
 #include "../classes/ArgumentHelper.h"
 #include "../classes/mainutilities.h"
-#include "../classes/Region.h"
-#include "../classes/Coordinate.h"
-
 
 #ifndef Real
 #define Real float
@@ -25,8 +22,6 @@ using namespace std;
 using namespace dsr;
 
 string filenamePrefix;
-
-extern template class Image<Real>;
 
 int main(int argc, const char **argv)
 {
@@ -71,19 +66,23 @@ int main(int argc, const char **argv)
 		cerr<<imagesFilenames.size()<<" fits image file given as parameter, at least 1 must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
-	
 
-	SunImage* image = getImageFromFile(imageType, imagesFilenames[0]);
-	image->dilateCircular(image->Xaxes()/50,0);
-	vector<Region*> regions = getRegions(image);
-	for (unsigned r = 0; r < regions.size(); ++r)
-	{
-		vector<Coordinate> chain_code = image->chainCode(regions[r]->FirstPixel(), 20);
-		for (unsigned i=0; i < chain_code.size(); ++i)
-		{
-			image->drawCross(30, chain_code[i]);
-		}
-	}
-	image->writeFitsImage(stripPath(stripSuffix(imagesFilenames[0])) + ".chain_coded.fits");
+	FitsFile file(imagesFilenames[0], FitsFile::write);
+	file.moveToTable("ActiveRegionStats");
+	vector<string> data1;
+	cout<<"DATE_OBS"<<endl<<"-------"<<endl;
+	file.readColumn("DATE_OBS", data1);
+	for (unsigned i = 0; i < data1.size(); ++i)
+		cout<<data1[i]<<endl;
+		
+	vector<unsigned> data2;
+	cout<<"XFIRST"<<endl<<"-------"<<endl;
+	file.readColumn("XFIRST", data2);
+	for (unsigned i = 0; i < data2.size(); ++i)
+		cout<<data2[i]<<endl;
+	
+	vector<unsigned> data3(data2.size(), 100);
+	file.writeColumn("COLOR", data3, FitsFile::overwrite);
+	
 	return EXIT_SUCCESS;
 }

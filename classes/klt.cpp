@@ -387,12 +387,12 @@ float min_displacement)
 	/* Write internal images */
 	for (unsigned L = 0 ; L < pyramidLevels ; L++)
 	{
-		pyramid1[L]->writeFits(outputFileName + "img1.L" + itos(L) + ".fits");
-		pyramid1_gradx[L]->writeFits(outputFileName + "img1.L" + itos(L) + "_dx.fits");
-		pyramid1_grady[L]->writeFits(outputFileName + "img1.L" + itos(L) + "_dy.fits");
-		pyramid2[L]->writeFits(outputFileName + "img2.L" + itos(L) + ".fits");
-		pyramid2_gradx[L]->writeFits(outputFileName + "img2.L" + itos(L) + "_dx.fits");
-		pyramid2_grady[L]->writeFits(outputFileName + "img2.L" + itos(L) + "_dy.fits");
+		pyramid1[L]->writeFits(filenamePrefix + "img1.L" + itos(L) + ".fits");
+		pyramid1_gradx[L]->writeFits(filenamePrefix + "img1.L" + itos(L) + "_dx.fits");
+		pyramid1_grady[L]->writeFits(filenamePrefix + "img1.L" + itos(L) + "_dy.fits");
+		pyramid2[L]->writeFits(filenamePrefix + "img2.L" + itos(L) + ".fits");
+		pyramid2_gradx[L]->writeFits(filenamePrefix + "img2.L" + itos(L) + "_dx.fits");
+		pyramid2_grady[L]->writeFits(filenamePrefix + "img2.L" + itos(L) + "_dy.fits");
 	}
 	#endif
 	/* For each feature, do ... */

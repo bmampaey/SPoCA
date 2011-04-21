@@ -1,20 +1,20 @@
 CC=g++
-CFLAGS=-Wall -fkeep-inline-functions -O3 -g
+CFLAGS=-Wall -fkeep-inline-functions -g -O3
 TRACKINGLFLAGS=-lpthread
 IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lXpm -lXmu -lXext -lXt -lSM -lICE  -lXinerama -lX11 -ldl -ltermcap -lrt -lm /usr/lib/libXm.a
 MAGICKLFLAGS=`Magick++-config --cppflags --ldflags --libs`
 MAGICKCFLAGS=`Magick++-config --cppflags`
 DFLAGS=
-LFLAGS=-lcfitsio 
+LFLAGS=-lcfitsio
 
 all:bin/classification.x
-clean: rm bin/classification.x objects/classification.o objects/FitsFile.o objects/Header.o objects/CoronalHoleStats.o objects/Coordinate.o objects/Region.o objects/CoronalHole.o objects/ActiveRegionStats.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/EUVImage.o objects/SunImage.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+clean: rm bin/classification.x objects/classification.o objects/FitsFile.o objects/Header.o objects/CoronalHoleStats.o objects/Coordinate.o objects/Region.o objects/CoronalHole.o objects/ActiveRegionStats.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PFCMClassifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/EUVImage.o objects/SunImage.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
 
 
-bin/classification.x : classification.mk objects/classification.o objects/FitsFile.o objects/Header.o objects/CoronalHoleStats.o objects/Coordinate.o objects/Region.o objects/CoronalHole.o objects/ActiveRegionStats.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/EUVImage.o objects/SunImage.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/classification.o objects/FitsFile.o objects/Header.o objects/CoronalHoleStats.o objects/Coordinate.o objects/Region.o objects/CoronalHole.o objects/ActiveRegionStats.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/EUVImage.o objects/SunImage.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/classification.x
+bin/classification.x : classification.mk objects/classification.o objects/FitsFile.o objects/Header.o objects/CoronalHoleStats.o objects/Coordinate.o objects/Region.o objects/CoronalHole.o objects/ActiveRegionStats.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PFCMClassifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/EUVImage.o objects/SunImage.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/classification.o objects/FitsFile.o objects/Header.o objects/CoronalHoleStats.o objects/Coordinate.o objects/Region.o objects/CoronalHole.o objects/ActiveRegionStats.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/HistogramPCMClassifier.o objects/HistogramPCM2Classifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/Image.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PFCMClassifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/EUVImage.o objects/SunImage.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/classification.x
 
-objects/classification.o : classification.mk programs/classification.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/ColorMap.h classes/EUVImage.h classes/Classifier.h classes/FCMClassifier.h classes/PCMClassifier.h classes/PCM2Classifier.h classes/SPoCAClassifier.h classes/SPoCA2Classifier.h classes/HistogramFCMClassifier.h classes/HistogramPCM2Classifier.h classes/HistogramPCMClassifier.h classes/FeatureVector.h classes/RegionStats.h classes/ActiveRegion.h classes/ActiveRegionStats.h classes/CoronalHole.h classes/CoronalHoleStats.h classes/FitsFile.h
+objects/classification.o : classification.mk programs/classification.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/ColorMap.h classes/EUVImage.h classes/Classifier.h classes/FCMClassifier.h classes/PCMClassifier.h classes/PFCMClassifier.h classes/PCM2Classifier.h classes/SPoCAClassifier.h classes/SPoCA2Classifier.h classes/HistogramFCMClassifier.h classes/HistogramPCM2Classifier.h classes/HistogramPCMClassifier.h classes/FeatureVector.h classes/RegionStats.h classes/ActiveRegion.h classes/ActiveRegionStats.h classes/CoronalHole.h classes/CoronalHoleStats.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) programs/classification.cpp -o objects/classification.o
 
 objects/FitsFile.o : classification.mk classes/FitsFile.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Header.h
@@ -32,13 +32,13 @@ objects/Coordinate.o : classification.mk classes/Coordinate.cpp
 objects/Region.o : classification.mk classes/Region.cpp classes/constants.h classes/Coordinate.h classes/ColorMap.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Region.cpp -o objects/Region.o
 
-objects/CoronalHole.o : classification.mk classes/CoronalHole.cpp classes/FeatureVector.h classes/ColorMap.h classes/EUVImage.h classes/Coordinate.h classes/CoronalHoleStats.h
+objects/CoronalHole.o : classification.mk classes/CoronalHole.cpp classes/FeatureVector.h classes/ColorMap.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/CoronalHole.cpp -o objects/CoronalHole.o
 
 objects/ActiveRegionStats.o : classification.mk classes/ActiveRegionStats.cpp classes/constants.h classes/Region.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ActiveRegionStats.cpp -o objects/ActiveRegionStats.o
 
-objects/ActiveRegion.o : classification.mk classes/ActiveRegion.cpp classes/FeatureVector.h classes/ColorMap.h classes/EUVImage.h classes/Coordinate.h classes/ActiveRegionStats.h
+objects/ActiveRegion.o : classification.mk classes/ActiveRegion.cpp classes/FeatureVector.h classes/ColorMap.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ActiveRegion.cpp -o objects/ActiveRegion.o
 
 objects/RegionStats.o : classification.mk classes/RegionStats.cpp classes/constants.h classes/Region.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h
@@ -70,6 +70,9 @@ objects/SPoCAClassifier.o : classification.mk classes/SPoCAClassifier.cpp classe
 
 objects/PCM2Classifier.o : classification.mk classes/PCM2Classifier.cpp classes/EUVImage.h classes/FeatureVector.h classes/PCMClassifier.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/PCM2Classifier.cpp -o objects/PCM2Classifier.o
+
+objects/PFCMClassifier.o : classification.mk classes/PFCMClassifier.cpp classes/EUVImage.h classes/FeatureVector.h classes/PCMClassifier.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/PFCMClassifier.cpp -o objects/PFCMClassifier.o
 
 objects/PCMClassifier.o : classification.mk classes/PCMClassifier.cpp classes/EUVImage.h classes/FeatureVector.h classes/FCMClassifier.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/PCMClassifier.cpp -o objects/PCMClassifier.o

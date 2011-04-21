@@ -1,0 +1,1 @@
+../../spoca_ar_hek/spoca.pro

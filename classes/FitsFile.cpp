@@ -225,37 +225,25 @@ int FitsFile::getBitpix(int datatype)
 			bitpix = LONGLONG_IMG;
 			break;
 		case TULONG:
-			//#ifdef STRICTFITS
-			//bitpix = LONGLONG_IMG;
-			//#else
 			bitpix = ULONG_IMG;//There is no ULONGLONG_IMG
-			//#endif
 			break;
 		case TINT:
 			bitpix = LONGLONG_IMG;
 			break;
 		case TUINT:
-			//#ifdef STRICTFITS
-			//bitpix = LONGLONG_IMG;
-			//#else
 			bitpix = ULONG_IMG;
-			//#endif
 			break;
 		case TSHORT:
 			bitpix = SHORT_IMG;
 			break;
 		case TUSHORT:
-			bitpix = SHORT_IMG;
+			bitpix = USHORT_IMG;
 			break;
 		case TBYTE:
 			bitpix = BYTE_IMG;
 			break;
 		case TSBYTE:
-			//#ifdef STRICTFITS
-			//bitpix = BYTE_IMG;
-			//#else
 			bitpix = SBYTE_IMG;
-			//#endif
 			break;
 		default:
 			cerr<<"Error determining bitpix for datatype "<<datatype<<". Setting it to double."<<endl;
@@ -296,7 +284,7 @@ FitsFile& FitsFile::readHeader(Header& header)
 	char value[FLEN_VALUE];
 	char key[FLEN_KEYWORD];
 	int keylength = 0;
-	char* comment = NULL; /**<By specifying NULL we say that we don't want the comments	*/
+	char* comment = NULL; //By specifying NULL we say that we don't want the comments
 	int i = 0;
 	while(status != KEY_OUT_BOUNDS)
 	{

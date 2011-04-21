@@ -140,7 +140,8 @@ void colorize(RegionGraph::node& me)
 	RegionGraph::adjlist::const_iterator biggestParent = parentsList.begin();
 	for (RegionGraph::adjlist::const_iterator itadj = parentsList.begin(); itadj != itadjEnd; ++itadj)
 	{
-		colorize(itadj->node());				  //Carefull there is recursion here
+		//Carefull there is recursion here
+		colorize(itadj->node()); 
 		// We search for the biggest parent
 		if(itadj->edge().value() > biggestParent->edge().value())
 			biggestParent = itadj;
@@ -150,7 +151,8 @@ void colorize(RegionGraph::node& me)
 	
 	if(biggestParent != itadjEnd && me.value() == biggestSon(&(biggestParent->node()))->value() )
 		me.value()->setColor(biggestParent->node().value()->Color());
-	else					 //There was a split or a merge, or I have no parrents
+	//There was a split or a merge, or I have no parrents
+	else
 		me.value()->setColor(++newColor);
 
 }
@@ -178,7 +180,7 @@ bool path(const RegionGraph::node* n, const Region* r)
 void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, const string graphName, bool isColored)
 {
 
-	ofstream graphFile((outputFileName + graphName + ".dot").c_str());
+	ofstream graphFile((filenamePrefix + graphName + ".dot").c_str());
 	if (graphFile.good())
 	{
 

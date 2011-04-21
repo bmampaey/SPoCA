@@ -1,3 +1,42 @@
+//! Program that traces the contours of colored regions for display.
+/*!
+@page contours contours.x
+
+ This program takes color maps in fits format, and for each one extract the contours and writes them to a png image.
+ The background will be transparent, so that the contours can be overlayed on another image. 
+ The name of the png image will be the name of the original file with "contours" appended.
+ 
+ N.B.: In fits files, there is no colors, so they are represented as a number in the color maps.
+ When creating the png image, a mapping is done from a number to a color.
+ That mapping is consistent between images and calls so that a region that has been tracked keep the same color in the successive images. 
+ 
+ @section usage Usage
+ 
+ <tt> contours.x -h </tt>
+ 
+ Calling the programs with -h will provide you with help 
+ 
+ <tt> contours.x [-option optionvalue, ...] fitsFileName1 fitsFileName2 </tt>
+ 
+@param width	The width of the contour in pixels.
+
+@param internal	Set this flag if you want the contours inside the regions.
+<BR>Choose this for example if the regions may touch each other.
+ 
+@param external	Set this flag if you want the contours outside the regions.
+<BR> Choose this if you want to see exactly wich pixels are part of the region.
+
+@param fits	Set this flag if you want the output saved as fits instead of png.
+
+@param mastic	Set this flag if you want to fill holes in the connected components before tracing the contours.
+
+
+See @ref Compilation_Options for constants and parameters at compilation time.
+
+*/
+
+
+
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -21,7 +60,7 @@ using Magick::ColorGray;
 using Magick::Geometry;
 using Magick::Quantum;
 
-string outputFileName;
+string filenamePrefix;
 
 int main(int argc, const char **argv)
 {
@@ -43,10 +82,8 @@ int main(int argc, const char **argv)
 	
 	string programDescription = "This Program makes contours out off color regions.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
-	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
-	programDescription+="\nReal: " + string(typeid(Real).name());
+	programDescription+="\nColorType: " + string(typeid(ColorType).name());
 
 	ArgumentHelper arguments;
 	arguments.new_named_unsigned_int('w', "width", "positive integer", "\n\tThe width of the contour.\n\t", width);
@@ -67,7 +104,7 @@ int main(int argc, const char **argv)
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 		image.readFits(imagesFilenames[p]);
-		outputFileName =  stripSuffix(imagesFilenames[p]) + ".contours.";
+		filenamePrefix =  stripSuffix(imagesFilenames[p]) + ".contours.";
 		
 		if(mastic)
 			image.removeHoles();
@@ -81,7 +118,7 @@ int main(int argc, const char **argv)
 			
 		if(fits)
 		{
-			image.writeFits(outputFileName + "fits");
+			image.writeFits(filenamePrefix + "fits");
 		}
 		else //png
 		{
@@ -97,7 +134,7 @@ int main(int argc, const char **argv)
 					}
 				}
 			}
-			pngImage.write(outputFileName + "png");
+			pngImage.write(filenamePrefix + "png");
 		}
 		
 	}

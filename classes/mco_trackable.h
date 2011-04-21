@@ -20,7 +20,7 @@
 #include "gradient.h"
 #include "../cgt/graph.h"
 
-extern std::string outputFileName;
+extern std::string filenamePrefix;
 extern unsigned long newColor;
 
 class TargetSet 

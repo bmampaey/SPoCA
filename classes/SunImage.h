@@ -54,7 +54,7 @@ class SunImage : public Image<T>
 		//! Constructor for an SunImage of size xAxes x yAxes, with sun center and radius
 		SunImage(const unsigned xAxes, const unsigned yAxes, const Coordinate suncenter, const double radius);
 		
-		//! Constructor for an SunImage of size xAxes x yAxes, with an header
+		//! Constructor for an SunImage with an header
 		SunImage(const Header& header);
 		
 		//! Copy Constructor
@@ -87,10 +87,10 @@ class SunImage : public Image<T>
 		//! Accessor to retrieve the header
 		Header& getHeader();
 
-		//! Routines to read the sun parameters from the header
+		//! Routine to read the sun parameters from the header
 		virtual void postRead(){};
 		
-		//! Routines to write the sun parameters to the header
+		//! Routine to write the sun parameters to the header
 		virtual void preWrite(){};
 		
 		//! Routine to copy the parameters from another SunImage

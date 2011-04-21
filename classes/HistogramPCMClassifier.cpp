@@ -24,88 +24,117 @@ HistogramPCMClassifier::HistogramPCMClassifier(const std::string& histogramFilen
 
 void HistogramPCMClassifier::attribution()
 {
+	PCMClassifier::sortB();
 	PCMClassifier::computeU();
 }
 
 void HistogramPCMClassifier::computeU()
 {
 	U.resize(numberBins * numberClasses);
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
+	
+	MembershipSet::iterator uij = U.begin();
+	if (fuzzifier == 1.5)
 	{
-		unsigned j = 0;
-		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
 		{
-
-			U[i*numberBins+j] = d2(*xj,B[i]) / eta[i] ;
-			if(fuzzifier == 1.5)
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				U[i*numberBins+j] *=  U[i*numberBins+j];
+				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = 1. / (1. + *uij * *uij);
 			}
-			else if(fuzzifier != 2)
-			{
-				U[i*numberBins+j] = pow( U[i*numberBins+j] , Real(1./(fuzzifier-1.)));
-			}
-			
-			U[i*numberBins+j] = 1. / (1. + U[i*numberBins+j]);
-
 		}
-
 	}
-
+	else if (fuzzifier == 2)
+	{
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = 1. / (1. + *uij);
+			}
+		}
+	}
+	else
+	{
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = 1. / (1. + pow(*uij , Real(1./(fuzzifier-1.))));
+			}
+		}
+	}
 }
 
 
 void HistogramPCMClassifier::computeEta()
 {
-
-	eta = vector<Real>(numberClasses,0.);
-
-	Real sum, uij_m;
-
+	eta.assign(numberClasses,0.);
+	vector<Real> sum(numberClasses,0.);
+	
+	MembershipSet::iterator uij = U.begin();
+	if (fuzzifier == 2)
+	{
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				Real uij_m = *uij * *uij * xj->c;
+				eta[i] += uij_m * d2(*xj,B[i]);
+				sum[i] += uij_m;
+			}
+		}
+	}
+	else
+	{
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				Real uij_m = pow(*uij,fuzzifier) * xj->c;
+				eta[i] += uij_m * d2(*xj,B[i]);
+				sum[i] += uij_m;
+			}
+		}
+	}
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
-		sum = 0;
-		unsigned j = 0;
-		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
-		{
-
-			if(fuzzifier == 2)
-				uij_m = U[i*numberBins+j] * xj->c * U[i*numberBins+j] ;
-			else
-				uij_m = pow(U[i*numberBins+j],fuzzifier) * xj->c;
-
-			eta[i] += uij_m*d2(*xj,B[i]);
-			sum += uij_m;
-
-		}
-		eta[i] /= sum;
+		eta[i] /= sum[i];
 	}
-
 }
 
-
+/*!
+This is another method to compute eta.
+It was described by Krishnapuram and Keller and is faster than the other computeEta method.
+*/
 void HistogramPCMClassifier::computeEta(Real alpha)
 {
-	//This is the other method to calculate eta, descibed by Krishnapuram and Keller. It is a little faster by the way
-	eta = vector<Real>(numberClasses,0.);
+	eta.assign(numberClasses,0.);
+	vector<Real> sum(numberClasses,0.);
+	MembershipSet::iterator uij = U.begin();
+	for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
+	{
+		for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+		{
+			if (*uij > alpha)
+			{
+				eta[i] += d2(*xj,B[i]);
+				sum[i] +=  xj->c;
+			}
+		}
+	}
 
-	Real sum;
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
-		sum = 0;
-		unsigned j = 0;
-		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
+		if(sum[i] != 0)
+			eta[i] /= sum[i];
+		else
 		{
-			if (U[i*numberBins+j]>alpha)
-			{
-				eta[i] += d2(*xj,B[i]) * xj->c;
-				sum +=  xj->c;
-			}
-
+			cerr<<"Error : Computation of Eta failed for class "<<i<<endl;
+			exit(EXIT_FAILURE);
 		}
-
-		eta[i] /= sum;
-
 	}
 }
 
@@ -113,31 +142,37 @@ void HistogramPCMClassifier::computeEta(Real alpha)
 Real HistogramPCMClassifier::computeJ() const
 {
 	Real result = 0;
-
+	vector<Real> sum(numberClasses,0.);
+	MembershipSet::const_iterator uij = U.begin();
+	if (fuzzifier == 2)
+	{
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				result += *uij * *uij * d2(*xj,B[i]) * xj->c;
+				sum[i] += (1 - *uij) * (1 - *uij) * xj->c; 
+			}
+		}
+	}
+	else
+	{
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				result += pow( *uij, fuzzifier) * d2(*xj,B[i]) * xj->c;
+				sum[i] += pow(1. - *uij, fuzzifier) * xj->c; 
+			}
+		}
+	}
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
-		Real sum1 = 0, sum2 = 0;
-		unsigned j = 0;
-		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
-		{
-
-			if(fuzzifier == 2)
-				sum1 +=  U[i*numberBins+j] * U[i*numberBins+j] * d2(*xj,B[i]) * xj->c;
-			else
-				sum1 +=  pow(U[i*numberBins+j], fuzzifier) * d2(*xj,B[i]) * xj->c;
-
-			if(fuzzifier == 2)
-				sum2 += (1 - U[i*numberBins+j]) * (1 - U[i*numberBins+j]) * xj->c;
-			else
-				sum2 +=  pow(1 - U[i*numberBins+j], fuzzifier) * xj->c;
-
-		}
-		result += sum1 + (eta[i] * sum2);
+		result += eta[i] * sum[i];
 	}
 	return result;
 
 }
-
 
 
 // VERSION WITH LIMITED VARIATION OF ETA W.R.T. ITS INITIAL VALUE
@@ -161,7 +196,7 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 	#endif
 
 	#if DEBUG >= 2
-		stepinit(outputFileName+"iterations.txt");
+		stepinit(filenamePrefix+"iterations.txt");
 		unsigned decimals = unsigned(1 - log10(precision));;
 	#endif
 
@@ -173,7 +208,7 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 	Real precisionReached = numeric_limits<Real>::max();
 	vector<RealFeature> oldB = B;
 	vector<Real> start_eta = eta;
-	bool recomputeEta = FIXETA != TRUE;
+	bool recomputeEta = FIXETA != true;
 	for (unsigned iteration = 0; iteration < maxNumberIteration && precisionReached > precision ; ++iteration)
 	{
 
@@ -215,63 +250,71 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 }
 
 
-
-
 Real HistogramPCMClassifier::assess(vector<Real>& V)
 {
-	V = vector<Real>(numberClasses, 0.);
+	V.assign(numberClasses, 0.);
 	Real score = 0;
-
+	unsigned numberElements = 0;
+	vector<Real> sum(numberClasses,0.);
+	
 	//This is the vector of the min distances between the centers Bi and all the others centers Bii with ii!=i
 	vector<Real> minDist(numberClasses, numeric_limits<Real>::max());
-	//The min distance between all centers
+	//The min distance between any 2 centers
 	Real minDistBiBii = numeric_limits<Real>::max() ;
 
 	Real distBiBii;
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
+		{
+			distBiBii = d2(B[i],B[ii]);
+			if(distBiBii < minDist[i])
+				minDist[i] = distBiBii;
+			if(distBiBii < minDist[ii])
+				minDist[ii] = distBiBii;
+		}
+	
+	MembershipSet::iterator uij = U.begin();
+	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if (fuzzifier == 2)
 	{
-		distBiBii = d2(B[i],B[ii]);
-		if(distBiBii < minDist[i])
-			minDist[i] = distBiBii;
-		if(distBiBii < minDist[ii])
-			minDist[ii] = distBiBii;
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				V[i] += d2(*xj,B[i]) * *uij * *uij * xj->c;
+				sum[i] += (1 - *uij) * (1 - *uij) * xj->c; 
+				numberElements += xj->c;
+			}
+		}
 	}
-
+	else
+	{
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				V[i] += d2(*xj,B[i]) * pow(*uij, fuzzifier) * xj->c;
+				sum[i] += pow(1. - *uij, fuzzifier) * xj->c; 
+				numberElements += xj->c;
+			}
+		}
+	}
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
-		Real sum1 = 0, sum2 = 0;
-		unsigned j = 0;
-		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj, ++j)
-		{
-
-			if(fuzzifier == 2)
-				sum1 +=  U[i*numberBins+j] * U[i*numberBins+j] * d2(*xj,B[i]) * xj->c;
-			else
-				sum1 +=  pow(U[i*numberBins+j], fuzzifier) * d2(*xj,B[i]) * xj->c;
-
-			if(fuzzifier == 2)
-				sum2 += (1 - U[i*numberBins+j]) * (1 - U[i*numberBins+j]) * xj->c;
-			else
-				sum2 +=  pow(1 - U[i*numberBins+j], fuzzifier) * xj->c;
-
-		}
-
-		V[i] = sum1 + (eta[i] * sum2);
+		V[i] += eta[i] * sum[i];
 		score += V[i];
 		if(minDist[i] < minDistBiBii)
 			minDistBiBii = minDist[i];
 
-		V[i] /= (minDist[i] * numberBins);
+		V[i] /= (minDist[i] * numberElements);
 
 	}
 
-	score /= (minDistBiBii * numberBins);
+	score /= (minDistBiBii * numberElements);
+
 	return score;
 
 }
-
-
 
 
 void HistogramPCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FCMfuzzifier)
@@ -280,7 +323,7 @@ void HistogramPCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration
 	#if DEBUG >= 1
 	if(HistoX.size() == 0)
 	{
-		cerr<<"Error : The vector of FeatureVector must be initialized before doing a centers only init."<<endl;
+		cerr<<"Error : The set of FeatureVector must be initialized before doing a centers only init."<<endl;
 		exit(EXIT_FAILURE);
 
 	}
@@ -299,7 +342,7 @@ void HistogramPCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration
 
 	
 	//We like our centers to be sorted 
-	sort(B.begin(), B.end());
+	HistogramFCMClassifier::sortB();
 	HistogramFCMClassifier::computeU();
 	fuzzifier = temp;
 	//We initialise eta

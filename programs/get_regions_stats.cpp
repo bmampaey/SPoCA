@@ -1,6 +1,6 @@
 //! Program that computes the regions statistics of sun images
 /*!
-@defgroup get_region_stats get_region_stats.x
+@page get_region_stats get_region_stats.x
 
  This program takes a colorized map in fits format as a mask of regions, and computes different statistics on the sun images provided
  
@@ -79,7 +79,7 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 using namespace std;
 using namespace dsr;
 
-string outputFileName;
+string filenamePrefix;
 
 
 
@@ -147,17 +147,15 @@ int main(int argc, const char **argv)
 	ColorMap* colorizedMap = dynamic_cast<ColorMap*> (getImageFromFile("ColorMap", colorizedMapFileName));
 	colorizedMap->nullifyAboveRadius(1);
 	Coordinate sunCenter = colorizedMap->SunCenter();
-	double sunRadius = colorizedMap->SunRadius();
-
-
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 	
 		//We read and preprocess the sun image
 		EUVImage* image = getImageFromFile(imageType, imagesFilenames[p]);
+		image->recenter(sunCenter);
 		image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
 		#if DEBUG >= 2
-		image->writeFitsImage(outputFileName + "preprocessed." +  stripPath(imagesFilenames[p]) );
+		image->writeFitsImage(filenamePrefix + "preprocessed." +  stripPath(imagesFilenames[p]) );
 		#endif
 	
 		if(!colorizedMap->checkSimilar(image))

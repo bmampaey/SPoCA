@@ -20,7 +20,7 @@
 #include "gradient.h"
 #include "../cgt/graph.h"
 
-extern std::string outputFileName;
+extern std::string filenamePrefix;
 extern ColorType newColor;
 
 typedef cgt::graph<Region*, int> RegionGraph;

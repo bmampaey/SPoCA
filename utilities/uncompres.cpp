@@ -10,7 +10,9 @@
 #include <iomanip>
 # include <algorithm>
 
-#include "../classes/SunImage.h"
+#include "../classes/EUVImage.h"
+#include "../classes/ColorMap.h"
+#include "../classes/FitsFile.h"
 #include "../classes/ArgumentHelper.h"
 #include "../classes/mainutilities.h"
 
@@ -18,7 +20,7 @@
 using namespace std;
 using namespace dsr;
 
-string outputFileName;
+string filenamePrefix;
 
 
 int main(int argc, const char **argv)
@@ -48,10 +50,21 @@ int main(int argc, const char **argv)
 		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file name given as parameter, 2 must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
-
-	SunImage* image = getImageFromFile("SunImage", imagesFilenames[0]);
-	image->writeFitsImage(imagesFilenames[1]);
-	delete image;
+	FitsFile file(imagesFilenames[0]);
+	Header header;
+	file.readHeader(header);
+	if(isColorMap(header))
+	{
+		ColorMap image;
+		image.readFits(file);
+		image.writeFits(imagesFilenames[1]);
+	}
+	else
+	{
+		EUVImage image;
+		image.readFits(file);
+		image.writeFits(imagesFilenames[1]);
+	}
 
 	return EXIT_SUCCESS;
 }

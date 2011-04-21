@@ -3,7 +3,7 @@
 using namespace std;
 
 FCMClassifier::FCMClassifier(Real fuzzifier)
-:Classifier(),fuzzifier(fuzzifier)
+:Classifier(fuzzifier)
 {
 	#if DEBUG >= 1
 	if (fuzzifier == 1)
@@ -19,71 +19,86 @@ FCMClassifier::FCMClassifier(Real fuzzifier)
 
 void FCMClassifier::computeB()
 {
-
-	Real sum, uij_m;
-
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
+	B.assign(numberClasses, 0.);
+	vector<Real> sum(numberClasses, 0.);
+	
+	MembershipSet::iterator uij = U.begin();
+	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if (fuzzifier == 2)
 	{
-		B[i] = 0.;
-		sum = 0;
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 		{
-			if (fuzzifier == 2)
-				uij_m = U[i*numberValidPixels+j] * U[i*numberValidPixels+j];
-			else
-				uij_m = pow(U[i*numberValidPixels+j],fuzzifier);
-
-			B[i] += X[j] * uij_m;
-			sum += uij_m;
-
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				Real uij_m = *uij * *uij;
+				B[i] += *xj * uij_m;
+				sum[i] += uij_m;
+			}
 		}
-
-		B[i] /= sum;
-
 	}
+	else
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				Real uij_m = pow(*uij,fuzzifier);
+				B[i] += *xj * uij_m;
+				sum[i] += uij_m;
+			}
+		}
+	}
+	
+	for (unsigned i = 0 ; i < numberClasses ; ++i)
+		B[i] /= sum[i];
 }
+
 
 
 void FCMClassifier::computeU()
 {
-
-	Real sum;
 	vector<Real> d2XjB(numberClasses);
-	unsigned i;
-	U.resize(numberValidPixels * numberClasses);
+	U.resize(numberFeatureVectors * numberClasses);
 	
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	unsigned i;
+	MembershipSet::iterator uij = U.begin();
+	
+	for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 	{
 		for (i = 0 ; i < numberClasses ; ++i)
 		{
-			d2XjB[i] = d2(X[j],B[i]);
+			d2XjB[i] = d2(*xj,B[i]);
 			if (d2XjB[i] < precision)
 				break;
 		}
-		if(i < numberClasses)					  // The pixel is very close to B[i]
+		// The pixel is very close to B[i]
+		if(i < numberClasses)
 		{
-			for (unsigned ii = 0 ; ii < numberClasses ; ++ii)
+			for (unsigned ii = 0 ; ii < numberClasses ; ++ii, ++uij)
 			{
-				U[ii*numberValidPixels+j] = 0.;
+				*uij = i != ii? 0. : 1.;
 			}
-			U[i*numberValidPixels+j] = 1.;
+		}
+		// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
+		else if (fuzzifier == 2)
+		{
+			for (i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				Real sum = 0;
+				for (unsigned ii = 0 ; ii < numberClasses ; ++ii)
+					sum += (d2XjB[i]/d2XjB[ii]);
+				*uij = 1./sum;
+			}
 		}
 		else
 		{
-			for (i = 0 ; i < numberClasses ; ++i)
+			for (i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				sum = 0;
+				Real sum = 0;
 				for (unsigned ii = 0 ; ii < numberClasses ; ++ii)
-				{
-					if (fuzzifier == 2)
-						sum += (d2XjB[i]/d2XjB[ii]);
-					else
-						sum += pow(d2XjB[i]/d2XjB[ii],Real(1./(fuzzifier-1.)));
-
-				}
-				U[i*numberValidPixels+j] = 1./sum;
+					sum += pow(d2XjB[i]/d2XjB[ii],Real(1./(fuzzifier-1.)));
+				*uij = 1./sum;
 			}
-
 		}
 
 	}
@@ -94,22 +109,29 @@ void FCMClassifier::computeU()
 Real FCMClassifier::computeJ() const
 {
 	Real result = 0;
-
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
+	MembershipSet::const_iterator uij = U.begin();
+	if (fuzzifier == 2)
 	{
-
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (FeatureVectorSet::const_iterator xj = X.begin(); xj != X.end(); ++xj)
 		{
-
-			if (fuzzifier == 2)
-				result +=  U[i*numberValidPixels+j] * U[i*numberValidPixels+j] * d2(X[j],B[i]);
-			else
-				result +=  pow(U[i*numberValidPixels+j], fuzzifier) * d2(X[j],B[i]);
-
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				result +=  *uij * *uij * d2(*xj,B[i]);
+			}
 		}
 	}
-	return result;
+	else
+	{
+		for (FeatureVectorSet::const_iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				result +=  pow(*uij, fuzzifier) * d2(*xj,B[i]);
+			}
+		}
+	}
 
+	return result;
 }
 
 
@@ -132,12 +154,11 @@ void FCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	#endif
 	
 	#if DEBUG >= 2
-		stepinit(outputFileName+"iterations.txt");
+		FCMClassifier::stepinit(filenamePrefix+"iterations.txt");
 		unsigned decimals = unsigned(1 - log10(precision));
 	#endif
 	
-	//Initialisation of precision & U
-
+	//Initialisation of precision
 	this->precision = precision;
 
 	Real precisionReached = numeric_limits<Real>::max();
@@ -157,7 +178,7 @@ void FCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 		oldB = B;
 
 		#if DEBUG >= 2
-			stepout(iteration, precisionReached, decimals);
+			FCMClassifier::stepout(iteration, precisionReached, decimals);
 		#endif
 
 	}
@@ -175,136 +196,244 @@ void FCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 
 Real FCMClassifier::assess(vector<Real>& V)
 {
-	V = vector<Real>(numberClasses, 0.);
+	V.assign(numberClasses, 0.);
 	Real score = 0;
 
 	//This is the vector of the min distances between the centers Bi and all the others centers Bii with ii!=i
 	vector<Real> minDist(numberClasses, numeric_limits<Real>::max());
-	//The min distance between all centers
+	//The min distance between any 2 centers
 	Real minDistBiBii = numeric_limits<Real>::max() ;
 
 	Real distBiBii;
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
+		{
+			distBiBii = d2(B[i],B[ii]);
+			if(distBiBii < minDist[i])
+				minDist[i] = distBiBii;
+			if(distBiBii < minDist[ii])
+				minDist[ii] = distBiBii;
+		}
+	MembershipSet::iterator uij = U.begin();
+	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if (fuzzifier == 2)
 	{
-		distBiBii = d2(B[i],B[ii]);
-		if(distBiBii < minDist[i])
-			minDist[i] = distBiBii;
-		if(distBiBii < minDist[ii])
-			minDist[ii] = distBiBii;
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				V[i] += d2(*xj,B[i]) * *uij * *uij;
+			}
+		}
 	}
-
+	else
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				V[i] += d2(*xj,B[i]) * pow(*uij, fuzzifier);
+			}
+		}
+	}
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
-		{
-			if (fuzzifier == 2)
-				V[i] += d2(X[j],B[i]) * U[i*numberValidPixels+j] * U[i*numberValidPixels+j];
-			else
-				V[i] += d2(X[j],B[i]) * pow(U[i*numberValidPixels+j],fuzzifier);
-
-		}
-
 		score += V[i];
 		if(minDist[i] < minDistBiBii)
 			minDistBiBii = minDist[i];
 
-		V[i] /= (minDist[i] * numberValidPixels);
+		V[i] /= (minDist[i] * numberFeatureVectors);
 
 	}
 
-	score /= (minDistBiBii * numberValidPixels);
+	score /= (minDistBiBii * numberFeatureVectors);
 
 	return score;
 
 }
 
 
-#if MERGE==MERGEMAX
-//We merge according to Benjamin's method
+#if MERGE_TYPE==MERGEMAX
+/*!
+Compute the new center by computing the mean value of the featurevector belonging to one of the 2 centers to be merged, weighted by the max value of the membership of the 2 centers.
+A featurevector belong to a class if it's memebership is maximal for that class. 
+The values of the membership are computed using the regular method for computing memebership with the new centers.
+*/
 
 void FCMClassifier::merge(unsigned i1, unsigned i2)
 {
-
-	#if DEBUG >= 3
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2];
-	#endif
-
-	Real max_uij, uij_m, sum = 0;
-	unsigned max_i;
-	B[i1] = 0;
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	Real sum = 0;
+	RealFeature newB = 0;
+	MembershipSet::iterator uij = U.begin();
+	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if (fuzzifier == 2)
 	{
-		max_uij = 0;
-		max_i = 0;
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
-			if (U[i*numberValidPixels+j] > max_uij)
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 		{
-			max_uij = U[i*numberValidPixels+j];
-			max_i = i;
+			// We search to which class belongs the featureVector 
+			Real max_uij = 0;
+			unsigned max_i = 0;
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				if (*uij > max_uij)
+				{
+					max_uij = *uij;
+					max_i = i;
+				}
+			}
+			// If it belongs to one of the 2 class I am merging, I update it's B
+			if(max_i == i1 || max_i == i2)
+			{
+				Real uij_m = max_uij * max_uij;
+				newB += *xj * uij_m;
+				sum += uij_m;
+
+			}
 		}
-		if(max_i == i1 || max_i == i2)
+	}
+	else
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 		{
-			if (fuzzifier == 2)
-				uij_m = max_uij * max_uij;
-			else
-				uij_m = pow(max_uij,fuzzifier);
+			// We search to which class belongs the featureVector 
+			Real max_uij = 0;
+			unsigned max_i = 0;
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				if (*uij > max_uij)
+				{
+					max_uij = *uij;
+					max_i = i;
+				}
+			}
+			// If it belongs to one of the 2 class I am merging, I update it's B
+			if(max_i == i1 || max_i == i2)
+			{
+				Real uij_m = pow(max_uij,fuzzifier);
+				newB += *xj * uij_m;
+				sum += uij_m;
 
-			B[i1] += X[j] * uij_m;
-			sum += uij_m;
-
+			}
 		}
-
 	}
 
-	B[i1] /= sum;
+	
+
+	newB /= sum;
 
 	#if DEBUG >= 3
-	cout<<" into new center :"<<B[i1]<<endl;
+	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
-
+	
+	B[i1] = newB;
 	B.erase(B.begin()+i2);
 	--numberClasses;
-
+	
 	computeU();
 }
 
 
-#elif MERGE==MERGECIS
+#elif MERGE_TYPE==MERGECIS
+/*!
+The values of the membership are computed by taking the maximal membership value for the 2 classes to be merged.
+The new center is computed using the regular method for computing centers with the new membership.
 
-//We merge according to Cis's method
+N.B. This method invalidate the constraint that the sum of membership for a feature vector is equal to 1 
+*/
 void FCMClassifier::merge(unsigned i1, unsigned i2)
 {
-
-	#if DEBUG >= 3
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2];
-	#endif
-
-	Real uij_m, sum = 0;
-	B[i1] = 0;
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	Real sum = 0;
+	RealFeature newB = 0;
+	MembershipSet::iterator uij = U.begin();
+	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if (fuzzifier == 2)
 	{
-		if(U[i1*numberValidPixels+j] < U[i2*numberValidPixels+j])
-			U[i1*numberValidPixels+j] = U[i2*numberValidPixels+j];
-
-		if (fuzzifier == 2)
-			uij_m = U[i1*numberValidPixels+j] * U[i1*numberValidPixels+j];
-		else
-			uij_m = pow(U[i1*numberValidPixels+j],fuzzifier);
-
-		B[i1] += X[j] * uij_m;
-		sum += uij_m;
-
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			// We search to which class belongs the featureVector 
+			if(*(uij+i1) < *(uij+i2))
+				*(uij+i1) = *(uij+i2);
+			
+			Real uij_m = *(uij+i1) **(uij+i1);
+			newB += *xj * uij_m;
+			sum += uij_m;
+			
+			uij = U.erase(uij + i2) + numberClasses - (i2 + 1);
+		}
 	}
-
-	B[i1] /= sum;
+	else
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			// We search to which class belongs the featureVector 
+			if(*(uij+i1) < *(uij+i2))
+				*(uij+i1) = *(uij+i2);
+			
+			Real uij_m = pow(*(uij+i1),fuzzifier);
+			newB += *xj * uij_m;
+			sum += uij_m;
+			
+			uij = U.erase(uij + i2) + numberClasses - (i2 + 1);
+		}
+	}
+	
+	newB /= sum;
 
 	#if DEBUG >= 3
-	cout<<" into new center :"<<B[i1]<<endl;
+	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 
+	B[i1] = newB;
 	B.erase(B.begin()+i2);
 	--numberClasses;
-	U.erase(U.begin() + i2 * numberValidPixels, U.begin() + (i2 + 1)  * numberValidPixels);
+	
+
+}
+#elif MERGE_TYPE==MERGESUM
+/*!
+The values of the membership are computed by taking the sum of the membership value for the 2 classes to be merged.
+The new center is computed using the regular method for computing centers with the new membership.
+*/
+void FCMClassifier::merge(unsigned i1, unsigned i2)
+{
+	Real sum = 0;
+	RealFeature newB = 0;
+	MembershipSet::iterator uij = U.begin();
+	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if (fuzzifier == 2)
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{ 
+			*(uij+i1) += *(uij+i2);
+			Real uij_m = *(uij+i1) **(uij+i1);
+			newB += *xj * uij_m;
+			sum += uij_m;
+			
+			uij = U.erase(uij + i2) + numberClasses - (i2 + 1);
+		}
+	}
+	else
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			*(uij+i1) += *(uij+i2);
+			Real uij_m = pow(*(uij+i1),fuzzifier);
+			newB += *xj * uij_m;
+			sum += uij_m;
+			
+			uij = U.erase(uij + i2) + numberClasses - (i2 + 1);
+		}
+	}
+	
+	newB /= sum;
+
+	#if DEBUG >= 3
+	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
+	#endif
+	
+	B[i1] = newB;
+	B.erase(B.begin()+i2);
+	--numberClasses;
+
 }
 #endif

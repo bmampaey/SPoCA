@@ -11,15 +11,14 @@
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
-#include "../classes/Image.h"
-#include "../classes/gradient.h"
+#include "../classes/EUVImage.h"
 #include "../classes/ArgumentHelper.h"
 #include "../classes/mainutilities.h"
 
 using namespace std;
 using namespace dsr;
 
-string outputFileName;
+string filenamePrefix;
 
 int main(int argc, const char **argv)
 {
@@ -47,7 +46,7 @@ int main(int argc, const char **argv)
 	arguments.new_flag('D', "difference", "\n\tIf you want to produce the difference of the 2 images\n\t" , difference);
 	arguments.new_flag('r', "recenter", "\n\tIf you wantthe second image to be shifted to have the same sun center than the first image.\n\t" , recenter);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
-	arguments.new_named_string('O',"outputFile","outputFile", "The name for the output file(s).", outputFileName);
+	arguments.new_named_string('O',"outputFile","outputFile", "The name for the output file(s).", filenamePrefix);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
@@ -59,22 +58,18 @@ int main(int argc, const char **argv)
 		cerr<<"Error : you must provide one and only one of -Q or -D."<<endl;
 		return EXIT_FAILURE;
 	}
-	vector<SunImage*> images;
-	if(recenter)
-		images = getImagesFromFiles("UNKNOWN", imagesFilenames, recenter);
-	else
-		images = getImagesFromFiles("SunImage", imagesFilenames, recenter);
+	vector<EUVImage*> images = getImagesFromFiles("UNKNOWN", imagesFilenames, recenter);
 	if(images.size() != 2)
 	{
 		cerr<<"Error : you must provide exactly 2 fits files."<<endl;
 		return EXIT_FAILURE;
 	}
-	if(outputFileName.empty())
+	if(filenamePrefix.empty())
 	{
 		if(quotient)
-			outputFileName =  stripPath(stripSuffix(imagesFilenames[0])) + "_Q_" +  stripPath(stripSuffix(imagesFilenames[1])) + ".fits";
+			filenamePrefix =  stripPath(stripSuffix(imagesFilenames[0])) + "_Q_" +  stripPath(stripSuffix(imagesFilenames[1])) + ".fits";
 		else
-			outputFileName = stripPath(stripSuffix(imagesFilenames[0])) + "_D_" + stripPath(stripSuffix(imagesFilenames[1])) + ".fits";
+			filenamePrefix = stripPath(stripSuffix(imagesFilenames[0])) + "_D_" + stripPath(stripSuffix(imagesFilenames[1])) + ".fits";
 	}
 	
 	if(quotient)
@@ -86,7 +81,7 @@ int main(int argc, const char **argv)
 		images[0]->diff(images[1]);
 	}
 	
-	images[0]->writeFitsImage(outputFileName);
+	images[0]->writeFits(filenamePrefix);
 
 	return EXIT_SUCCESS;
 }

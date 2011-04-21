@@ -13,19 +13,38 @@
 #include "FeatureVector.h"
 #include "PCMClassifier.h"
 
+
+//! Spatial Possibilistic C-Means Classifier
+/*!
+The class implements a multi channel Spatialy constrained Possibilistic C-Means clustering algorithm.
+
+The SPoCA Classifier has been described in Barra V., Delouille V., Hochedez J.-F.:2008 `Segmentation of extreme ultraviolet solar images via multichannel fuzzy clustering', Advances in Space Research, 42, 917--925.
+
+*/
+
+//! The type for neighbors indices
+typedef unsigned NeighborIndex;
+
+//! The type for the vector of neighbors
+typedef std::vector<NeighborIndex> Neighborhood;
+
+//! The type for the vector of the vector of neighbors
+typedef std::vector<Neighborhood> NeighborhoodVector;
+
+
 class SPoCAClassifier : public virtual PCMClassifier
 {
 	protected :
-		//vector of precalculated neighboors smoothing (Xj + (betaj * sum Xn) for n belonging to Nj)
-		std::vector<RealFeature> smoothedX;
+		//! Vector of precalculated neighbors smoothing (Xj + (betaj * sum Xn) for n belonging to Nj)
+		FeatureVectorSet smoothedX;
 
-		//vector of the beta function (1/number of valid neighboors)
+		//! Vector of the beta function (1/Nj)
 		std::vector<Real> beta;
 
-		//vector of neighboors (Nj are the strict neighboors of pixel j)
-		std::vector<std::vector<unsigned> > N;
+		//! Vector of neighbors indices (Nj are the strict neighbors of pixel j)
+		NeighborhoodVector N;
 		
-		//the neighboorhoodRadius == half the size of the square of neighboors
+		//! The neighborhoodRadius <=> half the size of the square of neighbors. i.e. The square of neighbors has a side of (2 * Nradius) + 1
 		unsigned Nradius;
 
 		// Basic functions
@@ -40,9 +59,9 @@ class SPoCAClassifier : public virtual PCMClassifier
 
 	public :
 		//Constructors & Destructors
-		SPoCAClassifier(unsigned neighboorhoodRadius = 1, Real fuzzifier = 2);
+		SPoCAClassifier(unsigned neighborhoodRadius = 1, Real fuzzifier = 2);
 
-		//Functions to add images
+		//! Function to add images to the classifier 
 		void addImages(std::vector<EUVImage*> images);
 
 		//Classification functions

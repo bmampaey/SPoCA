@@ -29,14 +29,27 @@ All classification methods are implemented as classes that derive from this clas
 The class is purely virtual as it does not define any classification method itself.
 */
 
+//! The type for the set of feature vectors
+typedef std::vector<RealFeature> FeatureVectorSet;
+
+//! The type for the set of membership/probability
+typedef std::vector<Real> MembershipSet;
+
+//! The type for the set of centers of classes
+typedef std::vector<RealFeature> ClassCenterSet;
+
+
 class Classifier
 {
 	protected :
+		//! The fuzzifier value, usually represented by the m value
+		Real fuzzifier;
+
 		//! Number of classes
 		unsigned numberClasses;
 		
 		//! Number of feature vectors
-		unsigned numberValidPixels;
+		unsigned numberFeatureVectors;
 		
 		//! Size of the axes
 		unsigned Xaxes, Yaxes;
@@ -44,18 +57,22 @@ class Classifier
 		//! Feature vector descibing the channels (usually the wavelength)
 		RealFeature channels;
 
-		//! Vector of membership/probability
-		std::vector<Real> U;
+		//! Set of membership/probability
+		MembershipSet U;
 
-		//! Vector of the centers of the classes
-		std::vector<RealFeature> B;
+		//! Set of the centers of the classes
+		ClassCenterSet B;
 
-		//! Vector of the feature vectors (pixel intensities for example)
-		std::vector<PixelFeature> X;
+		//! Set of the feature vectors (pixel intensities for example)
+		FeatureVectorSet X;
 
 		//! The coordinates of the feature vectors (needed to output the results)
 		std::vector<Coordinate> coordinates;
-
+		
+		//! File stream to output the classification steps
+		std::ofstream stepfile;
+		
+	protected :
 		//! Computation of the centers of classes
 		virtual void computeB() = 0;
 		
@@ -66,29 +83,28 @@ class Classifier
 		virtual Real computeJ() const = 0;
 
 		//! Asses function for the sursegmentation
+		/*! Computes the compactness of each class and returns the global score of the classification*/
 		virtual Real assess(std::vector<Real>& V) = 0;
 		
 		//! Merge function for the sursegmentation
+		/*! Merge 2 classes into 1 */
 		virtual void merge(unsigned i1, unsigned i2);
 		
 		//! Function to initialise the centers
 		virtual void initB(const std::vector<RealFeature>& B);
-
-		//! File stream to output the classification steps
-		std::ofstream stepfile;
 		
-		//! Function to initialize the output of the classification step
+		//! Function to sort the centers
+		virtual void sortB();
+		
+		//! Function to initialize the output of the classification steps
 		virtual void stepinit(const std::string filename);
 		
 		//! Function to output a classification step
 		virtual void stepout(const unsigned iteration, const Real precisionReached, const int precision = 5);
 
-		
-
 	public :
-	
 		//! Constructor
-		Classifier();
+		Classifier(Real fuzzifier = 2.);
 		
 		//! Destructor
 		virtual ~Classifier();
@@ -154,9 +170,9 @@ class Classifier
 		RealFeature getChannels();
 		
 		//! Accessor to retrieve the percentiles of the feature vectors
-		std::vector<PixelFeature> percentiles(std::vector<Real> percentileValues);
+		std::vector<RealFeature> percentiles(std::vector<Real> percentileValues);
 
 };
 
-extern std::string outputFileName;
+extern std::string filenamePrefix;
 #endif

@@ -26,7 +26,7 @@ This is similar to the way fits files store the pixels.
 It implements also some common routines on images.
 */
 
-//! \tparam T Type of a single pixel
+//! @tparam T Type of a single pixel
 template<class T>
 class Image
 {
@@ -115,55 +115,14 @@ class Image
 		//! Routine to draw a cross
 		Image<T>* drawCross(const T color, Coordinate c, const unsigned size = 5);
 		
-		//! Routine to draw the contours 
-		Image<T>* drawContours(const unsigned width, const T unsetValue );
-		
-		//! Routine to draw the internal contours
-		Image<T>* drawInternContours(const unsigned width, const T unsetValue);
-		
-		//! Routine to draw the external contours
-		Image<T>* drawExternContours(const unsigned width, const T unsetValue);
-		
-		//! Routine to do dilation with the shape of a diamond
-		Image<T>* dilateDiamond(const unsigned size, const T pixelValueToDilate);
-		
-		//! Routine to do erosion with the shape of a diamond
-		Image<T>* erodeDiamond(const unsigned size, const T pixelValueToErode);
-		
-		//! Routine to do dilation with the shape of a disc
-		/*! Much slower than dilateDiamond */
-		Image<T>* dilateCircular(const unsigned size, const T unsetValue);
-		
-		//! Routine to do erosion with the shape of a disc
-		/*! Much slower than erodeDiamond */
-		Image<T>* erodeCircular(const unsigned size, const T unsetValue);
-		
 		//! Routine to substract each pixel by the corresponding pixel of img
 		void diff(const Image<T> * img);
 		
 		//! Routine to divide each pixel by the corresponding pixel of img
 		void div(const Image<T> * img);
 		
-		//! Routine to propagate a color in the connected component specified by firstPixel
-		unsigned propagateColor(const T color, const Coordinate& firstPixel);
-		
-		//! Routine to propagate a color in the connected component specified by firstPixel
-		unsigned propagateColor(const T color, const unsigned firstPixel);
-		
-		//! Routine that gives a different color to each connected component
-		unsigned colorizeConnectedComponents(const T setValue = 0);
-		
-		//! Routine that removes connected component of a size smaller than minSize
-		unsigned tresholdConnectedComponents(const unsigned minSize, const T setValue = 0);
-		
 		//! Routine that set all pixels to 1 if the corresponding pixel in bitMap has a value of setValue
 		Image<T>* bitmap(const Image<T>* bitMap, T setValue = 1);
-		
-		//! Routine that tries to remove holes in connected components
-		Image<T>* removeHoles(T unusedColor = std::numeric_limits<T>::max() - 1);
-		
-		//! Routine that generate a chaincode for the connected component indicated by firstPixel
-		std::vector<Coordinate> chainCode(const Coordinate firstPixel, const unsigned max_points) const;
 		
 		//! Computes the min and max of the Image
 		void minmax(T& min, T& max) const;
@@ -178,13 +137,13 @@ class Image
 		Real kurtosis() const;
 		
 		//! Routine that Replace each pixel by the mean of its neighboors (in circle of radius Nradius)
-		void neighboorhoodMean(const Image<T>* image, int Nradius);
+		void localMean(const Image<T>* image, int Nradius);
 		//! Routine that Replace each pixel by the variance of its neighboors (in circle of radius Nradius)
-		void neighboorhoodVariance(const Image<T>* image, int Nradius);
+		void localVariance(const Image<T>* image, int Nradius);
 		//! Routine that Replace each pixel by the skewness of its neighboors (in circle of radius Nradius)
-		void neighboorhoodSkewness(const Image<T>* image, int Nradius);
+		void localSkewness(const Image<T>* image, int Nradius);
 		//! Routine that Replace each pixel by the kurtosis of its neighboors (in circle of radius Nradius)
-		void neighboorhoodKurtosis(const Image<T>* image, int Nradius);
+		void localKurtosis(const Image<T>* image, int Nradius);
 		
 		Image<T>* convolution(const Image<T> * img, const float kernel[3][3]);
 		Image<T>* convolution(const Image<T> * img, const float kernel[5][5]);
@@ -211,5 +170,5 @@ class Image
 
 };
 
-void fillRandomDots(Image<PixelType>* image, unsigned numberClasses, const std::vector<Real>& classesFeatures, const std::vector<Real>& backgroundFeatures);
+
 #endif

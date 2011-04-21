@@ -2,8 +2,8 @@
 
 using namespace std;
 
-SPoCAClassifier::SPoCAClassifier(unsigned neighboorhoodRadius, Real fuzzifier)
-:PCMClassifier(fuzzifier), Nradius(neighboorhoodRadius)
+SPoCAClassifier::SPoCAClassifier(unsigned neighborhoodRadius, Real fuzzifier)
+:PCMClassifier(fuzzifier), Nradius(neighborhoodRadius)
 {}
 
 void SPoCAClassifier::addImages(vector<EUVImage*> images)
@@ -35,12 +35,12 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 	smoothedX.reserve(numberValidPixelsEstimate);
 
 	//Temporary vectors to build the neihboorhood
-	vector<unsigned short> caardNeighboors(Xaxes * Yaxes, 0);
-	vector<vector<unsigned> > neighboors(Xaxes * Yaxes);
+	vector<unsigned> caardNeighbors(Xaxes * Yaxes, 0);
+	NeighborhoodVector neighbors(Xaxes * Yaxes);
 
 	bool validPixel;
-	PixelFeature xj;
-	//We initialise the valid pixels vector X, and the neighboors N
+	RealFeature f;
+	//We initialise the valid pixels vector X, and the neighbors N
 	for (unsigned y = 0; y < Yaxes; ++y)
 	{
 		for (unsigned x = 0; x < Xaxes; ++x)
@@ -48,8 +48,8 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 			validPixel = true;
 			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
 			{
-				xj.v[p] = images[p]->pixel(x,y);
-				if(xj.v[p] == images[p]->nullvalue())
+				f.v[p] = images[p]->pixel(x,y);
+				if(f.v[p] == images[p]->nullvalue())
 					validPixel=false;
 			}
 			
@@ -58,7 +58,7 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 			
 			//In a normal situation, we can suppose that the sun disc isn't going to touch the borders of the picture. Otherwise just take a radiusRatio smaller.
 			#if DEBUG >= 1
-			#define ASSERTBOUNDARIES neighboor > 0 && neighboor < images[0]->NumberPixels()
+			#define ASSERTBOUNDARIES neighbor > 0 && neighbor < images[0]->NumberPixels()
 			#else
 			#define ASSERTBOUNDARIES true
 			#endif
@@ -66,44 +66,43 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 			//Since I am the neigboor of my neigboors, I can add myself to their neigboorhood
 			for (unsigned ny = y - Nradius; ny <= y + Nradius; ++ny)
 			{
-				unsigned neighboor = ny * Xaxes + x - Nradius;
+				NeighborIndex neighbor = ny * Xaxes + x - Nradius;
 				for (unsigned nx = x - Nradius; nx <= x + Nradius; ++nx)
 				{
-					if(nx != x && ny != y && ASSERTBOUNDARIES)
+					if(!(nx == x && ny == y) && ASSERTBOUNDARIES)
 					{
-						neighboors[neighboor].push_back(numberValidPixels);
-						++caardNeighboors[neighboor];
+						neighbors[neighbor].push_back(numberFeatureVectors);
+						++caardNeighbors[neighbor];
 					}
-					++neighboor;
+					++neighbor;
 				}
 			}
-			X.push_back(xj);
-			smoothedX.push_back(xj);
+			X.push_back(f);
+			smoothedX.push_back(f);
 			coordinates.push_back(Coordinate(x,y));
-			++numberValidPixels;
+			++numberFeatureVectors;
 			
 		}
 	}
 
 
-	//Calculation of beta, Initialisation of smoothedX (the picture of the mean intensities) and of N the neighboors
-	beta.reserve(numberValidPixels);
-	RealFeature sum;
-	for (unsigned j = 0; j < numberValidPixels; ++j)
+	//Calculation of beta, smoothedX (the picture of the mean intensities) and of N the neighbors
+	beta.reserve(numberFeatureVectors);
+
+	for (unsigned j = 0; j < numberFeatureVectors; ++j)
 	{
 		unsigned coord = coordinates[j].x + coordinates[j].y * Xaxes;
-		beta.push_back(caardNeighboors[coord] != 0 ? (1. / caardNeighboors[coord]) : 0);
-		N.push_back(neighboors[coord]);
+		beta.push_back(caardNeighbors[coord] != 0 ? (1. / caardNeighbors[coord]) : 0);
+		N.push_back(neighbors[coord]);
 		
 		if( N[j].size() == 0)
 			continue;
 
-		sum = 0;
-		for (vector<unsigned>::iterator k = N[j].begin(); k!=N[j].end(); ++k)
+		RealFeature sum = 0;
+		for (Neighborhood::iterator k = N[j].begin(); k!=N[j].end(); ++k)
 			sum +=  X[*k];
 
 		smoothedX[j] += sum * beta[j];
-		
 
 	}
 	
@@ -114,18 +113,17 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 	for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
 	{
 		image.zero();
-
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 			image.pixel(coordinates[j]) = smoothedX[j].v[p];
 
-		image.writeFits(outputFileName + "smoothed." + itos(int(images[p]->Wavelength())) + ".fits");
+		image.writeFits(filenamePrefix + "smoothed." + itos(int(images[p]->Wavelength())) + ".fits");
 
 	}
 	#endif
-	#if DEBUG >= 3
+	#if DEBUG >= 2
 	#include <fstream>
-	ofstream betaFile((outputFileName + "betaN.txt").c_str());
-	for (unsigned j = 0; j < numberValidPixels && betaFile.good(); ++j)
+	ofstream betaFile((filenamePrefix + "betaN.txt").c_str());
+	for (unsigned j = 0; j < numberFeatureVectors && betaFile.good(); ++j)
 	{
 		betaFile<<coordinates[j]<<"\t"<<beta[j];
 		for (unsigned k = 0; k < N[j].size(); ++k)
@@ -136,73 +134,99 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 	#endif
 }
 
-
 void SPoCAClassifier::computeB()
 {
-	Real sum, uij_m;
-
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
+	B.assign(numberClasses, 0.);
+	vector<Real> sum(numberClasses, 0.);
+	
+	MembershipSet::iterator uij = U.begin();
+	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if (fuzzifier == 2)
 	{
-		B[i] = 0;
-		sum = 0;
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (FeatureVectorSet::iterator sxj = smoothedX.begin(); sxj != smoothedX.end(); ++sxj)
 		{
-			if(fuzzifier == 2)
-				uij_m = U[i*numberValidPixels+j] * U[i*numberValidPixels+j];
-			else
-				uij_m = pow(U[i*numberValidPixels+j],fuzzifier);
-
-			B[i] += smoothedX[j] * uij_m;
-			sum += uij_m;
-
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				Real uij_m = *uij * *uij;
+				B[i] += *sxj * uij_m;
+				sum[i] += uij_m;
+			}
 		}
-
-		sum *= 2;
-		B[i] /= sum;
-
 	}
-
+	else
+	{
+		for (FeatureVectorSet::iterator sxj = smoothedX.begin(); sxj != smoothedX.end(); ++sxj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				Real uij_m = pow(*uij,fuzzifier);
+				B[i] += *sxj * uij_m;
+				sum[i] += uij_m;
+			}
+		}
+	}
+	
+	for (unsigned i = 0 ; i < numberClasses ; ++i)
+		B[i] /= 2 * sum[i];
 }
+
 
 
 void SPoCAClassifier::computeU()
 {
+	U.assign(numberFeatureVectors * numberClasses, 0.);
 
-	Real sumNeighboors;
-	vector<Real> d2BiX(numberValidPixels);
-	vector<unsigned>::iterator lastneighboor;
-	U.resize(numberValidPixels * numberClasses);
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
+	// For each feature vector, we compute the distance to each Bi
+	// And we had the distance to all the neighbors of j (including myself) multiplied by beta[N[j]]
+	MembershipSet::iterator uij = U.begin();
+	NeighborhoodVector::iterator Nj = N.begin();
+	for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj, ++Nj)
 	{
-		//We precalculate all the distances from each pixel Xj to the center Bi
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 		{
-			d2BiX[j] = d2(X[j],B[i]);
-		}
-
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
-		{
-			sumNeighboors = 0;
-			lastneighboor = N[j].end();
-			for (vector<unsigned>::iterator k = N[j].begin(); k!=lastneighboor; ++k)
-				sumNeighboors +=  d2BiX[(*k)];
-
-			sumNeighboors = (sumNeighboors * beta[j]) + d2BiX[j];
-
-			if(fuzzifier == 2)
-				U[i*numberValidPixels+j] = sumNeighboors / eta[i] ;
-			else if(fuzzifier == 1.5)
+			Real d2BiXj = d2(*xj,B[i]);
+			*uij += d2BiXj;
+			for(Neighborhood::iterator k = Nj->begin(); k!=Nj->end(); ++k)
 			{
-				U[i*numberValidPixels+j] = sumNeighboors / eta[i] ;
-				U[i*numberValidPixels+j] *= U[i*numberValidPixels+j];
+				U[(*k)*numberClasses+i] += beta[*k] * d2BiXj;
 			}
-			else
-				U[i*numberValidPixels+j] = pow( sumNeighboors / eta[i], Real(1./(fuzzifier-1.)));
-
-			U[i*numberValidPixels+j] = 1. / (1. + U[i*numberValidPixels+j]);
-
 		}
-
+	}
+	// Now I fuzzify and inverse uij
+	if(fuzzifier == 2)
+	{
+		for (MembershipSet::iterator uij = U.begin(); uij != U.end();)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				*uij /= eta[i];
+				*uij = 1. / (1. + *uij);
+			}
+		}
+	}
+	else if(fuzzifier == 1.5)
+	{
+		for (MembershipSet::iterator uij = U.begin(); uij != U.end();)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				*uij /= eta[i];
+				*uij *= *uij;
+				*uij = 1. / (1. + *uij);
+			}
+		}
+	}
+	else
+	{
+		for (MembershipSet::iterator uij = U.begin(); uij != U.end();)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				*uij /= eta[i];
+				*uij = pow( *uij, Real(1./(fuzzifier-1.)));
+				*uij = 1. / (1. + *uij);
+			}
+		}
 	}
 
 }
@@ -210,8 +234,8 @@ void SPoCAClassifier::computeU()
 
 Real SPoCAClassifier::computeJ() const
 {
-	Real result = 0, sumNeighboors, sum1, sum2;
-	vector<Real> d2BiX(numberValidPixels);
+	Real result = 0, sumNeighbors, sum1, sum2;
+	vector<Real> d2BiX(numberFeatureVectors);
 
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
@@ -219,29 +243,29 @@ Real SPoCAClassifier::computeJ() const
 		sum2 = 0;
 
 		//We precalculate all the distances from each pixel Xj to the center Bi
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 		{
 			d2BiX[j] = d2(X[j],B[i]);
 		}
 
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 		{
-			sumNeighboors = 0;
+			sumNeighbors = 0;
 			
-			for (vector<unsigned>::const_iterator k = N[j].begin(); k!=N[j].end(); ++k)
-				sumNeighboors +=  d2BiX[(*k)];
+			for (Neighborhood::const_iterator k = N[j].begin(); k!=N[j].end(); ++k)
+				sumNeighbors +=  d2BiX[(*k)];
 
-			sumNeighboors = (sumNeighboors * beta[j]) + d2BiX[j];
-
-			if(fuzzifier == 2)
-				sum1 +=  U[i*numberValidPixels+j] * U[i*numberValidPixels+j] * sumNeighboors;
-			else
-				sum1 +=  pow(U[i*numberValidPixels+j], fuzzifier) * sumNeighboors;
+			sumNeighbors = (sumNeighbors * beta[j]) + d2BiX[j];
 
 			if(fuzzifier == 2)
-				sum2 += (1 - U[i*numberValidPixels+j]) * (1 - U[i*numberValidPixels+j]);
+				sum1 +=  U[j*numberClasses+i] * U[j*numberClasses+i] * sumNeighbors;
 			else
-				sum2 +=  pow(1 - U[i*numberValidPixels+j], fuzzifier);
+				sum1 +=  pow(U[j*numberClasses+i], fuzzifier) * sumNeighbors;
+
+			if(fuzzifier == 2)
+				sum2 += (1 - U[j*numberClasses+i]) * (1 - U[j*numberClasses+i]);
+			else
+				sum2 +=  pow(1 - U[j*numberClasses+i], fuzzifier);
 
 		}
 		result += sum1 + (eta[i] * sum2);
@@ -253,7 +277,7 @@ Real SPoCAClassifier::computeJ() const
 
 Real SPoCAClassifier::assess(vector<Real>& V)
 {
-	V = vector<Real>(numberClasses, 0.);
+	V.assign(numberClasses, 0.);
 	Real score = 0;
 
 	//This is the vector of the min distances between the centers Bi and all the others centers Bii with ii!=i
@@ -264,46 +288,46 @@ Real SPoCAClassifier::assess(vector<Real>& V)
 	Real distBiBii;
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
-	{
-		distBiBii = d2(B[i],B[ii]);
-		if(distBiBii < minDist[i])
-			minDist[i] = distBiBii;
-		if(distBiBii < minDist[ii])
-			minDist[ii] = distBiBii;
-	}
+		{
+			distBiBii = d2(B[i],B[ii]);
+			if(distBiBii < minDist[i])
+				minDist[i] = distBiBii;
+			if(distBiBii < minDist[ii])
+				minDist[ii] = distBiBii;
+		}
 
-	vector<Real> d2BiX(numberValidPixels);
-	Real sumNeighboors, sum2;
+	vector<Real> d2BiX(numberFeatureVectors);
+	Real sumNeighbors, sum2;
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
 
 		//We precalculate all the distances from each pixel Xj to the center Bi
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 		{
 			d2BiX[j] = d2(X[j],B[i]);
 		}
 
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 		{
-			sumNeighboors = 0;
-			for (vector<unsigned>::iterator k = N[j].begin(); k!=N[j].end(); ++k)
-				sumNeighboors +=  d2BiX[(*k)];
+			sumNeighbors = 0;
+			for (Neighborhood::iterator k = N[j].begin(); k!=N[j].end(); ++k)
+				sumNeighbors +=  d2BiX[(*k)];
 
-			sumNeighboors = (sumNeighboors * beta[j]) + d2BiX[j];
+			sumNeighbors = (sumNeighbors * beta[j]) + d2BiX[j];
 
 			if(fuzzifier == 2)
-				V[i] += U[i*numberValidPixels+j] * U[i*numberValidPixels+j] * sumNeighboors;
+				V[i] += U[j*numberClasses+i] * U[j*numberClasses+i] * sumNeighbors;
 			else
-				V[i] += pow(U[i*numberValidPixels+j],fuzzifier) * sumNeighboors;
+				V[i] += pow(U[j*numberClasses+i],fuzzifier) * sumNeighbors;
 
 		}
 		sum2 = 0;
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 		{
 			if(fuzzifier == 2)
-				sum2 += (1. - U[i*numberValidPixels+j]) * (1. - U[i*numberValidPixels+j]);
+				sum2 += (1. - U[j*numberClasses+i]) * (1. - U[j*numberClasses+i]);
 			else
-				sum2 += pow(Real(1. - U[i*numberValidPixels+j]),fuzzifier);
+				sum2 += pow(Real(1. - U[j*numberClasses+i]),fuzzifier);
 
 		}
 		V[i] += eta[i] * sum2;
@@ -311,101 +335,149 @@ Real SPoCAClassifier::assess(vector<Real>& V)
 		if(minDist[i] < minDistBiBii)
 			minDistBiBii = minDist[i];
 
-		V[i] /= (minDist[i] * numberValidPixels);
+		V[i] /= (minDist[i] * numberFeatureVectors);
 
 	}
 
-	score /= (minDistBiBii * numberValidPixels);
+	score /= (minDistBiBii * numberFeatureVectors);
 	return score;
 
 }
 
 
-#if MERGE==MERGEMAX
-//We merge according to Benjamin's method
+#if MERGE_TYPE==MERGEMAX
+/*!
+Compute the new center by computing the mean value of the featurevector belonging to one of the 2 centers to be merged, weighted by the max value of the membership of the 2 centers.
+A featurevector belong to a class if it's memebership is maximal for that class. 
+The values of the membership are computed using the regular method for computing memebership with the new centers.
+*/
+
 void SPoCAClassifier::merge(unsigned i1, unsigned i2)
 {
 
-	#if DEBUG >= 3
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2];
-	#endif
-
-	Real max_uij, uij_m, sum = 0;
-	unsigned max_i;
-	B[i1] = 0;
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	Real sum = 0;
+	RealFeature newB = 0;
+	MembershipSet::iterator uij = U.begin();
+	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if (fuzzifier == 2)
 	{
-		max_uij = 0;
-		max_i = 0;
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
-			if (U[i*numberValidPixels+j] > max_uij)
+		for (FeatureVectorSet::iterator sxj = smoothedX.begin(); sxj != smoothedX.end(); ++sxj)
 		{
-			max_uij = U[i*numberValidPixels+j];
-			max_i = i;
+			// We search to which class belongs the featureVector 
+			Real max_uij = 0;
+			unsigned max_i = 0;
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				if (*uij > max_uij)
+				{
+					max_uij = *uij;
+					max_i = i;
+				}
+			}
+			// If it belongs to one of the 2 class I am merging, I update it's B
+			if(max_i == i1 || max_i == i2)
+			{
+				Real uij_m = max_uij * max_uij;
+				newB += *sxj * uij_m;
+				sum += uij_m;
+
+			}
 		}
-		if(max_i == i1 || max_i == i2)
+	}
+	else
+	{
+		for (FeatureVectorSet::iterator sxj = smoothedX.begin(); sxj != smoothedX.end(); ++sxj)
 		{
-			if(fuzzifier == 2)
-				uij_m = max_uij * max_uij;
-			else
-				uij_m = pow(max_uij,fuzzifier);
+			// We search to which class belongs the featureVector 
+			Real max_uij = 0;
+			unsigned max_i = 0;
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				if (*uij > max_uij)
+				{
+					max_uij = *uij;
+					max_i = i;
+				}
+			}
+			// If it belongs to one of the 2 class I am merging, I update it's B
+			if(max_i == i1 || max_i == i2)
+			{
+				Real uij_m = pow(max_uij,fuzzifier);
+				newB += *sxj * uij_m;
+				sum += uij_m;
 
-			B[i1] += smoothedX[j] * uij_m;
-			sum += uij_m;
-
+			}
 		}
-
 	}
 
-	sum *= 2;
-	B[i1] /= sum;
+	
+
+	newB /= sum;
 
 	#if DEBUG >= 3
-	cout<<" into new center :"<<B[i1]<<endl;
+	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 
 	B.erase(B.begin()+i2);
 	--numberClasses;
-
+	B[i1] = newB;
 	computeU();
+
 
 }
 
-
-#elif MERGE==MERGECIS
-//We merge according to Cis's method
+#elif MERGE_TYPE==MERGECIS
+/*!
+The values of the membership are computed by taking the maximal membership value for the 2 classes to be merged.
+The new center is computed using the regular method for computing centers with the new membership.
+*/
 void SPoCAClassifier::merge(unsigned i1, unsigned i2)
 {
-
-	#if DEBUG >= 3
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2];
-	#endif
-
-	Real uij_m, sum = 0;
-	B[i1] = 0;
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	Real sum = 0;
+	RealFeature newB = 0;
+	MembershipSet::iterator uij = U.begin();
+	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if (fuzzifier == 2)
 	{
-		if(U[i1*numberValidPixels+j] < U[i2*numberValidPixels+j])
-			U[i1*numberValidPixels+j] = U[i2*numberValidPixels+j];
-
-		if(fuzzifier == 2)
-			uij_m = U[i1*numberValidPixels+j] * U[i1*numberValidPixels+j];
-		else
-			uij_m = pow(U[i1*numberValidPixels+j],fuzzifier);
-
-		B[i1] += smoothedX[j] * uij_m;
-		sum += uij_m;
-
+		for (FeatureVectorSet::iterator sxj = smoothedX.begin(); sxj != smoothedX.end(); ++sxj)
+		{
+			// We search to which class belongs the featureVector 
+			if(*(uij+i1) < *(uij+i2))
+				*(uij+i1) = *(uij+i2);
+			
+			Real uij_m = *(uij+i1) **(uij+i1);
+			newB += *sxj * uij_m;
+			sum += uij_m;
+			
+			uij = U.erase(uij + i2) + numberClasses - (i2 + 1);
+		}
 	}
-
-	B[i1] /= 2 * sum;
+	else
+	{
+		for (FeatureVectorSet::iterator sxj = smoothedX.begin(); sxj != smoothedX.end(); ++sxj)
+		{
+			// We search to which class belongs the featureVector 
+			if(*(uij+i1) < *(uij+i2))
+				*(uij+i1) = *(uij+i2);
+			
+			Real uij_m = pow(*(uij+i1),fuzzifier);
+			newB += *sxj * uij_m;
+			sum += uij_m;
+			
+			uij = U.erase(uij + i2) + numberClasses - (i2 + 1);
+		}
+	}
+	
+	newB /= sum;
 
 	#if DEBUG >= 3
-	cout<<" into new center :"<<B[i1]<<endl;
+	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
-
+	
+	B[i1] = newB;
 	B.erase(B.begin()+i2);
 	--numberClasses;
-	U.erase(U.begin() + i2 * numberValidPixels, U.begin() + (i2 + 1)  * numberValidPixels);
+	
+
 }
 #endif

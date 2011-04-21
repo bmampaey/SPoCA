@@ -1,14 +1,63 @@
-// This programm will generate a histogram file
-// Written by Benjamin Mampaey on 14 July 2010
+//! Program that generates the histogram of a tuple of EUV sun images
+/*!
+@page histogram histogram.x
 
-#include <vector>
+ This program takes a tuple of EUV sun images in fits format, does the requested preprocessingand generates an histogram file.
+ 
+ A tuple of images is a list of images that have different channels / wavelength but are similar.
+ 
+ @section usage Usage
+ 
+ <tt> histogram.x -h </tt>
+ 
+ Calling the programs with -h will provide you with help 
+ 
+ <tt> histogram.x [-option optionvalue, ...] fitsFileName1 fitsFileName2 </tt>
+ 
+ You must provide exactly one fits file per channel.
+ The order of the fits files is important, as it will set the order of the dimensions.
+ 
+ 	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogramm.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
+	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", filenamePrefix);
+	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
+	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP\n\t", imageType);
+	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
+
+@param imageType	The type of the images.
+<BR>Possible values are : 
+ - EIT
+ - EUVI
+ - AIA
+ - SWAP
+
+@param preprocessingSteps	The steps of preprocessing to apply to the sun images.
+<BR>Possible values :
+ - NAR (Nullify above radius)
+ - ALC (Annulus Limb Correction)
+ - DivMedian (Division by the median)
+ - TakeSqrt (Take the square root)
+ - TakeLog (Take the log)
+ - DivMode (Division by the mode)
+ - DivExpTime (Division by the Exposure Time)
+ 
+@param radiusratio	The ratio of the radius of the sun that will be processed.
+
+@param outputFile	The name of a file to write the histogram to.
+
+@param binSize	The size of the bins of the histogramm.
+<BR>N.B. Be carreful that the histogram is built after the preprocessing.
+
+See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
+
+*/
+
+
 #include <iostream>
 #include <fstream>
-#include <cstdlib>
 #include <string>
 #include <fenv.h>
 #include <iomanip>
-# include <algorithm>
+#include <set>
 
 #include "../classes/EUVImage.h"
 #include "../classes/ArgumentHelper.h"
@@ -19,101 +68,40 @@
 using namespace std;
 using namespace dsr;
 
-string outputFileName;
+string filenamePrefix;
 
-vector<HistoPixelFeature> HistoX;
+set<HistoPixelFeature> HistoX;
 
-unsigned insert(const HistoPixelFeature& xj)
+
+// Function to insert a new HistoFeatureVector into HistoX
+inline void insert(const HistoPixelFeature& xj)
 {
-	unsigned bsup = HistoX.size();
-	unsigned binf = 0;
-	unsigned pos = 0;
-	while(binf < bsup)
+	pair<set<HistoPixelFeature>::iterator, bool> ret = HistoX.insert(xj);
+	if(! ret.second)
 	{
-		pos = unsigned((bsup+binf)/2);
-		switch(compare(HistoX[pos], xj))
-		{
-			case -1 :
-				binf = pos + 1;
-				break;
-			case 1 :
-				bsup = pos;
-				break;
-			default :
-				return pos;
-
-		}
+		//The element existed already, I increase it's count
+		(ret.first)->c += xj.c;
 	}
-	if (bsup == HistoX.size())
-	{
-		HistoX.push_back(xj);
-	}
-	else
-	{
-
-		vector<HistoPixelFeature>::iterator there = HistoX.begin();
-		there += bsup;
-		HistoX.insert(there,xj);
-	}
-	return bsup;
-
 }
 
-bool cmp (const HistoPixelFeature& x1, const HistoPixelFeature& x2)
-{
-	return compare(x1,x2) < 0 ? true : false; 
-}
 
 void histogram(const vector<EUVImage*>& images, RealFeature binSize)
 {
-	HistoX.reserve(images[0]->numberValidPixelsEstimate());
 	HistoPixelFeature xj;
-	bool validPixel;
-	
-	if(binSize)
+	xj.c = 1;
+	for (unsigned j = 0; j < images[0]->NumberPixels(); ++j)
 	{
-		for (unsigned j = 0; j < images[0]->NumberPixels(); ++j)
+		bool valid = true;
+		for (unsigned p = 0; p < images.size() && valid; ++p)
 		{
-			validPixel = true;
-			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
-			{
-				xj.v[p] = images[p]->pixel(j);
-				if(xj.v[p] == images[p]->nullvalue())
-					validPixel=false;
-				else 
-					xj.v[p] = (int(xj.v[p]/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
-			}
-			if(validPixel)
-			{
-				unsigned pos = insert(xj);
-				++HistoX[pos].c;
-			}
-
-		
+			valid = images[p]->pixel(j) != images[p]->nullvalue();
+			xj.v[p] = (int(images[p]->pixel(j)/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
 		}
+		if(valid)
+			insert(xj);
 	}
-	else // Case no binsize has been given, we output 1 bin per pixel
-	{
-		xj.c = 1;
-		for (unsigned j = 0; j < images[0]->NumberPixels(); ++j)
-		{
-			validPixel = true;
-			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
-			{
-				xj.v[p] = images[p]->pixel(j);
-				if(xj.v[p] == images[p]->nullvalue())
-					validPixel=false;
-			}
-			if(validPixel)
-			{
-				HistoX.push_back(xj);
-			}
 
-		
-		}
-		sort(HistoX.begin(),HistoX.end(),cmp);
-	}
-	
+
 }
 
 
@@ -136,9 +124,9 @@ int main(int argc, const char **argv)
 	string sbinSize;
 
 	
-	outputFileName = "histogram.txt";
+	filenamePrefix = "histogram.txt";
 
-	string programDescription = "This Program will generate the histogram file for the given images.\n";
+	string programDescription = "This program will generate the histogram file for the given images.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
@@ -147,7 +135,7 @@ int main(int argc, const char **argv)
 
 	ArgumentHelper arguments;
 	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogramm.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
-	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
+	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", filenamePrefix);
 	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP\n\t", imageType);
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
@@ -191,7 +179,7 @@ int main(int argc, const char **argv)
 			
 	histogram(images, binSize);
 	
-	ofstream histoFile(outputFileName.c_str());
+	ofstream histoFile(filenamePrefix.c_str());
 	if (histoFile)
 	{
 		//We save the binSize and the number of bins
@@ -200,17 +188,16 @@ int main(int argc, const char **argv)
 		histoFile<<HistoX.size()<<endl;
 		
 		//We save the Histogram
-		for (unsigned j = 0; j < HistoX.size() && histoFile.good(); ++j)
+		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end() && histoFile.good(); ++xj)
 		{
 			for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
-				histoFile<<HistoX[j].v[p]<<" ";
-			histoFile<<HistoX[j].c<<endl;
+				histoFile<*xj<<endl;
 		}
 
 	}
 	else
 	{
-		cerr<<"Error : Could not open file "<<outputFileName<<" for writing."<<endl;
+		cerr<<"Error : Could not open file "<<filenamePrefix<<" for writing."<<endl;
 
 	}
 	

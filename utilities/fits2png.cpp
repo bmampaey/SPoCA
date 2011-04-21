@@ -1,5 +1,28 @@
-// This programm will make a fits file readable by Imagemagick
-// Written by Benjamin Mampaey on 14 July 2010
+//! Program that converts a color map in fits format to a png image.
+/*!
+@page fits2png fits2png.x
+
+ This program takes color maps in fits format, and for each one writes it to a png image.
+ The name of the png image will be the name of the original file with the suffix png.
+ 
+ @section usage Usage
+ 
+ <tt> fits2png.x -h </tt>
+ 
+ Calling the programs with -h will provide you with help 
+ 
+ <tt> fits2png.x [-option optionvalue, ...] fitsFileName1 fitsFileName2 </tt>
+ 
+@param transparent	If you want the null values to be transparent.
+
+@param colorize	If you want to colorize the regions.
+<BR>N.B.: In fits files, there is no colors, so they are represented as a number in the color maps.
+ When creating the png image, a mapping is done from a number to a color.
+ That mapping is consistent between images and calls so that a region that has been tracked keep the same color in the successive images. 
+
+See @ref Compilation_Options for constants and parameters at compilation time.
+
+*/
 
 #include <vector>
 #include <iostream>
@@ -23,7 +46,7 @@ using Magick::ColorGray;
 using Magick::Geometry;
 using Magick::Quantum; 
 
-string outputFileName;
+string filenamePrefix;
 
 int main(int argc, const char **argv)
 {
@@ -42,8 +65,7 @@ int main(int argc, const char **argv)
 	string programDescription = "This Program makes the fits files usable with ImageMagick utilities.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
-	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
-	programDescription+="\nReal: " + string(typeid(Real).name());
+	programDescription+="\nColorType: " + string(typeid(ColorType).name());
 
 	ArgumentHelper arguments;
 	arguments.new_flag('T', "transparent", "\n\tIf you want the null values to be transparent\n\t" , transparent);
@@ -95,8 +117,8 @@ int main(int argc, const char **argv)
 			}
 		}
 
-		outputFileName =  stripSuffix(imagesFilenames[p]);
-		pngImage.write(outputFileName + ".png");
+		filenamePrefix =  stripSuffix(imagesFilenames[p]);
+		pngImage.write(filenamePrefix + ".png");
 	}
 	return EXIT_SUCCESS;
 }

@@ -28,7 +28,7 @@ class CumulativeSPoCA2Classifier : public  SPoCA2Classifier, public CumulativeSP
 		using SPoCA2Classifier::assess;
 		using SPoCA2Classifier::merge;
 	public :
-		CumulativeSPoCA2Classifier(unsigned neighboorhoodRadius = 1, Real fuzzifier = 2);
+		CumulativeSPoCA2Classifier(unsigned neighborhoodRadius = 1, Real fuzzifier = 2);
 		using CumulativeSPoCAClassifier::addImages;
 
 		//Classification functions

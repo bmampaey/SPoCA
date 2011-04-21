@@ -2,10 +2,15 @@
 
 using namespace std;
 
-Classifier::Classifier()
-:numberClasses(0),numberValidPixels(0),Xaxes(0),Yaxes(0),channels(0)
+Classifier::Classifier(Real fuzzifier)
+:fuzzifier(fuzzifier),numberClasses(0),numberFeatureVectors(0),Xaxes(0),Yaxes(0),channels(0)
 {}
 
+Classifier::~Classifier()
+{
+	if(stepfile.is_open())
+		stepfile.close();
+}
 
 void Classifier::addImages(vector<EUVImage*> images)
 {
@@ -35,7 +40,7 @@ void Classifier::addImages(vector<EUVImage*> images)
 	X.reserve(numberPixelsEstimate);
 	coordinates.reserve(numberPixelsEstimate);
 
-	PixelFeature xj;
+	RealFeature f;
 	bool validPixel;
 	for (unsigned y = 0; y < Yaxes; ++y)
 	{
@@ -44,25 +49,26 @@ void Classifier::addImages(vector<EUVImage*> images)
 			validPixel = true;
 			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
 			{
-				xj.v[p] = images[p]->pixel(x, y);
-				if(xj.v[p] == images[p]->nullvalue())
+				f.v[p] = images[p]->pixel(x, y);
+				if(f.v[p] == images[p]->nullvalue())
 					validPixel=false;
 			}
 			if(validPixel)
 			{
 				coordinates.push_back(Coordinate(x,y));
-				X.push_back(xj);
+				X.push_back(f);
 			}
 
 		}
 	}
 
-	numberValidPixels = X.size();
+	numberFeatureVectors = X.size();
 
 }
 
 void Classifier::attribution()
 {
+	sortB();
 	computeU();
 }
 
@@ -119,7 +125,7 @@ unsigned Classifier::sursegmentation(unsigned Cmin)
 		#if DEBUG >= 2
 		ColorMap segmentedMap;
 		segmentedMap_maxUij(&segmentedMap);
-		segmentedMap.writeFits(outputFileName + "segmented." + itos(numberClasses) + "classes.fits");
+		segmentedMap.writeFits(filenamePrefix + "segmented." + itos(numberClasses) + "classes.fits");
 		#endif
 		
 		#if DEBUG >= 3
@@ -159,127 +165,121 @@ unsigned Classifier::sursegmentation(vector<RealFeature>& B, unsigned Cmin)
 
 }
 
-
-// The merge function takes 2 centers and merge them into 1
-
-//Merging by taking the mean value of the pixels Xj belonging to the classes Bi1 or Bi2
+#if MERGE_TYPE==MERGEMAX
+/*!
+Compute the new center by computing the mean value of the featurevector belonging to one of the 2 centers to be merged.
+A featurevector belong to a class if it's memebership is maximal for that class. 
+The values of the membership are computed using the regular method for computing membership with the new centers.
+*/
 void Classifier::merge(unsigned i1, unsigned i2)
 {
-
-	#if DEBUG >= 3
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2];
-	#endif
-
-	Real max_uij, sum = 0;
-	unsigned max_i;
+	Real sum = 0;
 	RealFeature newB = 0;
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	MembershipSet::iterator uij = U.begin();
+	
+	for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 	{
-		max_uij = 0;
-		max_i = 0;
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
+		// We search to which class belongs the featureVector 
+		Real max_uij = 0;
+		unsigned max_i = 0;
+		for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 		{
-			if (U[i*numberValidPixels+j] > max_uij)
+			if (*uij > max_uij)
 			{
-				max_uij = U[i*numberValidPixels+j];
+				max_uij = *uij;
 				max_i = i;
 			}
 		}
+		// If it belongs to one of the 2 class I am merging, I update it's B
 		if(max_i == i1 || max_i == i2)
 		{
-			newB += X[j] ;
+			newB += *xj;
 			sum += 1;
-
 		}
-
 	}
-
-	B[i1] = newB / sum;
+	newB /= sum;
 
 	#if DEBUG >= 3
-	cout<<" into new center :"<<B[i1]<<endl;
+	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
-
+	
+	B[i1] = newB;
 	B.erase(B.begin()+i2);
 	--numberClasses;
-
+	
 	computeU();
-
 }
 
 
-/* Older merging functions kept for historical reasons
-
-//Merging according to Vincent's method
+#elif MERGE_TYPE==MERGEVINCENT
+/*!
+Compute the new center by a strange method.
+The values of the membership are computed using the regular method for computing membership with the new centers.
+*/
 void Classifier::merge(unsigned i1, unsigned i2)
 {
-	#if DEBUG >= 3
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2];
-	#endif
-
 	Real alpha = MERGEVINCENT_ALPHA;
 	RealFeature newB[] = {0., 0.};
 	Real caardinal[] = {0., 0.};
-
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	MembershipSet::iterator uij = U.begin();
+	for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 	{
-		if( U[i1*numberValidPixels+j] > alpha)
+		if(*(uij + i1) > alpha)
 		{
 			++caardinal[0];
-			newB[0] += X[j]*U[i1*numberValidPixels+j];
+			newB[0] += *xj * *(uij + i1);
 
 		}
-		if( U[i2*numberValidPixels+j] > alpha)
+		if( *(uij + i2) > alpha)
 		{
 			++caardinal[1];
-			newB[1] += X[j]*U[i2*numberValidPixels+j];
+			newB[1] += *xj * *(uij + i2);
 
 		}
-
+		uij+=numberClasses;
 	}
+
 	newB[0] /= caardinal[0];
 	newB[1] /= caardinal[1];
-	B[i1] = newB[0] + newB[1];
 
 	#if DEBUG >= 3
-	cout<<" into new center :"<<B[i1]<<endl;
+	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB[0] + newB[1]<<endl;
 	#endif
 
+	B[i1] = newB[0] + newB[1];
 	B.erase(B.begin()+i2);
 	--numberClasses;
-
+	
 	computeU();
 }
 
-//Merging by taking the mean value of the 2 centers, and recalculate U acordingly
+#else
+/*!
+Compute the new center by a taking the mean value of the 2 centers to be merged.
+The values of the membership are computed using the regular method for computing membership with the new centers.
+*/
 void Classifier::merge(unsigned i1, unsigned i2)
 {
+	RealFeature newB = (B[i1] + B[i2]) / 2.;
 
 	#if DEBUG >= 3
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2];
+	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
-
-	B[i1] += B[i2];
-	B[i1] /= 2.;
-
-	#if DEBUG >= 3
-	cout<<" into new center :"<<B[i1]<<endl;
-	#endif
-
+	
+	B[i1] = newB;
 	B.erase(B.begin()+i2);
 	--numberClasses;
 
 	computeU();
 
 }
-
-*/
+#endif
 
 ColorMap* Classifier::segmentedMap_maxUij(ColorMap* segmentedMap)
 {
 
 	#if DEBUG >= 1
-	if (U.size() != numberClasses*numberValidPixels)
+	if (U.size() != numberClasses*numberFeatureVectors)
 		cerr<<"The membership matrix U has not yet been calculated"<<endl;
 	#endif
 	
@@ -295,15 +295,16 @@ ColorMap* Classifier::segmentedMap_maxUij(ColorMap* segmentedMap)
 	segmentedMap->zero();
 	segmentedMap->setNullvalue(0);
 	
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	MembershipSet::iterator uij = U.begin();
+	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 	{
-		Real max_uij = U[j];
+		Real max_uij = *uij;
 		segmentedMap->pixel(coordinates[j]) = 1;
-		for (unsigned i = 1 ; i < numberClasses ; ++i)
+		for (unsigned i = 1 ; i < numberClasses ; ++i, ++uij)
 		{
-			if (U[i*numberValidPixels+j] > max_uij)
+			if (*uij > max_uij)
 			{
-				max_uij = U[i*numberValidPixels+j];
+				max_uij = *uij;
 				segmentedMap->pixel(coordinates[j]) = i + 1;
 			}
 		}
@@ -317,7 +318,7 @@ ColorMap* Classifier::segmentedMap_closestCenter(ColorMap* segmentedMap)
 {
 
 	#if DEBUG >= 1
-	if (U.size() != numberClasses*numberValidPixels)
+	if (U.size() != numberClasses*numberFeatureVectors)
 		cerr<<"The membership matrix U has not yet been calculated"<<endl;
 	#endif
 
@@ -333,14 +334,13 @@ ColorMap* Classifier::segmentedMap_closestCenter(ColorMap* segmentedMap)
 	segmentedMap->zero();
 	segmentedMap->setNullvalue(0);
 	
-	Real d2XjBi;
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 	{
 		Real minDistance = d2(X[j], B[0]);
 		segmentedMap->pixel(coordinates[j]) = 1;
 		for (unsigned i = 1 ; i < numberClasses ; ++i)
 		{
-			d2XjBi = d2(X[j], B[i]);
+			Real d2XjBi = d2(X[j], B[i]);
 			if (d2XjBi < minDistance)
 			{
 				minDistance = d2XjBi;
@@ -357,7 +357,7 @@ ColorMap* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowe
 {
 
 	#if DEBUG >= 1
-	if (U.size() != numberClasses*numberValidPixels)
+	if (U.size() != numberClasses*numberFeatureVectors)
 		cerr<<"The membership matrix U has not yet been calculated."<<endl;
 	if (middleClass == 0 || middleClass > numberClasses)
 	{
@@ -390,18 +390,18 @@ ColorMap* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowe
 	segmentedMap->zero();
 	segmentedMap->setNullvalue(0);
 	
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 	{
 		if(X[j] < B[middleClass])
 		{
-			if(U[middleClass*numberValidPixels+j] < lowerIntensity_minMembership)
+			if(U[middleClass*numberFeatureVectors+j] < lowerIntensity_minMembership)
 				segmentedMap->pixel(coordinates[j]) = 1;
 			else
 				segmentedMap->pixel(coordinates[j]) = 2;
 		}
 		else
 		{
-			if(U[middleClass*numberValidPixels+j] < higherIntensity_minMembership)
+			if(U[middleClass*numberFeatureVectors+j] < higherIntensity_minMembership)
 				segmentedMap->pixel(coordinates[j]) = 3;
 			else
 				segmentedMap->pixel(coordinates[j]) = 2;
@@ -418,7 +418,7 @@ ColorMap* Classifier::segmentedMap_limits(vector<RealFeature>& limits,ColorMap* 
 	segmentedMap_maxUij(segmentedMap);
 	
 	#if DEBUG >= 2
-	segmentedMap->writeFits(outputFileName + "max.segmented.fits");
+	segmentedMap->writeFits(filenamePrefix + "max.segmented.fits");
 	#endif
 
 	//We create a vector of transformation telling wich class must be merged to what class
@@ -446,7 +446,7 @@ ColorMap* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>&
 	segmentedMap_maxUij(segmentedMap);
 
 	#if DEBUG >= 2
-	segmentedMap->writeFits(outputFileName + "max.segmented.fits");
+	segmentedMap->writeFits(filenamePrefix + "max.segmented.fits");
 	#endif
 
 	//We create a vector of transformation telling wich class must be merged to what class
@@ -483,9 +483,9 @@ EUVImage* Classifier::fuzzyMap(const unsigned i, EUVImage* fuzzyMap)
 	}
 	
 	fuzzyMap->zero();
-
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
-		fuzzyMap->pixel(coordinates[j]) = U[i*numberValidPixels+j];
+	unsigned j = 0;
+	for (MembershipSet::iterator uij = U.begin()+i; uij != U.end(); uij += numberClasses, ++j)
+		fuzzyMap->pixel(coordinates[j]) = *uij;
 
 	return fuzzyMap;
 }
@@ -504,15 +504,16 @@ EUVImage* Classifier::normalizedFuzzyMap(const unsigned i, EUVImage* fuzzyMap)
 	
 	fuzzyMap->zero();
 
-	Real    sum;
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	MembershipSet::iterator uij = U.begin();
+
+	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 	{
-		sum = 0;
-		for (unsigned k = 0 ; k < numberClasses ; ++k)
+		Real sum = 0;
+		for (unsigned k = 0 ; k < numberClasses ; ++k, ++uij)
 		{
-			sum += U[k*numberValidPixels+j];
+			sum += *uij;
 		}
-		fuzzyMap->pixel(coordinates[j]) = U[i*numberValidPixels+j] / sum;
+		fuzzyMap->pixel(coordinates[j]) = U[j*numberClasses+i] / sum;
 	}
 
 	return fuzzyMap;
@@ -530,11 +531,11 @@ void Classifier::saveB(const string& filename)
 }
 
 
-vector<PixelFeature> Classifier::percentiles(vector<Real> percentileValues)
+vector<RealFeature> Classifier::percentiles(vector<Real> percentileValues)
 {
 
-	vector<PixelFeature> sortedX = X;
-	vector<PixelFeature> result;
+	vector<RealFeature> sortedX = X;
+	vector<RealFeature> result;
 	sort(sortedX.begin(), sortedX.end());
 	for (unsigned h = 0; h < percentileValues.size(); ++h)
 	{
@@ -567,7 +568,7 @@ EUVImage* Classifier::getImage(unsigned p)
 
 	EUVImage* image = new EUVImage(Xaxes, Yaxes);
 	image->zero();
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 	{
 		image->pixel(coordinates[j]) = X[j].v[p];
 	}
@@ -582,7 +583,7 @@ void Classifier::randomInitB(unsigned C)
 	#if DEBUG >= 1
 	if(X.size() == 0)
 	{
-		cerr<<"Error : The vector of FeatureVector must be initialized before doing a random init."<<endl;
+		cerr<<"Error : The set of FeatureVector must be initialized before doing a random init."<<endl;
 		exit(EXIT_FAILURE);
 
 	}
@@ -593,7 +594,7 @@ void Classifier::randomInitB(unsigned C)
 	B.resize(numberClasses);
 	for (unsigned i = 0; i < numberClasses; ++i)
 	{
-		B[i]=X[rand() % numberValidPixels];
+		B[i]=X[rand() % numberFeatureVectors];
 
 	}
 	//We like our centers to be sorted
@@ -614,9 +615,14 @@ void Classifier::initB(const vector<RealFeature>& B, const RealFeature& channels
 	this->channels = channels;
 }
 
+void Classifier::sortB()
+{
+	sort(B.begin(), B.end());
+}
+
 void Classifier::ordonateImages(vector<EUVImage*>& images)
 {
-	if(channels)
+	if(! channels.is_null())
 	{
 		for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
 		{
@@ -654,33 +660,29 @@ vector<RealFeature> Classifier::classAverage() const
 	
 	vector<RealFeature> class_average(numberClasses, 0.);
 	vector<Real> cardinal(numberClasses, 0.);
-	for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+	
+	MembershipSet::const_iterator uij = U.begin();
+	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 	{
-		Real max_uij = U[j];
+		Real max_uij = *uij;
 		unsigned belongsTo = 0;
-		for (unsigned i = 1 ; i < numberClasses ; ++i)
+		for (unsigned i = 1 ; i < numberClasses ; ++i, ++uij)
 		{
-			if (U[i*numberValidPixels+j] > max_uij)
+			if (*uij > max_uij)
 			{
-				max_uij = U[i*numberValidPixels+j];
+				max_uij = *uij;
 				belongsTo = i;
 			}
 		}
 		class_average[belongsTo] += X[j];
 		++cardinal[belongsTo];
-
 	}
+	
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
 		class_average[i]/=cardinal[i];
 	}
 	return class_average;
-}
-
-Classifier::~Classifier()
-{
-	if(stepfile.is_open())
-		stepfile.close();
 }
 
 void Classifier::stepinit(const string filename)
@@ -691,7 +693,7 @@ void Classifier::stepinit(const string filename)
 	stepfile.open(filename.c_str(), ios_base::app);
 	if(!stepfile)
 	{
-		cerr<<"Error : could not open iterations file "<<outputFileName<<"iterations.txt !"<<endl;
+		cerr<<"Error : could not open iterations file "<<filenamePrefix<<"iterations.txt !"<<endl;
 	}
 	ostringstream out;
 	out<<"iteration"<<"\t"<<"precisionReached";

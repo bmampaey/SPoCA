@@ -26,7 +26,7 @@ using namespace std;
 using namespace dsr;
 using namespace cgt;
 
-string outputFileName;
+string filenamePrefix;
 
 
 int main(int argc, const char **argv)
@@ -58,7 +58,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('C', "coordinateType", "string", "\n\tThe type of coordinates to output positions.\n\tPossible values are : HG, HGC, HPC, HPR, HCC, HCR\n\t", coordinateType);
 	arguments.new_named_string('A', "algorithmId", "string", "\n\tThe id of the algorithm.\n\t", algorithmId);	
 	arguments.new_flag('M', "monochrome", "Set this flag if you want the regions to be outputed in monochrome colour.\n\t", monochrome);
-	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", outputFileName);
+	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", filenamePrefix);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
@@ -76,11 +76,11 @@ int main(int argc, const char **argv)
 	float x, y;
 	
 	// We set the name of output files
-	if(outputFileName.empty())
+	if(filenamePrefix.empty())
 	{
-		outputFileName = "./visualisation3D_" + algorithmId;
+		filenamePrefix = "./visualisation3D_" + algorithmId;
 	}
-	ofstream outputFile(outputFileName.c_str());
+	ofstream outputFile(filenamePrefix.c_str());
 	
 
 	if(monochrome)

@@ -8,75 +8,111 @@ PCMClassifier::PCMClassifier(Real fuzzifier)
 
 void PCMClassifier::computeU()
 {
-	U.resize(numberValidPixels * numberClasses);
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
+	U.resize(numberFeatureVectors * numberClasses);
+	
+	MembershipSet::iterator uij = U.begin();
+	if (fuzzifier == 1.5)
 	{
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 		{
-			U[i*numberValidPixels+j] = d2(X[j],B[i]) / eta[i] ;
-			if(fuzzifier == 1.5)
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				U[i*numberValidPixels+j] *=  U[i*numberValidPixels+j];
+				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = 1. / (1. + *uij * *uij);
 			}
-			else if(fuzzifier != 2)
-			{
-				U[i*numberValidPixels+j] = pow( U[i*numberValidPixels+j] , Real(1./(fuzzifier-1.)));
-			}
-			U[i*numberValidPixels+j] = 1. / (1. + U[i*numberValidPixels+j]);
 		}
-
 	}
-
+	else if (fuzzifier == 2)
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = 1. / (1. + *uij);
+			}
+		}
+	}
+	else
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = 1. / (1. + pow(*uij , Real(1./(fuzzifier-1.))));
+			}
+		}
+	}
 }
 
 
 void PCMClassifier::computeEta()
 {
-	eta = vector<Real>(numberClasses,0.);
-
-	Real sum, uij_m;
+	eta.assign(numberClasses,0.);
+	vector<Real> sum(numberClasses,0.);
+	MembershipSet::iterator uij = U.begin();
+	if (fuzzifier == 2)
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				Real uij_m = *uij * *uij;
+				eta[i] += uij_m * d2(*xj,B[i]);
+				sum[i] += uij_m;
+			}
+		}
+	}
+	else
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				Real uij_m = pow(*uij,fuzzifier);
+				eta[i] += uij_m * d2(*xj,B[i]);
+				sum[i] += uij_m;
+			}
+		}
+	}
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
-		sum = 0;
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
-		{
-
-			if(fuzzifier == 2)
-				uij_m = U[i*numberValidPixels+j] * U[i*numberValidPixels+j];
-			else
-				uij_m = pow(U[i*numberValidPixels+j],fuzzifier);
-
-			eta[i] += uij_m*d2(X[j],B[i]);
-			sum += uij_m;
-		}
-		eta[i] /= sum;
+		eta[i] /= sum[i];
 	}
 }
 
-//This is the other method to calculate eta, descibed by Krishnapuram and Keller. It is a little faster by the way
+/*!
+This is another method to compute eta.
+It was described by Krishnapuram and Keller and is faster than the other computeEta method.
+*/
 void PCMClassifier::computeEta(Real alpha)
 {
-	
-	eta = vector<Real>(numberClasses,0.);
-
-	Real sum;
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
+	eta.assign(numberClasses,0.);
+	vector<Real> sum(numberClasses,0.);
+	MembershipSet::iterator uij = U.begin();
+	for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 	{
-		sum = 0;
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
+		for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 		{
-			if (U[i*numberValidPixels+j]>alpha)
+			if (*uij > alpha)
 			{
-				eta[i] += d2(X[j],B[i]);
-				++sum;
+				eta[i] += d2(*xj,B[i]);
+				sum[i] += 1;
 			}
-
 		}
-
-		eta[i] /= sum;
-
 	}
 
+	for (unsigned i = 0 ; i < numberClasses ; ++i)
+	{
+		if(sum[i] != 0)
+			eta[i] /= sum[i];
+		else
+		{
+			cerr<<"Error : Computation of Eta failed for class "<<i<<endl;
+			exit(EXIT_FAILURE);
+		}
+	}
 }
 
 // VERSION WITH LIMITED VARIATION OF ETA W.R.T. ITS INITIAL VALUE
@@ -101,17 +137,17 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	#endif
 	
 	#if DEBUG >= 2
-		stepinit(outputFileName+"iterations.txt");
+		stepinit(filenamePrefix+"iterations.txt");
 		unsigned decimals = unsigned(1 - log10(precision));;
 	#endif
 	
-	//Initialisation of precision & U
+	//Initialisation of precision
 	this->precision = precision;
 
 	Real precisionReached = numeric_limits<Real>::max();
 	vector<RealFeature> oldB = B;
 	vector<Real> start_eta = eta;
-	bool recomputeEta = FIXETA != TRUE;
+	bool recomputeEta = FIXETA != true;
 	for (unsigned iteration = 0; iteration < maxNumberIteration && precisionReached > precision ; ++iteration)
 	{
 
@@ -157,46 +193,51 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 Real PCMClassifier::computeJ() const
 {
 	Real result = 0;
-
+	vector<Real> sum(numberClasses,0.);
+	MembershipSet::const_iterator uij = U.begin();
+	if (fuzzifier == 2)
+	{
+		for (FeatureVectorSet::const_iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				result += *uij * *uij * d2(*xj,B[i]);
+				sum[i] += (1 - *uij) * (1 - *uij); 
+			}
+		}
+	}
+	else
+	{
+		for (FeatureVectorSet::const_iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				result += pow( *uij, fuzzifier) * d2(*xj,B[i]);
+				sum[i] += pow(1. - *uij, fuzzifier); 
+			}
+		}
+	}
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
-		Real sum1 = 0, sum2 = 0;
-
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
-		{
-
-			if(fuzzifier == 2)
-				sum1 +=  U[i*numberValidPixels+j] * U[i*numberValidPixels+j] * d2(X[j],B[i]);
-			else
-				sum1 +=  pow(U[i*numberValidPixels+j], fuzzifier) * d2(X[j],B[i]);
-
-			if(fuzzifier == 2)
-				sum2 += (1 - U[i*numberValidPixels+j]) * (1 - U[i*numberValidPixels+j]);
-			else
-				sum2 +=  pow(1 - U[i*numberValidPixels+j], fuzzifier);
-
-		}
-		result += sum1 + (eta[i] * sum2);
+		result += eta[i] * sum[i];
 	}
 	return result;
 
 }
 
-
-
 Real PCMClassifier::assess(vector<Real>& V)
 {
-	V = vector<Real>(numberClasses, 0.);
+	V.assign(numberClasses, 0.);
 	Real score = 0;
-
+	vector<Real> sum(numberClasses,0.);
+	
 	//This is the vector of the min distances between the centers Bi and all the others centers Bii with ii!=i
 	vector<Real> minDist(numberClasses, numeric_limits<Real>::max());
-	//The min distance between all centers
+	//The min distance between any 2 centers
 	Real minDistBiBii = numeric_limits<Real>::max() ;
 
 	Real distBiBii;
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
-	{
 		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
 		{
 			distBiBii = d2(B[i],B[ii]);
@@ -205,37 +246,44 @@ Real PCMClassifier::assess(vector<Real>& V)
 			if(distBiBii < minDist[ii])
 				minDist[ii] = distBiBii;
 		}
+	
+	MembershipSet::iterator uij = U.begin();
+	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if (fuzzifier == 2)
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				V[i] += d2(*xj,B[i]) * *uij * *uij;
+				sum[i] += (1 - *uij) * (1 - *uij); 
+			}
+		}
 	}
-
+	else
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+			{
+				V[i] += d2(*xj,B[i]) * pow(*uij, fuzzifier);
+				sum[i] += pow(1. - *uij, fuzzifier); 
+			}
+		}
+	}
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 	{
-		Real sum1 = 0, sum2 = 0;
-
-		for (unsigned j = 0 ; j < numberValidPixels ; ++j)
-		{
-
-			if(fuzzifier == 2)
-				sum1 +=  U[i*numberValidPixels+j] * U[i*numberValidPixels+j] * d2(X[j],B[i]);
-			else
-				sum1 +=  pow(U[i*numberValidPixels+j], fuzzifier) * d2(X[j],B[i]);
-
-			if(fuzzifier == 2)
-				sum2 += (1 - U[i*numberValidPixels+j]) * (1 - U[i*numberValidPixels+j]);
-			else
-				sum2 +=  pow(1 - U[i*numberValidPixels+j], fuzzifier);
-
-		}
-
-		V[i] = sum1 + (eta[i] * sum2);
+		V[i] += eta[i] * sum[i];
 		score += V[i];
 		if(minDist[i] < minDistBiBii)
 			minDistBiBii = minDist[i];
 
-		V[i] /= (minDist[i] * numberValidPixels);
+		V[i] /= (minDist[i] * numberFeatureVectors);
 
 	}
 
-	score /= (minDistBiBii * numberValidPixels);
+	score /= (minDistBiBii * numberFeatureVectors);
+
 	return score;
 
 }
@@ -283,7 +331,7 @@ void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FC
 	#if DEBUG >= 1
 	if(X.size() == 0)
 	{
-		cerr<<"Error : The vector of FeatureVector must be initialized before doing a FCM init."<<endl;
+		cerr<<"Error : The set of FeatureVector must be initialized before doing a FCM init."<<endl;
 		exit(EXIT_FAILURE);
 
 	}
@@ -301,7 +349,7 @@ void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FC
 	FCMClassifier::classification(precision, maxNumberIteration);
 	
 	//We like our centers to be sorted 
-	sort(B.begin(), B.end());
+	FCMClassifier::sortB();
 	FCMClassifier::computeU();
 	fuzzifier = temp;
 	//We initialise eta
@@ -317,7 +365,6 @@ void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FC
 		computeU();
 		computeEta();
 
-		
 		for (unsigned i = 0 ; i < numberClasses ; ++i)
 		{
 			precisionReached = abs(oldEta[i] - eta[i]);
@@ -362,3 +409,29 @@ void PCMClassifier::stepout(const unsigned iteration, const Real precisionReache
 		
 }
 
+void PCMClassifier::sortB()
+{
+	/*! When sorting B, the eta need to follow the same order. */
+	vector<RealFeature> sortedB = B;
+	sort(sortedB.begin(), sortedB.end());
+	vector<unsigned> indice(numberClasses);
+	for (unsigned i = 0; i < numberClasses; ++i)
+	{
+		for(unsigned ii = 0; ii < numberClasses; ++ii)
+		{
+			if(sortedB[i] == B[ii])
+			{
+				indice[i] = ii;
+				break;
+			}
+		}
+	}
+	
+	vector<Real> sortedEta(numberClasses);
+	for (unsigned i = 0; i < numberClasses; ++i)
+	{
+		sortedEta[i] = eta[indice[i]];
+	}
+	eta = sortedEta;
+	B = sortedB;
+}

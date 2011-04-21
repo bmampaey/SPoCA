@@ -2,9 +2,9 @@
 
 using namespace std;
 
-CumulativeSPoCA2Classifier::CumulativeSPoCA2Classifier(unsigned neighboorhoodRadius, Real fuzzifier)
+CumulativeSPoCA2Classifier::CumulativeSPoCA2Classifier(unsigned neighborhoodRadius, Real fuzzifier)
 :SPoCA2Classifier(), CumulativeSPoCAClassifier()
 {
 	this->fuzzifier = fuzzifier;
-	this->Nradius = neighboorhoodRadius;
+	this->Nradius = neighborhoodRadius;
 }

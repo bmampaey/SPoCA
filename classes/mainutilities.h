@@ -22,7 +22,7 @@
 #include "HMIImage.h"
 #include "ColorMap.h"
 
-extern std::string outputFileName;
+extern std::string filenamePrefix;
 extern const char * instruments[];
 extern const char * limb_corrections[];
 

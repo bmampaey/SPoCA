@@ -5,7 +5,7 @@
 
 @section building_seq Building the software
 
-The programms has been develloped to run on linuxand has not been tested on any other plateform.
+The programs have been develloped to run on linux and have not been tested on any other plateform.
 
 To compile a program named program_name.x type "make -f program_name.mk -B", this will generate the corresponding executable in the bin directory.
 
@@ -18,13 +18,13 @@ You can always get help for a program or a script by calling it with the -h opti
 
 The directories are organized as follow :
 
-- spoca		: repository for the makefiles
+- spoca			: repository for the makefiles
 - spoca/programs	: repository for the main c++ files of programs
-- spoca/classes	: repository for the classes .h and .cpp files (classifiers, images, ...) written specifically for SPoCA
-- spoca/bin	: repository for executables
-- spoca/objects	: repository for temporary object files during compilation
-- spoca/cgt	: a library of graph class
-- spoca/script	: repository of scripts (mainly in perl) to help in running spoca and manipulating output (creation of movies, ...)
+- spoca/classes		: repository for the classes .h and .cpp files (classifiers, images, ...) written specifically for SPoCA
+- spoca/bin		: repository for executables
+- spoca/objects		: repository for temporary object files during compilation
+- spoca/cgt		: a library of graph class
+- spoca/script		: repository of scripts (mainly in perl) to help in running spoca and manipulating output (creation of movies, ...)
 - spoca/utilities	: repository for some utilities program
 
 There is also 1 directory for your convenience :

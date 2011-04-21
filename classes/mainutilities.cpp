@@ -65,7 +65,7 @@ inline vector<EUVImage*> getImagesFromFiles(const string imageType, const vector
 				cerr<<"Warning : Image "<<imagesFilenames[p]<<" will be recentered to have the same sun centre than image "<<imagesFilenames[0]<<endl;
 				images[p]->recenter(sunCenter);
 				#if DEBUG >= 3
-				string filename = outputFileName + "recentered.";
+				string filename = filenamePrefix + "recentered.";
 				filename +=  stripPath(imagesFilenames[p]);
 				images[p]->writeFits(filename);
 				#endif

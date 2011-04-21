@@ -1,6 +1,9 @@
 #include "HistogramClassifier.h"
+#include <math.h>
 
 using namespace std;
+
+extern string filenamePrefix;
 
 HistogramClassifier::HistogramClassifier()
 :binSize(0),numberBins(0),histoChannels(0)
@@ -17,20 +20,20 @@ HistogramClassifier::HistogramClassifier(const std::string& histogramFilename)
 }
 
 // Function to insert a new HistoFeatureVector into HistoX
-inline void HistogramClassifier::insert(const HistoPixelFeature& xj)
+inline void HistogramClassifier::insert(const HistoRealFeature& x)
 {
-	pair<set<HistoPixelFeature>::iterator,bool> ret = HistoX.insert(xj);
+	pair<HistoFeatureVectorSet::iterator,bool> ret = HistoX.insert(x);
 	if(! ret.second)
 	{
 		//The element existed already, I increase it's count
-		ret.first->c += xj.c;
+		(ret.first)->c += x.c;
 	}
 }
 
 // Function to insert a new FeatureVector into HistoX
-inline void HistogramClassifier::insert(const PixelFeature& xj)
+inline void HistogramClassifier::insert(const RealFeature& x)
 {
-	pair<set<HistoPixelFeature>::iterator,bool> ret = HistoX.insert(xj);
+	pair<HistoFeatureVectorSet::iterator,bool> ret = HistoX.insert(x);
 	(ret.first)->c += 1;
 }
 
@@ -68,22 +71,22 @@ void HistogramClassifier::initHistogram(const std::string& histogramFilename, bo
 	histoStream>>binSize;
 	histoStream>>numberBins;
 	
-	HistoPixelFeature xj;
+	HistoRealFeature x;
 	if (!reset)
 	{
 		for (unsigned j = 0; j < numberBins && histoStream.good(); ++j)
 		{
-			histoStream>>xj;
-			insert(xj);
+			histoStream>>x;
+			insert(x);
 		}
 	}
 	else
 	{
 		for (unsigned j = 0; j < numberBins && histoStream.good(); ++j)
 		{
-			histoStream>>xj;
-			xj.c = 1;
-			insert(xj);
+			histoStream>>x;
+			x.c = 0;
+			insert(x);
 		}
 		
 
@@ -107,7 +110,7 @@ void HistogramClassifier::saveHistogram(const std::string& histogramFilename)
 		histoFile<<HistoX.size()<<endl;
 		
 		//We save the Histogram
-		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end() && histoFile.good(); ++xj)
+		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end() && histoFile.good(); ++xj)
 		{
 			histoFile<<*xj<<endl;
 		}
@@ -123,35 +126,32 @@ void HistogramClassifier::saveHistogram(const std::string& histogramFilename)
 	histoFile.close();
 }
 
-void HistogramClassifier::addFeatures(const vector<PixelFeature>& X)
+void HistogramClassifier::addFeatures(const FeatureVectorSet& X)
 {
 
-	for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
+	if(binSize.has_null() )
 	{
-		if( binSize.v[p] == 0 )
-		{
-			cerr<<"binSize cannot be 0."<<endl;
-			exit(EXIT_FAILURE);
-		}
+		cerr<<"binSize cannot be 0."<<endl;
+		exit(EXIT_FAILURE);
 	}
-	
+
 	//TODO: test if it is faster to use the other insert
-	HistoPixelFeature xj;
-	xj.c = 1;
-	for (unsigned j = 0; j < X.size(); ++j)
+	HistoRealFeature f;
+	f.c = 1;
+	for (FeatureVectorSet::const_iterator xj = X.begin(); xj != X.end(); ++xj)
 	{
 		for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
 		{
-			xj.v[p] = (int(X[j].v[p]/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
+			f.v[p] = (floor(xj->v[p]/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
 		}
 
-		insert(xj);
+		insert(f);
 	}
 
 	numberBins = HistoX.size();
 	
 	#if DEBUG >= 2
-	saveHistogram(outputFileName + "histogram.txt");
+	saveHistogram(filenamePrefix + "histogram.txt");
 	#endif
 
 }
@@ -160,37 +160,32 @@ void HistogramClassifier::addFeatures(const vector<PixelFeature>& X)
 void HistogramClassifier::addImages(vector<EUVImage*> images, const unsigned xaxes, const unsigned yaxes)
 {
 
-	for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
+	if(binSize.has_null() )
 	{
-		if( binSize.v[p] == 0 )
-		{
-			cerr<<"binSize cannot be 0."<<endl;
-			exit(EXIT_FAILURE);
-		}
+		cerr<<"binSize cannot be 0."<<endl;
+		exit(EXIT_FAILURE);
 	}
 
+	HistoRealFeature f;
+	f.c = 1;
 
-	HistoPixelFeature xj;
-	xj.c = 1;
-	bool validPixel;
 	for (unsigned y = 0; y < yaxes; ++y)
 	{
 		for (unsigned x = 0; x < xaxes; ++x)
 		{
-			validPixel = true;
-			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
+			bool validPixel = true;
+			for (unsigned p = 0; p < NUMBERCHANNELS && validPixel; ++p)
 			{
-				xj.v[p] = images[p]->pixel(x, y);
-				if(xj.v[p] == images[p]->nullvalue())
+				f.v[p] = images[p]->pixel(x, y);
+				if(f.v[p] == images[p]->nullvalue())
 					validPixel=false;
 				else
-					xj.v[p] = (int(xj.v[p]/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
+					f.v[p] = (floor(f.v[p]/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
 			}
 			if(validPixel)
 			{
-				insert(xj);
+				insert(f);
 			}
-
 		}
 	}
 

@@ -24,5 +24,5 @@ float min_determinant = 0.01f,
 float min_displacement = 0.1f);
 
 typedef std::vector<SunImage*> Pyramid;
-extern std::string outputFileName;
+extern std::string filenamePrefix;
 #endif

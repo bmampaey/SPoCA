@@ -12,7 +12,7 @@ List of function to transform the results of the segmentation into a map of Acti
 */
 
 //! Function that creates the map of AR
-ColorMap* ActiveRegionMap(const ColorMap* segmentedMap, unsigned ARclass, bool tresholdRawArea = false);
+ColorMap* ActiveRegionMap(const ColorMap* segmentedMap, unsigned ARclass, bool thresholdRawArea = false);
 //! Function that returns the class number corresponding to the AR
 unsigned ARclass(const std::vector<RealFeature>& B);
 //! Routine that aggregate blobs into AR

@@ -298,17 +298,17 @@ ColorMap* Classifier::segmentedMap_maxUij(ColorMap* segmentedMap)
 	MembershipSet::iterator uij = U.begin();
 	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 	{
-		Real max_uij = *uij;
-		segmentedMap->pixel(coordinates[j]) = 1;
-		for (unsigned i = 1 ; i < numberClasses ; ++i, ++uij)
+		Real max_uij = 0;
+		ColorType color = 0;
+		for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 		{
 			if (*uij > max_uij)
 			{
 				max_uij = *uij;
-				segmentedMap->pixel(coordinates[j]) = i + 1;
+				color = i + 1;
 			}
 		}
-
+		segmentedMap->pixel(coordinates[j]) = color;
 	}
 	return segmentedMap;
 
@@ -353,7 +353,7 @@ ColorMap* Classifier::segmentedMap_closestCenter(ColorMap* segmentedMap)
 
 }
 
-ColorMap* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, ColorMap* segmentedMap)
+ColorMap* Classifier::segmentedMap_classThreshold(unsigned middleClass, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, ColorMap* segmentedMap)
 {
 
 	#if DEBUG >= 1
@@ -361,7 +361,7 @@ ColorMap* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowe
 		cerr<<"The membership matrix U has not yet been calculated."<<endl;
 	if (middleClass == 0 || middleClass > numberClasses)
 	{
-		cerr<<"The class number for treshold segmentation should be between 1 and numberClasses. It was set to: "<<middleClass<<endl;
+		cerr<<"The class number for threshold segmentation should be between 1 and numberClasses. It was set to: "<<middleClass<<endl;
 		exit(EXIT_FAILURE);
 	}
 	if(lowerIntensity_minMembership < 0 || lowerIntensity_minMembership > 1)
@@ -394,14 +394,14 @@ ColorMap* Classifier::segmentedMap_classTreshold(unsigned middleClass, Real lowe
 	{
 		if(X[j] < B[middleClass])
 		{
-			if(U[middleClass*numberFeatureVectors+j] < lowerIntensity_minMembership)
+			if(U[j*numberClasses+middleClass] < lowerIntensity_minMembership)
 				segmentedMap->pixel(coordinates[j]) = 1;
 			else
 				segmentedMap->pixel(coordinates[j]) = 2;
 		}
 		else
 		{
-			if(U[middleClass*numberFeatureVectors+j] < higherIntensity_minMembership)
+			if(U[j*numberClasses+middleClass] < higherIntensity_minMembership)
 				segmentedMap->pixel(coordinates[j]) = 3;
 			else
 				segmentedMap->pixel(coordinates[j]) = 2;
@@ -664,9 +664,9 @@ vector<RealFeature> Classifier::classAverage() const
 	MembershipSet::const_iterator uij = U.begin();
 	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 	{
-		Real max_uij = *uij;
+		Real max_uij = 0;
 		unsigned belongsTo = 0;
-		for (unsigned i = 1 ; i < numberClasses ; ++i, ++uij)
+		for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 		{
 			if (*uij > max_uij)
 			{
@@ -730,3 +730,18 @@ void Classifier::stepout(const unsigned iteration, const Real precisionReached, 
 		
 }
 
+Real Classifier::variation(const vector<RealFeature>& oldB, const vector<RealFeature>& newB) const
+{
+	Real maximalVariation = 0;
+	for (unsigned i = 0 ; i < oldB.size() && i < newB.size() ; ++i)
+	{
+		Real normNewBi = norm(newB[i]);
+		Real normOldBi = norm(oldB[i]);
+		Real variationI = abs(normNewBi - normOldBi)/normOldBi;
+		if (variationI > maximalVariation)
+		{
+			maximalVariation = variationI;
+		}
+	}
+	return maximalVariation;
+}

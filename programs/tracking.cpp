@@ -29,6 +29,8 @@ Otherwise only the region table is updated.
 
 @param regionTableHdu	The name of the region table Hdu
 
+@param uncompressed_results	Set this flag if you want results maps to be uncompressed.
+
 See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
 
 */
@@ -66,6 +68,9 @@ int main(int argc, const char **argv)
 {
 	cout<<setiosflags(ios::fixed);
 
+	// Program version
+	const char * version = "2.0";
+
 	// Options for the tracking
 	unsigned newColorArg = 0;
 	unsigned max_delta_t = 3600;
@@ -74,9 +79,8 @@ int main(int argc, const char **argv)
 	bool derotate = false;
 	string regionTableHdu;
 	
-	#ifdef HEK
-		unsigned previous_last_hek_map = 0;
-	#endif
+	// Options for the desired outputs 
+	bool uncompressed_results = false;
 	
 	// The list of names of the sun images to process
 	vector<string> imagesFilenames;
@@ -84,7 +88,7 @@ int main(int argc, const char **argv)
 	string programDescription = "This Programm will track regions from color maps.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
-	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
+	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
 
 	ArgumentHelper arguments;
@@ -95,13 +99,18 @@ int main(int argc, const char **argv)
 	arguments.new_flag('A', "recolorImages", "\n\tSet this flag if you want all images to be colored and written to disk.\n\tOtherwise only the region table is updated.\n\t", recolorImages);
 	arguments.new_flag('D', "derotate", "\n\tSet this flag if you want images to be derotated before comparison.\n\t", derotate);
 	arguments.new_named_string('H',"regionTableHdu","string","\n\tThe name of the region table Hdu\n\t",regionTableHdu);
+	arguments.new_flag('u', "uncompressed_results", "\n\tSet this flag if you want results maps to be uncompressed.\n\t", uncompressed_results);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
-	arguments.set_version("2.0");
+	arguments.set_version(version);
 	arguments.process(argc, argv);
 
 	newColor = newColorArg;
+
+	#ifdef HEK
+		unsigned previous_last_hek_map = 0;
+	#endif
 
 	// We get the maps, regions and colors from the fits files
 	vector<vector<Region*> > regions;
@@ -259,6 +268,9 @@ int main(int argc, const char **argv)
 	ouputRegions(regions, "regions_postmodification.txt");
 	#endif
 
+	// We set wheter we should not compress the maps
+	const int compressed_fits = uncompressed_results ? 0 : FitsFile::compress;
+
 	// We update the fits files with the new colors
 	for (unsigned s = 0; s < images.size(); ++s)
 	{
@@ -269,7 +281,7 @@ int main(int argc, const char **argv)
 			// We color the image and overwrite them in the fitsfile
 			recolorFromRegions(images[s], regions[s]);
 			images[s]->header.set<string>("TRACKED", "yes", "Map has been tracked");
-			images[s]->writeFits(file, FitsFile::update|FitsFile::compress);
+			images[s]->writeFits(file, FitsFile::update|compressed_fits);
 			delete images[s];
 		}
 		

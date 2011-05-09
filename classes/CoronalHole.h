@@ -12,7 +12,7 @@ List of function to transform the results of the segmentation into a map of Coro
 */
 
 //! Function that creates the map of CH
-ColorMap* CoronalHoleMap(const ColorMap* segmentedMap, unsigned CHclass, bool tresholdRawArea = false);
+ColorMap* CoronalHoleMap(const ColorMap* segmentedMap, unsigned CHclass, bool thresholdRawArea = false);
 //! Function that returns the class number corresponding to the CH
 unsigned CHclass(const std::vector<RealFeature>& B);
 //! Routine that aggregate blobs into CH

@@ -72,10 +72,10 @@ typedef HistogramFeatureVector<Real, NUMBERCHANNELS> HistoRealFeature;
 template<class T, unsigned N>
 inline std::ostream& operator<<(std::ostream& out, const HistogramFeatureVector<T, N>& fv)
 {
-	out<<fv.v[0];
+	out<<"("<<fv.v[0];
 	for (unsigned p = 1; p < N; ++p)
 		out<<","<<fv.v[p];
-	out<<" "<<fv.c;
+	out<<")x"<<fv.c;
 	return out;
 }
 
@@ -84,10 +84,10 @@ template<class T, unsigned N>
 inline std::istream& operator>>(std::istream& in, HistogramFeatureVector<T, N>& fv)
 {
 	char separator;
-	in>>fv.v[0];
+	in>>separator>>fv.v[0];
 	for (unsigned p = 1; p < N && in.good(); ++p)
 		in>>separator>>fv.v[p];
-	in>>separator>>fv.c;
+	in>>separator>>separator>>fv.c;
 	return in;
 }
 

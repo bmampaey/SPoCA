@@ -26,9 +26,9 @@ unsigned ARclass(const vector<RealFeature>& B)
 /*!
 @param segmentedMap ColorMap of the segmentation that has already all the keywords correctly set
 @param ARclass The color in the segmentedMap that correspond to the class of AR
-@param tresholdRawArea If set, the treshold fro removing small AR will be computed onthe Raw Area. Otherwise on the Area at disc center
+@param thresholdRawArea If set, the threshold fro removing small AR will be computed onthe Raw Area. Otherwise on the Area at disc center
 */
-ColorMap* ActiveRegionMap(const ColorMap* segmentedMap, unsigned ARclass, bool tresholdRawArea)
+ColorMap* ActiveRegionMap(const ColorMap* segmentedMap, unsigned ARclass, bool thresholdRawArea)
 {
 	ColorMap* ARMap = new ColorMap(segmentedMap);
 
@@ -62,10 +62,10 @@ ColorMap* ActiveRegionMap(const ColorMap* segmentedMap, unsigned ARclass, bool t
 	ARMap->nullifyAboveRadius(1.); 
 
 	/*! Erase the small regions*/
-	if(tresholdRawArea)
-		ARMap->tresholdRegionsByRawArea(MIN_AR_SIZE);
+	if(thresholdRawArea)
+		ARMap->thresholdRegionsByRawArea(MIN_AR_SIZE);
 	else
-		ARMap->tresholdRegionsByRealArea(MIN_AR_SIZE);
+		ARMap->thresholdRegionsByRealArea(MIN_AR_SIZE);
 
 	return ARMap;
 }

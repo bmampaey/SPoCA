@@ -21,29 +21,37 @@
 #include "SWAPImage.h"
 #include "HMIImage.h"
 #include "ColorMap.h"
+#include "Header.h"
 
 extern std::string filenamePrefix;
 extern const char * instruments[];
 extern const char * limb_corrections[];
 
-// Read the centers and the wavelength from a file
+//! Read and parse the centers and the wavelength from a file
 unsigned readCentersFromFile(std::vector<RealFeature>& B, RealFeature& wavelengths, const std::string& centersFileName);
 
-// Read the binsize
+//! Read and parse the binsize
 bool readbinSize(RealFeature& binSize, const std::string& sbinSize);
 
-// Tell if a file exists
-bool fileExists(const std::string& filename);
-
-// Read the images from fits files
+//! Read and creates one EUV image from a fits files name
+/*! It will try to guess the Image type if it is UNKNOWN */
 EUVImage* getImageFromFile(const std::string imageType, const std::string sunImageFileName);
+
+//! Read and creates EUV images from fits files names
+/*! It will try to guess the Image type if it is UNKNOWN
+    @param align Specify if you want all images to be recenterd on the sun center of the first image */
 std::vector<EUVImage*> getImagesFromFiles(const std::string imageType, const std::vector<std::string>& sunImagesFileNames, bool align = false);
+
+//! Read and creates one color map from a fits files name
 ColorMap* getImageFromFile(const std::string sunImageFileName);
 
-// Read the eta from a file
+//! Read and parse the eta from a file
 unsigned readEtaFromFile(std::vector<Real>& eta, const std::string& etaFileName);
 
-// Read the max limits from file
+//! Read and parse the max limits from file
 unsigned readMaxLimitsFromFile (std::vector<RealFeature>& maxLimits, const std::string& maxLimitsFileName);
+
+//! Expand the text repacing all keywords between {} by their value in the header
+std::string expand(std::string text, const Header& header);
 
 #endif

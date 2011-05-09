@@ -162,7 +162,7 @@ Real HistogramPCMClassifier::computeJ() const
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
 				result += pow( *uij, fuzzifier) * d2(*xj,B[i]) * xj->c;
-				sum[i] += pow(1. - *uij, fuzzifier) * xj->c; 
+				sum[i] += pow(Real(1. - *uij), fuzzifier) * xj->c; 
 			}
 		}
 	}
@@ -227,12 +227,7 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 		computeU();
 		computeB();
 
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
-		{
-			precisionReached = d2(oldB[i],B[i]);
-			if (precisionReached > precision)
-				break;
-		}
+		precisionReached = variation(oldB,B);
 
 		oldB = B;
 
@@ -294,7 +289,7 @@ Real HistogramPCMClassifier::assess(vector<Real>& V)
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
 				V[i] += d2(*xj,B[i]) * pow(*uij, fuzzifier) * xj->c;
-				sum[i] += pow(1. - *uij, fuzzifier) * xj->c; 
+				sum[i] += pow(Real(1. - *uij), fuzzifier) * xj->c; 
 				numberElements += xj->c;
 			}
 		}
@@ -362,7 +357,7 @@ void HistogramPCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration
 		
 		for (unsigned i = 0 ; i < numberClasses ; ++i)
 		{
-			precisionReached = abs(oldEta[i] - eta[i]);
+			precisionReached = abs((eta[i] - oldEta[i])/oldEta[i]);
 			if (precisionReached > precision)
 				break;
 		}

@@ -35,7 +35,7 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This Program will uncompres a fits files.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
+	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 
 	ArgumentHelper arguments;
 	arguments.set_string_vector("input_fitsFileName output_fitsFileName", "", imagesFilenames);

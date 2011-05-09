@@ -124,14 +124,7 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 		computeU();
 		computeB();
 
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
-		{
-			precisionReached = d2(oldB[i],B[i]);
-			if (precisionReached > precision)
-			{
-				break;
-			}
-		}
+		precisionReached = variation(oldB,B);
 		
 		// avoid class cannibalism
 		if (precisionReached <= precision)
@@ -165,7 +158,7 @@ void HistogramPCM2Classifier::computeEta()
 	HistogramPCMClassifier::computeEta();
 
 	#if DEBUG >= 3
-		cout<<"pre_eta:\t"<<eta<<"\t";
+		cout<<"\npre_eta:\t"<<eta<<"\t";
 	#endif
 
 	PCM2Classifier::reduceEta();

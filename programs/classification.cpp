@@ -25,11 +25,13 @@
 @param classifierType	The type of classifier to use for the classification.
 <BR> Possible values are : 
  - FCM
+ - PFCM
  - PCM
  - PCM2
  - SPOCA
  - SPOCA2
  - HFCM(Histogram FCM)
+ - HPFCM(Histogram PFCM)
  - HPCM(Histogram PCM)
  - HPCM2(Histogram PCM2)
 
@@ -85,7 +87,7 @@
 <BR>Possible values :
  - max (Maximum of Uij)
  - closest (Closest center)
- - treshold (Treshold on Uij)
+ - threshold (Threshold on Uij)
  - limits (Merge on centers value limits)
  - fix (Merge on fix CH QS AR)
 
@@ -98,11 +100,13 @@
 
 @param ar	The classes of the Active %Region. <BR>Only for fix segmentation.
 
-@param tr	The parameter of the treshold segmentation.
-Must be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership <BR>Only for treshold segmentation.
+@param tr	The parameter of the threshold segmentation.
+Must be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership <BR>Only for threshold segmentation.
  
 
-@param tresholdRawArea	Set this flag if you want the Active Regions and Coronal Holes to be tresholded according to their Raw area instead of their center area
+@param thresholdRawArea	Set this flag if you want the Active Regions and Coronal Holes to be thresholded according to their Raw area instead of their center area
+
+@param uncompressed_results	Set this flag if you want results maps to be uncompressed.
 
 @param outputDirectory	The name for the output directory.
 
@@ -159,7 +163,7 @@ int main(int argc, const char **argv)
 	cout<<setiosflags(ios::fixed);
 
 	// Program version
-	const char * version = "0.7";
+	const char * version = "2.0";
 
 	// The list of names of the sun images to process
 	string imageType = "UNKNOWN";
@@ -178,7 +182,7 @@ int main(int argc, const char **argv)
 	// Options for the classification
 	string classifierType = "HFCM";
 	unsigned maxNumberIteration = 100;
-	double precision = 0.001;
+	double precision = 0.0015;
 	double fuzzifier = 2;
 		
 	// Option for the Spacial Classifiers (SPoCA)
@@ -199,18 +203,19 @@ int main(int argc, const char **argv)
 	string quietSun;
 	string activeRegion;
 	
-	// Options for the treshold segmentation
-	string treshold;
+	// Options for the threshold segmentation
+	string threshold;
 	
 	// Options for the ARmap and CHmap
-	bool tresholdRawArea = false;
+	bool thresholdRawArea = false;
 	double regionStatsRadiusRatio = 0.95;
 	string regionStatsPreprocessing = "NAR";
 
 	// option for the output directory
 	string outputDirectory = ".";
 	
-	// Options for the desired outputs
+	// Options for the desired outputs 
+	bool uncompressed_results = false; 
 	string desiredMaps;
 
 
@@ -220,11 +225,11 @@ int main(int argc, const char **argv)
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
-	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
+	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
 
 	ArgumentHelper arguments;
-	arguments.new_named_string('T',"classifierType", "string", "\n\tThe type of classifier to use for the classification.\n\tPossible values are : FCM, PCM, PCM2, SPoCA, SPoCA2, HFCM(Histogram FCM), HPCM(Histogram PCM), HPCM2(Histogram PCM2)\n\t", classifierType);
+	arguments.new_named_string('T',"classifierType", "string", "\n\tThe type of classifier to use for the classification.\n\tPossible values are : FCM, PFCM, PCM, PCM2, SPoCA, SPoCA2, HFCM(Histogram FCM), HPFCM(Histogram PFCM), HPCM(Histogram PCM), HPCM2(Histogram PCM2)\n\t", classifierType);
 	arguments.new_named_unsigned_int('i', "maxNumberIteration", "positive integer", "\n\tThe maximal number of iteration for the classification.\n\t", maxNumberIteration);
 	arguments.new_named_double('p',"precision", "positive real", "\n\tThe precision to be reached to stop the classification.\n\t",precision);
 	arguments.new_named_double('f',"fuzzifier", "positive real", "\n\tThe fuzzifier (m).\n\t",fuzzifier);
@@ -239,14 +244,15 @@ int main(int argc, const char **argv)
 	arguments.new_named_unsigned_int('N', "neighboorhoodRadius", "positive integer", "\n\tOnly for spatial classifiers like SPoCA.\n\tThe neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.\n\t", neighboorhoodRadius);
 	arguments.new_named_string('H', "histogramFile","file name", "\n\tThe name of a file containing an histogram.\n\t", histogramFile);
 	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogramm.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
-	arguments.new_named_string('S', "segmentation", "string", "\n\tThe segmentation type.\n\tPossible values :\n\t\tmax (Maximum of Uij)\n\t\tclosest (Closest center)\n\t\ttreshold (Treshold on Uij)\n\t\tlimits (Merge on centers value limits)\n\t\tfix (Merge on fix CH QS AR)\n\t", segmentation);
+	arguments.new_named_string('S', "segmentation", "string", "\n\tThe segmentation type.\n\tPossible values :\n\t\tmax (Maximum of Uij)\n\t\tclosest (Closest center)\n\t\tthreshold (Threshold on Uij)\n\t\tlimits (Merge on centers value limits)\n\t\tfix (Merge on fix CH QS AR)\n\t", segmentation);
 	arguments.new_named_string('L',"maxLimitsFile","file", "\n\tOnly for limit segmentation.\n\tThe name of the file containing the max limits.\n\t", maxLimitsFileName);
 	arguments.new_named_string('c',"ch","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Coronal Hole.\n\t", coronalHole);
 	arguments.new_named_string('q',"qs","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Quiet Sun.\n\t", quietSun);
 	arguments.new_named_string('a',"ar","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Active Region.\n\t", activeRegion);
-	arguments.new_named_string('t',"tr","coma separated list of positive integer (no spaces)", "\n\tOnly for treshold segmentation.\n\tThe parameter of the treshold segmentation.\n\tMust be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership\n\t", treshold);	
-	arguments.new_flag('w', "tresholdRawArea", "\n\tSet this flag if you want the Active Regions and Coronal Holes to be tresholded according to their Raw area instead of their center area.\n\t", tresholdRawArea);
+	arguments.new_named_string('t',"tr","coma separated list of positive integer (no spaces)", "\n\tOnly for threshold segmentation.\n\tThe parameter of the threshold segmentation.\n\tMust be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership\n\t", threshold);	
+	arguments.new_flag('w', "thresholdRawArea", "\n\tSet this flag if you want the Active Regions and Coronal Holes to be thresholded according to their Raw area instead of their center area.\n\t", thresholdRawArea);
 	arguments.new_named_string('O', "outputDirectory","directory name", "\n\tThe name for the output directory.\n\t", outputDirectory);
+	arguments.new_flag('u', "uncompressed_results", "\n\tSet this flag if you want results maps to be uncompressed.\n\t", uncompressed_results);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\tThe order is important, the first image will be used as a reference for time, suncenter,... and will be used for the statistics.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
@@ -286,7 +292,7 @@ int main(int argc, const char **argv)
 	}
 	
 	// We read the wavelengths and the initial centers from the centers file
-	if(fileExists(centersFileName) && readCentersFromFile(B, wavelengths, centersFileName))
+	if(isFile(centersFileName) && readCentersFromFile(B, wavelengths, centersFileName))
 	{
 		if(B.size() != numberClasses)
 		{
@@ -336,7 +342,7 @@ int main(int argc, const char **argv)
 	}
 	else if (classifierType == "HFCM")
 	{
-		if(fileExists(histogramFile))
+		if(isFile(histogramFile))
 		{
 			F = new HistogramFCMClassifier(histogramFile, fuzzifier);
 		}
@@ -354,7 +360,7 @@ int main(int argc, const char **argv)
 	else if (classifierType == "HPCM")
 	{
 
-		if(fileExists(histogramFile))
+		if(isFile(histogramFile))
 		{
 			F = new HistogramPCMClassifier(histogramFile, fuzzifier);
 		}
@@ -373,7 +379,7 @@ int main(int argc, const char **argv)
 	else if (classifierType == "HPCM2")
 	{
 
-		if(fileExists(histogramFile))
+		if(isFile(histogramFile))
 		{
 			F = new HistogramPCM2Classifier(histogramFile, fuzzifier);
 		}
@@ -419,10 +425,6 @@ int main(int argc, const char **argv)
 	// We add the images to the classifier
 	F->addImages(images);
 	
-	// We declare the segmented map with the keywords of the first image
-	ColorMap* segmentedMap = new ColorMap(images[0]->getHeader());
-	segmentedMap->copySunParameters(images[0]);
-	
 	// We delete all images to gain memory space
 	for (unsigned p = 0; p < images.size(); ++p)
 	{
@@ -456,12 +458,7 @@ int main(int argc, const char **argv)
 
 	// We have all the information we need, we can do the classification
 	F->classification(precision, maxNumberIteration);
-	
-	//TOBE REMOVED
-	B = F->getB();
-	sort(B.begin(), B.end());
-	cout<<classifierType<<": "<<B<<endl;
-	return EXIT_SUCCESS;
+
 
 	#ifdef HEK
 	// Hack asked by Veronique, to stabilize the centers
@@ -497,7 +494,7 @@ int main(int argc, const char **argv)
 	#endif
 
 	// We always terminate by an attribution
-	// it sort the class centers
+	// it sorts the class centers
 	// it is needed when the Quotient Factor was bad
 	// or if the classifier is histogram
 	F->attribution();
@@ -523,6 +520,27 @@ int main(int argc, const char **argv)
 		dynamic_cast<PCMClassifier*>(F)->saveEta(filenamePrefix + "eta.txt");
 	}
 	
+	// We wheck what are the requested maps
+	
+	bool getARMap = (desiredMaps.find_first_of("Aa")!=string::npos);
+	bool getCHMap = (desiredMaps.find_first_of("Cc")!=string::npos);
+	bool getSegmentedMap = (desiredMaps.find_first_of("Ss")!=string::npos);
+	
+	if(!(getARMap || getCHMap || getSegmentedMap))
+	{
+		cerr<<"Warning: No maps has been requested"<<endl;
+		delete F;
+		return EXIT_SUCCESS;
+	}
+	
+	// I need the first image for the region stats
+	EUVImage* image = getImageFromFile(imageType, imagesFilenames[0]);
+	image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
+	
+	// We declare the segmented map with the keywords of the first image
+	ColorMap* segmentedMap = new ColorMap(image->getHeader());
+	segmentedMap->copySunParameters(image);
+	
 	// We do the segmentation
 	if (segmentation == "max")
 	{
@@ -532,14 +550,14 @@ int main(int argc, const char **argv)
 	{
 		F->segmentedMap_closestCenter(segmentedMap);
 	}
-	else if (segmentation == "treshold")
+	else if (segmentation == "threshold")
 	{
 		char delimitor;
 		unsigned class_number;
 		Real lowerIntensity_minMembership, higherIntensity_minMembership;
-		istringstream iss(treshold);
+		istringstream iss(threshold);
 		iss>>class_number>>delimitor>>lowerIntensity_minMembership>>delimitor>>higherIntensity_minMembership;
-		F->segmentedMap_classTreshold(class_number, lowerIntensity_minMembership, higherIntensity_minMembership, segmentedMap);
+		F->segmentedMap_classThreshold(class_number, lowerIntensity_minMembership, higherIntensity_minMembership, segmentedMap);
 	}
 	else if (segmentation == "limits")
 	{
@@ -581,68 +599,53 @@ int main(int argc, const char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	//We add information about the classification to the segmentedMap 
+	//We create an header of information about the classification
 	B = F->getB();
 	
+	Header classification_info;
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		segmentedMap->header.set<string>(string("IMAGE")+itos(p+1,3), imagesFilenames[p]);
+		classification_info.set<string>(string("IMAGE")+itos(p+1,3), imagesFilenames[p]);
 	}
 
-	segmentedMap->header.set<string>("CVERSION", version, "SPoCA Version");
-	segmentedMap->header.set<string>("CPREPROC", preprocessingSteps, "Preprocessing Steps");
-	segmentedMap->header.set<double>("CRADRATI", radiusRatio, "Radius Ratio");
-	segmentedMap->header.set<string>("CLASTYPE", classifierType, "Classifier Type");
-	segmentedMap->header.set<int>("CNBRCLAS", numberClasses, "Number Classes");
-	segmentedMap->header.set<double>("CPRECIS", precision, "Classifier Precision");
-	segmentedMap->header.set<int>("CMAXITER", maxNumberIteration, "Max Number Iteration");
-	segmentedMap->header.set<double>("CFUZFIER", fuzzifier, "Classifier Fuzzifier");
-	segmentedMap->header.set<string>("CBINSIZE", sbinSize, "Histogram bin size");
-	segmentedMap->header.set<string>("RPREPROC", regionStatsPreprocessing, "Region Stats Preprocesing");
-	segmentedMap->header.set<double>("RRADRATI", regionStatsRadiusRatio, "Region Stats Radius Ratio");
+	classification_info.set<string>("CVERSION", version, "SPoCA Version");
+	classification_info.set<string>("CPREPROC", preprocessingSteps, "Preprocessing Steps");
+	classification_info.set<double>("CRADRATI", radiusRatio, "Radius Ratio");
+	classification_info.set<string>("CLASTYPE", classifierType, "Classifier Type");
+	classification_info.set<int>("CNBRCLAS", numberClasses, "Number Classes");
+	classification_info.set<double>("CPRECIS", precision, "Classifier Precision");
+	classification_info.set<int>("CMAXITER", maxNumberIteration, "Max Number Iteration");
+	classification_info.set<double>("CFUZFIER", fuzzifier, "Classifier Fuzzifier");
+	classification_info.set<string>("CBINSIZE", sbinSize, "Histogram bin size");
+	classification_info.set<string>("RPREPROC", regionStatsPreprocessing, "Region Stats Preprocesing");
+	classification_info.set<double>("RRADRATI", regionStatsRadiusRatio, "Region Stats Radius Ratio");
 
-	segmentedMap->header.set<string>("SEGMTYPE", segmentation, "Segmentation type");
+	classification_info.set<string>("SEGMTYPE", segmentation, "Segmentation type");
 	if(! activeRegion.empty())
-		segmentedMap->header.set<string>("SFIXAR", activeRegion);
+		classification_info.set<string>("SFIXAR", activeRegion);
 	if(! quietSun.empty())
-		segmentedMap->header.set<string>("SFIXQS", quietSun);
+		classification_info.set<string>("SFIXQS", quietSun);
 	if(! coronalHole.empty())
-		segmentedMap->header.set<string>("SFIXCH", coronalHole);
-	if(! treshold.empty())
-		segmentedMap->header.set<string>("STRSHLD", treshold);
-	segmentedMap->header.set<int>("MRAWTRSH", tresholdRawArea, "Region Size Treshold on Raw Area");
+		classification_info.set<string>("SFIXCH", coronalHole);
+	if(! threshold.empty())
+		classification_info.set<string>("STRSHLD", threshold);
+	classification_info.set<int>("MRAWTRSH", thresholdRawArea, "Region Size Threshold on Raw Area");
 	
 	ostringstream ss;
 	ss<<F->getChannels()<<" "<<B;
-	segmentedMap->header.set<string>("CCENTER", ss.str(), "Classification Center");
+	classification_info.set<string>("CCENTER", ss.str(), "Classification Center");
 	
 	if(classifierIsPossibilistic)
 	{
 		ostringstream ss;
 		ss<<dynamic_cast<PCMClassifier*>(F)->getEta();
-		segmentedMap->header.set<string>("CETA", ss.str(), "Classification eta");
+		classification_info.set<string>("CETA", ss.str(), "Classification eta");
 	}
 	
 	delete F;
 	
-	// We generate the requested maps
-	
-	bool getARMap = (desiredMaps.find_first_of("Aa")!=string::npos);
-	bool getCHMap = (desiredMaps.find_first_of("Cc")!=string::npos);
-	bool getSegmentedMap = (desiredMaps.find_first_of("Ss")!=string::npos);
-	
-	#if DEBUG >= 1
-	if(!(getARMap || getCHMap || getSegmentedMap))
-	{
-		cerr<<"Warning: No maps has been requested"<<endl;
-		delete segmentedMap;
-		return EXIT_SUCCESS;
-	}
-	#endif
-	
-	// I need the first image for the region stats
-	EUVImage* image = getImageFromFile(imageType, imagesFilenames[0]);
-	image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
+	// We set wheter we should not compress the maps
+	const int compressed_fits = uncompressed_results ? 0 : FitsFile::compress;
 	
 	// We get the class of AR
 	unsigned ARClassNumber = 3;
@@ -654,18 +657,21 @@ int main(int argc, const char **argv)
 	if(getARMap)
 	{
 		// We get the map of AR
-		ColorMap* ARMap = ActiveRegionMap(segmentedMap, ARClassNumber, tresholdRawArea);
+		ColorMap* ARMap = ActiveRegionMap(segmentedMap, ARClassNumber, thresholdRawArea);
 	
 		// We write the map of AR to a fits file
 		FitsFile file(filenamePrefix + "ARmap.fits", FitsFile::overwrite);
-		ARMap->writeFits(file, FitsFile::compress);
-	
+		ARMap->writeFits(file, compressed_fits);
+		file.writeHeader(classification_info);
+		
 		// We get the AR Stats
 		vector<ActiveRegionStats*> ARStats = getActiveRegionStats(ARMap, image);
+		
 		// We write the AR Stats into the fits
 		file.writeTable("ActiveRegionStats");
 		writeRegions(file, ARStats);
 		delete ARMap;
+		
 		#if DEBUG>= 3
 		cerr<<"ActiveRegionStats Table"<<endl;
 		if(ARStats.size() > 0)
@@ -693,17 +699,20 @@ int main(int argc, const char **argv)
 	if(getCHMap)
 	{
 		// We get the map of CH
-		ColorMap* CHMap = CoronalHoleMap(segmentedMap, CHClassNumber, tresholdRawArea);
-	
+		ColorMap* CHMap = CoronalHoleMap(segmentedMap, CHClassNumber, thresholdRawArea);
+		
 		// We write the map of CH to a fits file
 		FitsFile file(filenamePrefix + "CHmap.fits", FitsFile::overwrite);
-		CHMap->writeFits(file, FitsFile::compress);
-	
+		CHMap->writeFits(file, compressed_fits);
+		file.writeHeader(classification_info);
+		
 		// We get the CH Stats
 		vector<CoronalHoleStats*> CHStats = getCoronalHoleStats(CHMap, image);
+		
 		// We write the CH Stats into the fits
 		file.writeTable("CoronalHoleStats");
 		writeRegions(file, CHStats);
+		
 		#if DEBUG>= 3
 		cerr<<"CoronalHoleStats Table"<<endl;
 		if(CHStats.size() > 0)
@@ -715,6 +724,7 @@ int main(int argc, const char **argv)
 			cerr<<CHStats[r]->toString("|")<<endl;
 		}
 		#endif
+		
 		//We get the CH chaincode and write them to the CH map
 		file.writeTable("CoronalHoleChaincode");
 		unsigned chaincode_nbr_points = 20;
@@ -730,12 +740,14 @@ int main(int argc, const char **argv)
 			}
 			file.writeColumn("X"+itos(r,7), xdata);
 			file.writeColumn("Y"+itos(r,7), ydata);
+			
 			#if DEBUG>= 3
 			cerr<<"CoronalHole Chaincode for region id "<<CHStats[r]->Id()<<endl;
 			cerr<<CH_chaincode<<endl;
 			#endif
 		}
 		delete CHMap;
+		
 		for (unsigned r = 0; r < CHStats.size(); ++r)
 		{
 			delete CHStats[r];
@@ -745,17 +757,21 @@ int main(int argc, const char **argv)
 	if(getSegmentedMap)
 	{
 		// We set the class info into the segmentedMap
-		segmentedMap->header.set("ARCLASS", ARClassNumber, "Color of the Active Region class");
-		segmentedMap->header.set("CHCLASS", CHClassNumber, "Color of the Coronal Hole class");
+		classification_info.set("ARCLASS", ARClassNumber, "Color of the Active Region class");
+		classification_info.set("CHCLASS", CHClassNumber, "Color of the Coronal Hole class");
 	
 		// We write the segmentedMap to a fits file
 		FitsFile file(filenamePrefix + "segmentedMap.fits", FitsFile::overwrite);
-		segmentedMap->writeFits(file, FitsFile::compress);
+		segmentedMap->writeFits(file,compressed_fits);
+		file.writeHeader(classification_info);
+		
 		// We get the RegionStats
 		vector<RegionStats*> regionStats = getRegionStats(segmentedMap, image);
+		
 		// We write the RegionStats into the fits
 		file.writeTable("RegionStats");
 		writeRegions(file, regionStats);
+		
 		#if DEBUG>= 3
 		cerr<<"RegionStats Table"<<endl;
 		if(regionStats.size() > 0)
@@ -767,6 +783,7 @@ int main(int argc, const char **argv)
 			cerr<<regionStats[r]->toString("|")<<endl;
 		}
 		#endif
+		
 		for (unsigned r = 0; r < regionStats.size(); ++r)
 		{
 			delete regionStats[r];

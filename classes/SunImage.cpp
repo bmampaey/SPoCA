@@ -82,6 +82,9 @@ template<class T>
 string SunImage<T>::ObservationDate() const
 {return date_obs;}
 template<class T>
+string SunImage<T>::Instrument() const
+{return header.get<string>("INSTRUME");}
+template<class T>
 double SunImage<T>::PixelArea() const
 {return cdelt1 * cdelt2;}
 template<class T>
@@ -403,14 +406,15 @@ bool SunImage<T>::readFits(const std::string& filename)
 }
 
 
-template class SunImage<PixelType>;
+
+template class SunImage<EUVPixelType>;
 template class SunImage<ColorType>;
-template void SunImage<PixelType>::copySunParameters(const SunImage<PixelType>* i);
+template void SunImage<EUVPixelType>::copySunParameters(const SunImage<EUVPixelType>* i);
 template void SunImage<ColorType>::copySunParameters(const SunImage<ColorType>* i);
-template void SunImage<PixelType>::copySunParameters(const SunImage<ColorType>* i);
-template void SunImage<ColorType>::copySunParameters(const SunImage<PixelType>* i);
-template bool SunImage<PixelType>::checkSimilar(const SunImage<ColorType>* image) const;
-template bool SunImage<PixelType>::checkSimilar(const SunImage<PixelType>* image) const;
+template void SunImage<EUVPixelType>::copySunParameters(const SunImage<ColorType>* i);
+template void SunImage<ColorType>::copySunParameters(const SunImage<EUVPixelType>* i);
+template bool SunImage<EUVPixelType>::checkSimilar(const SunImage<ColorType>* image) const;
+template bool SunImage<EUVPixelType>::checkSimilar(const SunImage<EUVPixelType>* image) const;
 template bool SunImage<ColorType>::checkSimilar(const SunImage<ColorType>* image) const;
-template bool SunImage<ColorType>::checkSimilar(const SunImage<PixelType>* image) const;
+template bool SunImage<ColorType>::checkSimilar(const SunImage<EUVPixelType>* image) const;
  

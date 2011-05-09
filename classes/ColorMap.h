@@ -5,6 +5,11 @@
 #include "Header.h"
 #include "SunImage.h"
 
+#ifdef MAGICK
+#include "gradient.h"
+#include "MagickImage.h"
+#endif
+
 
 class ColorMap : public SunImage<ColorType>
 {
@@ -50,14 +55,14 @@ class ColorMap : public SunImage<ColorType>
 		/*! Much slower than erodeDiamond */
 		ColorMap* erodeCircular(const unsigned size, const ColorType unsetValue);
 		
-		//! Routine to treshold regions by its raw size
-		void tresholdRegionsByRawArea(const double minSize);
+		//! Routine to threshold regions by its raw size
+		void thresholdRegionsByRawArea(const double minSize);
 		
-		//! Routine to treshold regions by its size at disc center
-		void tresholdRegionsByRealArea(const double minSize);
+		//! Routine to threshold regions by its size at disc center
+		void thresholdRegionsByRealArea(const double minSize);
 		
 		//! Routine that removes connected component of a size (number of pixels) smaller than minSize
-		unsigned tresholdConnectedComponents(const unsigned minSize, const ColorType setValue = 0);
+		unsigned thresholdConnectedComponents(const unsigned minSize, const ColorType setValue = 0);
 		
 		//! Routine to propagate a color in the connected component specified by firstPixel
 		unsigned propagateColor(const ColorType color, const Coordinate& firstPixel);
@@ -73,8 +78,16 @@ class ColorMap : public SunImage<ColorType>
 		
 		//! Routine that generate a chaincode for the connected component indicated by firstPixel
 		std::vector<Coordinate> chainCode(const Coordinate firstPixel, const unsigned max_points) const;
+		
+		#ifdef MAGICK
+		//! Routine that creates and return a MagickImage with the specified background
+		MagickImage magick(const Magick::Color background);
+		//! Routine that creates and return a MagickImage with a transparent background
+		MagickImage magick();
+		#endif
 
 };
 
 bool isColorMap(const Header& header);
 #endif
+

@@ -2,7 +2,7 @@
 /*!
 @page fits2png fits2png.x
 
- This program takes color maps in fits format, and for each one writes it to a png image.
+ This program takes fits images and transform them to png images.
  The name of the png image will be the name of the original file with the suffix png.
  
  @section usage Usage
@@ -15,8 +15,7 @@
  
 @param transparent	If you want the null values to be transparent.
 
-@param colorize	If you want to colorize the regions.
-<BR>N.B.: In fits files, there is no colors, so they are represented as a number in the color maps.
+<BR>N.B.: In the color maps, because there is no colors in fits files, they are represented as a number.
  When creating the png image, a mapping is done from a number to a color.
  That mapping is consistent between images and calls so that a region that has been tracked keep the same color in the successive images. 
 
@@ -31,11 +30,11 @@ See @ref Compilation_Options for constants and parameters at compilation time.
 #include <string>
 #include <fenv.h>
 #include <iomanip>
-#include <Magick++.h>
 #include "../classes/tools.h"
 #include "../classes/constants.h"
 #include "../classes/ColorMap.h"
-#include "../classes/gradient.h"
+#include "../classes/EUVImage.h"
+#include "../classes/MagickImage.h"
 #include "../classes/ArgumentHelper.h"
 
 
@@ -58,9 +57,11 @@ int main(int argc, const char **argv)
 	// The list of names of the sun images to process
 	vector<string> imagesFilenames;
 	
-	// Options for the colorisation
+	// Options for the background of color maps
 	bool transparent = false;
-	bool colorize = false;
+	
+	// option for the output directory
+	string outputDirectory = ".";
 
 	string programDescription = "This Program makes the fits files usable with ImageMagick utilities.\n";
 	programDescription+="Compiled with options :";
@@ -69,7 +70,7 @@ int main(int argc, const char **argv)
 
 	ArgumentHelper arguments;
 	arguments.new_flag('T', "transparent", "\n\tIf you want the null values to be transparent\n\t" , transparent);
-	arguments.new_flag('C', "colorize", "\n\tIf you want to colorize the image\n\t" , colorize);
+	arguments.new_named_string('O', "outputDirectory","directory name", "\n\tThe name for the output directory.\n\t", outputDirectory);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
@@ -80,45 +81,33 @@ int main(int argc, const char **argv)
 	Color background(0, 0 ,0, 0);
 	if(transparent)
 	{
-	    background.alphaQuantum(MaxRGB);
+		background.alphaQuantum(MaxRGB);
 	}
 	else
 	{
-	    background.alphaQuantum(0);
+		background.alphaQuantum(0);
 	}
-
-	ColorMap image;
+	
+	MagickImage pngImage;
+	
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		
-		image.readFits(imagesFilenames[p]);
-		unsigned Xaxes = image.Xaxes();
-		unsigned Yaxes = image.Yaxes();
-
-		Magick::Image pngImage( Geometry(Xaxes, Yaxes), background );
-		//pngImage.type(Magick::TrueColorMatteType);
-    
-		for (unsigned y = 0; y < Yaxes; ++y)
+		FitsFile file(imagesFilenames[p]);
+		Header header;
+		file.readHeader(Header);
+		if(isColorMap(header))
 		{
-		    for (unsigned x = 0; x < Xaxes; ++x)
-		    {	
-				if(image.pixel(x, y) != image.nullvalue() )
-				{
-					unsigned indice = (image.pixel(x, y) % gradientMax) + 1 ;
-					if(colorize)
-					{
-						pngImage.pixelColor(x, Yaxes - y - 1, Color(magick_gradient[indice]));
-					}
-					else
-					{
-						pngImage.pixelColor(x, Yaxes - y - 1, ColorGray(double(indice * MaxRGB)/gradientMax));
-					}
-				}
-			}
+			ColorMap image;
+			image.readFits(file);
+			pngImage = image.magick(background);
 		}
-
-		filenamePrefix =  stripSuffix(imagesFilenames[p]);
-		pngImage.write(filenamePrefix + ".png");
+		else
+		{
+			EUVImage image;
+			image.readFits(file);
+			pngImage = image.magick();
+		}
+		pngImage.write(outputDirectory + "/" + stripSuffix(stripPath(imagesFilenames[p])) + ".png");
 	}
 	return EXIT_SUCCESS;
 }

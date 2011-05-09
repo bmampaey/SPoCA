@@ -48,8 +48,8 @@ void AIAImage::postRead()
 	b0 = (header.get<double>("CRLT_OBS")/180.)*PI; //Need to be verified
 	
 	median = header.get<double>("DATAMEDN");
-	datap01 = header.get<PixelType>("DATAP01");
-	datap95 = header.get<PixelType>("DATAP95");
+	datap01 = header.get<EUVPixelType>("DATAP01");
+	datap95 = header.get<EUVPixelType>("DATAP95");
 	
 	// We read the radius
 	if(header.get<bool>("R_SUN"))
@@ -80,14 +80,16 @@ void AIAImage::preWrite()
 	header.set<double>("R_SUN", radius);
 	header.set<double>("EXPTIME", exposureTime);
 	header.set<double>("DATAMEDN", median);
-	header.set<PixelType>("DATAP01",datap01);
-	header.set<PixelType>("DATAP95", datap95);
+	header.set<EUVPixelType>("DATAP01",datap01);
+	header.set<EUVPixelType>("DATAP95", datap95);
 	header.set<double>("CRLT_OBS", (b0 * 180)/PI);
 }
 
+string AIAImage::Instrument() const
+{return "AIA";}
 
 bool isAIA(const Header& header)
 {
-	return header.get<bool>("INSTRUME") && header.get<string>("INSTRUME").find("AIA") != string::npos;	
+	return header.get<bool>("INSTRUME") && header.get<string>("INSTRUME").find("AIA") != string::npos;
 }
 

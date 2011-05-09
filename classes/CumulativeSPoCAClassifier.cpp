@@ -124,7 +124,7 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 
 	// We write the fits file of smoothedX for verification
 	#if DEBUG >= 2
-	Image<PixelType> image(Xaxes,Yaxes);
+	Image<EUVPixelType> image(Xaxes,Yaxes);
 	for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
 	{
 		image.zero();

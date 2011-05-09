@@ -211,13 +211,7 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 		HistogramFCMClassifier::computeU();
 		HistogramFCMClassifier::computeB();
 
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
-		{
-			precisionReached = d2(oldB[i],B[i]);
-			if (precisionReached > precision)
-				break;
-
-		}
+		precisionReached = variation(oldB,B);
 		oldB = B;
 
 		#if DEBUG >= 2
@@ -550,7 +544,7 @@ void HistogramFCMClassifier::randomInitB(unsigned C)
 
 	}
 	//We like our centers to be sorted
-	sortB();
+	FCMClassifier::sortB();
 }
 
 

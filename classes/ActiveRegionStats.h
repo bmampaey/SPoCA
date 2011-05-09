@@ -25,10 +25,10 @@ class ActiveRegionStats : public Region
 	private :
 		Real m1, m2, m3, m4, minIntensity, maxIntensity, totalIntensity, centerxError, centeryError, area_Raw, area_RawUncert, area_AtDiskCenter, area_AtDiskCenterUncert, numberContourPixels;
 		Real barycenter_x, barycenter_y;
-		std::vector<PixelType> intensities;
+		std::vector<EUVPixelType> intensities;
 	private :
 		//! Routine to update a region with a new pixel
-		void add(const Coordinate& pixelCoordinate, const PixelType& pixelIntensity, const Coordinate sunCenter, const bool atBorder, const double R);
+		void add(const Coordinate& pixelCoordinate, const EUVPixelType& pixelIntensity, const Coordinate sunCenter, const bool atBorder, const double R);
 		//! Routine to compute the moments from the pixel intensities vector
 		void computeMoments();
 

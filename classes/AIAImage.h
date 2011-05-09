@@ -17,6 +17,9 @@ class AIAImage : public EUVImage
 		//Routines to read and write the keywords from/to the header
 		void postRead();
 		void preWrite();
+		
+		//! Accessor to retrieve the Instrument
+		std::string Instrument() const;
 };
 
 bool isAIA(const Header& header);

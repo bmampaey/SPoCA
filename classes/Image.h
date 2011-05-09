@@ -121,6 +121,15 @@ class Image
 		//! Routine to divide each pixel by the corresponding pixel of img
 		void div(const Image<T> * img);
 		
+		//! Routine to divide each pixel by the value
+		void div(const T value);
+		
+		//! Routine to divide each pixel by the value
+		void mul(const T value);
+		
+		//! Routine to threshold the image betwenn min and max
+		void threshold(const T min, const T max);
+		
 		//! Routine that set all pixels to 1 if the corresponding pixel in bitMap has a value of setValue
 		Image<T>* bitmap(const Image<T>* bitMap, T setValue = 1);
 		

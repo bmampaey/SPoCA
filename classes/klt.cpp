@@ -144,7 +144,7 @@ SunImage* imageDifference(const SunImage* img1, const SunImage* img2, float x1, 
 	register int hw = width/2, hh = height/2;
 	register int i, j;
 	SunImage* imgdiff = new SunImage(width, height);
-	PixelType *ptr = &(imgdiff->pixel(0));
+	EUVPixelType *ptr = &(imgdiff->pixel(0));
 	/* Compute values */
 	for (j = -hh ; j <= hh ; j++)
 		for (i = -hw ; i <= hw ; i++)
@@ -159,7 +159,7 @@ SunImage* imageSum(const SunImage* img1, const SunImage* img2, float x1, float y
 	register int hw = width/2, hh = height/2;
 	register int i, j;
 	SunImage* imgsum = new SunImage(width, height);
-	PixelType *ptr = &(imgsum->pixel(0));
+	EUVPixelType *ptr = &(imgsum->pixel(0));
 	/* Compute values */
 	for (j = -hh ; j <= hh ; j++)
 		for (i = -hw ; i <= hw ; i++)
@@ -230,7 +230,7 @@ float sumAbsWindow(const SunImage* window, int width, int height)
 {
 	float sum = 0.0;
 	int w;
-	const PixelType *ptr = &(window->pixel(0));
+	const EUVPixelType *ptr = &(window->pixel(0));
 	for ( ; height > 0 ; height--)
 		for (w=0 ; w < width ; w++)
 			sum += (float) fabs(*ptr++);

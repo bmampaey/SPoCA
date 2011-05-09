@@ -20,18 +20,55 @@ A collection of little function to make life easier.
 
 */
 
-std::ostream& operator<<(std::ostream& out, const std::vector<Real>& v);
-std::istream& operator>>(std::istream& in, std::vector<Real>& v);
+//! General vector output
+template<class T>
+std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
+{
+	if (v.size() > 0)
+	{
+		out<<"["<<v.at(0);
+		for (unsigned i = 1 ; i < v.size() ; ++i)
+			out<<","<<v.at(i);
+		out<<"]";
+	}
+	else
+	{
+		out<<"[]";
+	}
 
-std::ostream& operator<<(std::ostream& out, const std::vector<unsigned>& v);
-std::istream& operator>>(std::istream& in, std::vector<unsigned>& v);
+	return out;
+}
+
+//! General vector input
+template<class T>
+std::istream& operator>>(std::istream& in, std::vector<T>& v)
+{
+	v.clear();
+	char trash;
+	T value;
+	in>>trash>>value;
+	while (in.good())
+	{
+		v.push_back(value);
+		in>>trash>>value;
+	}
+	in>>trash;
+	v.push_back(value);
+	return in;
+
+}
 
 //! Convert a integer as a string
 /*! @param size Minimal size of the integer. It will be padded on the left with 0 if needed */
 std::string itos(const int& i, const int size = 0);
 //! Convert a double as a string
 /*! @param size Minimal size of the double. It will be padded on the left with 0 if needed */
-std::string dtos(const double& i, const int size = 0);
+std::string dtos(const double& d, const int size = 0);
+
+//! Convert a string to a integer
+int stoi(const std::string& s);
+//! Convert a string to a double
+double stod(const std::string& s);
 
 //! Return the name of the file without the preceding path (/ si the directory limiter)
 std::string stripPath(const std::string &name); 
@@ -43,6 +80,8 @@ std::string getPath(const std::string &name);
 std::string getSuffix(const std::string &name);
 //! Check if the path is an existing directory
 bool isDir(const std::string path);
+//! Check if the path is an existing and regular file
+bool isFile(const std::string path);
 //! Return a time as a string of the form yyyymmdd_hhmmss
 std::string time2string(const time_t time);
 

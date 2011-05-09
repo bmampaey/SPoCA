@@ -138,17 +138,6 @@ inline ColorMap* getImageFromFile(const string imageFilename)
 
 }
 
-
-inline bool fileExists(const string& filename)
-{
-	struct stat fileinfo;
-  	// Attempt to get the file attributes
-	if(!stat(filename.c_str(),&fileinfo))
-		return true;
-	else
-		return false;
-}
-
 inline unsigned readEtaFromFile (vector<Real>& eta, const string& etaFileName)
 {
 	eta.clear();
@@ -193,4 +182,34 @@ inline unsigned readMaxLimitsFromFile (vector<RealFeature>& maxLimits, const str
 	}
 	return maxLimits.size();
 
+}
+
+string expand(string text, const Header& header)
+{
+	size_t key_start = text.find_first_of('{');
+	while (key_start != string::npos)
+	{
+		size_t key_end = text.find_first_of('}', key_start);
+		if(key_end != string::npos)
+		{
+			string key_name = text.substr(key_start + 1, key_end - key_start - 1);
+			string value = "";
+			if(header.get<bool>(key_name))
+			{
+				value = header.get<string>(key_name);
+			}
+			else
+			{
+				cerr<<"Warning: key_name "<<key_name<<" requested in "<<text<<" not found in header."<<endl;
+			}
+			text.replace(key_start, key_end - key_start + 1, value);
+		}
+		else
+		{
+			cerr<<"Warning: malformed string, no closing } after position "<<key_start<<" in "<<text<<endl;
+			break;
+		}
+		key_start = text.find_first_of('{');
+	}
+	return text;
 }

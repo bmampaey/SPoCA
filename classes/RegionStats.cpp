@@ -25,7 +25,7 @@ RegionStats::RegionStats(const time_t& observationTime, const unsigned id, const
 {}
 
 
-void RegionStats::add(const Coordinate& pixelCoordinate, const PixelType& pixelIntensity, const Coordinate sunCenter, const bool atBorder, const double R)
+void RegionStats::add(const Coordinate& pixelCoordinate, const EUVPixelType& pixelIntensity, const Coordinate sunCenter, const bool atBorder, const double R)
 {
 	Region::add(pixelCoordinate);
 	m1 += pixelIntensity;

@@ -168,7 +168,46 @@ void Image<T>::div(const Image<T> * img)
 	}
 }
 
+template<class T>
+void Image<T>::div(const T value)
+{
+	if (value == 0 )
+	{
+		cerr<<"Error: Trying to divide pixels by 0"<<endl;
+	}
+	else
+	{
+		for (unsigned j = 0; j < numberPixels; ++j)
+		{
+			if(pixels[j] != nullvalue_)
+				pixels[j] /= value;
+		}
+	}
+}
 
+template<class T>
+void Image<T>::mul(const T value)
+{
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if(pixels[j] != nullvalue_)
+			pixels[j] *= value;
+	}
+	
+}
+		
+template<class T>
+void Image<T>::threshold(const T min, const T max = numeric_limits<T>::max())
+{
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if(pixels[j] != nullvalue_)
+		{
+			pixels[j] = pixels[j] < min ? min : pixels[j];
+			pixels[j] = pixels[j] > max ? max : pixels[j];
+		}
+	}
+}
 
 
 
@@ -786,10 +825,10 @@ bool Image<T>::readFits(const std::string& filename)
 
 
 /*! @file Image.cpp
-Instantiation of the template class Image for PixelType
+Instantiation of the template class Image for EUVPixelType
 See @ref Compilation_Options constants.h */
 
-template class Image<PixelType>;
+template class Image<EUVPixelType>;
 
 /*! @file Image.cpp
 Instantiation of the template class Image for ColorType

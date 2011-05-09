@@ -72,7 +72,7 @@ bool isColorMap(const Header& header)
 
 
 
-void ColorMap::tresholdRegionsByRawArea(const double minSize)
+void ColorMap::thresholdRegionsByRawArea(const double minSize)
 {
 	const double pixelarea = PixelArea();
 	
@@ -109,7 +109,7 @@ void ColorMap::tresholdRegionsByRawArea(const double minSize)
 
 }
 
-void ColorMap::tresholdRegionsByRealArea(const double minSize)
+void ColorMap::thresholdRegionsByRealArea(const double minSize)
 {
 	const double R0 = radius * PixelArea();
 	const double R2 = radius * radius;
@@ -504,7 +504,7 @@ unsigned ColorMap::propagateColor(const ColorType color, const unsigned firstPix
 
 
 
-unsigned ColorMap::tresholdConnectedComponents(const unsigned minSize, const ColorType setValue)
+unsigned ColorMap::thresholdConnectedComponents(const unsigned minSize, const ColorType setValue)
 {
 	vector<unsigned> treatedPixels;
 	ColorType color = setValue + 1;
@@ -747,4 +747,29 @@ vector<Coordinate> ColorMap::chainCode(const Coordinate firstPixel, const unsign
 	}
 	return reduced_chain;
 }
+
+#ifdef MAGICK
+MagickImage ColorMap::magick(const Magick::Color background)
+{
+	MagickImage image(background, xAxes, yAxes);
+	for (unsigned y = 0; y < yAxes; ++y)
+	{
+		for (unsigned x = 0; x < xAxes; ++x)
+		{	
+			if(pixel(x, y) != nullvalue_)
+			{
+				unsigned indice = (pixel(x, y) % gradientMax) + 1 ;
+				image.pixelColor(x, yAxes - y - 1, Magick::Color(magick_gradient[indice]));
+			}
+		}
+	}
+	return image;
+}
+
+MagickImage ColorMap::magick()
+{
+	return magick(Magick::Color(0, 0 ,0, MaxRGB));
+}
+#endif
+
 

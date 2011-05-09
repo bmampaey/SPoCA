@@ -32,13 +32,13 @@ See constants.h for the actual values.
 
 /*!
 @page Compilation_Options
-@param PixelType The type of the pixel values for the EUVImage. 
+@param EUVPixelType The type of the pixel values for the EUVImage. 
 <BR> Acceptable values are float or double (gives better precision, but increase computation time)
  Be carrefull that depending on the type of the image you may loose precision.
- It is best to use the same type for PixelType and Real
+ It is best to use the same type for EUVPixelType and Real
 */
-#if ! defined(PixelType)
-#define PixelType float
+#if ! defined(EUVPixelType)
+#define EUVPixelType float
 #endif
 
 /*!
@@ -337,7 +337,7 @@ See ActiveRegion.h and CoronalHole.h for information about how these parameters 
 
 /*!
 @page Compilation_Options
-@param HIGGINS_FACTOR Limit of correction for projection effects
+@param HIGGINS_FACTOR Limit of correction for projection effects in the computation of the area at disk center
 */
 #define HIGGINS_FACTOR 16
 
@@ -400,9 +400,9 @@ See ActiveRegion.h and CoronalHole.h for information about how these parameters 
 #define Real float
 #endif
 
-#if !(PixelType==float || PixelType==double)
-#warning "PixelType not defined or badly defined, using default type float"
-#define PixelType float
+#if !(EUVPixelType==float || EUVPixelType==double)
+#warning "EUVPixelType not defined or badly defined, using default type float"
+#define EUVPixelType float
 #endif
 
 

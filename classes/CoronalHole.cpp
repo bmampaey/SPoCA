@@ -26,9 +26,9 @@ unsigned CHclass(const vector<RealFeature>& B)
 /*!
 @param segmentedMap ColorMap of the segmentation that has already all the keywords correctly set
 @param CHclass The color in the segmentedMap that correspond to the class of CH
-@param tresholdRawArea If set, the treshold fro removing small CH will be computed onthe Raw Area. Otherwise on the Area at disc center
+@param thresholdRawArea If set, the threshold fro removing small CH will be computed onthe Raw Area. Otherwise on the Area at disc center
 */
-ColorMap* CoronalHoleMap(const ColorMap* segmentedMap, unsigned CHclass, bool tresholdRawArea)
+ColorMap* CoronalHoleMap(const ColorMap* segmentedMap, unsigned CHclass, bool thresholdRawArea)
 {
 	ColorMap* CHMap = new ColorMap(segmentedMap);
 
@@ -62,10 +62,10 @@ ColorMap* CoronalHoleMap(const ColorMap* segmentedMap, unsigned CHclass, bool tr
 	CHMap->nullifyAboveRadius(1.); 
 
 	/*! Erase the small regions*/
-	if(tresholdRawArea)
-		CHMap->tresholdRegionsByRawArea(MIN_CH_SIZE);
+	if(thresholdRawArea)
+		CHMap->thresholdRegionsByRawArea(MIN_CH_SIZE);
 	else
-		CHMap->tresholdRegionsByRealArea(MIN_CH_SIZE);
+		CHMap->thresholdRegionsByRealArea(MIN_CH_SIZE);
 
 	return CHMap;
 }

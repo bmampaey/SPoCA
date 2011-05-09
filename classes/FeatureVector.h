@@ -59,6 +59,7 @@ class FeatureVector
 			}
 			return sum;
 		}
+		
 		//! Multiply each element by value
 		FeatureVector<Real, N> operator*(const Real& value) const
 		{
@@ -194,6 +195,10 @@ Real d2(const FeatureVector<T, N>& fv1, const FeatureVector<T, N>& fv2);
 template<class T, unsigned N>
 Real d(const FeatureVector<T, N>& fv1, const FeatureVector<T, N>& fv2);
 
+//! Norm of the feature vector
+template<class T, unsigned N>
+Real norm(const FeatureVector<T, N>& fv);
+
 //! Square root of the features of a feature vector
 template<class T, unsigned N>
 FeatureVector<Real, N> sqrt(const FeatureVector<T, N>& fv);
@@ -205,14 +210,6 @@ std::ostream& operator<<(std::ostream& out, const FeatureVector<T, N>& fv);
 //! Input of a FeatureVector
 template<class T, unsigned N>
 std::istream& operator>>(std::istream& in, FeatureVector<T, N>& fv);
-
-//! Output of a vector of FeatureVector
-template<class T, unsigned N>
-std::ostream& operator<<(std::ostream& out, const std::vector<FeatureVector<T, N> >& v);
-
-//! Input of a vector of FeatureVector
-template<class T, unsigned N>
-std::istream& operator>>(std::istream& in, std::vector<FeatureVector<T, N> >& v);
 
 //! Type of the FeatureVector
 typedef FeatureVector<Real, NUMBERCHANNELS> RealFeature;

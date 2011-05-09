@@ -47,7 +47,7 @@ int main(int argc, const char **argv)
 	string programDescription = "This Programm will output a file for the 3D visualisation program of Tufan Colak.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
-	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
+	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
 
 	ArgumentHelper arguments;

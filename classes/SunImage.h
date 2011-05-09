@@ -15,7 +15,6 @@
 #include "Header.h"
 #include "FitsFile.h"
 
-
 template<class T>
 class SunImage : public Image<T>
 {
@@ -76,6 +75,8 @@ class SunImage : public Image<T>
 		time_t ObservationTime() const;
 		//! Accessor to retrieve the ObservationDate
 		std::string ObservationDate() const;
+		//! Accessor to retrieve the Instrument
+		virtual std::string Instrument() const;
 		//! Accessor to retrieve the PixelLength in arcsec (i.e. cdelt1)
 		double PixelLength() const;
 		//! Accessor to retrieve the PixelWidth in arcsec (i.e. cdelt2)
@@ -132,11 +133,17 @@ class SunImage : public Image<T>
 		//! Routine that returns the map longitude and latitude of the SunImage
 		void longlat_map(std::vector<Real>& longitude_map, std::vector<Real>& latitude_map) const;
 		
-		//Routines to read/write fits files
+		//! Routine to write to a fits files
 		FitsFile& writeFits(FitsFile& file, int mode = 0);
+		//! Routine to read from a fits files
 		FitsFile& readFits(FitsFile& file);
+		//! Routine to write the image to a fits files
+		/*! The routine will overwrite any fits file with the same name */
 		bool writeFits(const std::string& filename, int mode = 0);
+		//! Routine to read an image from a fits files
 		bool readFits(const std::string& filename);
+		
+
 
 };
 

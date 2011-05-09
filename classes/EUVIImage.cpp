@@ -49,8 +49,8 @@ void EUVIImage::postRead()
 	exposureTime = header.get<double>("EXPTIME");
 	b0 = (header.get<double>("HGLT_OBS")/180.)*PI; //Need to be verified
 
-	datap01 = header.get<PixelType>("DATAP01");
-	datap95 = header.get<PixelType>("DATAP95");
+	datap01 = header.get<EUVPixelType>("DATAP01");
+	datap95 = header.get<EUVPixelType>("DATAP95");
 	
 	//We read the radius
 	radius = header.get<double>("RSUN");
@@ -76,8 +76,8 @@ void EUVIImage::preWrite()
 	header.set<string>("DATE-OBS", date_obs);
 	header.set<double>("RSUN", radius*cdelt1);
 	header.set<double>("EXPTIME", exposureTime);
-	header.set<PixelType>("DATAP01",datap01);
-	header.set<PixelType>("DATAP95", datap95);
+	header.set<EUVPixelType>("DATAP01",datap01);
+	header.set<EUVPixelType>("DATAP95", datap95);
 	header.set<double>("HGLT_OBS", (b0 * 180)/PI);
 	
 }

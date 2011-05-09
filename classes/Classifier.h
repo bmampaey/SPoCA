@@ -133,8 +133,8 @@ class Classifier
 		//! Function to segment by selection of the class that has is the closest to the feature vector
 		virtual ColorMap* segmentedMap_closestCenter(ColorMap* segmentedMap = NULL);
 		
-		//! Function to segment by selection of one class and that has membership/probability value between 2 tresholds
-		virtual ColorMap* segmentedMap_classTreshold(unsigned i, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, ColorMap* segmentedMap = NULL);
+		//! Function to segment by selection of one class and that has membership/probability value between 2 thresholds
+		virtual ColorMap* segmentedMap_classThreshold(unsigned i, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, ColorMap* segmentedMap = NULL);
 		
 		//! Function to segment by using the maxUij segmentation, and grouping them further by their class value
 		virtual ColorMap* segmentedMap_limits(std::vector<RealFeature>& limits, ColorMap* segmentedMap = NULL);
@@ -159,6 +159,9 @@ class Classifier
 		
 		//! Function to compute the class average
 		virtual std::vector<RealFeature> classAverage() const;
+		
+		//! Function to compute the maximal variation of the centers of classes between 2 classification iteration
+		Real variation(const std::vector<RealFeature>& oldB, const std::vector<RealFeature>& newB) const;
 		
 		//! Accessor to retrieve the image corresponding to a specific channel 
 		EUVImage* getImage(unsigned p);

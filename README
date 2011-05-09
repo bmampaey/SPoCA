@@ -47,8 +47,10 @@ List of executables to run SPoCA.
 @page utilities Utilities
 List of utilities executable to help visualising the results of SPoCA, or to test and use spoca.
  <BR>@subpage contours
+ <BR>@subpage overlay
+ <BR>@subpage background
  <BR>@subpage fits2png
  <BR>@subpage histogram
-  <BR>@subpage limb_correction
+ <BR>@subpage limb_correction
  <BR>@subpage image_stat
 */

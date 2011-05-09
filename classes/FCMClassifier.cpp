@@ -167,14 +167,8 @@ void FCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	{
 		FCMClassifier::computeU();
 		FCMClassifier::computeB();
-
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
-		{
-			precisionReached = d2(oldB[i],B[i]);
-			if (precisionReached > precision)
-				break;
-
-		}
+		
+		precisionReached = variation(oldB,B);
 		oldB = B;
 
 		#if DEBUG >= 2

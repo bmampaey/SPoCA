@@ -109,7 +109,7 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 	// We write the fits file of smoothedX for verification
 	#if DEBUG >= 2
 
-	Image<PixelType> image(Xaxes,Yaxes);
+	Image<EUVPixelType> image(Xaxes,Yaxes);
 	for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
 	{
 		image.zero();
@@ -265,7 +265,7 @@ Real SPoCAClassifier::computeJ() const
 			if(fuzzifier == 2)
 				sum2 += (1 - U[j*numberClasses+i]) * (1 - U[j*numberClasses+i]);
 			else
-				sum2 +=  pow(1 - U[j*numberClasses+i], fuzzifier);
+				sum2 +=  pow(Real(1. - U[j*numberClasses+i]), fuzzifier);
 
 		}
 		result += sum1 + (eta[i] * sum2);

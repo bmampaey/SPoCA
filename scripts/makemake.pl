@@ -5,7 +5,7 @@ use File::Basename;
 
 # My global variable
 
-my ($main, $makefile, $debug, $defines, $executable, $coco) = undef;
+my ($main, $makefile, $debug, $defines, $executable, $coco, $magick) = undef;
 my $objectdir = 'objects';
 my $bindir = 'bin';
 
@@ -14,7 +14,7 @@ my $CFLAGS = 'CFLAGS=-Wall -fkeep-inline-functions -g';
 my $LFLAGS = 'LFLAGS=-lcfitsio';
 my $DFLAGS = 'DFLAGS=';
 my $TRACKINGLFLAGS = 'TRACKINGLFLAGS=-lpthread';
-my $MAGICKLFLAGS = 'MAGICKLFLAGS=`Magick++-config --cppflags --ldflags --libs`';
+my $MAGICKLFLAGS = 'MAGICKLFLAGS=`Magick++-config --ldflags --libs`';
 my $MAGICKCFLAGS = 'MAGICKCFLAGS=`Magick++-config --cppflags`';
 my $IDLLFLAGS = 'IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lXpm -lXmu -lXext -lXt -lSM -lICE  -lXinerama -lX11 -ldl -ltermcap -lrt -lm /usr/lib/libXm.a';
 
@@ -63,7 +63,8 @@ sub parse_arguments
             "d"=>\$debug,
             "D:s"=> \$defines,
             "x:s"=> \$executable,
-            "C"=> \$coco
+            "C"=> \$coco,
+            "M"=> \$magick,
 	);
 
 	if (! defined $main)
@@ -104,9 +105,15 @@ sub parse_arguments
 	}
 	if($coco)
 	{
-		 $DFLAGS =  $DFLAGS . ' -DCOCO ';
+		$DFLAGS = $DFLAGS . ' -DCOCO ';
 	}
-		
+	if($magick)
+	{
+		$CFLAGS = $CFLAGS . ' $(MAGICKCFLAGS) ';
+		$LFLAGS = $LFLAGS . ' $(MAGICKLFLAGS) ';
+		$DFLAGS = $DFLAGS . ' -DMAGICK ';
+	}
+
 }
 
 
@@ -173,13 +180,22 @@ while (my $file = shift @untreated)
 		if (m/^#include\s+"(.*)"/)
 		{
 			my $include = $1;
-			if($coco || $include !~ /CoordinateConvertor/i)
+			my $skip = undef;
+			if($include =~ /CoordinateConvertor/i && !$coco)
 			{
-				push @includes, $include;
+				$skip = 1;
+			}
+			if ($include =~ /MagickImage/i && !$magick)
+			{
+				$skip = 1;
+			}
+			if($skip)
+			{
+				print "Skipping $include.\n"
 			}
 			else
 			{
-				print "Skipping $include.\n"
+				push @includes, $include;
 			}
 		}
 	} 
@@ -221,7 +237,7 @@ while (my $file = shift @untreated)
 
 open MAKEFILE, ">$makefile" or die "Could not open $makefile";
 
-print MAKEFILE "$CC\n$CFLAGS\n$TRACKINGLFLAGS\n$IDLLFLAGS\n$MAGICKLFLAGS\n$MAGICKCFLAGS\n$DFLAGS\n$LFLAGS\n\n";
+print MAKEFILE "$CC\n$TRACKINGLFLAGS\n$IDLLFLAGS\n$MAGICKLFLAGS\n$MAGICKCFLAGS\n$CFLAGS\n$LFLAGS\n$DFLAGS\n\n";
 print MAKEFILE "all:$executable\n";
 print MAKEFILE "clean: rm $executable " . (join ' ', @objects) . "\n";
 print MAKEFILE "\n\n";

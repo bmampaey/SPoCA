@@ -166,12 +166,7 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 		computeU();
 		computeB();
 
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
-		{
-			precisionReached = d2(oldB[i],B[i]);
-			if (precisionReached > precision)
-				break;
-		}
+		precisionReached = variation(oldB,B);
 
 		oldB = B;
 
@@ -213,7 +208,7 @@ Real PCMClassifier::computeJ() const
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
 				result += pow( *uij, fuzzifier) * d2(*xj,B[i]);
-				sum[i] += pow(1. - *uij, fuzzifier); 
+				sum[i] += pow(Real(1. - *uij), fuzzifier); 
 			}
 		}
 	}
@@ -267,7 +262,7 @@ Real PCMClassifier::assess(vector<Real>& V)
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
 				V[i] += d2(*xj,B[i]) * pow(*uij, fuzzifier);
-				sum[i] += pow(1. - *uij, fuzzifier); 
+				sum[i] += pow(Real(1. - *uij), fuzzifier); 
 			}
 		}
 	}
@@ -367,7 +362,7 @@ void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FC
 
 		for (unsigned i = 0 ; i < numberClasses ; ++i)
 		{
-			precisionReached = abs(oldEta[i] - eta[i]);
+			precisionReached = abs((eta[i] - oldEta[i])/oldEta[i]);
 			if (precisionReached > precision)
 				break;
 		}

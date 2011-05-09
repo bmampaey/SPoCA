@@ -3,10 +3,10 @@
 using namespace std;
 
 #ifndef NAN
-#define NAN (numeric_limits<PixelType>.quiet_NaN())
+#define NAN (numeric_limits<EUVPixelType>.quiet_NaN())
 #endif
 #ifndef RealMAX
-#define RealMAX (numeric_limits<PixelType>::max())
+#define RealMAX (numeric_limits<EUVPixelType>::max())
 #endif
 
 EUVImage::~EUVImage()
@@ -15,7 +15,7 @@ EUVImage::~EUVImage()
 }
 
 EUVImage::EUVImage(const long xAxes, const long yAxes)
-:SunImage<PixelType>(xAxes,yAxes),wavelength(0),median(0),mode(0),datap01(0), datap95(RealMAX), exposureTime(1)
+:SunImage<EUVPixelType>(xAxes,yAxes),wavelength(0),median(0),mode(0),datap01(0), datap95(RealMAX), exposureTime(1)
 {
 	sineCorrectionParameters[0] = SINE_CORR_R1 / 100.;
 	sineCorrectionParameters[1] = SINE_CORR_R2 / 100.;
@@ -24,7 +24,7 @@ EUVImage::EUVImage(const long xAxes, const long yAxes)
 }
 
 EUVImage::EUVImage(const long xAxes, const long yAxes, const Coordinate suncenter, const double radius)
-:SunImage<PixelType>(xAxes,yAxes,suncenter,radius),wavelength(0),median(0),mode(0),datap01(0), datap95(RealMAX), exposureTime(1)
+:SunImage<EUVPixelType>(xAxes,yAxes,suncenter,radius),wavelength(0),median(0),mode(0),datap01(0), datap95(RealMAX), exposureTime(1)
 {
 	sineCorrectionParameters[0] = SINE_CORR_R1 / 100.;
 	sineCorrectionParameters[1] = SINE_CORR_R2 / 100.;
@@ -34,18 +34,18 @@ EUVImage::EUVImage(const long xAxes, const long yAxes, const Coordinate suncente
 
 
 EUVImage::EUVImage(const EUVImage& i)
-:SunImage<PixelType>(i),wavelength(i.wavelength),median(i.median),datap01(i.datap01),datap95(i.datap95),exposureTime(i.exposureTime)
+:SunImage<EUVPixelType>(i),wavelength(i.wavelength),median(i.median),datap01(i.datap01),datap95(i.datap95),exposureTime(i.exposureTime)
 {
 }
 
 
 EUVImage::EUVImage(const EUVImage* i)
-:SunImage<PixelType>(i),wavelength(i->wavelength),median(i->median),datap01(i->datap01),datap95(i->datap95), exposureTime(i->exposureTime)
+:SunImage<EUVPixelType>(i),wavelength(i->wavelength),median(i->median),datap01(i->datap01),datap95(i->datap95), exposureTime(i->exposureTime)
 {
 }
 
 EUVImage::EUVImage(const Header& header)
-:SunImage<PixelType>(header)
+:SunImage<EUVPixelType>(header)
 {
 	postRead();
 }
@@ -79,7 +79,7 @@ double EUVImage::ExposureTime() const
 
 void EUVImage::copySunParameters(const EUVImage* i)
 {
-	SunImage<PixelType>::copySunParameters(i);
+	SunImage<EUVPixelType>::copySunParameters(i);
 	wavelength = i->wavelength;
 	median = i->median;
 	mode = i->mode;
@@ -311,9 +311,9 @@ inline Real EUVImage::percentCorrection(const Real r)const
  *  This code by Nicolas Devillard - 1998. Public domain.
  */
 
-#define ELEM_SWAP(a,b) { register PixelType t=(a);(a)=(b);(b)=t; }
+#define ELEM_SWAP(a,b) { register EUVPixelType t=(a);(a)=(b);(b)=t; }
 
-PixelType quick_select(vector<PixelType>& arr, int n)
+EUVPixelType quick_select(vector<EUVPixelType>& arr, int n)
 {
 	int low, high ;
 	int median;
@@ -379,14 +379,14 @@ void EUVImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 	vector<Real> annulusMean(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 	vector<unsigned> annulusNbrPixels(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 
-	PixelType* pixelValue = pixels;
+	EUVPixelType* pixelValue = pixels;
 	const int xmax = Xaxes() - suncenter.x;
 	const int ymax = Yaxes() - suncenter.y;
 	Real pixelRadius2 = 0;
 	unsigned indice = 0;
 	if (median == 0) // I don't know the median value yet
 	{
-		vector<PixelType> onDiscList;
+		vector<EUVPixelType> onDiscList;
 		onDiscList.reserve(numberValidPixelsEstimate());
 
 	
@@ -486,14 +486,14 @@ void EUVImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 	vector<Real> annulusMean(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 	vector<unsigned> annulusNbrPixels(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 
-	PixelType* pixelValue = pixels;
+	EUVPixelType* pixelValue = pixels;
 	const int xmax = Xaxes() - suncenter.x;
 	const int ymax = Yaxes() - suncenter.y;
 	Real pixelRadius2 = 0;
 	unsigned indice = 0;
 	if (median == 0) // I don't know the median value yet
 	{
-		vector<PixelType> onDiscList;
+		vector<EUVPixelType> onDiscList;
 		onDiscList.reserve(numberValidPixelsEstimate());
 
 	
@@ -602,14 +602,14 @@ void EUVImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 	vector<unsigned> histo(1024, 0);
 
 
-	PixelType* pixelValue = pixels;
+	EUVPixelType* pixelValue = pixels;
 	const int xmax = Xaxes() - suncenter.x;
 	const int ymax = Yaxes() - suncenter.y;
 	Real pixelRadius2 = 0;
 	unsigned indice = 0;
 	if (median == 0) // I don't know the median value yet
 	{
-		vector<PixelType> onDiscList;
+		vector<EUVPixelType> onDiscList;
 		onDiscList.reserve(numberValidPixelsEstimate());
 
 	
@@ -731,5 +731,22 @@ void EUVImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
 	}
 
 }
+
+#ifdef MAGICK
+MagickImage EUVImage::magick()
+{
+	EUVPixelType* rescaledPixels = new EUVPixelType[numberPixels];
+	EUVPixelType min, max;
+	minmax(min,max);
+	Real scale = 1./ (max - min);
+	for(unsigned j = 0; j < numberPixels; ++j)
+	{
+		rescaledPixels[j] = pixels[j] == nullvalue_ ? 0 : (pixels[j] - min) * scale;
+	}
+	MagickImage rescaledImage(rescaledPixels, xAxes, yAxes, "I");
+	rescaledImage.flip();
+	return rescaledImage;
+}
+#endif
 
 

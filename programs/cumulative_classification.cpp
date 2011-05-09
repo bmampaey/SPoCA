@@ -109,6 +109,9 @@ int main(int argc, const char **argv)
 {
 	cout<<setiosflags(ios::fixed);
 
+	// Program version
+	const char * version = "2.0";
+
 	// The list of names of the sun images to process
 	string imageType = "UNKNOWN";
 	vector<string> imagesFilenames;
@@ -126,7 +129,7 @@ int main(int argc, const char **argv)
 	// Options for the classification
 	string classifierType;
 	unsigned maxNumberIteration = 100;
-	double precision = 0.001;
+	double precision = 0.0015;
 	double fuzzifier = 2;
 	unsigned classificationPeriodicity = 1;
 	bool reinit = false;
@@ -145,7 +148,7 @@ int main(int argc, const char **argv)
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
-	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
+	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
 
 	ArgumentHelper arguments;
@@ -168,7 +171,7 @@ int main(int argc, const char **argv)
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
-	arguments.set_version("2.0");
+	arguments.set_version(version);
 	arguments.process(argc, argv);
 
 	
@@ -221,7 +224,7 @@ int main(int argc, const char **argv)
 	// We declare the type of Classifier we want
 	if (classifierType == "FCM")
 	{
-		if(fileExists(histogramFile))
+		if(isFile(histogramFile))
 		{
 			F = new CumulativeFCMClassifier(histogramFile, fuzzifier);
 		}
@@ -237,7 +240,7 @@ int main(int argc, const char **argv)
 	}
 	else if (classifierType == "PCM")
 	{
-		if(fileExists(histogramFile))
+		if(isFile(histogramFile))
 		{
 			F = new CumulativePCMClassifier(histogramFile, fuzzifier);
 		}
@@ -254,7 +257,7 @@ int main(int argc, const char **argv)
 	}
 	else if (classifierType == "PCM2")
 	{
-		if(fileExists(histogramFile))
+		if(isFile(histogramFile))
 		{
 			F = new CumulativePCM2Classifier(histogramFile, fuzzifier);
 		}

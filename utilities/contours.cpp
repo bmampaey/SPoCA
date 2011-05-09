@@ -6,9 +6,9 @@
  The background will be transparent, so that the contours can be overlayed on another image. 
  The name of the png image will be the name of the original file with "contours" appended.
  
- N.B.: In fits files, there is no colors, so they are represented as a number in the color maps.
+ <BR>N.B.: In the color maps, because there is no colors in fits files, they are represented as a number.
  When creating the png image, a mapping is done from a number to a color.
- That mapping is consistent between images and calls so that a region that has been tracked keep the same color in the successive images. 
+ That mapping is consistent between images and calls so that a region that has been tracked keep the same color in the successive images.
  
  @section usage Usage
  
@@ -30,6 +30,12 @@
 
 @param mastic	Set this flag if you want to fill holes in the connected components before tracing the contours.
 
+@param Label	The label to write in the upper left corner.
+<BR>You can use keywords from the fits file of the color map by specifying them between {}. e.g. Wavelength: {WAVELNTH}
+
+@param size The size of the image written. i.e. "1024x1024" See <a href="http://www.imagemagick.org/script/command-line-processing.php#geometry" target="_blank">ImageMagick Image Geometry</a>  for specification.
+
+@param outputDirectory	The name for the output directory.
 
 See @ref Compilation_Options for constants and parameters at compilation time.
 
@@ -44,13 +50,16 @@ See @ref Compilation_Options for constants and parameters at compilation time.
 #include <string>
 #include <fenv.h>
 #include <iomanip>
-#include <Magick++.h>
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
-#include "../classes/ColorMap.h"
+#include "../classes/mainutilities.h"
 #include "../classes/ArgumentHelper.h"
-#include "../classes/gradient.h"
+
+#include "../classes/ColorMap.h"
+#include "../classes/MagickImage.h"
+
+
 
 using namespace std;
 using namespace dsr;
@@ -78,6 +87,15 @@ int main(int argc, const char **argv)
 	
 	// Option for the preprocessing
 	bool mastic = false;
+	
+	// Options for the labeling
+	string Label = "{CLASTYPE} {CPREPROC}";
+	
+	// Option for the output size
+	string size;
+	
+	// option for the output directory
+	string outputDirectory = ".";
 
 	
 	string programDescription = "This Program makes contours out off color regions.\n";
@@ -91,6 +109,9 @@ int main(int argc, const char **argv)
 	arguments.new_flag('e', "external", "\n\tSet this flag if you want the contours outside the regions.\n\t", external);
 	arguments.new_flag('f', "fits", "\n\tSet this flag if you want the output saved as fits.\n\t", fits);
 	arguments.new_flag('m', "mastic", "\n\tSet this flag if you want to fill holes before taking the contours.\n\t", mastic);
+	arguments.new_named_string('L', "Label", "string", "\n\tThe label for the contours.\n\tYou can use keywords from the color map fits file by specifying them between {}\n\t", Label);
+	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
+	arguments.new_named_string('O', "outputDirectory","directory name", "\n\tThe name for the output directory.\n\t", outputDirectory);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files to draw the contours.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
@@ -98,8 +119,21 @@ int main(int argc, const char **argv)
 	arguments.set_version("1.0");
 	arguments.process(argc, argv);
 
-	Color background(0, 0 ,0, MaxRGB);
-
+	// We check if the outputDirectory is a directory 
+	if (! isDir(outputDirectory))
+	{
+		cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
+		return EXIT_FAILURE;
+	}
+	
+	// We parse the size option
+	Magick::Geometry size_geometry(size);
+	if(!fits && ! size.empty() && !size_geometry.isValid())
+	{
+		cerr << "Error parsing size argument: "<<size<<" is not a valid specification."<< endl;
+		return 2;
+	}
+	
 	ColorMap image;
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
@@ -118,23 +152,24 @@ int main(int argc, const char **argv)
 			
 		if(fits)
 		{
-			image.writeFits(filenamePrefix + "fits");
+			image.writeFits(outputDirectory + "/" + stripSuffix(stripPath(imagesFilenames[p])) + ".contours.fits");
 		}
 		else //png
 		{
-			Magick::Image pngImage( Geometry(image.Xaxes(), image.Yaxes()), background );
-			for (unsigned y = 0; y < image.Yaxes(); ++y)
+			MagickImage contours = image.magick();
+			if(!Label.empty())
 			{
-				for (unsigned x = 0; x < image.Xaxes(); ++x)
-				{	
-					if(image.pixel(x, y) != image.nullvalue() )
-					{
-						ColorType indice = (image.pixel(x, y) % gradientMax) + 1 ;
-						pngImage.pixelColor(x, image.Yaxes() - y - 1, Color(magick_gradient[indice]));
-					}
-				}
+				string text = expand(Label, image.header);
+				size_t text_size = image.Xaxes()/40;
+				contours.fillColor("white");
+				contours.fontPointsize(text_size);
+				contours.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
+				contours.label(text);
 			}
-			pngImage.write(filenamePrefix + "png");
+			if(size_geometry.isValid())
+				contours.scale(size_geometry);
+			
+			contours.write(outputDirectory + "/" + stripSuffix(stripPath(imagesFilenames[p])) + ".contours.png");
 		}
 		
 	}

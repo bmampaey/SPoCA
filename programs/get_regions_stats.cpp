@@ -88,7 +88,7 @@ int main(int argc, const char **argv)
 	cout<<setiosflags(ios::fixed);
 	
 	// Program version
-	const char * version = "0.7";
+	const char * version = "2.0";
 	
 	// The list of names of the sun images to process
 	string imageType = "UNKNOWN";
@@ -113,7 +113,7 @@ int main(int argc, const char **argv)
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
-	programDescription+="\nPixelType: " + string(typeid(PixelType).name());
+	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
 
 	ArgumentHelper arguments;
@@ -144,7 +144,7 @@ int main(int argc, const char **argv)
 	bool getCHStats = (desiredStats.find_first_of("Cc")!=string::npos);
 	bool getRegularStats = (desiredStats.find_first_of("Rr")!=string::npos);
 		
-	ColorMap* colorizedMap = dynamic_cast<ColorMap*> (getImageFromFile("ColorMap", colorizedMapFileName));
+	ColorMap* colorizedMap = getImageFromFile(colorizedMapFileName);
 	colorizedMap->nullifyAboveRadius(1);
 	Coordinate sunCenter = colorizedMap->SunCenter();
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)

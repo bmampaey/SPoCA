@@ -128,19 +128,23 @@ int FitsFile::fitsDataType(const type_info& t)
 	else if(t == typeid(long))
 		datatype = TLONG;
 	else if(t == typeid(unsigned long))
-		datatype = TULONG;
+		//datatype = TULONG;
+		datatype = TLONG;
 	else if(t == typeid(short))
 		datatype = TSHORT;
 	else if(t == typeid(unsigned short))
-		datatype = TUSHORT;
+		//datatype = TUSHORT;
+		datatype = TSHORT;
 	else if(t == typeid(int))
 		datatype = TINT;
 	else if(t == typeid(unsigned int))
-		datatype = TUINT;
+		//datatype = TUINT;
+		datatype = TINT;
 	else if(t == typeid(char))
 		datatype = TBYTE;
 	else if(t == typeid(signed char))
-		datatype = TSBYTE;
+		//datatype = TSBYTE;
+		datatype = TBYTE;
 	else if(t == typeid(char*))
 		datatype = TSTRING;
 	else
@@ -222,28 +226,28 @@ int FitsFile::getBitpix(int datatype)
 			bitpix = FLOAT_IMG;
 			break;
 		case TLONG:
-			bitpix = LONGLONG_IMG;
+			bitpix = LONG_IMG;
 			break;
 		case TULONG:
-			bitpix = ULONG_IMG;//There is no ULONGLONG_IMG
+			bitpix = LONG_IMG;
 			break;
 		case TINT:
-			bitpix = LONGLONG_IMG;
+			bitpix = LONG_IMG;
 			break;
 		case TUINT:
-			bitpix = ULONG_IMG;
+			bitpix = LONG_IMG;
 			break;
 		case TSHORT:
 			bitpix = SHORT_IMG;
 			break;
 		case TUSHORT:
-			bitpix = USHORT_IMG;
+			bitpix = SHORT_IMG;
 			break;
 		case TBYTE:
 			bitpix = BYTE_IMG;
 			break;
 		case TSBYTE:
-			bitpix = SBYTE_IMG;
+			bitpix = BYTE_IMG;
 			break;
 		default:
 			cerr<<"Error determining bitpix for datatype "<<datatype<<". Setting it to double."<<endl;
@@ -324,15 +328,13 @@ FitsFile& FitsFile::readHeader(Header& header)
 					status = 0;
 					continue;
 				}
-				//Sometimes string values are surrounded by '  ' therefore we must remove them
-				if(value[0] == '\'')
+				//We need to cleanup the value for leading/trailing spaces and quotes
+				string cleanValue(value);
+				size_t startpos = cleanValue.find_first_not_of("' \t");
+				size_t endpos = cleanValue.find_last_not_of("' \t");
+				if((startpos != string::npos) && (endpos != string::npos))
 				{
-					*(strrchr(value, '\'')) = '\0';
-					header.set(key,string(value+1));
-				}
-				else
-				{
-					header.set(key,string(value));
+					header.set(key,cleanValue.substr(startpos, endpos-startpos+1));
 				}
 			}
 		}
@@ -364,15 +366,54 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 		return *this;
 	}
 	char* comment = NULL;
-	
 	for ( Header::const_iterator i = header.begin(); i != header.end(); ++i )
 	{
-		if(fits_update_key(fptr, TSTRING, i->first.c_str(), const_cast<char *>(i->second.c_str()), comment, &status))
+		// To avoid cfitsio to put quotes around values (why does it do it in the first place ???) we have to know if the value is a number or not
+		// We cannot use fits_get_keytype to determine the type of the value because it is bugged
+		if(i->second.find_first_not_of(" \t") == string::npos)
 		{
-			cerr<<"Error : writing keyword to file "<<filename<<" :"<< status <<endl;			
-			fits_report_error(stderr, status);
-			status = 0;
-		} 
+			// The value is all white
+			if(fits_update_key_null(fptr, i->first.c_str(), comment, &status))
+			{
+				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;			
+				fits_report_error(stderr, status);
+				status = 0;
+			}
+		}
+		else if(i->second.find_first_not_of(" \t0123456789.-") != string::npos)
+		{
+			// It is a string
+			if(fits_update_key(fptr, TSTRING, i->first.c_str(), const_cast<char *>(i->second.c_str()), comment, &status))
+			{
+				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;			
+				fits_report_error(stderr, status);
+				status = 0;
+			} 
+		}
+		else if(i->second.find_first_of(".") == string::npos)
+		{
+			//It is probably a integer
+			int value = stoi(i->second);
+			if(fits_update_key(fptr, TINT, i->first.c_str(), &value, comment, &status))
+			{
+				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;			
+				fits_report_error(stderr, status);
+				status = 0;
+			} 
+		
+		}
+		else
+		{
+			//It is probably a double
+			double value = stod(i->second);
+			if(fits_update_key(fptr, TDOUBLE, i->first.c_str(), &value, comment, &status))
+			{
+				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;			
+				fits_report_error(stderr, status);
+				status = 0;
+			} 
+		
+		}
 	}
 	return *this;
 }
@@ -816,8 +857,8 @@ FitsFile& FitsFile::readColumn(const string &name, vector<T>& data)
 template FitsFile& FitsFile::writeImage(ColorType* image, const unsigned X, const unsigned Y, int mode);
 template FitsFile& FitsFile::readImage(ColorType*& image, unsigned &X, unsigned& Y, ColorType* nullvalue);
 
-template FitsFile& FitsFile::writeImage(PixelType* image, const unsigned X, const unsigned Y, int mode);
-template FitsFile& FitsFile::readImage(PixelType*& image, unsigned &X, unsigned& Y, PixelType* nullvalue);
+template FitsFile& FitsFile::writeImage(EUVPixelType* image, const unsigned X, const unsigned Y, int mode);
+template FitsFile& FitsFile::readImage(EUVPixelType*& image, unsigned &X, unsigned& Y, EUVPixelType* nullvalue);
 
 template FitsFile& FitsFile::writeColumn(const string &name, const vector<int>& array, const int mode);
 template FitsFile& FitsFile::writeColumn(const string &name, const vector<unsigned>& array, const int mode);
@@ -991,3 +1032,4 @@ time_t iso2ctime(const string& date)
 	}
 	return timegm(&time);
 }
+

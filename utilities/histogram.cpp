@@ -161,15 +161,10 @@ int main(int argc, const char **argv)
 	}
 
 	// We read the histogram bin size
-	if(!sbinSize.empty())
+	// We read the bin size
+	if(!readbinSize(binSize,sbinSize))
 	{
-		istringstream Z(sbinSize);
-		Z>>binSize;
-		if(Z.fail())
-		{
-			cerr<<"Error reading the binSize."<<endl;
-			return EXIT_FAILURE;
-		}
+		return EXIT_FAILURE;
 	}
 	
 	RealFeature histoChannels;

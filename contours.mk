@@ -70,4 +70,3 @@ objects/FeatureVector.o : contours.mk classes/FeatureVector.cpp classes/constant
 
 objects/tools.o : contours.mk classes/tools.cpp classes/constants.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/tools.cpp -o objects/tools.o
-

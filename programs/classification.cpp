@@ -491,6 +491,57 @@ int main(int argc, const char **argv)
 				#endif
 			}
 		} 
+	#elif defined(HEK_CH)
+		string previous_centers_file = "previous_centers.txt";
+		Real max_variation = 0.1;
+		vector<vector<RealFeature> > previousB;
+		if (readManyCentersFromFile(previous_centers_file, previousB))
+		{
+			cout<<"Previous centers read: "<<previousB<<endl;
+			vector<RealFeature> newB = F->getB();
+			sort(newB.begin(), newB.end());
+			if(B.size() > 0)
+			{
+				sort(B.begin(), B.end());
+				Real variation = norm(newB[0]/B[0]);
+				#if DEBUG >= 3
+				cout<<"oldB: "<<B<<" newB: "<<newB<<" variation of B0: "<<variation<<endl;
+				#endif
+				if ((1. - max_variation) < variation && variation < (1.+ max_variation))
+					previousB.insert(previousB.begin(), newB);
+					
+			}
+			else
+			{
+				previousB.insert(previousB.begin(), newB);
+			}
+			if (previousB.size() >= max_previous_B)
+				 previousB.resize(max_previous_B);
+			
+		}
+		else
+		{
+			previousB.insert(previousB.begin(), newB);
+		}
+		cout<<"Previous centers now: "<<previousB<<endl;
+		writeManyCentersToFile(previous_centers_file, previousB);
+		vector<RealFeature> meanB(numberClasses, 0);
+		for (unsigned p = 0; p < previousB.size(); ++p)
+		{
+			for (unsigned i = 0; i < numberClasses; ++i)
+				meanB[i] += previousB[p].at(i);
+		}
+		F->initB(meanB, wavelengths);
+		if(classifierIsPossibilistic)
+		{
+				dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
+				F->initB(B, wavelengths);
+		}	
+
+		#if DEBUG >= 3
+		cout<<"Initialized B with meanB: "<<meanB<<endl;
+		#endif
+	
 	#endif
 
 	// We always terminate by an attribution

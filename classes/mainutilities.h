@@ -30,8 +30,12 @@ extern const char * limb_corrections[];
 //! Read and parse the centers and the wavelength from a file
 unsigned readCentersFromFile(std::vector<RealFeature>& B, RealFeature& wavelengths, const std::string& centersFileName);
 
+unsigned readManyCentersFromFile(std::vector< std::vector<RealFeature> >& Bs, const std::string& centersFileName);
+
+void writeManyCentersToFile(const std::vector< std::vector<RealFeature> >& Bs, const std::string& centersFileName);
+
 //! Read and parse the binsize
-bool readbinSize(RealFeature& binSize, const std::string& sbinSize);
+bool readbinSize(RealFeature& binSize, std::string sbinSize);
 
 //! Read and creates one EUV image from a fits files name
 /*! It will try to guess the Image type if it is UNKNOWN */

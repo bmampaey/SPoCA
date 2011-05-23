@@ -131,7 +131,7 @@ int main(int argc, const char **argv)
 		readRegions(file, tmp_regions);
 		Header tracking_info;
 		file.readHeader(tracking_info);
-		if(tracking_info.get<bool>("TRACKED"))
+		if(tracking_info.get<bool>("TRACKED") && tracking_info.get<string>("TRACKED").find("yes") != string::npos)
 		{
 			//We get the tracked_colors from the table to update the regions color
 			vector<ColorType> tracked_colors;
@@ -167,10 +167,11 @@ int main(int argc, const char **argv)
 		#endif
 		regions.push_back(tmp_regions);
 	}
-
+	
+	filenamePrefix = images.size() > 0 ? time2string(images[0]->ObservationTime()) + "." : "nofiles.";
 	#if DEBUG >= 2
 	// We output the regions found
-	ouputRegions(regions, "regions_premodification.txt");
+	ouputRegions(regions, filenamePrefix+"regions_premodification.txt");
 	#endif
 
 	RegionGraph tracking_graph;
@@ -265,10 +266,10 @@ int main(int argc, const char **argv)
 	// We output the graph after tranformation
 	ouputGraph(tracking_graph, regions, "ar_graph_postmodification");
 	// We output the regions found
-	ouputRegions(regions, "regions_postmodification.txt");
+	ouputRegions(regions, filenamePrefix+"regions_postmodification.txt");
 	#endif
 
-	// We set wheter we should not compress the maps
+	// We set whether we should not compress the maps
 	const int compressed_fits = uncompressed_results ? 0 : FitsFile::compress;
 
 	// We update the fits files with the new colors
@@ -348,7 +349,7 @@ int main(int argc, const char **argv)
 	
 	#if DEBUG >= 2
 	// We output the graph after recolorization
-	// Ideally I should remove first all regions before previous_overlap from the graph, but there is remove node in our graph libarry so I recolor them to black
+	// Ideally I should remove first all regions before previous_overlap from the graph, but there is no remove node in our graph libarry so I recolor them to black
 	for (unsigned s = 0 ; s < previous_last_hek_map; ++s)
 	{
 		for (unsigned r = 0; r < regions[s].size(); ++r)

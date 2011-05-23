@@ -185,7 +185,7 @@ void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, c
 	{
 
 		graphFile<<"digraph "<<graphName<<" {"<<endl;
-		graphFile<<"node [colorscheme=set312 penwidth=4];"<<endl;
+		graphFile<<"node [penwidth=4];"<<endl;
 		//First we output all node info
 		for (unsigned s = 0; s < regions.size(); ++s)
 		{
@@ -194,11 +194,10 @@ void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, c
 			{
 				rank += " \"" + regions[s][r]->HekLabel() + "\"";
 				graphFile <<"\""<< regions[s][r]->HekLabel()<<"\"";
-				if(isColored)
-					graphFile<<dot_gradient[ (int(regions[s][r]->Color()) % gradientMax) + 1 ] << endl;
-				else
-					graphFile<<" [color="<< (s%12) + 1 <<"];" << endl;
-
+				if(isColored && regions[s][r]->Color() != 0)
+				{
+					graphFile<<dot_gradient[ (regions[s][r]->Color() % gradientMax) + 1 ] << endl;
+				}
 			}
 			graphFile<<"{ rank=same; "<< rank <<" };" << endl;
 

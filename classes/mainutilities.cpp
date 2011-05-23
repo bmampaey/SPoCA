@@ -1,4 +1,5 @@
 #include "mainutilities.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -26,11 +27,86 @@ inline unsigned readCentersFromFile(vector<RealFeature>& B, RealFeature& wavelen
 	}
 	return B.size();
 }
+/*
+inline unsigned readManyCentersFromFile(vector< vector<RealFeature> >& Bs, const string& centersFileName)
+{
+	Bs.clear();
+	
+	ifstream centersFile(centersFileName.c_str());
+	while(centersFile.good())
+	{
+		string centersLine;
+		getline(centersFile, centersLine);
+		isstream centersString(centersLine);
+		vector<RealFeature> B;
+		centersString>>B;
+		Bs.push_back(B);
+		centersFile.close();
+		
+	}
+	else
+	{
+		cerr<<"Error : could not read centers from file "<<centersFileName<<endl;
+	}
+	return Bs.size();
+}
 
-inline bool readbinSize(RealFeature& binSize, const string& sbinSize)
+inline void writeManyCentersFromFile(const vector< vector<RealFeature> >& Bs, const string& centersFileName)
+{
+	ofstream centersFile(centersFileName.c_str(),  ios_base::trunc);
+	if (centersFile.good())
+	{
+		for(unsigned b = 0; b < Bs.size(); ++b)
+		{
+			centersFile<<Bs[b]<<endl;
+		}
+		centersFile.close();
+		
+	}
+	else
+	{
+		cerr<<"Error : could not read centers from file "<<centersFileName<<endl;
+	}
+}
+*/
+inline unsigned readManyCentersFromFile(vector< vector<RealFeature> >& Bs, const string& centersFileName)
+{
+	Bs.clear();
+	
+	ifstream centersFile(centersFileName.c_str());
+	if(centersFile.good())
+	{
+		centersFile>>Bs;
+		centersFile.close();
+		
+	}
+	else
+	{
+		cerr<<"Error : could not read centers from file "<<centersFileName<<endl;
+	}
+	return Bs.size();
+}
+
+inline void writeManyCentersToFile(const vector< vector<RealFeature> >& Bs, const string& centersFileName)
+{
+	ofstream centersFile(centersFileName.c_str(),  ios_base::trunc);
+	if (centersFile.good())
+	{
+		centersFile<<Bs;
+		centersFile.close();
+	}
+	else
+	{
+		cerr<<"Error : could not write centers to file "<<centersFileName<<endl;
+	}
+}
+inline bool readbinSize(RealFeature& binSize, string sbinSize)
 {
 	if(!sbinSize.empty())
 	{
+		sbinSize.erase(remove_if(sbinSize.begin(), sbinSize.end(), ::isspace), sbinSize.end());
+		if (sbinSize[0] != '(')
+			sbinSize = "(" + sbinSize + ")";
 		istringstream Z(sbinSize);
 		Z>>binSize;
 		if(Z.fail())

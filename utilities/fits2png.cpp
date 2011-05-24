@@ -94,7 +94,7 @@ int main(int argc, const char **argv)
 	{
 		FitsFile file(imagesFilenames[p]);
 		Header header;
-		file.readHeader(Header);
+		file.readHeader(header);
 		if(isColorMap(header))
 		{
 			ColorMap image;

@@ -354,9 +354,6 @@ int main(int argc, const char **argv)
 	// We add the images to the classifier
 	F->addImages(images);
 		
-	// We declare the segmented map with the keywords of the first image
-	ColorMap* segmentedMap = new ColorMap();
-	segmentedMap->copySunParameters(images[0]);
 		
 	// We delete all images to gain memory space
 	for (unsigned p = 0; p < images.size(); ++p)
@@ -586,7 +583,7 @@ int main(int argc, const char **argv)
 	
 		// We write the map of CH to a fits file
 		FitsFile file(filenamePrefix + "CHmap.fits", FitsFile::overwrite);
-		CHmap->writeFits(file, compressed_fits);
+		CHMap->writeFits(file, compressed_fits);
 		file.writeHeader(attribution_info);
 		
 		// We get the CH Stats

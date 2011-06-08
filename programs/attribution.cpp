@@ -436,8 +436,7 @@ int main(int argc, const char **argv)
 		char delimitor;
 		unsigned class_number;
 		Real lowerIntensity_minMembership, higherIntensity_minMembership;
-		istringstream iss(threshold);
-		iss>>class_number>>delimitor>>lowerIntensity_minMembership>>delimitor>>higherIntensity_minMembership;
+		threshold>>class_number>>delimitor>>lowerIntensity_minMembership>>delimitor>>higherIntensity_minMembership;
 		F->segmentedMap_classThreshold(class_number, lowerIntensity_minMembership, higherIntensity_minMembership, segmentedMap);
 	}
 	else if (segmentation == "limits")
@@ -459,18 +458,15 @@ int main(int argc, const char **argv)
 		vector<unsigned> ch, qs, ar;
 		if(!coronalHole.empty())
 		{
-			istringstream iss(coronalHole);
-			iss>>ch;
+			coronalHole>>ch;
 		}
 		if(!quietSun.empty())
 		{
-			istringstream iss(quietSun);
-			iss>>qs;
+			quietSun>>qs;
 		}
 		if(!activeRegion.empty())
 		{
-			istringstream iss(activeRegion);
-			iss>>ar;
+			activeRegion>>ar;
 		}
 		F->segmentedMap_fixed(ch, qs, ar, segmentedMap);
 	}
@@ -511,7 +507,7 @@ int main(int argc, const char **argv)
 	attribution_info.set<int>("MRAWTRSH", thresholdRawArea, "Region Size Threshold on Raw Area");
 	
 	ostringstream ss;
-	ss<<F->getChannels()<<" "<<B;
+	ss<<F->getChannels()<<" "<<fixed<<setprecision(3)<<B;
 	attribution_info.set<string>("CCENTER", ss.str(), "Classification Center");
 	
 	if(classifierIsPossibilistic)

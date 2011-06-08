@@ -46,6 +46,9 @@
 @param centersFile	The name of the file containing the centers.
  If it it not provided the centers will be initialized randomly.
 
+@param numberPreviousCenters	The number of previous saved centers to take into account for the final attribution.
+<BR> If you are running in continuous mode, this option allow to store n centers in the centers files. It is the median value of those n centers + the last found one that will to be used for the last attribution.
+
 @param imageType	The type of the images.
 <BR>Possible values are : 
  - EIT
@@ -80,7 +83,7 @@
 
 @param histogramFile	The name of a file containing an histogram.
 
-@param binSize	The size of the bins of the histogramm.
+@param binSize	The size of the bins of the histogram.
 <BR>N.B. Be carreful that the histogram is built after the preprocessing.
 
 @param segmentation	The segmentation type.
@@ -176,6 +179,9 @@ int main(int argc, const char **argv)
 	// The number of classes to classify into
 	unsigned numberClasses = 0;
 	
+	//The number of previos centers to take into account into the computation of the final class centers
+	unsigned numberPreviousCenters = 0;
+	
 	// Option to pass a class center file
 	string centersFileName;
 
@@ -235,6 +241,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_double('f',"fuzzifier", "positive real", "\n\tThe fuzzifier (m).\n\t",fuzzifier);
 	arguments.new_named_unsigned_int('C', "numberClasses", "positive integer", "\n\tThe number of classes to classify the sun images into.\n\t", numberClasses);
 	arguments.new_named_string('B',"centersFile","file name", "\n\tThe name of the file containing the centers.\n\tIf it it not provided the centers will be initialized randomly.\n\t", centersFileName);
+	arguments.new_named_unsigned_int('b',"numberPreviousCenters","positive integer", "\n\tThe number of previous saved centers to take into account for the final attribution.\n\t", numberPreviousCenters);
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP\n\t", imageType);
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
 	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
@@ -243,7 +250,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('G', "regionStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images (see preprocessingSteps for possible values).\n\t",regionStatsPreprocessing);
 	arguments.new_named_unsigned_int('N', "neighboorhoodRadius", "positive integer", "\n\tOnly for spatial classifiers like SPoCA.\n\tThe neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.\n\t", neighboorhoodRadius);
 	arguments.new_named_string('H', "histogramFile","file name", "\n\tThe name of a file containing an histogram.\n\t", histogramFile);
-	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogramm.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
+	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogram.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
 	arguments.new_named_string('S', "segmentation", "string", "\n\tThe segmentation type.\n\tPossible values :\n\t\tmax (Maximum of Uij)\n\t\tclosest (Closest center)\n\t\tthreshold (Threshold on Uij)\n\t\tlimits (Merge on centers value limits)\n\t\tfix (Merge on fix CH QS AR)\n\t", segmentation);
 	arguments.new_named_string('L',"maxLimitsFile","file", "\n\tOnly for limit segmentation.\n\tThe name of the file containing the max limits.\n\t", maxLimitsFileName);
 	arguments.new_named_string('c',"ch","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Coronal Hole.\n\t", coronalHole);
@@ -263,6 +270,7 @@ int main(int argc, const char **argv)
 	
 	// General variables
 	vector<RealFeature> B;
+	vector<vector<RealFeature> > Bs;
 	RealFeature wavelengths = 0;
 	Classifier* F;
 	RealFeature binSize(0);
@@ -291,23 +299,32 @@ int main(int argc, const char **argv)
 		}
 	}
 	
-	// We read the wavelengths and the initial centers from the centers file
-	if(isFile(centersFileName) && readCentersFromFile(B, wavelengths, centersFileName))
+	// We read the wavelengths and the initial class centers from the centers file
+	if(isFile(centersFileName))
 	{
-		if(B.size() != numberClasses)
+		readCentersFromFile(Bs, wavelengths, centersFileName);
+		if(Bs.size() > 0)
+		{
+			B = median_classcenters(Bs);
+			#if DEBUG >= 3
+			cout<<"Bmedian "<<B<<endl;
+			for (unsigned b = 0; b < Bs.size(); ++b)
+				cout<<"Bs"<<b<<" "<<Bs[b]<<endl;
+			#endif
+		}
+		if(B.size() > 0 && B.size() != numberClasses)
 		{
 			cerr<<"Error : The number of classes is different than the number of centers read in the center file."<<endl;
 			numberClasses = B.size();
 			cerr<<"The number of classes will be set to "<<numberClasses<<endl;
-			
+		
 		}
 	}
 	
-	
 	// We read the bin size
-	if(!readbinSize(binSize,sbinSize))
+	if(!sbinSize.empty())
 	{
-		return EXIT_FAILURE;
+		sbinSize>>binSize;
 	}
 
 	// We declare the type of Classifier we want
@@ -458,91 +475,31 @@ int main(int argc, const char **argv)
 
 	// We have all the information we need, we can do the classification
 	F->classification(precision, maxNumberIteration);
-
-
-	#ifdef HEK
-	// Hack asked by Veronique, to stabilize the centers
-		if(B.size() >= 4)
-		{
-			vector<RealFeature> newB = F->getB();
-			sort(newB.begin(), newB.end());
-			//We compare if the 2 last class centers are within boudaries
-			Real quotientFactor = d(newB[numberClasses-1]/newB[numberClasses-2], RealFeature(0));
-			cerr<<"quotientFactor="<<quotientFactor<<endl;
-			if(quotientFactor < MIN_QUOTIENT_FACTOR || quotientFactor > MAX_QUOTIENT_FACTOR)
-			{
-				// If it not the case we use the old centers to do an attribution
-				F->initB(B, wavelengths);
-
-				if(classifierIsPossibilistic)
-				{
-						dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
-						F->initB(B, wavelengths);
-				}	
 	
-				#if DEBUG >= 3
-				cout<<"Centers of AR classes are too close, doing an attribution with old centers"<<endl;
-				cout<<"oldB :"<<B<<" newB: "<<newB<<endl; 
-				cout<<"The centers have been initialized to B :"<<F->getB()<<endl;
-				if(classifierIsPossibilistic)
-				{
-					cout<<"The eta have been initialized to :"<<dynamic_cast<PCMClassifier*>(F)->getEta()<<endl;
-				}
-				#endif
-			}
-		} 
-	#elif defined(HEK_CH)
-		string previous_centers_file = "previous_centers.txt";
-		Real max_variation = 0.1;
-		vector<vector<RealFeature> > previousB;
-		if (readManyCentersFromFile(previous_centers_file, previousB))
-		{
-			cout<<"Previous centers read: "<<previousB<<endl;
-			vector<RealFeature> newB = F->getB();
-			sort(newB.begin(), newB.end());
-			if(B.size() > 0)
-			{
-				sort(B.begin(), B.end());
-				Real variation = norm(newB[0]/B[0]);
-				#if DEBUG >= 3
-				cout<<"oldB: "<<B<<" newB: "<<newB<<" variation of B0: "<<variation<<endl;
-				#endif
-				if ((1. - max_variation) < variation && variation < (1.+ max_variation))
-					previousB.insert(previousB.begin(), newB);
-					
-			}
-			else
-			{
-				previousB.insert(previousB.begin(), newB);
-			}
-			if (previousB.size() >= max_previous_B)
-				 previousB.resize(max_previous_B);
+	// We retrieve the new centers found
+	B = F->getB();
+	wavelengths = F->getChannels();
+	sort(B.begin(), B.end());
+	Bs.insert(Bs.begin(), B);
+	
+	// If we need to take into account the previous centers found
+	// We adapt the centers found by the classification
+	if(numberPreviousCenters > 0)
+	{
+		B = median_classcenters(Bs);
+		if(Bs.size() > numberPreviousCenters)
+			Bs.resize(numberPreviousCenters+1);
 			
-		}
-		else
-		{
-			previousB.insert(previousB.begin(), newB);
-		}
-		cout<<"Previous centers now: "<<previousB<<endl;
-		writeManyCentersToFile(previous_centers_file, previousB);
-		vector<RealFeature> meanB(numberClasses, 0);
-		for (unsigned p = 0; p < previousB.size(); ++p)
-		{
-			for (unsigned i = 0; i < numberClasses; ++i)
-				meanB[i] += previousB[p].at(i);
-		}
-		F->initB(meanB, wavelengths);
+		#if DEBUG >= 3
+		cout<<"Re-Initialized B with "<<B<<endl;
+		#endif
+		F->initB(B, wavelengths);
 		if(classifierIsPossibilistic)
 		{
 				dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
 				F->initB(B, wavelengths);
 		}	
-
-		#if DEBUG >= 3
-		cout<<"Initialized B with meanB: "<<meanB<<endl;
-		#endif
-	
-	#endif
+	}
 
 	// We always terminate by an attribution
 	// it sorts the class centers
@@ -553,11 +510,11 @@ int main(int argc, const char **argv)
 	// We save the centers for the next run 
 	if (!centersFileName.empty())
 	{
-		F->saveB(centersFileName);
+		writeCentersToFile(Bs, wavelengths, centersFileName);
 	}
 	else
 	{
-		F->saveB(filenamePrefix + "centers.txt");
+		writeCentersToFile(Bs, wavelengths, filenamePrefix + "centers.txt");
 	}
 
 	// We save the histogram
@@ -571,7 +528,7 @@ int main(int argc, const char **argv)
 		dynamic_cast<PCMClassifier*>(F)->saveEta(filenamePrefix + "eta.txt");
 	}
 	
-	// We wheck what are the requested maps
+	// We check what are the requested maps
 	
 	bool getARMap = (desiredMaps.find_first_of("Aa")!=string::npos);
 	bool getCHMap = (desiredMaps.find_first_of("Cc")!=string::npos);
@@ -606,8 +563,7 @@ int main(int argc, const char **argv)
 		char delimitor;
 		unsigned class_number;
 		Real lowerIntensity_minMembership, higherIntensity_minMembership;
-		istringstream iss(threshold);
-		iss>>class_number>>delimitor>>lowerIntensity_minMembership>>delimitor>>higherIntensity_minMembership;
+		threshold>>class_number>>delimitor>>lowerIntensity_minMembership>>delimitor>>higherIntensity_minMembership;
 		F->segmentedMap_classThreshold(class_number, lowerIntensity_minMembership, higherIntensity_minMembership, segmentedMap);
 	}
 	else if (segmentation == "limits")
@@ -629,18 +585,15 @@ int main(int argc, const char **argv)
 		vector<unsigned> ch, qs, ar;
 		if(!coronalHole.empty())
 		{
-			istringstream iss(coronalHole);
-			iss>>ch;
+			coronalHole>>ch;
 		}
 		if(!quietSun.empty())
 		{
-			istringstream iss(quietSun);
-			iss>>qs;
+			quietSun>>qs;
 		}
 		if(!activeRegion.empty())
 		{
-			istringstream iss(activeRegion);
-			iss>>ar;
+			activeRegion>>ar;
 		}
 		F->segmentedMap_fixed(ch, qs, ar, segmentedMap);
 	}
@@ -683,7 +636,7 @@ int main(int argc, const char **argv)
 	classification_info.set<int>("MRAWTRSH", thresholdRawArea, "Region Size Threshold on Raw Area");
 	
 	ostringstream ss;
-	ss<<F->getChannels()<<" "<<B;
+	ss<<F->getChannels()<<" "<<fixed<<setprecision(3)<<B;
 	classification_info.set<string>("CCENTER", ss.str(), "Classification Center");
 	
 	if(classifierIsPossibilistic)

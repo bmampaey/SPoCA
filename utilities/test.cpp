@@ -2,8 +2,9 @@
 #include <cmath>
 #include <typeinfo>
 #include <string>
-#include "../classes/EITImage.h"
-#include "../classes/Header.h"
+#include "../classes/tools.h"
+#include "../classes/constants.h"
+#include "../classes/FeatureVector.h"
 
 using namespace std;
 
@@ -11,8 +12,12 @@ using namespace std;
 
 int main()
 {
-	EITImage image;
-	image.readFits("/data/eit/200109/EFZ20010911.010014.fits");
-	cout<<expand("Bonjour my name is {FILENAME} and my wavelength is {WAVELNTH}A ", image.header)<<endl;
+	string hello = "[1,2,3,4]5,6 [7,8,9,10]";
+	vector<int> a;
+	RealFeature b;
+	vector<RealFeature> c;
+	vector<int>d;
+	hello>>a>>b>>c;
+	cout<<a<<endl<<b<<endl<<c<<endl<<d<<endl;
 
 }

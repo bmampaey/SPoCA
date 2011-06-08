@@ -37,10 +37,32 @@ template<class T, unsigned N>
 istream& operator>>(istream& in, FeatureVector<T, N>& fv)
 {
 	char separator;
-	in>>separator>>fv.v[0];
+	while(in.good() && isspace(char(in.peek())))
+	{
+		in.get();
+	}
+	if(! in.good())
+	{
+		cerr<<"Error parsing FeatureVector from stream"<<endl;
+		return in;
+	}
+	
+	bool get_last = in.peek() == '(';
+	
+	if(get_last)
+	{
+		in>>separator;
+	}
+	
+	in>>fv.v[0];
 	for (unsigned p = 1; p < N && in.good(); ++p)
 		in>>separator>>fv.v[p];
-	in>>separator;
+	
+	if (get_last)
+	{
+		in>>separator;
+	}
+	
 	return in;
 }
 

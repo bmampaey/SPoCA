@@ -62,11 +62,13 @@ void RegionStats::add(const Coordinate& pixelCoordinate, const EUVPixelType& pix
 		area_AtDiskCenterUncert += R0R2 * ( (2 * (DR0 / SUNRADIUS) * pixelArea2 + (DR / R) * modifiedPixelArea2 + abs(relativePixelCoordinatex) + abs(relativePixelCoordinatey) ) * 
 					   (pixelArea * pixelArea * pixelArea)) / (R * R);	
 	}
+	#ifndef NONAN_HIGGINS_FACTOR
 	else 
 	{
 		area_AtDiskCenter = NAN;
 		area_AtDiskCenterUncert = NAN;
 	}
+	#endif
 
 	centerxError += relativePixelCoordinatex;
 	centeryError += relativePixelCoordinatey;

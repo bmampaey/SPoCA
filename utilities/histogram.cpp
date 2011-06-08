@@ -17,7 +17,7 @@
  You must provide exactly one fits file per channel.
  The order of the fits files is important, as it will set the order of the dimensions.
  
- 	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogramm.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
+ 	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogram.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
 	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", filenamePrefix);
 	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP\n\t", imageType);
@@ -44,7 +44,7 @@
 
 @param outputFile	The name of a file to write the histogram to.
 
-@param binSize	The size of the bins of the histogramm.
+@param binSize	The size of the bins of the histogram.
 <BR>N.B. Be carreful that the histogram is built after the preprocessing.
 
 See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
@@ -134,7 +134,7 @@ int main(int argc, const char **argv)
 	programDescription+="\nReal: " + string(typeid(Real).name());
 
 	ArgumentHelper arguments;
-	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogramm.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
+	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogram.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
 	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", filenamePrefix);
 	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP\n\t", imageType);
@@ -161,10 +161,9 @@ int main(int argc, const char **argv)
 	}
 
 	// We read the histogram bin size
-	// We read the bin size
-	if(!readbinSize(binSize,sbinSize))
+	if(!sbinSize.empty())
 	{
-		return EXIT_FAILURE;
+		sbinSize>>binSize;
 	}
 	
 	RealFeature histoChannels;

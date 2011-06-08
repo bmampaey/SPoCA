@@ -63,7 +63,7 @@
 
 @param histogramFile	The name of a file containing an histogram.
 
-@param binSize	The size of the bins of the histogramm.
+@param binSize	The size of the bins of the histogram.
 <BR>N.B. Be carreful that the histogram is built after the preprocessing.
 
 @param classificationPeriodicity	The periodicity with wich we do the classification (0 means only classification at the end)
@@ -163,7 +163,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
 	arguments.new_named_unsigned_int('N', "neighboorhoodRadius", "positive integer", "\n\tOnly for spatial classifiers like SPoCA.\n\tThe neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.\n\t", neighboorhoodRadius);
 	arguments.new_named_string('H', "histogramFile","file name", "\n\tThe name of a file containing an histogram.\n\t", histogramFile);
-	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogramm.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
+	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogram.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
 	arguments.new_named_unsigned_int('t', "classificationPeriodicity", "classificationPeriodicity", "The periodicity with wich we do the classification (0 means only classification at the end).\n\t", classificationPeriodicity);
 	arguments.new_flag('R', "reinitializeCenters", "\n\tSet this flag if you want the centers to be reinitialized before each classification (For possibilistic classifiers this mean doing a FCM init again.\n\t", reinit);
 	arguments.new_named_string('O', "outputFile","file name", "\n\tThe name for the output file(s).\n\t", filenamePrefix);
@@ -215,9 +215,9 @@ int main(int argc, const char **argv)
 	
 	
 	// We read the bin size
-	if(!readbinSize(binSize,sbinSize))
+	if(!sbinSize.empty())
 	{
-		return EXIT_FAILURE;
+		sbinSize>>binSize;
 	}
 
 	

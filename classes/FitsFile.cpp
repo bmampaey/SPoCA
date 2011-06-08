@@ -375,7 +375,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 			// The value is all white
 			if(fits_update_key_null(fptr, i->first.c_str(), comment, &status))
 			{
-				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;			
+				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
 				status = 0;
 			}
@@ -385,7 +385,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 			// It is a string
 			if(fits_update_key(fptr, TSTRING, i->first.c_str(), const_cast<char *>(i->second.c_str()), comment, &status))
 			{
-				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;			
+				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
 				status = 0;
 			} 
@@ -396,7 +396,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 			int value = stoi(i->second);
 			if(fits_update_key(fptr, TINT, i->first.c_str(), &value, comment, &status))
 			{
-				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;			
+				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
 				status = 0;
 			} 
@@ -408,7 +408,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 			double value = stod(i->second);
 			if(fits_update_key(fptr, TDOUBLE, i->first.c_str(), &value, comment, &status))
 			{
-				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;			
+				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
 				status = 0;
 			} 

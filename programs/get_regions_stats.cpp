@@ -151,23 +151,29 @@ int main(int argc, const char **argv)
 	{
 	
 		//We read and preprocess the sun image
-		EUVImage* image = getImageFromFile(imageType, imagesFilenames[p]);
+		string imageFilename = expand(imagesFilenames[p], colorizedMap->header);
+		if(! isFile(imageFilename))
+		{
+			cerr<<"Error : "<<imageFilename<<" is not a regular file!"<<endl;
+			continue;
+		}
+		EUVImage* image = getImageFromFile(imageType, imageFilename);
 		image->recenter(sunCenter);
 		image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
 		#if DEBUG >= 2
-		image->writeFitsImage(filenamePrefix + "preprocessed." +  stripPath(imagesFilenames[p]) );
+		image->writeFitsImage(filenamePrefix + "preprocessed." +  stripPath(imageFilename) );
 		#endif
 	
 		if(!colorizedMap->checkSimilar(image))
 		{
-			cerr<<"Warning: image "<<imagesFilenames[p]<<" is not similar to the colorizedMap!"<<endl;
+			cerr<<"Warning: image "<<imageFilename<<" is not similar to the colorizedMap!"<<endl;
 		}
 		
 		if(getARStats)
 		{
 			// We get the regions stats and output them
 			vector<ActiveRegionStats*> regions = getActiveRegionStats(colorizedMap, image);
-			cout<<"ActiveRegion statistics for file "<<stripPath(imagesFilenames[p])<<endl;
+			cout<<"ActiveRegion statistics for file "<<stripPath(imageFilename)<<endl;
 			if(regions.size() > 0)
 				cout<<regions[0]->toString(separator, true)<<endl;
 			else
@@ -182,7 +188,7 @@ int main(int argc, const char **argv)
 		{
 			// We get the regions stats and output them
 			vector<CoronalHoleStats*> regions = getCoronalHoleStats(colorizedMap, image);
-			cout<<"CoronalHole statistics for file "<<stripPath(imagesFilenames[p])<<endl;
+			cout<<"CoronalHole statistics for file "<<stripPath(imageFilename)<<endl;
 			if(regions.size() > 0)
 				cout<<regions[0]->toString(separator, true)<<endl;
 			else
@@ -197,7 +203,7 @@ int main(int argc, const char **argv)
 		{
 			// We get the regions stats and output them
 			vector<RegionStats*> regions = getRegionStats(colorizedMap, image);
-			cout<<"Region statistics for file "<<stripPath(imagesFilenames[p])<<endl;
+			cout<<"Region statistics for file "<<stripPath(imageFilename)<<endl;
 			if(regions.size() > 0)
 				cout<<regions[0]->toString(separator, true)<<endl;
 			else

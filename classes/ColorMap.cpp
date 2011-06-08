@@ -758,8 +758,7 @@ MagickImage ColorMap::magick(const Magick::Color background)
 		{	
 			if(pixel(x, y) != nullvalue_)
 			{
-				unsigned indice = (pixel(x, y) % gradientMax) + 1 ;
-				image.pixelColor(x, yAxes - y - 1, Magick::Color(magick_gradient[indice]));
+				image.pixelColor(x, yAxes - y - 1, Magick::Color(gradient[pixel(x, y) % gradientMax]));
 			}
 		}
 	}

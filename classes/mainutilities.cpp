@@ -11,93 +11,86 @@ inline unsigned readCentersFromFile(vector<RealFeature>& B, RealFeature& wavelen
 	if (centersFile.good())
 	{
 		centersFile>>wavelengths;
-		RealFeature Bi;
-		centersFile>>Bi;
-		while(centersFile.good())
-		{
-			B.push_back(Bi);
-			centersFile>>Bi;
-		}
+		centersFile>>B;
 		centersFile.close();
-		
 	}
 	else
 	{
-		cerr<<"Error : could not read centers from file "<<centersFileName<<endl;
+		cerr<<"Error : could not read class centers from file "<<centersFileName<<endl;
 	}
 	return B.size();
 }
-/*
-inline unsigned readManyCentersFromFile(vector< vector<RealFeature> >& Bs, const string& centersFileName)
-{
-	Bs.clear();
-	
-	ifstream centersFile(centersFileName.c_str());
-	while(centersFile.good())
-	{
-		string centersLine;
-		getline(centersFile, centersLine);
-		isstream centersString(centersLine);
-		vector<RealFeature> B;
-		centersString>>B;
-		Bs.push_back(B);
-		centersFile.close();
-		
-	}
-	else
-	{
-		cerr<<"Error : could not read centers from file "<<centersFileName<<endl;
-	}
-	return Bs.size();
-}
 
-inline void writeManyCentersFromFile(const vector< vector<RealFeature> >& Bs, const string& centersFileName)
+inline void writeCentersToFile(const vector<RealFeature> & B, const RealFeature& wavelengths, const string& centersFileName)
 {
 	ofstream centersFile(centersFileName.c_str(),  ios_base::trunc);
 	if (centersFile.good())
 	{
-		for(unsigned b = 0; b < Bs.size(); ++b)
+		centersFile<<wavelengths<<"\t"<<B<<endl;
+		centersFile.close();
+	}
+	else
+	{
+		cerr<<"Error : could not write class centers to file "<<centersFileName<<endl;
+	}
+}
+
+inline unsigned readCentersFromFile(vector< vector<RealFeature> >& Bs, RealFeature& wavelengths, const string& centersFileName)
+{
+	Bs.clear();
+	vector<RealFeature> B;
+	ifstream centersFile(centersFileName.c_str());
+	if(centersFile.good())
+	{
+		centersFile>>wavelengths;
+		centersFile>>B;
+		Bs.push_back(B);
+		while(centersFile.good())
 		{
-			centersFile<<Bs[b]<<endl;
+			
+			RealFeature wavelengths2;
+			centersFile>>wavelengths2;
+			if(!centersFile.good())
+				break;
+			
+			centersFile>>B;
+			if(wavelengths2 != wavelengths)
+			{
+				cerr<<"Warning : Reading class centers from file "<<centersFileName<<". Wavelength do not match, ommiting centers "<<B<<endl;
+			}
+			else if(B.size() != Bs[0].size())
+			{
+				cerr<<"Warning : Reading class centers from file "<<centersFileName<<". Number of classes do not match, ommiting centers "<<B<<endl;
+			}
+			else
+			{
+				Bs.push_back(B);
+			}
 		}
 		centersFile.close();
 		
 	}
 	else
 	{
-		cerr<<"Error : could not read centers from file "<<centersFileName<<endl;
-	}
-}
-*/
-inline unsigned readManyCentersFromFile(vector< vector<RealFeature> >& Bs, const string& centersFileName)
-{
-	Bs.clear();
-	
-	ifstream centersFile(centersFileName.c_str());
-	if(centersFile.good())
-	{
-		centersFile>>Bs;
-		centersFile.close();
-		
-	}
-	else
-	{
-		cerr<<"Error : could not read centers from file "<<centersFileName<<endl;
+		cerr<<"Error : could not read class centers from file "<<centersFileName<<endl;
 	}
 	return Bs.size();
 }
 
-inline void writeManyCentersToFile(const vector< vector<RealFeature> >& Bs, const string& centersFileName)
+inline void writeCentersToFile(const vector< vector<RealFeature> >& Bs, const RealFeature& wavelengths, const string& centersFileName)
 {
 	ofstream centersFile(centersFileName.c_str(),  ios_base::trunc);
 	if (centersFile.good())
 	{
-		centersFile<<Bs;
+		for(unsigned b = 0; b < Bs.size() && centersFile.good(); ++b)
+		{
+			centersFile<<wavelengths<<"\t"<<Bs[b]<<endl;
+		}
 		centersFile.close();
 	}
 	else
 	{
-		cerr<<"Error : could not write centers to file "<<centersFileName<<endl;
+		cerr<<"Error : could not write class centers to file "<<centersFileName<<endl;
 	}
 }
 inline bool readbinSize(RealFeature& binSize, string sbinSize)
@@ -288,4 +281,31 @@ string expand(string text, const Header& header)
 		key_start = text.find_first_of('{');
 	}
 	return text;
+}
+
+vector<RealFeature> median_classcenters(const vector< vector<RealFeature> >& Bs)
+{
+	vector<RealFeature> Bmedian;
+	if(Bs.size() > 0)
+	{
+		Bmedian.resize(Bs[0].size());
+		for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
+		{
+			for(unsigned i = 0; i < Bs[0].size(); ++i)
+			{
+				vector<Real> values(Bs.size());
+				for(unsigned b = 0; b < Bs.size(); ++b)
+				{
+					values[b] = Bs[b].at(i).v[p];
+				}
+				sort(values.begin(), values.end());
+				Bmedian[i].v[p] = values[values.size()/2];
+			}
+		}
+	}
+	else
+	{
+		cerr<<"Warning : computing median of an empty vector."<<endl;
+	}
+	return Bmedian;
 }

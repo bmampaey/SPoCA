@@ -196,7 +196,7 @@ void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, c
 				graphFile <<"\""<< regions[s][r]->HekLabel()<<"\"";
 				if(isColored && regions[s][r]->Color() != 0)
 				{
-					graphFile<<dot_gradient[ (regions[s][r]->Color() % gradientMax) + 1 ] << endl;
+					graphFile<<"[color="<<gradient[regions[s][r]->Color() % gradientMax]<<"];"<<endl;
 				}
 			}
 			graphFile<<"{ rank=same; "<< rank <<" };" << endl;

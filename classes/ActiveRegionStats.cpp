@@ -62,18 +62,20 @@ void ActiveRegionStats::add(const Coordinate& pixelCoordinate, const EUVPixelTyp
 		area_AtDiskCenterUncert += R0R2 * ( (2 * (DR0 / SUNRADIUS) * pixelArea2 + (DR / R) * modifiedPixelArea2 + abs(relativePixelCoordinatex) + abs(relativePixelCoordinatey) ) * 
 					   (pixelArea * pixelArea * pixelArea)) / (R * R);	
 	}
+	#ifndef NONAN_HIGGINS_FACTOR
 	else 
 	{
 		area_AtDiskCenter = NAN;
 		area_AtDiskCenterUncert = NAN;
 	}
-
+	#endif
+	
 	centerxError += relativePixelCoordinatex;
 	centeryError += relativePixelCoordinatey;
 	
 	barycenter_x += pixelCoordinate.x * pixelIntensity;
 	barycenter_y += pixelCoordinate.y * pixelIntensity;
-	// We keep a ector of intensities to compute the variance, the skewness and the kurtosis
+	// We keep a vector of intensities to compute the variance, the skewness and the kurtosis
 	if(intensities.capacity() == intensities.size())
 		intensities.reserve(intensities.size() + 100);
 	intensities.push_back(pixelIntensity);

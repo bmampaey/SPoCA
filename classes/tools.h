@@ -12,6 +12,7 @@
 #include <cmath>
 #include <ctime>
 #include <sys/stat.h>
+#include <locale>
 #include "constants.h"
 
 /*!
@@ -46,17 +47,52 @@ std::istream& operator>>(std::istream& in, std::vector<T>& v)
 	v.clear();
 	char trash;
 	T value;
-	in>>trash>>value;
-	while (in.good())
+	while(in.good() && isspace(char(in.peek())))
 	{
-		v.push_back(value);
-		in>>trash>>value;
+		in.get();
 	}
-	in>>trash;
-	v.push_back(value);
+	if(! in.good())
+	{
+		std::cerr<<"Error parsing Vector from stream"<<std::endl;
+		return in;
+	}
+	if(in.peek() == '[')
+	{
+		in>>trash>>value;
+		while (in.good() && in.peek() != ']')
+		{
+			v.push_back(value);
+			in>>trash>>value;
+		}
+		in>>trash;
+		v.push_back(value);
+	}
+	else
+	{
+		in>>value;
+		while (in.good() && ! isspace(char(in.peek())))
+		{
+			v.push_back(value);
+			in>>trash>>value;
+		}
+		in>>trash;
+		v.push_back(value);
+	}
 	return in;
 
 }
+
+//! General string parsing
+template<class T>
+std::string& operator>>(std::string& input, T& value)
+{
+	std::istringstream in(input);
+	in>>value;
+	
+	input.erase(0,in.tellg());
+	return input;
+}
+
 
 //! Convert a integer as a string
 /*! @param size Minimal size of the integer. It will be padded on the left with 0 if needed */

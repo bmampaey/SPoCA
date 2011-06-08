@@ -8,11 +8,11 @@ LFLAGS=-lcfitsio  $(TRACKINGLFLAGS)  $(TRACKINGLFLAGS)
 DFLAGS=
 
 all:bin/tracking.x
-clean: rm bin/tracking.x objects/tracking.o objects/Header.o objects/FitsFile.o objects/trackable.o objects/gradient.o objects/Region.o objects/Coordinate.o objects/ColorMap.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o
+clean: rm bin/tracking.x objects/tracking.o objects/Header.o objects/FitsFile.o objects/trackable.o objects/Region.o objects/Coordinate.o objects/ColorMap.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o
 
 
-bin/tracking.x : tracking.mk objects/tracking.o objects/Header.o objects/FitsFile.o objects/trackable.o objects/gradient.o objects/Region.o objects/Coordinate.o objects/ColorMap.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/tracking.o objects/Header.o objects/FitsFile.o objects/trackable.o objects/gradient.o objects/Region.o objects/Coordinate.o objects/ColorMap.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o $(LFLAGS) -o bin/tracking.x
+bin/tracking.x : tracking.mk objects/tracking.o objects/Header.o objects/FitsFile.o objects/trackable.o objects/Region.o objects/Coordinate.o objects/ColorMap.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/tracking.o objects/Header.o objects/FitsFile.o objects/trackable.o objects/Region.o objects/Coordinate.o objects/ColorMap.o objects/SunImage.o objects/Image.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o $(LFLAGS) -o bin/tracking.x
 
 objects/tracking.o : tracking.mk programs/tracking.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/ColorMap.h classes/Region.h classes/trackable.h classes/TrackingRelation.h cgt/graph.h classes/FitsFile.h classes/Header.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) programs/tracking.cpp -o objects/tracking.o
@@ -25,9 +25,6 @@ objects/FitsFile.o : tracking.mk classes/FitsFile.cpp classes/fitsio.h classes/l
 
 objects/trackable.o : tracking.mk classes/trackable.cpp classes/tools.h classes/constants.h classes/ColorMap.h classes/Region.h classes/gradient.h cgt/graph.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/trackable.cpp -o objects/trackable.o
-
-objects/gradient.o : tracking.mk classes/gradient.cpp 
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/gradient.cpp -o objects/gradient.o
 
 objects/Region.o : tracking.mk classes/Region.cpp classes/constants.h classes/Coordinate.h classes/ColorMap.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Region.cpp -o objects/Region.o

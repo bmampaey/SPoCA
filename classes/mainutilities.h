@@ -27,14 +27,17 @@ extern std::string filenamePrefix;
 extern const char * instruments[];
 extern const char * limb_corrections[];
 
-//! Read and parse the centers and the wavelength from a file
+//! Read class centers and their associated wavelength from a file
 unsigned readCentersFromFile(std::vector<RealFeature>& B, RealFeature& wavelengths, const std::string& centersFileName);
+//! Read a list of class centers and their associated wavelength from a file
+unsigned readCentersFromFile(std::vector< std::vector<RealFeature> >& Bs, RealFeature& wavelengths, const std::string& centersFileName);
 
-unsigned readManyCentersFromFile(std::vector< std::vector<RealFeature> >& Bs, const std::string& centersFileName);
+//! Write class centers and their associated wavelength from a file
+void writeCentersToFile(const std::vector<RealFeature>& B, const RealFeature& wavelengths, const std::string& centersFileName);
+//! Write a list of class centers and their associated wavelength from a file
+void writeCentersToFile(const std::vector< std::vector<RealFeature> >& Bs, const RealFeature& wavelengths, const std::string& centersFileName);
 
-void writeManyCentersToFile(const std::vector< std::vector<RealFeature> >& Bs, const std::string& centersFileName);
-
-//! Read and parse the binsize
+//! Read and parse the binsize from a string
 bool readbinSize(RealFeature& binSize, std::string sbinSize);
 
 //! Read and creates one EUV image from a fits files name
@@ -57,5 +60,8 @@ unsigned readMaxLimitsFromFile (std::vector<RealFeature>& maxLimits, const std::
 
 //! Expand the text repacing all keywords between {} by their value in the header
 std::string expand(std::string text, const Header& header);
+
+//! Return the median class centers of a list of class centers
+std::vector<RealFeature> median_classcenters(const std::vector< std::vector<RealFeature> >& Bs);
 
 #endif

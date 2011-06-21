@@ -141,6 +141,23 @@ Image<T>* Image<T>::drawCross(const T color, Coordinate c, const unsigned size)
 	return this;
 }
 
+template<class T>
+Image<T>* Image<T>::drawCircle(Coordinate center, double radius, T color)
+{
+	unsigned x0 = center.x;
+	unsigned y0 = center.y;
+	for(Real y = 0; y <= radius; ++y)
+	{
+		unsigned dx = unsigned((radius*cos(asin(y/radius)))+0.5);
+		pixel(x0+dx,y0+y) = color;
+		pixel(x0-dx,y0+y) = color;
+		pixel(x0+dx,y0+y) = color;
+		pixel(x0-dx,y0-y) = color;
+	}
+	return this;
+}
+
+
 
 template<class T>
 void Image<T>::diff(const Image<T> * img)

@@ -10,10 +10,8 @@ EUVIImage::~EUVIImage()
 EUVIImage::EUVIImage()
 :EUVImage()
 {
-	sineCorrectionParameters[0] = EUVI_SINE_CORR_R1 / 100.;
-	sineCorrectionParameters[1] = EUVI_SINE_CORR_R2 / 100.;
-	sineCorrectionParameters[2] = EUVI_SINE_CORR_R3 / 100.;
-	sineCorrectionParameters[3] = EUVI_SINE_CORR_R4 / 100.;
+	Real parameters[] = EUVI_ALC_PARAMETERS;
+	setALCParameters(parameters);
 }
 
 
@@ -21,20 +19,16 @@ EUVIImage::EUVIImage()
 EUVIImage::EUVIImage(const EUVImage& i)
 :EUVImage(i)
 {	
-	sineCorrectionParameters[0] = EUVI_SINE_CORR_R1 / 100.;
-	sineCorrectionParameters[1] = EUVI_SINE_CORR_R2 / 100.;
-	sineCorrectionParameters[2] = EUVI_SINE_CORR_R3 / 100.;
-	sineCorrectionParameters[3] = EUVI_SINE_CORR_R4 / 100.;
+	Real parameters[] = EUVI_ALC_PARAMETERS;
+	setALCParameters(parameters);
 }
 
 
 EUVIImage::EUVIImage(const EUVImage* i)
 :EUVImage(i)
 {	
-	sineCorrectionParameters[0] = EUVI_SINE_CORR_R1 / 100.;
-	sineCorrectionParameters[1] = EUVI_SINE_CORR_R2 / 100.;
-	sineCorrectionParameters[2] = EUVI_SINE_CORR_R3 / 100.;
-	sineCorrectionParameters[3] = EUVI_SINE_CORR_R4 / 100.;
+	Real parameters[] = EUVI_ALC_PARAMETERS;
+	setALCParameters(parameters);
 }
 
 

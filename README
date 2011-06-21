@@ -51,6 +51,9 @@ List of utilities executable to help visualising the results of SPoCA, or to tes
  <BR>@subpage background
  <BR>@subpage fits2png
  <BR>@subpage histogram
- <BR>@subpage limb_correction
+ <BR>@subpage preprocessing_x
  <BR>@subpage image_stat
+ <BR>@subpage RGBcomposite
 */
+
+

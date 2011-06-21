@@ -8,11 +8,11 @@ LFLAGS=-lcfitsio $(MAGICKLFLAGS)
 DFLAGS= -DMAGICK 
 
 all:bin/contours.x
-clean: rm bin/contours.x objects/contours.o objects/MagickImage.o objects/ColorMap.o objects/gradient.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/Header.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o
+clean: rm bin/contours.x objects/contours.o objects/MagickImage.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/Header.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o
 
 
-bin/contours.x : contours.mk objects/contours.o objects/MagickImage.o objects/ColorMap.o objects/gradient.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/Header.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/contours.o objects/MagickImage.o objects/ColorMap.o objects/gradient.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/Header.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o $(LFLAGS) -o bin/contours.x
+bin/contours.x : contours.mk objects/contours.o objects/MagickImage.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/Header.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/contours.o objects/MagickImage.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/Header.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/EUVImage.o objects/FeatureVector.o objects/tools.o $(LFLAGS) -o bin/contours.x
 
 objects/contours.o : contours.mk utilities/contours.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/ColorMap.h classes/MagickImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) utilities/contours.cpp -o objects/contours.o
@@ -22,9 +22,6 @@ objects/MagickImage.o : contours.mk classes/MagickImage.cpp classes/constants.h
 
 objects/ColorMap.o : contours.mk classes/ColorMap.cpp classes/Header.h classes/SunImage.h classes/gradient.h classes/MagickImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ColorMap.cpp -o objects/ColorMap.o
-
-objects/gradient.o : contours.mk classes/gradient.cpp 
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/gradient.cpp -o objects/gradient.o
 
 objects/SunImage.o : contours.mk classes/SunImage.cpp classes/Image.h classes/Coordinate.h classes/Header.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SunImage.cpp -o objects/SunImage.o

@@ -8,11 +8,11 @@ LFLAGS=-lcfitsio $(MAGICKLFLAGS)
 DFLAGS= -DMAGICK 
 
 all:bin/fits2png.x
-clean: rm bin/fits2png.x objects/fits2png.o objects/ArgumentHelper.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/Image.o objects/Coordinate.o objects/ColorMap.o objects/gradient.o objects/tools.o
+clean: rm bin/fits2png.x objects/fits2png.o objects/ArgumentHelper.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/Image.o objects/Coordinate.o objects/ColorMap.o objects/tools.o
 
 
-bin/fits2png.x : fits2png.mk objects/fits2png.o objects/ArgumentHelper.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/Image.o objects/Coordinate.o objects/ColorMap.o objects/gradient.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/fits2png.o objects/ArgumentHelper.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/Image.o objects/Coordinate.o objects/ColorMap.o objects/gradient.o objects/tools.o $(LFLAGS) -o bin/fits2png.x
+bin/fits2png.x : fits2png.mk objects/fits2png.o objects/ArgumentHelper.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/Image.o objects/Coordinate.o objects/ColorMap.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/fits2png.o objects/ArgumentHelper.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/Image.o objects/Coordinate.o objects/ColorMap.o objects/tools.o $(LFLAGS) -o bin/fits2png.x
 
 objects/fits2png.o : fits2png.mk utilities/fits2png.cpp classes/tools.h classes/constants.h classes/ColorMap.h classes/EUVImage.h classes/MagickImage.h classes/ArgumentHelper.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) utilities/fits2png.cpp -o objects/fits2png.o
@@ -43,9 +43,6 @@ objects/Coordinate.o : fits2png.mk classes/Coordinate.cpp
 
 objects/ColorMap.o : fits2png.mk classes/ColorMap.cpp classes/Header.h classes/SunImage.h classes/gradient.h classes/MagickImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ColorMap.cpp -o objects/ColorMap.o
-
-objects/gradient.o : fits2png.mk classes/gradient.cpp 
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/gradient.cpp -o objects/gradient.o
 
 objects/tools.o : fits2png.mk classes/tools.cpp classes/constants.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/tools.cpp -o objects/tools.o

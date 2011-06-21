@@ -4,7 +4,7 @@ IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lX
 MAGICKLFLAGS=`Magick++-config --ldflags --libs`
 MAGICKCFLAGS=`Magick++-config --cppflags`
 CFLAGS=-Wall -fkeep-inline-functions -g -O3
-LFLAGS=-lcfitsio  $(TRACKINGLFLAGS)  $(TRACKINGLFLAGS)
+LFLAGS=-lcfitsio  $(TRACKINGLFLAGS)
 DFLAGS=
 
 all:bin/tracking.x

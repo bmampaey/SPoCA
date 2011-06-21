@@ -34,12 +34,13 @@ class EUVImage : public SunImage<EUVPixelType>
 		double datap95;
 		//! exposure time of the EUV image
 		double exposureTime;
-		//! parameters for the sin ALC
-		Real sineCorrectionParameters[4];
+		
+		//! Parameters fo the Annulus Limb Correction
+		std::vector<Real> ALCParameters;
 	
 		//! Routine to return the radius of the disc not corrected by the ALC
 		virtual Real MINRADIUS()
-		{ return sineCorrectionParameters[0]; }
+		{ return ALCParameters[0]; }
 
 	public :
 		
@@ -72,6 +73,15 @@ class EUVImage : public SunImage<EUVPixelType>
 		
 		//! Routine to copy the parameters from another EUVImage
 		void copySunParameters(const EUVImage* i);
+		
+		//! Routine to set the ALC parameters
+		void setALCParameters(const std::vector<Real>& ALCParameters);
+		
+		//! Routine to set the ALC parameters
+		void setALCParameters(const Real ALCParameters[]);
+		
+		//! Routine to get the ALC parameters
+		std::vector<Real> getALCParameters();
 
 		//! Routine to do image preprocessing
 		void preprocessing(std::string preprocessingList, const Real radiusRatio = 1.0);

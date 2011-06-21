@@ -17,19 +17,15 @@ EUVImage::~EUVImage()
 EUVImage::EUVImage(const long xAxes, const long yAxes)
 :SunImage<EUVPixelType>(xAxes,yAxes),wavelength(0),median(0),mode(0),datap01(0), datap95(RealMAX), exposureTime(1)
 {
-	sineCorrectionParameters[0] = SINE_CORR_R1 / 100.;
-	sineCorrectionParameters[1] = SINE_CORR_R2 / 100.;
-	sineCorrectionParameters[2] = SINE_CORR_R3 / 100.;
-	sineCorrectionParameters[3] = SINE_CORR_R4 / 100.;
+	Real parameters[] = EUV_ALC_PARAMETERS;
+	setALCParameters(parameters);
 }
 
 EUVImage::EUVImage(const long xAxes, const long yAxes, const Coordinate suncenter, const double radius)
 :SunImage<EUVPixelType>(xAxes,yAxes,suncenter,radius),wavelength(0),median(0),mode(0),datap01(0), datap95(RealMAX), exposureTime(1)
 {
-	sineCorrectionParameters[0] = SINE_CORR_R1 / 100.;
-	sineCorrectionParameters[1] = SINE_CORR_R2 / 100.;
-	sineCorrectionParameters[2] = SINE_CORR_R3 / 100.;
-	sineCorrectionParameters[3] = SINE_CORR_R4 / 100.;
+	Real parameters[] = EUV_ALC_PARAMETERS;
+	setALCParameters(parameters);
 }
 
 
@@ -86,6 +82,37 @@ void EUVImage::copySunParameters(const EUVImage* i)
 	datap01 = i->datap01;
 	datap95 = i->datap95;
 	exposureTime = i->exposureTime;
+}
+
+void EUVImage::setALCParameters(const vector<Real>& ALCParameters)
+{
+	if(ALCParameters.size() != 4)
+	{
+		cerr<<"Error setting ALC parameters. 4 values must be provided"<<endl;
+		exit(EXIT_FAILURE);
+	}
+	this->ALCParameters.resize(4);
+	this->ALCParameters[0] = ALCParameters[0]/100.;
+	for(unsigned a = 1; a < 4; ++a)
+	{
+		if(ALCParameters[a] < ALCParameters[a-1])
+		{
+			cerr<<"Error setting ALC parameters. Values must be increasing"<<endl;
+			exit(EXIT_FAILURE);
+		}
+		this->ALCParameters[a] = ALCParameters[a]/100.;
+	}
+}
+
+void EUVImage::setALCParameters(const Real ALCParameters[])
+{
+	vector<Real> temp(ALCParameters, ALCParameters + sizeof(ALCParameters));
+	setALCParameters(temp);
+}
+
+vector<Real> EUVImage::getALCParameters()
+{
+	return ALCParameters;
 }
 
 string nextStep(string& preprocessingList)
@@ -238,10 +265,10 @@ progressive correction following the descending phase of the sine between r3 and
 inline Real EUVImage::percentCorrection(const Real r)const
 {
 
-	const Real r1 = sineCorrectionParameters[0];
-	const Real r2 = sineCorrectionParameters[1];
-	const Real r3 = sineCorrectionParameters[2];
-	const Real r4 = sineCorrectionParameters[3];
+	const Real r1 = ALCParameters[0];
+	const Real r2 = ALCParameters[1];
+	const Real r3 = ALCParameters[2];
+	const Real r4 = ALCParameters[3];
 	if (r <= r1 || r >= r4)
 		return 0;
 	else if (r >= r2 && r <= r3)

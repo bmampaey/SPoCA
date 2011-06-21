@@ -232,71 +232,46 @@ See ActiveRegion.h and CoronalHole.h for information about how these parameters 
 /*!
 @page Compilation_Options
 
-@section ALC_corr Anulus Limb Correction
+@section ALC_corr Annulus Limb Correction
+See @ref ALC.
 
-@param EIT_*_CORR_R* Limits for the limb correction
-<BR> For instrument EIT
+@param EIT_ALC_PARAMETERS Parameters for Annulus Limb Correction of EIT images
+
 */
-#define EIT_DISCRETE_CORR_R1  95
-#define EIT_SLOPE_CORR_R1 90
-#define EIT_SLOPE_CORR_R2 95
-#define EIT_SINE_CORR_R1 90
-#define EIT_SINE_CORR_R2 95
-#define EIT_SINE_CORR_R3 105
-#define EIT_SINE_CORR_R4 110
+
+#define EIT_ALC_PARAMETERS {95, 100, 105, 110}
 
 /*!
 @page Compilation_Options
-@param EUVI_*_CORR_R* Limits for the limb correction
-<BR> For instrument EUVI
+@param EUVI_ALC_PARAMETERS Parameters for Annulus Limb Correction of EUVI images
+
 */
-#define EUVI_DISCRETE_CORR_R1  95
-#define EUVI_SLOPE_CORR_R1 90
-#define EUVI_SLOPE_CORR_R2 95
-#define EUVI_SINE_CORR_R1 95
-#define EUVI_SINE_CORR_R2 100
-#define EUVI_SINE_CORR_R3 105
-#define EUVI_SINE_CORR_R4 110
+
+#define EUVI_ALC_PARAMETERS {95, 100, 105, 110}
 
 /*!
 @page Compilation_Options
-@param AIA_*_CORR_R* Limits for the limb correction
-<BR> For instrument AIA
+@param AIA_ALC_PARAMETERS Parameters for Annulus Limb Correction of AIA images
+
 */
-#define AIA_DISCRETE_CORR_R1  95
-#define AIA_SLOPE_CORR_R1 90
-#define AIA_SLOPE_CORR_R2 95
-#define AIA_SINE_CORR_R1 80
-#define AIA_SINE_CORR_R2 102
-#define AIA_SINE_CORR_R3 105
-#define AIA_SINE_CORR_R4 112
+
+#define AIA_ALC_PARAMETERS {80, 102, 105, 112}
 
 /*!
 @page Compilation_Options
-@param SWAP_*_CORR_R* Limits for the limb correction
-<BR> For instrument SWAP
+@param SWAP_ALC_PARAMETERS Parameters for Annulus Limb Correction of SWAP images
+
 */
-#define SWAP_DISCRETE_CORR_R1  95
-#define SWAP_SLOPE_CORR_R1 90
-#define SWAP_SLOPE_CORR_R2 95
-#define SWAP_SINE_CORR_R1 95
-#define SWAP_SINE_CORR_R2 100
-#define SWAP_SINE_CORR_R3 105
-#define SWAP_SINE_CORR_R4 115
+
+#define SWAP_ALC_PARAMETERS {95, 100, 105, 110}
 
 /*!
 @page Compilation_Options
-@param *_CORR_R* Limits for the limb correction
-<BR> For a default instrument
-*/
-#define DISCRETE_CORR_R1  95
-#define SLOPE_CORR_R1 90
-#define SLOPE_CORR_R2 95
-#define SINE_CORR_R1 95
-#define SINE_CORR_R2 100
-#define SINE_CORR_R3 105
-#define SINE_CORR_R4 115
+@param EUV_ALC_PARAMETERS Parameters for Annulus Limb Correction of EUV images
 
+*/
+
+#define EUV_ALC_PARAMETERS {95, 100, 105, 110}
 
 /*!
 @page Compilation_Options
@@ -312,9 +287,6 @@ See ActiveRegion.h and CoronalHole.h for information about how these parameters 
 @param MAX_QUOTIENT_FACTOR The maximum quotient factor 
 */
 #define MAX_QUOTIENT_FACTOR 10
-
-
-
 
 /*!
 @page Compilation_Options

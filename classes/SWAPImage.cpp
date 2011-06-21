@@ -9,29 +9,23 @@ SWAPImage::~SWAPImage()
 SWAPImage::SWAPImage()
 :EUVImage()
 {	
-	sineCorrectionParameters[0] = SWAP_SINE_CORR_R1 / 100.;
-	sineCorrectionParameters[1] = SWAP_SINE_CORR_R2 / 100.;
-	sineCorrectionParameters[2] = SWAP_SINE_CORR_R3 / 100.;
-	sineCorrectionParameters[3] = SWAP_SINE_CORR_R4 / 100.;
+	Real parameters[] = SWAP_ALC_PARAMETERS;
+	setALCParameters(parameters);
 }
 
 SWAPImage::SWAPImage(const EUVImage& i)
 :EUVImage(i)
 {	
-	sineCorrectionParameters[0] = SWAP_SINE_CORR_R1 / 100.;
-	sineCorrectionParameters[1] = SWAP_SINE_CORR_R2 / 100.;
-	sineCorrectionParameters[2] = SWAP_SINE_CORR_R3 / 100.;
-	sineCorrectionParameters[3] = SWAP_SINE_CORR_R4 / 100.;
+	Real parameters[] = SWAP_ALC_PARAMETERS;
+	setALCParameters(parameters);
 }
 
 
 SWAPImage::SWAPImage(const EUVImage* i)
 :EUVImage(i)
 {	
-	sineCorrectionParameters[0] = SWAP_SINE_CORR_R1 / 100.;
-	sineCorrectionParameters[1] = SWAP_SINE_CORR_R2 / 100.;
-	sineCorrectionParameters[2] = SWAP_SINE_CORR_R3 / 100.;
-	sineCorrectionParameters[3] = SWAP_SINE_CORR_R4 / 100.;
+	Real parameters[] = SWAP_ALC_PARAMETERS;
+	setALCParameters(parameters);
 }
 
 

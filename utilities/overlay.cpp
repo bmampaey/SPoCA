@@ -63,6 +63,7 @@ See @ref Compilation_Options for constants and parameters at compilation time.
 #include <string>
 #include <fenv.h>
 #include <iomanip>
+#include <set>
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
@@ -258,6 +259,10 @@ int main(int argc, const char **argv)
 	// Option for the output size
 	string size;
 	
+	// Options for the cleaning of the files
+	string keep;
+	string keepFilename;
+	
 	// option for the output directory
 	string outputDirectory = ".";
 
@@ -280,6 +285,10 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
 
 	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
+	
+	arguments.new_named_string('k', "keep", "string", "\n\tA list of colors to keep separated by commas (no spaces)\n\tAll other colors will be erased if specified.\n\t", keep);
+	arguments.new_named_string('K', "keepFilename", "string", "\n\tA file containing a list of colors to keep separated by commas\n\tAll other colors will be erased if specified.\n\t", keepFilename);
+
 	arguments.new_named_string('O', "outputDirectory","directory name", "\n\tThe name for the output directory.\n\t", outputDirectory);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "The name of the fits files containing the images of the sun.", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
@@ -304,8 +313,43 @@ int main(int argc, const char **argv)
 		return 2;
 	}
 	
+	set<ColorType> toKeep;
+	// We parse the colors to keep
+	if(! keepFilename.empty())
+	{
+		ifstream keepFile(keepFilename.c_str());
+		if(keepFile.good())
+		{
+			vector<ColorType> tmp;
+			keepFile>>tmp;
+			toKeep.insert(tmp.begin(),tmp.end());
+		}
+		else
+		{
+			cerr << "Error reading list of colors to keep from file: "<<keepFilename<<endl;
+			return 2;
+		}
+	}
+	if(! keep.empty())
+	{
+		vector<ColorType> tmp;
+		istringstream ss(keep);
+		ss>>tmp;
+		toKeep.insert(tmp.begin(),tmp.end());
+	}
+	
 	// We create the contour image
 	ColorMap* colorizedMap = getImageFromFile(colorizedMapFileName);
+	
+	// We erase any colors that is not to be kept
+	if(toKeep.size() > 0)
+	{
+		for(unsigned j = 0; j < colorizedMap->NumberPixels(); ++j)
+			if (toKeep.count(colorizedMap->pixel(j)) == 0)
+				colorizedMap->pixel(j) = colorizedMap->nullvalue();
+	}
+	
+	//We fill holes if requested
 	if(mastic)
 		colorizedMap->removeHoles();
 	

@@ -10,31 +10,24 @@ EITImage::~EITImage()
 EITImage::EITImage()
 :EUVImage()
 {
-	sineCorrectionParameters[0] = EIT_SINE_CORR_R1 / 100.;
-	sineCorrectionParameters[1] = EIT_SINE_CORR_R2 / 100.;
-	sineCorrectionParameters[2] = EIT_SINE_CORR_R3 / 100.;
-	sineCorrectionParameters[3] = EIT_SINE_CORR_R4 / 100.;
+	Real parameters[] = EIT_ALC_PARAMETERS;
+	setALCParameters(parameters);
 }
-
 
 
 EITImage::EITImage(const EUVImage& i)
 :EUVImage(i)
 {
-	sineCorrectionParameters[0] = EIT_SINE_CORR_R1 / 100.;
-	sineCorrectionParameters[1] = EIT_SINE_CORR_R2 / 100.;
-	sineCorrectionParameters[2] = EIT_SINE_CORR_R3 / 100.;
-	sineCorrectionParameters[3] = EIT_SINE_CORR_R4 / 100.;
+	Real parameters[] = EIT_ALC_PARAMETERS;
+	setALCParameters(parameters);
 }
 
 
 EITImage::EITImage(const EUVImage* i)
 :EUVImage(i)
 {
-	sineCorrectionParameters[0] = EIT_SINE_CORR_R1 / 100.;
-	sineCorrectionParameters[1] = EIT_SINE_CORR_R2 / 100.;
-	sineCorrectionParameters[2] = EIT_SINE_CORR_R3 / 100.;
-	sineCorrectionParameters[3] = EIT_SINE_CORR_R4 / 100.;
+	Real parameters[] = EIT_ALC_PARAMETERS;
+	setALCParameters(parameters);
 }
 
 

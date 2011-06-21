@@ -115,6 +115,9 @@ class Image
 		//! Routine to draw a cross
 		Image<T>* drawCross(const T color, Coordinate c, const unsigned size = 5);
 		
+		//! Routine to draw a circle
+		Image<T>* drawCircle(Coordinate center, double radius, T color);
+		
 		//! Routine to substract each pixel by the corresponding pixel of img
 		void diff(const Image<T> * img);
 		

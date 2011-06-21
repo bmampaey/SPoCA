@@ -70,13 +70,13 @@ using namespace dsr;
 
 string filenamePrefix;
 
-set<HistoPixelFeature> HistoX;
+set<HistoRealFeature> HistoX;
 
 
 // Function to insert a new HistoFeatureVector into HistoX
-inline void insert(const HistoPixelFeature& xj)
+inline void insert(const HistoRealFeature& xj)
 {
-	pair<set<HistoPixelFeature>::iterator, bool> ret = HistoX.insert(xj);
+	pair<set<HistoRealFeature>::iterator, bool> ret = HistoX.insert(xj);
 	if(! ret.second)
 	{
 		//The element existed already, I increase it's count
@@ -87,7 +87,7 @@ inline void insert(const HistoPixelFeature& xj)
 
 void histogram(const vector<EUVImage*>& images, RealFeature binSize)
 {
-	HistoPixelFeature xj;
+	HistoRealFeature xj;
 	xj.c = 1;
 	for (unsigned j = 0; j < images[0]->NumberPixels(); ++j)
 	{
@@ -182,10 +182,10 @@ int main(int argc, const char **argv)
 		histoFile<<HistoX.size()<<endl;
 		
 		//We save the Histogram
-		for (set<HistoPixelFeature>::iterator xj = HistoX.begin(); xj != HistoX.end() && histoFile.good(); ++xj)
+		for (set<HistoRealFeature>::iterator xj = HistoX.begin(); xj != HistoX.end() && histoFile.good(); ++xj)
 		{
 			for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
-				histoFile<*xj<<endl;
+				histoFile<<*xj<<endl;
 		}
 
 	}

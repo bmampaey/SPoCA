@@ -4,7 +4,7 @@
 ; filename: string, in, path to a text file containing the paths to fits files to aia_prep
 ; outdir: string, in, directory name where to write the aia_preped fits files
 
-PRO prep, filename=filename, filelist=filelist, dir=dir, outdir=outdir
+PRO aia_prep_many, filename=filename, filelist=filelist, dir=dir, outdir=outdir
 
 	IF N_ELEMENTS(filename) > 0 THEN BEGIN
 		filelist = RD_TFILE(filename, /compress)
@@ -23,7 +23,7 @@ PRO prep, filename=filename, filelist=filelist, dir=dir, outdir=outdir
 	
 	i=0
 	WHILE i LT N_ELEMENTS(filelist) DO BEGIN
-		; We only aia_prep maximu 10 files at a time because aia_prep open them all at once
+		; We only aia_prep maximum 10 files at a time because aia_prep open them all at once
 		ind_max = min([i+9, N_ELEMENTS(filelist)-1])
 		files = filelist[i:ind_max]
 		indices = INDGEN(n_elements(files))

@@ -1,26 +1,29 @@
 CC=g++
-CFLAGS=-Wall -fkeep-inline-functions -g -O3
 TRACKINGLFLAGS=-lpthread
 IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lXpm -lXmu -lXext -lXt -lSM -lICE  -lXinerama -lX11 -ldl -ltermcap -lrt -lm /usr/lib/libXm.a
-MAGICKLFLAGS=`Magick++-config --cppflags --ldflags --libs`
+MAGICKLFLAGS=`Magick++-config --ldflags --libs`
 MAGICKCFLAGS=`Magick++-config --cppflags`
-DFLAGS=
+CFLAGS=-Wall -fkeep-inline-functions -g -O3
 LFLAGS=-lcfitsio
+DFLAGS=
 
 all:bin/quodiff.x
-clean: rm bin/quodiff.x objects/quodiff.o objects/mainutilities.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/Header.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o
+clean: rm bin/quodiff.x objects/quodiff.o objects/mainutilities.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o
 
 
-bin/quodiff.x : quodiff.mk objects/quodiff.o objects/mainutilities.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/Header.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/quodiff.o objects/mainutilities.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/Header.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o $(LFLAGS) -o bin/quodiff.x
+bin/quodiff.x : quodiff.mk objects/quodiff.o objects/mainutilities.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/quodiff.o objects/mainutilities.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o $(LFLAGS) -o bin/quodiff.x
 
 objects/quodiff.o : quodiff.mk utilities/quodiff.cpp classes/tools.h classes/constants.h classes/EUVImage.h classes/ArgumentHelper.h classes/mainutilities.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) utilities/quodiff.cpp -o objects/quodiff.o
 
-objects/mainutilities.o : quodiff.mk classes/mainutilities.cpp classes/FeatureVector.h classes/EUVImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h classes/HMIImage.h classes/ColorMap.h
+objects/mainutilities.o : quodiff.mk classes/mainutilities.cpp classes/FeatureVector.h classes/EUVImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h classes/HMIImage.h classes/ColorMap.h classes/Header.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/mainutilities.cpp -o objects/mainutilities.o
 
-objects/ColorMap.o : quodiff.mk classes/ColorMap.cpp classes/Header.h classes/SunImage.h
+objects/Header.o : quodiff.mk classes/Header.cpp 
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Header.cpp -o objects/Header.o
+
+objects/ColorMap.o : quodiff.mk classes/ColorMap.cpp classes/Header.h classes/SunImage.h classes/gradient.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ColorMap.cpp -o objects/ColorMap.o
 
 objects/SunImage.o : quodiff.mk classes/SunImage.cpp classes/Image.h classes/Coordinate.h classes/Header.h classes/FitsFile.h
@@ -34,9 +37,6 @@ objects/Coordinate.o : quodiff.mk classes/Coordinate.cpp
 
 objects/Image.o : quodiff.mk classes/Image.cpp classes/tools.h classes/constants.h classes/Coordinate.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Image.cpp -o objects/Image.o
-
-objects/Header.o : quodiff.mk classes/Header.cpp 
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Header.cpp -o objects/Header.o
 
 objects/HMIImage.o : quodiff.mk classes/HMIImage.cpp classes/EUVImage.h classes/Header.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/HMIImage.cpp -o objects/HMIImage.o

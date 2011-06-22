@@ -1,11 +1,11 @@
 CC=g++
-CFLAGS=-Wall -fkeep-inline-functions -g -O3
 TRACKINGLFLAGS=-lpthread
 IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lXpm -lXmu -lXext -lXt -lSM -lICE  -lXinerama -lX11 -ldl -ltermcap -lrt -lm /usr/lib/libXm.a
-MAGICKLFLAGS=`Magick++-config --cppflags --ldflags --libs`
+MAGICKLFLAGS=`Magick++-config --ldflags --libs`
 MAGICKCFLAGS=`Magick++-config --cppflags`
-DFLAGS=
+CFLAGS=-Wall -fkeep-inline-functions -g -O3
 LFLAGS=-lcfitsio
+DFLAGS=
 
 all:bin/cumulative_classification.x
 clean: rm bin/cumulative_classification.x objects/cumulative_classification.o objects/ArgumentHelper.o objects/FeatureVector.o objects/CumulativeSPoCAClassifier.o objects/SPoCAClassifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Coordinate.o objects/Region.o objects/FitsFile.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/Image.o objects/CumulativeSPoCA2Classifier.o objects/SPoCA2Classifier.o objects/PCM2Classifier.o objects/CumulativePCMClassifier.o objects/HistogramPCMClassifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/CumulativePCM2Classifier.o objects/HistogramPCM2Classifier.o objects/CumulativeFCMClassifier.o objects/CumulativeClassifier.o objects/EUVImage.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
@@ -50,7 +50,7 @@ objects/FitsFile.o : cumulative_classification.mk classes/FitsFile.cpp classes/f
 objects/Header.o : cumulative_classification.mk classes/Header.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Header.cpp -o objects/Header.o
 
-objects/ColorMap.o : cumulative_classification.mk classes/ColorMap.cpp classes/Header.h classes/SunImage.h
+objects/ColorMap.o : cumulative_classification.mk classes/ColorMap.cpp classes/Header.h classes/SunImage.h classes/gradient.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ColorMap.cpp -o objects/ColorMap.o
 
 objects/SunImage.o : cumulative_classification.mk classes/SunImage.cpp classes/Image.h classes/Coordinate.h classes/Header.h classes/FitsFile.h
@@ -95,7 +95,7 @@ objects/CumulativeClassifier.o : cumulative_classification.mk classes/Cumulative
 objects/EUVImage.o : cumulative_classification.mk classes/EUVImage.cpp classes/Coordinate.h classes/SunImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/EUVImage.cpp -o objects/EUVImage.o
 
-objects/mainutilities.o : cumulative_classification.mk classes/mainutilities.cpp classes/FeatureVector.h classes/EUVImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h classes/HMIImage.h classes/ColorMap.h
+objects/mainutilities.o : cumulative_classification.mk classes/mainutilities.cpp classes/FeatureVector.h classes/EUVImage.h classes/EITImage.h classes/EUVIImage.h classes/AIAImage.h classes/SWAPImage.h classes/HMIImage.h classes/ColorMap.h classes/Header.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/mainutilities.cpp -o objects/mainutilities.o
 
 objects/HMIImage.o : cumulative_classification.mk classes/HMIImage.cpp classes/EUVImage.h classes/Header.h

@@ -310,7 +310,7 @@ int main(int argc, const char **argv)
 		{
 			images[p]->preprocessing(preprocessingSteps, radiusRatio);
 			#if DEBUG >= 2
-			images[p]->writeFitsImage(filenamePrefixBase + "preprocessed." + stripPath(imagesFilenames[p]) );
+			images[p]->writeFits(filenamePrefixBase + "preprocessed." + stripPath(imagesFilenames[p]) );
 			#endif
 			if(p > 0 && ! images[0]->checkSimilar(images[p]))
 			{

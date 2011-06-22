@@ -55,7 +55,7 @@ int main(int argc, const char **argv)
 	{
 		images[p]->preprocessing("ALC", 3);
 		#if DEBUG >= 2
-		images[p]->writeFitsImage(filenamePrefix + "preprocessed." +  stripPath(imagesFilenames[p]) );
+		images[p]->writeFits(filenamePrefix + "preprocessed." +  stripPath(imagesFilenames[p]) );
 		#endif
 		for(unsigned i = 0; i < images[p]->NumberPixels(); ++i)
 			if(images[p]->pixel(i) == images[p]->nullvalue())
@@ -93,7 +93,7 @@ int main(int argc, const char **argv)
            fl->feature[i]->val);
     temp->drawCross(0, Coordinate(fl->feature[i]->x, fl->feature[i]->y), 5+2*i);
   }
-  temp->writeFitsImage(filenamePrefix + "features." +  stripPath(imagesFilenames[0]) );
+  temp->writeFits(filenamePrefix + "features." +  stripPath(imagesFilenames[0]) );
 	delete temp;
   //KLTWriteFeatureListToPPM(fl, img1, ncols, nrows, "feat1.ppm");
   KLTWriteFeatureList(fl, "feat1.txt", "%3d");
@@ -109,7 +109,7 @@ int main(int argc, const char **argv)
     if(fl->feature[i]->val == 0)
     temp->drawCross(0, Coordinate(fl->feature[i]->x, fl->feature[i]->y), 5+2*i);
   }
- temp->writeFitsImage(filenamePrefix + "features." +  stripPath(imagesFilenames[1]) );
+ temp->writeFits(filenamePrefix + "features." +  stripPath(imagesFilenames[1]) );
 	delete temp;
   //KLTWriteFeatureListToPPM(fl, img2, ncols, nrows, "feat2.ppm");
   KLTWriteFeatureList(fl, "feat2.fl", NULL);      /* binary file */

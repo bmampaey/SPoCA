@@ -84,6 +84,6 @@ int main(int argc, const char **argv)
 			image->drawCross(30, chain_code[i]);
 		}
 	}
-	image->writeFitsImage(stripPath(stripSuffix(imagesFilenames[0])) + ".chain_coded.fits");
+	image->writeFits(stripPath(stripSuffix(imagesFilenames[0])) + ".chain_coded.fits");
 	return EXIT_SUCCESS;
 }

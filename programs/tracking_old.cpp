@@ -135,7 +135,7 @@ int main(int argc, const char **argv)
 			if(derotate)
 			{
 				SunImage * rotated = images[s1]->rotated_like(images[s2]);
-				rotated->writeFitsImage("rotated_"+ stripSuffix(stripPath(imagesFilenames[s1])) + "_to_" + stripSuffix(stripPath(imagesFilenames[s2]))+".fits");
+				rotated->writeFits("rotated_"+ stripSuffix(stripPath(imagesFilenames[s1])) + "_to_" + stripSuffix(stripPath(imagesFilenames[s2]))+".fits");
 				delete rotated;
 			}
 			#endif
@@ -205,7 +205,7 @@ int main(int argc, const char **argv)
 		for (unsigned s = 0; s < images.size(); ++s)
 		{
 			recolorFromRegions(images[s], regions[s]);
-			images[s]->writeFitsImage(filenamePrefix + imagesFilenames[s]);
+			images[s]->writeFits(filenamePrefix + imagesFilenames[s]);
 			delete images[s];
 		}
 	}
@@ -214,7 +214,7 @@ int main(int argc, const char **argv)
 		for (unsigned s = firstImageNextTracking; s < images.size(); ++s)
 		{
 			recolorFromRegions(images[firstImageNextTracking], regions[firstImageNextTracking]);
-			images[firstImageNextTracking]->writeFitsImage(filenamePrefix + imagesFilenames[firstImageNextTracking]);
+			images[firstImageNextTracking]->writeFits(filenamePrefix + imagesFilenames[firstImageNextTracking]);
 			delete images[firstImageNextTracking];
 		}
 	}

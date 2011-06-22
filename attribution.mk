@@ -5,7 +5,7 @@ MAGICKLFLAGS=`Magick++-config --ldflags --libs`
 MAGICKCFLAGS=`Magick++-config --cppflags`
 CFLAGS=-Wall -fkeep-inline-functions -g -O3
 LFLAGS=-lcfitsio
-DFLAGS=-DDEBUG=2 -DNONAN_HIGGINS_FACTOR
+DFLAGS=
 
 all:bin/attribution.x
 clean: rm bin/attribution.x objects/attribution.o objects/FitsFile.o objects/Header.o objects/CoronalHoleStats.o objects/Coordinate.o objects/Region.o objects/CoronalHole.o objects/ActiveRegionStats.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Classifier.o objects/ColorMap.o objects/SunImage.o objects/EUVImage.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o

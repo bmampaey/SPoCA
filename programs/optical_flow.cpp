@@ -138,7 +138,7 @@ int main(int argc, const char **argv)
 			}
 		}
 		
-		image1->writeFitsImage(filenamePrefix + "features." +  stripPath(imagesFilenames[p-1]));
+		image1->writeFits(filenamePrefix + "features." +  stripPath(imagesFilenames[p-1]));
 		delete image1;
 		
 		points_oldlocation = points_newlocation;
@@ -152,7 +152,7 @@ int main(int argc, const char **argv)
 			image1->drawCross(c, points_oldlocation[c], 10);
 		}
 	}
-	image1->writeFitsImage(filenamePrefix + "features." +  stripPath(imagesFilenames[imagesFilenames.size()-1]));
+	image1->writeFits(filenamePrefix + "features." +  stripPath(imagesFilenames[imagesFilenames.size()-1]));
 	delete image1;
 	
 	

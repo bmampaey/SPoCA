@@ -161,7 +161,7 @@ int main(int argc, const char **argv)
 		image->recenter(sunCenter);
 		image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
 		#if DEBUG >= 2
-		image->writeFitsImage(filenamePrefix + "preprocessed." +  stripPath(imageFilename) );
+		image->writeFits(filenamePrefix + "preprocessed." +  stripPath(imageFilename) );
 		#endif
 	
 		if(!colorizedMap->checkSimilar(image))

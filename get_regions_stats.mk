@@ -5,7 +5,7 @@ MAGICKLFLAGS=`Magick++-config --ldflags --libs`
 MAGICKCFLAGS=`Magick++-config --cppflags`
 CFLAGS=-Wall -fkeep-inline-functions -g -O3
 LFLAGS=-lcfitsio
-DFLAGS=
+DFLAGS=-DDEBUG=2
 
 all:bin/get_regions_stats.x
 clean: rm bin/get_regions_stats.x objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/CoronalHoleStats.o objects/FitsFile.o objects/Header.o objects/Region.o objects/ActiveRegionStats.o objects/RegionStats.o objects/EUVImage.o objects/SunImage.o objects/Image.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o

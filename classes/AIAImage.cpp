@@ -10,14 +10,16 @@ AIAImage::AIAImage()
 :EUVImage()
 {
 	Real parameters[] = AIA_ALC_PARAMETERS;
-	setALCParameters(parameters);
+	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
+	setALCParameters(temp);
 }
 
 AIAImage::AIAImage(const EUVImage& i)
 :EUVImage(i)
 {
 	Real parameters[] = AIA_ALC_PARAMETERS;
-	setALCParameters(parameters);
+	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
+	setALCParameters(temp);
 }
 
 
@@ -25,7 +27,8 @@ AIAImage::AIAImage(const EUVImage* i)
 :EUVImage(i)
 {
 	Real parameters[] = AIA_ALC_PARAMETERS;
-	setALCParameters(parameters);
+	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
+	setALCParameters(temp);
 }
 
 

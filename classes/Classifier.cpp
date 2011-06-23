@@ -737,7 +737,9 @@ Real Classifier::variation(const vector<RealFeature>& oldB, const vector<RealFea
 	{
 		Real normNewBi = norm(newB[i]);
 		Real normOldBi = norm(oldB[i]);
-		Real variationI = abs(normNewBi - normOldBi)/normOldBi;
+		if(fabs(normOldBi) < numeric_limits<Real>::epsilon() )
+			return numeric_limits<Real>::max();
+		Real variationI = fabs(normNewBi - normOldBi)/normOldBi;
 		if (variationI > maximalVariation)
 		{
 			maximalVariation = variationI;

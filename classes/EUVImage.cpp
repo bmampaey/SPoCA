@@ -18,14 +18,16 @@ EUVImage::EUVImage(const long xAxes, const long yAxes)
 :SunImage<EUVPixelType>(xAxes,yAxes),wavelength(0),median(0),mode(0),datap01(0), datap95(RealMAX), exposureTime(1)
 {
 	Real parameters[] = EUV_ALC_PARAMETERS;
-	setALCParameters(parameters);
+	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
+	setALCParameters(temp);
 }
 
 EUVImage::EUVImage(const long xAxes, const long yAxes, const Coordinate suncenter, const double radius)
 :SunImage<EUVPixelType>(xAxes,yAxes,suncenter,radius),wavelength(0),median(0),mode(0),datap01(0), datap95(RealMAX), exposureTime(1)
 {
 	Real parameters[] = EUV_ALC_PARAMETERS;
-	setALCParameters(parameters);
+	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
+	setALCParameters(temp);
 }
 
 
@@ -102,12 +104,6 @@ void EUVImage::setALCParameters(const vector<Real>& ALCParameters)
 		}
 		this->ALCParameters[a] = ALCParameters[a]/100.;
 	}
-}
-
-void EUVImage::setALCParameters(const Real ALCParameters[])
-{
-	vector<Real> temp(ALCParameters, ALCParameters + sizeof(ALCParameters));
-	setALCParameters(temp);
 }
 
 vector<Real> EUVImage::getALCParameters()

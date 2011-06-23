@@ -10,14 +10,16 @@ SWAPImage::SWAPImage()
 :EUVImage()
 {	
 	Real parameters[] = SWAP_ALC_PARAMETERS;
-	setALCParameters(parameters);
+	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
+	setALCParameters(temp);
 }
 
 SWAPImage::SWAPImage(const EUVImage& i)
 :EUVImage(i)
 {	
 	Real parameters[] = SWAP_ALC_PARAMETERS;
-	setALCParameters(parameters);
+	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
+	setALCParameters(temp);
 }
 
 
@@ -25,7 +27,8 @@ SWAPImage::SWAPImage(const EUVImage* i)
 :EUVImage(i)
 {	
 	Real parameters[] = SWAP_ALC_PARAMETERS;
-	setALCParameters(parameters);
+	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
+	setALCParameters(temp);
 }
 
 

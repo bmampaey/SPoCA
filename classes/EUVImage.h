@@ -77,9 +77,6 @@ class EUVImage : public SunImage<EUVPixelType>
 		//! Routine to set the ALC parameters
 		void setALCParameters(const std::vector<Real>& ALCParameters);
 		
-		//! Routine to set the ALC parameters
-		void setALCParameters(const Real ALCParameters[]);
-		
 		//! Routine to get the ALC parameters
 		std::vector<Real> getALCParameters();
 

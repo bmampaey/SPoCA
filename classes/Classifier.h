@@ -67,7 +67,7 @@ class Classifier
 		FeatureVectorSet X;
 
 		//! The coordinates of the feature vectors (needed to output the results)
-		std::vector<Coordinate> coordinates;
+		std::vector<PixLoc> coordinates;
 		
 		//! File stream to output the classification steps
 		std::ofstream stepfile;

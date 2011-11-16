@@ -15,41 +15,42 @@ unsigned overlay_derotate(ColorMap* image1, const Region* region1, ColorMap* ima
 	ColorType setValue2 = image2->pixel(region2->FirstPixel());
 	
 	
-	// We are going to project the image1 into the coordinate of image2	
-	Coordinate r1_boxmin = image1->shift_like(region1->Boxmin(), image2);
-	Coordinate r1_boxmax = image1->shift_like(region1->Boxmax(), image2);
-	Coordinate r2_boxmin = region2->Boxmin();
-	Coordinate r2_boxmax = region2->Boxmax();
+	// We are going to project the image1 into the coordinate of image2
+	RealPixLoc r1_boxmin = image1->shift_like(region1->Boxmin(), image2);
+	RealPixLoc r1_boxmax = image1->shift_like(region1->Boxmax(), image2);
+	PixLoc r2_boxmin = region2->Boxmin();
+	PixLoc r2_boxmax = region2->Boxmax();
 
 	//The projection of the box of region1 may lie outside of the sundisc ==> the projection is null 
-
-	if(r1_boxmin == Coordinate::Max)
+	if(!r1_boxmin)
 		 r1_boxmin = r2_boxmin;
-	if(r1_boxmax == Coordinate::Max)
-		 r1_boxmax = r2_boxmax;		
+	if(!r1_boxmax)
+		 r1_boxmax = r2_boxmax;
 
 
-	// We compute the bornes of the intersection of teh 2 regions
+	// We compute the bornes of the intersection of the 2 regions
 	// If the 2 regions don't overlay, we will not even enter the loops
-	unsigned Xmin = r1_boxmin.x > r2_boxmin.x ? r1_boxmin.x : r2_boxmin.x;
-	unsigned Ymin = r1_boxmin.y > r2_boxmin.y ? r1_boxmin.y : r2_boxmin.y;
-	unsigned Xmax = r1_boxmax.x < r2_boxmax.x ? r1_boxmax.x : r2_boxmax.x;
-	unsigned Ymax = r1_boxmax.y < r2_boxmax.y ? r1_boxmax.y : r2_boxmax.y;
+	unsigned Xmin = unsigned(r1_boxmin.x > r2_boxmin.x ? r1_boxmin.x : r2_boxmin.x);
+	unsigned Ymin = unsigned(r1_boxmin.y > r2_boxmin.y ? r1_boxmin.y : r2_boxmin.y);
+	unsigned Xmax = unsigned(r1_boxmax.x < r2_boxmax.x ? r1_boxmax.x : r2_boxmax.x);
+	unsigned Ymax = unsigned(r1_boxmax.y < r2_boxmax.y ? r1_boxmax.y : r2_boxmax.y);
 
 	// We scan the intersection in the coordinates of image2
-	Coordinate c1, c2;
+	PixLoc c2;
 	for (c2.y = Ymin; c2.y <= Ymax; ++c2.y)
 	{
 		for (c2.x = Xmin; c2.x <= Xmax; ++c2.x)
 		{
 			// We project back the coordinate of image2 into the coordinate of image1
-			c1 = image2->shift_like(c2, image1);
-			// There is overlay between the two regions									  
-			if(c1 != Coordinate::Max && image1->pixel(c1) == setValue1 && image2->pixel(c2) == setValue2)
+			RealPixLoc  c1 = image2->shift_like(c2, image1);
+			// The projection of the coordinate may lie outside of the sundisc ==> the projection is null
+			if (!c1)
+				continue;
+			// We check if there is overlay between the two regions 
+			if(image1->interpolate(c1) == setValue1 && image2->pixel(c2) == setValue2)
 				++intersectPixels;
 		}
 	}
-	
 	
 	return intersectPixels;
 
@@ -63,10 +64,10 @@ unsigned overlay(ColorMap* image1, const Region* region1, ColorMap* image2, cons
 	ColorType setValue1 = image1->pixel(region1->FirstPixel());
 	ColorType setValue2 = image2->pixel(region2->FirstPixel());
 	
-	Coordinate r1_boxmin = region1->Boxmin();
-	Coordinate r1_boxmax = region1->Boxmax();
-	Coordinate r2_boxmin = region2->Boxmin();
-	Coordinate r2_boxmax = region2->Boxmax();
+	PixLoc r1_boxmin = region1->Boxmin();
+	PixLoc r1_boxmax = region1->Boxmax();
+	PixLoc r2_boxmin = region2->Boxmin();
+	PixLoc r2_boxmax = region2->Boxmax();
 
 	unsigned Xmin = r1_boxmin.x > r2_boxmin.x ? r1_boxmin.x : r2_boxmin.x;
 	unsigned Ymin = r1_boxmin.y > r2_boxmin.y ? r1_boxmin.y : r2_boxmin.y;
@@ -79,7 +80,7 @@ unsigned overlay(ColorMap* image1, const Region* region1, ColorMap* image2, cons
 	{
 		for (unsigned x = Xmin; x <= Xmax; ++x)
 		{
-												  //There is overlay between the two regions
+			// We check if there is overlay between the two regions
 			if(image1->pixel(x,y) == setValue1 && image2->pixel(x,y) == setValue2)
 				++intersectPixels;
 		}
@@ -90,7 +91,7 @@ unsigned overlay(ColorMap* image1, const Region* region1, ColorMap* image2, cons
 }
 
 
-// Find the biggest parrent of a node (the one I have the biggest intersection with)
+// Find the biggest direct ascendant of a node (the one I have the biggest intersection with)
 RegionGraph::node* biggestParent(const RegionGraph::node* n)
 {
 	const RegionGraph::adjlist &parentsList = n->iadjlist();
@@ -108,7 +109,7 @@ RegionGraph::node* biggestParent(const RegionGraph::node* n)
 }
 
 
-// Find the biggest son of a node (the one I have the biggest intersection with)
+// Find the biggest direct descendant of a node (the one I have the biggest intersection with)
 RegionGraph::node* biggestSon(const RegionGraph::node* n)
 {
 	const RegionGraph::adjlist &sonsList = n->adjlist();
@@ -145,13 +146,18 @@ void colorize(RegionGraph::node& me)
 		// We search for the biggest parent
 		if(itadj->edge().value() > biggestParent->edge().value())
 			biggestParent = itadj;
+		// We inherit the firstObservationTime of my parents
+		if(itadj->node().value()->FirstObservationTime() < me.value()->FirstObservationTime())
+			me.value()->setFirstObservationTime(itadj->node().value()->FirstObservationTime());
 
 	}
-	//Either I am the only child of my biggest parrent, or I am his biggest Son
-	
+	//Either I am the only child of my biggest parent, or I am his biggest Son
 	if(biggestParent != itadjEnd && me.value() == biggestSon(&(biggestParent->node()))->value() )
+	{
 		me.value()->setColor(biggestParent->node().value()->Color());
-	//There was a split or a merge, or I have no parrents
+		me.value()->setFirstObservationTime(biggestParent->node().value()->FirstObservationTime());
+	}
+	//There was a split or a merge, or I have no parents
 	else
 		me.value()->setColor(++newColor);
 
@@ -196,7 +202,7 @@ void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, c
 				graphFile <<"\""<< regions[s][r]->HekLabel()<<"\"";
 				if(isColored && regions[s][r]->Color() != 0)
 				{
-					graphFile<<"[color="<<gradient[regions[s][r]->Color() % gradientMax]<<"];"<<endl;
+					graphFile<<"[color=\""<<gradient[regions[s][r]->Color() % gradientMax]<<"\"];"<<endl;
 				}
 			}
 			graphFile<<"{ rank=same; "<< rank <<" };" << endl;
@@ -299,7 +305,7 @@ void recolorFromRegions(ColorMap* image, const vector<Region*>& regions)
 	}
 	for (unsigned j = 0; j < image->NumberPixels(); ++j)
 	{
-		if(image->pixel(j) != image->nullvalue())
+		if(image->pixel(j) != image->null())
 		{
 			#if DEBUG >= 1
 				if(colorTransfo.count(image->pixel(j)) == 0)
@@ -312,3 +318,4 @@ void recolorFromRegions(ColorMap* image, const vector<Region*>& regions)
 		}
 	}
 }
+

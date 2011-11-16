@@ -1,5 +1,4 @@
 #include "RegionStats.h"
-#include <map>
 
 using namespace std;
 
@@ -12,114 +11,126 @@ using namespace std;
 #endif
 
 
-RegionStats::RegionStats()
-:Region(), m1(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), barycenter_x(0), barycenter_y(0)
-{}
 
-RegionStats::RegionStats(const time_t& observationTime)
-:Region(observationTime), m1(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), barycenter_x(0), barycenter_y(0)
-{}
-
-RegionStats::RegionStats(const time_t& observationTime, const unsigned id, const ColorType color)
-:Region(observationTime, id, color), m1(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), barycenter_x(0), barycenter_y(0)
+RegionStats::RegionStats(const unsigned id)
+:id(id), numberPixels(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), center(0,0), barycenter(0,0), clipped_spatial(false)
 {}
 
 
-void RegionStats::add(const Coordinate& pixelCoordinate, const EUVPixelType& pixelIntensity, const Coordinate sunCenter, const bool atBorder, const double R)
+void RegionStats::add(const PixLoc& coordinate, const EUVPixelType& pixelIntensity, const RealPixLoc& sunCenter, const bool& atBorder, const Real& sun_radius)
 {
-	Region::add(pixelCoordinate);
-	m1 += pixelIntensity;
-	if( isnan(maxIntensity) || maxIntensity < pixelIntensity )
-		maxIntensity = pixelIntensity;
-	if( isnan(minIntensity) || pixelIntensity < minIntensity)
-		minIntensity = pixelIntensity;
-	totalIntensity += pixelIntensity;
+
 	
-	const double R0R2 = (SUNRADIUS / R) * (SUNRADIUS / R);
-	const double DR0R0DRR = (DR0 / SUNRADIUS) + (DR / R);
-	int relativePixelCoordinatex = pixelCoordinate.x - sunCenter.x;
-	int relativePixelCoordinatey = pixelCoordinate.y - sunCenter.y;
-	double pixelArea2 = (R * R) - (relativePixelCoordinatex * relativePixelCoordinatex) - (relativePixelCoordinatey * relativePixelCoordinatey);
-	double modifiedPixelArea2 = (2 * R * R) - (relativePixelCoordinatex * relativePixelCoordinatex) - (relativePixelCoordinatey * relativePixelCoordinatey);
-	double pixelArea;
-	if(pixelArea2 > 0)
-		pixelArea = R / sqrt(pixelArea2);
+	// If the intensity is not a number, the event is said to be clipped spatially
+	if(isnan(pixelIntensity) || isinf(pixelIntensity))
+	{
+		clipped_spatial = true;
+	}
 	else
-		pixelArea = HIGGINS_FACTOR + 1;
+	{
+		if( isnan(maxIntensity) || maxIntensity < pixelIntensity )
+			maxIntensity = pixelIntensity;
+		
+		if( isnan(minIntensity) || pixelIntensity < minIntensity)
+			minIntensity = pixelIntensity;
+		
+		totalIntensity += pixelIntensity;
+		
+		barycenter.x += coordinate.x * pixelIntensity;
+		barycenter.y += coordinate.y * pixelIntensity;
+		
+		// We keep a vector of intensities to compute the variance, the skewness and the kurtosis
+		intensities.push_back(pixelIntensity);
+		
+		// If I add an intensity, the previously computed moment of order > 1 are invalid
+		m2 = NAN;
+		m3 = NAN;
+		m4 = NAN;
+	}
 	
-	area_Raw       += R0R2;
-	area_RawUncert += 2 * R0R2 * DR0R0DRR;
+	Real dx = fabs(coordinate.x - sunCenter.x);
+	Real dy = fabs(coordinate.y - sunCenter.y);
+	Real radius_squared = sun_radius * sun_radius;
+	Real sigma = radius_squared - (dx * dx) - (dy * dy);
+	
+	++numberPixels;
+	
+	// We compute the center
+	center.x += coordinate.x;
+	center.y += coordinate.y;
 
+	// We compute the center error
+	centerxError = fabs(center.x/numberPixels - sunCenter.x);
+	centeryError = fabs(center.y/numberPixels - sunCenter.y);
+	
+	// We compute the contribution of the pixel to the raw area in Mm², and it's uncertainity
+	const Real raw_pixel_area = (SUN_RADIUS) * (SUN_RADIUS) / radius_squared;
+	
+	area_Raw += raw_pixel_area;
+	area_RawUncert += 2 * raw_pixel_area * ((SUN_RADIUS_VARIATION / SUN_RADIUS) + (SUN_RADIUS_VARIATION_PIXELS / sun_radius));
 	if(atBorder)
-	{
-		area_RawUncert          += R0R2;
-		area_AtDiskCenterUncert += R0R2 * pixelArea;
-	}
-
-	if (pixelArea <= HIGGINS_FACTOR)
-	{
-		area_AtDiskCenter       += R0R2 * pixelArea;
-		area_AtDiskCenterUncert += R0R2 * ( (2 * (DR0 / SUNRADIUS) * pixelArea2 + (DR / R) * modifiedPixelArea2 + abs(relativePixelCoordinatex) + abs(relativePixelCoordinatey) ) * 
-					   (pixelArea * pixelArea * pixelArea)) / (R * R);	
-	}
-	#ifndef NONAN_HIGGINS_FACTOR
-	else 
-	{
-		area_AtDiskCenter = NAN;
-		area_AtDiskCenterUncert = NAN;
-	}
-	#endif
-
-	centerxError += relativePixelCoordinatex;
-	centeryError += relativePixelCoordinatey;
+		area_RawUncert += raw_pixel_area;
 	
-	barycenter_x += pixelCoordinate.x * pixelIntensity;
-	barycenter_y += pixelCoordinate.y * pixelIntensity;
-	// We keep a ector of intensities to compute the variance, the skewness and the kurtosis
-	if(intensities.capacity() == intensities.size())
-		intensities.reserve(intensities.size() + 100);
-	intensities.push_back(pixelIntensity);
-	// If I add an intensity, the previously computed moment of order > 1 are invalid
-	m2 = NAN;
-	m3 = NAN;
-	m4 = NAN;
+	// We compute the contribution of the pixel to the area at disk center in Mm², and it's uncertainity
+	Real area_correction_factor = HIGGINS_FACTOR + 1;
+	if(sigma > 0)
+		area_correction_factor = sun_radius/sqrt(sigma);
+
+	// If the area correction factor is more than some value (i.e. the pixel is near the limb)
+	// we mark that the area at disk center will be invalid
+	if (area_correction_factor <= HIGGINS_FACTOR)
+	{
+		area_AtDiskCenter += raw_pixel_area * area_correction_factor;
+		area_AtDiskCenterUncert += (raw_pixel_area / sqrt(sigma*sigma*sigma)) * (dx + dy + (2 * (SUN_RADIUS_VARIATION / SUN_RADIUS) * sigma) + ((SUN_RADIUS_VARIATION_PIXELS / sun_radius) * (radius_squared + sigma)));
+		if(atBorder)
+			area_AtDiskCenterUncert += raw_pixel_area * area_correction_factor;
+	}
+	else
+	{
+		clipped_spatial = true;
+	}
 }
 
-
-
-
-Coordinate RegionStats::Barycenter() const
+unsigned RegionStats::Id() const
 {
-	if (! isnan(totalIntensity) && ! isinf(totalIntensity) && totalIntensity > 0)
-		return Coordinate(barycenter_x/totalIntensity, barycenter_y/totalIntensity);
+	return id;
+}
+
+void RegionStats::setId(const unsigned& id)
+{
+	this->id = id;
+}
+
+unsigned RegionStats::NumberPixels() const
+{
+	return numberPixels;
+}
+
+RealPixLoc RegionStats::Center() const
+{
+	if (numberPixels > 0)
+		return RealPixLoc(center.x/numberPixels, center.y/numberPixels);
+	else
+		return center;
+}
+
+RealPixLoc RegionStats::Barycenter() const
+{
+	if (! clipped_spatial && totalIntensity > 0)
+		return RealPixLoc(barycenter.x/totalIntensity, barycenter.y/totalIntensity);
 	else
 		return Center();
 }
 
 Real RegionStats::CenterxError() const
 {
-	if (numberPixels > 0)
-	{
-		return rad2arcsec / distance_observer_sun * (1 + (yearly_maximal_error / distance_observer_sun) * abs(centerxError / numberPixels));
-	}
-	else
-	{
-		return INF;
-	}
+	return 1 + EARTH_ORBIT_ECCENTRICITY * centerxError;
 }
 
 Real RegionStats::CenteryError() const
 {
-	if (numberPixels > 0)
-	{
-		return rad2arcsec / distance_observer_sun * (1 + (yearly_maximal_error / distance_observer_sun) * abs(centeryError / numberPixels));
-	}
-	else
-	{
-		return INF;
-	}
+	return 1 + EARTH_ORBIT_ECCENTRICITY * centeryError;
 }
-
 
 Real RegionStats::MinIntensity() const
 {
@@ -139,12 +150,18 @@ Real RegionStats::MaxIntensity() const
 
 Real RegionStats::Mean() const
 {
-	if(numberPixels == 0)
-		return 0;
-	else if (isinf(m1) || isnan(m1))
+	if (intensities.size() == 0 || isinf(totalIntensity) || isnan(totalIntensity))
 		return NAN;
 	else
-		return m1 / numberPixels;
+		return totalIntensity / intensities.size();
+}
+
+Real RegionStats::Median() const
+{
+	if (intensities.size() == 0)
+		return NAN;
+	else
+		return quickselect(intensities, 0.5);
 }
 
 void RegionStats::computeMoments()
@@ -169,8 +186,8 @@ void RegionStats::computeMoments()
 }
 Real RegionStats::Variance() const
 {
-	if(numberPixels == 0)
-		return 0;
+	if (intensities.size() == 0)
+		return NAN;
 	if(isnan(m2))
 	{
 		const_cast<RegionStats*>(this)->computeMoments();
@@ -179,14 +196,14 @@ Real RegionStats::Variance() const
 	if (isinf(m2) || isnan(m2))
 		return NAN;
 	else
-		return m2 / numberPixels;
+		return m2 / intensities.size();
 
 }
 
 Real RegionStats::Skewness() const
 {
-	if(numberPixels == 0)
-		return 0;
+	if (intensities.size() == 0)
+		return NAN;
 	if(isnan(m2) || isnan(m3))
 	{
 		const_cast<RegionStats*>(this)->computeMoments();
@@ -195,23 +212,23 @@ Real RegionStats::Skewness() const
 	if (isinf(m3) || isnan(m3) || isinf(m2) || isnan(m2) || m2 <= 0)
 		return NAN;
 	else
-		return sqrt(numberPixels) * m3 / sqrt(m2 * m2 * m2);
+		return sqrt(intensities.size()) * m3 / sqrt(m2 * m2 * m2);
 
 }
 
 Real RegionStats::Kurtosis() const
 {
-	if(numberPixels == 0)
-		return 0;
+	if(intensities.size() == 0)
+		return NAN;
 	if(isnan(m2) || isnan(m4))
 	{
 		const_cast<RegionStats*>(this)->computeMoments();
 	}
 
-	if (isinf(m4) || isnan(m4) || isinf(m2) || isnan(m2))
+	if (isinf(m4) || isnan(m4) || isinf(m2) || isnan(m2) || m2 <= 0)
 		return NAN;
 	else
-		return (numberPixels * m4 / (m2 * m2) ) - 3;
+		return (intensities.size() * m4 / (m2 * m2) ) - 3;
 
 }
 
@@ -222,7 +239,6 @@ Real RegionStats::TotalIntensity() const
 	else
 		return totalIntensity;
 }
-
 
 Real RegionStats::Area_Raw() const
 {
@@ -244,179 +260,232 @@ Real RegionStats::Area_AtDiskCenterUncert() const
 	return area_AtDiskCenterUncert;
 }
 
+bool RegionStats::ClippedSpatial() const
+{
+	return clipped_spatial;
+}
 
 string RegionStats::toString(const string& separator, bool header) const
 {
-	string result = Region::toString(separator, header);
 	if (header)
 	{
-		result += separator+"Barycenter"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"CenterxError"+separator+"CenteryError"+separator+"Area_Raw"+separator+"Area_RawUncert"+separator+"Area_AtDiskCenter"+separator+"Area_AtDiskCenterUncert";
+		return "Id"+separator+"NumberPixels"+separator+"Center"+separator+"Barycenter"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"CenterxError"+separator+"CenteryError"+separator+"Area_Raw"+separator+"Area_RawUncert"+separator+"Area_AtDiskCenter"+separator+"Area_AtDiskCenterUncert"+separator+"ClippedSpatial";
 	}
 	else
 	{
 		ostringstream out;
-		out<<setiosflags(ios::fixed)<<separator<<Barycenter()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<CenterxError()<<separator<<CenteryError()<<separator<<Area_Raw()<<separator<<Area_RawUncert()<<separator<<Area_AtDiskCenter()<<separator<<Area_AtDiskCenterUncert();
-		result += out.str();
+		out<<setiosflags(ios::fixed)<<Id()<<separator<<NumberPixels()<<separator<<Center()<<separator<<Barycenter()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<CenterxError()<<separator<<CenteryError()<<separator<<Area_Raw()<<separator<<Area_RawUncert()<<separator<<Area_AtDiskCenter()<<separator<<Area_AtDiskCenterUncert()<<separator<<ClippedSpatial();
+		return out.str();
 	}
-	return result;
 }
 
 
-vector<RegionStats*> getRegionStats(const ColorMap* colorizedComponentsMap, const EUVImage* image)
+vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image, const vector<Region*>& regions)
 {
-	map<ColorType,RegionStats*> regions_table;
-	Coordinate sunCenter = colorizedComponentsMap->SunCenter();
-	double sunRadius = colorizedComponentsMap->SunRadius();
-	unsigned id = 0;
-	
-	//Let's get the connected regions stats
-	for (unsigned y = 0; y < colorizedComponentsMap->Yaxes(); ++y)
+	map<ColorType,RegionStats*> regions_stats;
+	for(unsigned r = 0; r < regions.size(); ++r)
 	{
-		for (unsigned x = 0; x < colorizedComponentsMap->Xaxes(); ++x)
+		if (regions_stats.count(regions[r]->Color()) == 0)
+			regions_stats[regions[r]->Color()] = new RegionStats(regions[r]->Id());
+	}
+	
+	RealPixLoc sunCenter = image->SunCenter();
+	Real sunRadius = image->SunRadius();
+	
+	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
+	{
+		for (unsigned x = 0; x < coloredMap->Xaxes(); ++x)
 		{
-			if(colorizedComponentsMap->pixel(x,y) != colorizedComponentsMap->nullvalue())
+			if(coloredMap->pixel(x,y) != coloredMap->null())
 			{
-				ColorType color = colorizedComponentsMap->pixel(x,y);
+				const ColorType& color = coloredMap->pixel(x,y);
 				
-				// If the regions does not yet exist we create it
-				if (regions_table.count(color) == 0)
+				// We only compute the region stats for the given regions
+				if (regions_stats.count(color) > 0)
 				{
-					regions_table[color] = new RegionStats(colorizedComponentsMap->ObservationTime(),id, color);
+					//Is the pixel in the contour (<=> there is a neighboor pixel != pixel color)
+					bool atBorder = coloredMap->pixel(x-1,y) != color || coloredMap->pixel(x+1,y) != color || coloredMap->pixel(x,y-1) != color || coloredMap->pixel(x,y+1) != color;
+				
+					// We add the pixel to the region
+					regions_stats[color]->add(PixLoc(x,y), image->pixel(x, y), sunCenter, atBorder, sunRadius);
+				}
+			}
+		}
+	}
+	
+	return values(regions_stats);
+}
+
+vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image)
+{
+	unsigned id = 0;
+	map<ColorType,RegionStats*> regions_stats;
+	
+	RealPixLoc sunCenter = image->SunCenter();
+	Real sunRadius = image->SunRadius();
+	
+	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
+	{
+		for (unsigned x = 0; x < coloredMap->Xaxes(); ++x)
+		{
+			if(coloredMap->pixel(x,y) != coloredMap->null())
+			{
+				const ColorType& color = coloredMap->pixel(x,y);
+				
+				// If the regions_stats does not yet exist we create it
+				if (regions_stats.count(color) == 0)
+				{
+					regions_stats[color] = new RegionStats(id);
 					++id;
 				}
 				
-				//Is the pixel in the contour (<=> there is a neighboor pixel != pixel color)
-				bool atBorder = colorizedComponentsMap->pixel(x-1,y) != color || colorizedComponentsMap->pixel(x+1,y) != color || colorizedComponentsMap->pixel(x,y-1) != color || colorizedComponentsMap->pixel(x,y+1) != color;
+				// Is the pixel in the contour (<=> there is a neighboor pixel != pixel color)
+				bool atBorder = coloredMap->pixel(x-1,y) != color || coloredMap->pixel(x+1,y) != color || coloredMap->pixel(x,y-1) != color || coloredMap->pixel(x,y+1) != color;
 				
 				// We add the pixel to the region
-				regions_table[color]->add(Coordinate(x,y), image->pixel(x, y), sunCenter, atBorder, sunRadius);
+				regions_stats[color]->add(PixLoc(x,y), image->pixel(x, y), sunCenter, atBorder, sunRadius);
 			}
 		}
-
 	}
-
 	
-	//We create the vector of regions
-	vector<RegionStats*> regions;
-	regions.reserve(regions_table.size());
-	for(map<ColorType,RegionStats*>::const_iterator r = regions_table.begin(); r != regions_table.end(); ++r)
-		regions.push_back(r->second);
-	
-	return regions;
-
+	return values(regions_stats);
 }
 
-FitsFile& writeRegions(FitsFile& file, const vector<RegionStats*>& regionStats)
+FitsFile& writeRegions(FitsFile& file, const vector<RegionStats*>& regions_stats)
 {
-
-	vector<Region*> regions(regionStats.begin(), regionStats.end());
-	writeRegions(file, regions);
-
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->Barycenter().x + 1;
-		file.writeColumn("XBARYCENTER", data);
+		vector<unsigned> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Id();
+		file.writeColumn("ID", data);
 	}
 	
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->Barycenter().y = 1;
-		file.writeColumn("YBARYCENTER", data);
+		vector<unsigned> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->NumberPixels();
+		file.writeColumn("NUMBER_PIXELS", data);
+	}
+	
+	{
+		vector<RealPixLoc> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Center();
+		file.writeColumn("CENTER", data);
+	}
+	
+	{
+		vector<RealPixLoc> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Barycenter();
+		file.writeColumn("BARYCENTER", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->MinIntensity();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->MinIntensity();
 		file.writeColumn("MIN_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->MaxIntensity();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->MaxIntensity();
 		file.writeColumn("MAX_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->Mean();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Mean();
 		file.writeColumn("MEAN_INTENSITY", data);
+	}
+	
+	{
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Median();
+		file.writeColumn("MEDIAN_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->Variance();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Variance();
 		file.writeColumn("VARIANCE", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->Skewness();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Skewness();
 		file.writeColumn("SKEWNESS", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->Kurtosis();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Kurtosis();
 		file.writeColumn("KURTOSIS", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->TotalIntensity();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->TotalIntensity();
 		file.writeColumn("TOTAL_INTENSITY", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->CenterxError();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->CenterxError();
 		file.writeColumn("XCENTER_ERROR", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->CenteryError();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->CenteryError();
 		file.writeColumn("YCENTER_ERROR", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->Area_Raw();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Area_Raw();
 		file.writeColumn("RAW_AREA", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->Area_RawUncert();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Area_RawUncert();
 		file.writeColumn("RAW_AREA_UNCERTAINITY", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->Area_AtDiskCenter();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Area_AtDiskCenter();
 		file.writeColumn("AREA_ATDISKCENTER", data);
 	}
 
 	{
-		vector<Real> data(regionStats.size());
-		for(unsigned r = 0; r < regionStats.size(); ++r)
-			data[r] = regionStats[r]->Area_AtDiskCenterUncert();
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->Area_AtDiskCenterUncert();
 		file.writeColumn("AREA_ATDISKCENTER_UNCERTAINITY", data);
 	}
-
+	
+	{
+		vector<string> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->ClippedSpatial() ? "T" : "F";
+		file.writeColumn("CLIPPED_SPATIAL", data);
+	}
+	
 	return file;
 
 }

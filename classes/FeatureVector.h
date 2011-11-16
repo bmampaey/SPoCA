@@ -3,8 +3,11 @@
 #define FeatureVector_H
 
 #include <iostream>
+#include <iomanip>
+#include <string>
+#include <sstream>
 #include <cmath>
-#include <vector>
+
 #include "constants.h"
 
 //! Class FeatureVector
@@ -27,6 +30,8 @@ class FeatureVector
 	public :
 		//! Constructor
 		FeatureVector(){}
+		//! Destructor
+		virtual ~FeatureVector(){}
 		//! Constructor
 		/*! Assign all features to value */
 		FeatureVector(T const &value)
@@ -46,18 +51,6 @@ class FeatureVector
 			for (unsigned p = 0; p < N; ++p)
 				v[p] = (T)fv.v[p];
 			return *this;
-		}
-		//! Square of the euclidian distance to fv
-		Real d2(const FeatureVector& fv) const
-		{
-			Real d;
-			Real sum = 0;
-			for (unsigned p = 0; p < N; ++p)
-			{
-				d = (Real)v[p] - (Real)fv.v[p];
-				sum += d * d;
-			}
-			return sum;
 		}
 		
 		//! Multiply each element by value
@@ -109,11 +102,10 @@ class FeatureVector
 			return result;
 		}
 		//! Comparison operator
-		/*! Compare the modulus of the feature vectors */
+		/*! Compare the norm of the feature vectors */
 		bool operator<(const FeatureVector& fv) const
 		{
-			FeatureVector zero = 0;
-			if(this->d2(zero) < fv.d2(zero))
+			if(distance_squared(*this, FeatureVector<T, N>(0)) < distance_squared(fv, FeatureVector<T, N>(0)))
 				return true;
 			else
 				return false;
@@ -184,16 +176,29 @@ class FeatureVector
 			}
 			return false;
 		}
+		
+		virtual std::string toString(const unsigned& precision = 0) const
+		{
+			std::ostringstream out;
+			if (precision != 0)
+				out<<std::fixed<<std::setprecision(precision)<<"("<<v[0];
+			else
+				out<<std::fixed<<std::noshowpoint<<"("<<v[0];
+			for (unsigned p = 1; p < N; ++p)
+				out<<","<<v[p];
+			out<<")";
+			return out.str();
+		}
 
 };
 
 //! Square of the Euclidian distance between 2 feature vectors  
 template<class T, unsigned N>
-Real d2(const FeatureVector<T, N>& fv1, const FeatureVector<T, N>& fv2);
+Real distance_squared(const FeatureVector<T, N>& fv1, const FeatureVector<T, N>& fv2);
 
 //! Euclidian distance between 2 feature vectors
 template<class T, unsigned N>
-Real d(const FeatureVector<T, N>& fv1, const FeatureVector<T, N>& fv2);
+Real distance(const FeatureVector<T, N>& fv1, const FeatureVector<T, N>& fv2);
 
 //! Norm of the feature vector
 template<class T, unsigned N>

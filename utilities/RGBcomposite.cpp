@@ -30,7 +30,9 @@ fitsFileName3 corresponds to the blue channel
  - TakeLog (Take the log)
  - DivMode (Division by the mode)
  - DivExpTime (Division by the Exposure Time)
-
+ - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
+ - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
+ 
 @param size The size of the image written. i.e. "1024x1024" See <a href="http://www.imagemagick.org/script/command-line-processing.php#geometry" target="_blank">ImageMagick Image Geometry</a>  for specification.
 
 @param outputDirectory	The name for the output directory.
@@ -69,148 +71,6 @@ using Magick::Quantum;
 string filenamePrefix;
 
 
-
-
-void AIA_contrast_0304(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99941/exposureTime);
-	image->threshold(50, 2000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0335(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(6.99734/exposureTime);
-	image->threshold(3.5, 1000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_1600(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(2.99911/exposureTime);
-	image->threshold(0, 1000);
-}
-
-void AIA_contrast_0193(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(2.99950/exposureTime);
-	image->threshold(120, 6000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0094(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99803/exposureTime);
-	image->threshold(1.5, 50);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = sqrt(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0171(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99803/exposureTime);
-	image->threshold(10, 6000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = sqrt(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0211(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99801/exposureTime);
-	image->threshold(30, 13000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0131(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(6.99685/exposureTime);
-	image->threshold(7, 1200);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_1700(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(1.00026/exposureTime);
-	image->threshold(0, 2500);
-}
-
-void AIA_contrast_4500(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(1.00026/exposureTime);
-	image->threshold(0, 26000);
-}
-void enhance_contrast(EUVImage * image, string preprocessingSteps)
-{
-	if(! preprocessingSteps.empty())
-	{
-		image->preprocessing(preprocessingSteps);
-	}
-	else if(isAIA(image->header))
-	{
-		if(image->Wavelength() == 304.)
-			AIA_contrast_0304(image);
-
-		else if(image->Wavelength() == 335. )
-			AIA_contrast_0335(image);
-
-		else if(image->Wavelength() == 1600. )
-			AIA_contrast_1600(image);
-
-		else if(image->Wavelength() == 193. )
-			AIA_contrast_0193(image);
-
-		else if(image->Wavelength() == 94. )
-			AIA_contrast_0094(image);
-
-		else if(image->Wavelength() == 171. )
-			AIA_contrast_0171(image);
-
-		else if(image->Wavelength() == 211. )
-			AIA_contrast_0211(image);
-
-		else if(image->Wavelength() == 131. )
-			AIA_contrast_0131(image);
-
-		else if(image->Wavelength() == 1700. )
-			AIA_contrast_1700(image);
-
-		else if(image->Wavelength() == 4500. )
-			AIA_contrast_4500(image);
-
-		else
-			cerr<<"Error: unknown wavelength for AIA "<<image->Wavelength()<<endl;
-
-	}
-}
 
 
 int main(int argc, const char **argv)
@@ -265,15 +125,23 @@ int main(int argc, const char **argv)
 	
 	// We make the gradients
 	Magick::Image red_gradient( "1x2", "black" );
-    	red_gradient.pixelColor( 0, 1, "red" );
-    	Magick::Image green_gradient( "1x2", "black" );
-    	green_gradient.pixelColor( 0, 1, "green1" );
-    	Magick::Image blue_gradient( "1x2", "black" );
-    	blue_gradient.pixelColor( 0, 1, "blue" ); 
-    	
-    	// We make the red channel with the first image
+	red_gradient.pixelColor( 0, 1, "red" );
+	Magick::Image green_gradient( "1x2", "black" );
+	green_gradient.pixelColor( 0, 1, "green1" );
+	Magick::Image blue_gradient( "1x2", "black" );
+	blue_gradient.pixelColor( 0, 1, "blue" ); 
+	
+	// We make the red channel with the first image
 	EUVImage* image = getImageFromFile("UNKNOWN", imagesFilenames[0]);
-	enhance_contrast(image, preprocessingSteps);
+	// We improve the contrast
+	if(! preprocessingSteps.empty())
+	{
+		image->preprocessing(preprocessingSteps);
+	}
+	else 
+	{
+		image->enhance_contrast();
+	}
 	MagickImage red_channel = image->magick();
 	delete image;
 	MagickCore::ClutImage(red_channel.image(), red_gradient.image());
@@ -284,7 +152,15 @@ int main(int argc, const char **argv)
 	
 	// We make the green channel with the second image
 	image = getImageFromFile("UNKNOWN", imagesFilenames[1]);
-	enhance_contrast(image, preprocessingSteps);
+	// We improve the contrast
+	if(! preprocessingSteps.empty())
+	{
+		image->preprocessing(preprocessingSteps);
+	}
+	else 
+	{
+		image->enhance_contrast();
+	}
 	MagickImage green_channel = image->magick();
 	delete image;
 	MagickCore::ClutImage(green_channel.image(), green_gradient.image());
@@ -294,7 +170,15 @@ int main(int argc, const char **argv)
 	
 	// We make the blue channel with the third image
 	image = getImageFromFile("UNKNOWN", imagesFilenames[2]);
-	enhance_contrast(image, preprocessingSteps);
+	// We improve the contrast
+	if(! preprocessingSteps.empty())
+	{
+		image->preprocessing(preprocessingSteps);
+	}
+	else 
+	{
+		image->enhance_contrast();
+	}
 	MagickImage blue_channel = image->magick();
 	MagickCore::ClutImage(blue_channel.image(), blue_gradient.image());
 	#if DEBUG >= 2

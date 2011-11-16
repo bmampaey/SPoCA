@@ -20,19 +20,17 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 	}
 	
 	ordonateImages(images);
-	unsigned numberValidPixelsEstimate = images[0]->numberValidPixelsEstimate();
 	Xaxes = images[0]->Xaxes();
 	Yaxes = images[0]->Yaxes();
 	for (unsigned p = 1; p <  NUMBERCHANNELS; ++p)
 	{
 		Xaxes = images[p]->Xaxes() < Xaxes ? images[p]->Xaxes() : Xaxes;
 		Yaxes = images[p]->Yaxes() < Yaxes ? images[p]->Yaxes() : Yaxes;
-		numberValidPixelsEstimate = images[p]->numberValidPixelsEstimate() > numberValidPixelsEstimate ? : numberValidPixelsEstimate;
 	}
 
-	X.reserve(numberValidPixelsEstimate);
-	coordinates.reserve(numberValidPixelsEstimate);
-	smoothedX.reserve(numberValidPixelsEstimate);
+	X.reserve(images[0]->NumberPixels());
+	coordinates.reserve(images[0]->NumberPixels());
+	smoothedX.reserve(images[0]->NumberPixels());
 
 	//Temporary vectors to build the neihboorhood
 	vector<unsigned> caardNeighbors(Xaxes * Yaxes, 0);
@@ -41,35 +39,28 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 	bool validPixel;
 	RealFeature f;
 	//We initialise the valid pixels vector X, and the neighbors N
-	for (unsigned y = 0; y < Yaxes; ++y)
+	for (int y = 0; y < int(Yaxes); ++y)
 	{
-		for (unsigned x = 0; x < Xaxes; ++x)
+		for (int x = 0; x < int(Xaxes); ++x)
 		{
 			validPixel = true;
 			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
 			{
 				f.v[p] = images[p]->pixel(x,y);
-				if(f.v[p] == images[p]->nullvalue())
+				if(f.v[p] == images[p]->null())
 					validPixel=false;
 			}
 			
 			if(! validPixel)
 				continue;
-			
-			//In a normal situation, we can suppose that the sun disc isn't going to touch the borders of the picture. Otherwise just take a radiusRatio smaller.
-			#if DEBUG >= 1
-			#define ASSERTBOUNDARIES neighbor > 0 && neighbor < images[0]->NumberPixels()
-			#else
-			#define ASSERTBOUNDARIES true
-			#endif
 
-			//Since I am the neigboor of my neigboors, I can add myself to their neigboorhood
-			for (unsigned ny = y - Nradius; ny <= y + Nradius; ++ny)
+			//Since I am the neigboor of my neigboors, I can add myself to their neigboorhood (my index == numberFeatureVectors)
+			for (int ny = y - int(Nradius); ny <= y + int(Nradius); ++ny)
 			{
-				NeighborIndex neighbor = ny * Xaxes + x - Nradius;
-				for (unsigned nx = x - Nradius; nx <= x + Nradius; ++nx)
+				NeighborIndex neighbor = (ny * Xaxes + x) - Nradius;
+				for (int nx = x - int(Nradius); nx <= x + int(Nradius); ++nx)
 				{
-					if(!(nx == x && ny == y) && ASSERTBOUNDARIES)
+					if(!(nx == x && ny == y) && neighbor > 0 && neighbor < images[0]->NumberPixels())
 					{
 						neighbors[neighbor].push_back(numberFeatureVectors);
 						++caardNeighbors[neighbor];
@@ -77,9 +68,10 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 					++neighbor;
 				}
 			}
+			
 			X.push_back(f);
 			smoothedX.push_back(f);
-			coordinates.push_back(Coordinate(x,y));
+			coordinates.push_back(PixLoc(x,y));
 			++numberFeatureVectors;
 			
 		}
@@ -184,7 +176,7 @@ void SPoCAClassifier::computeU()
 	{
 		for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 		{
-			Real d2BiXj = d2(*xj,B[i]);
+			Real d2BiXj = distance_squared(*xj,B[i]);
 			*uij += d2BiXj;
 			for(Neighborhood::iterator k = Nj->begin(); k!=Nj->end(); ++k)
 			{
@@ -245,7 +237,7 @@ Real SPoCAClassifier::computeJ() const
 		//We precalculate all the distances from each pixel Xj to the center Bi
 		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 		{
-			d2BiX[j] = d2(X[j],B[i]);
+			d2BiX[j] = distance_squared(X[j],B[i]);
 		}
 
 		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
@@ -289,7 +281,7 @@ Real SPoCAClassifier::assess(vector<Real>& V)
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
 		{
-			distBiBii = d2(B[i],B[ii]);
+			distBiBii = distance_squared(B[i],B[ii]);
 			if(distBiBii < minDist[i])
 				minDist[i] = distBiBii;
 			if(distBiBii < minDist[ii])
@@ -304,7 +296,7 @@ Real SPoCAClassifier::assess(vector<Real>& V)
 		//We precalculate all the distances from each pixel Xj to the center Bi
 		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 		{
-			d2BiX[j] = d2(X[j],B[i]);
+			d2BiX[j] = distance_squared(X[j],B[i]);
 		}
 
 		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)

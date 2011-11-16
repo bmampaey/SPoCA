@@ -130,11 +130,11 @@ inline vector<EUVImage*> getImagesFromFiles(const string imageType, const vector
 	
 	if(align) // We align the images so they all have the same sun center
 	{
-		Coordinate sunCenter = images[0]->SunCenter();
+		RealPixLoc sunCenter = images[0]->SunCenter();
 		
 		for (unsigned p = 1; p < imagesFilenames.size(); ++p)
 		{
-			if( sunCenter.d2(images[p]->SunCenter()) > 2 )
+			if(distance_squared(sunCenter, images[p]->SunCenter()) > 2)
 			{
 				cerr<<"Warning : Image "<<imagesFilenames[p]<<" will be recentered to have the same sun centre than image "<<imagesFilenames[0]<<endl;
 				images[p]->recenter(sunCenter);
@@ -218,15 +218,8 @@ inline unsigned readEtaFromFile (vector<Real>& eta, const string& etaFileName)
 	ifstream etaFile(etaFileName.c_str());
 	if (etaFile.good())
 	{
-		Real etai;
-		etaFile>>etai;
-		while(etaFile.good())
-		{
-			eta.push_back(etai);
-			etaFile>>etai;
-		}
+		etaFile>>eta;
 		etaFile.close();
-		
 	}
 	else
 	{
@@ -241,13 +234,7 @@ inline unsigned readMaxLimitsFromFile (vector<RealFeature>& maxLimits, const str
 	ifstream maxLimitsFile(maxLimitsFileName.c_str());
 	if (maxLimitsFile.good())
 	{
-		RealFeature L;
-		maxLimitsFile>>L;
-		while(maxLimitsFile.good())
-		{
-			maxLimits.push_back(L);
-			maxLimitsFile>>L;
-		}
+		maxLimitsFile>>maxLimits;
 		maxLimitsFile.close();
 	}
 	else
@@ -268,7 +255,7 @@ string expand(string text, const Header& header)
 		{
 			string key_name = text.substr(key_start + 1, key_end - key_start - 1);
 			string value = "";
-			if(header.get<bool>(key_name))
+			if(header.has(key_name))
 			{
 				value = header.get<string>(key_name);
 			}

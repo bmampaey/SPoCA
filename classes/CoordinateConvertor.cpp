@@ -1,4 +1,4 @@
-#include "CoordinateConvertor.h"
+#include "PixLocConvertor.h"
 
 using namespace std;
 	
@@ -31,7 +31,7 @@ inline void IDL_do(const string command, bool reset = true)
 }	
 
 
-CoordinateConvertor::CoordinateConvertor(SunImage* image, string coordinateType)
+PixLocConvertor::PixLocConvertor(SunImage* image, string coordinateType)
 :coordinateType(coordinateType)
 {
 	if(instances == 0)
@@ -102,7 +102,7 @@ CoordinateConvertor::CoordinateConvertor(SunImage* image, string coordinateType)
 	++instances;
 } 
 
-CoordinateConvertor::CoordinateConvertor(SunImage* image)
+PixLocConvertor::PixLocConvertor(SunImage* image)
 {
 
 	if(instances == 0)
@@ -172,13 +172,13 @@ CoordinateConvertor::CoordinateConvertor(SunImage* image)
 } 
 
 
-CoordinateConvertor::CoordinateConvertor(const CoordinateConvertor& cc)
+PixLocConvertor::PixLocConvertor(const PixLocConvertor& cc)
 :wcs(cc.wcs), coordinateType(cc.coordinateType)
 {
 	++instances;
 } 
 
-CoordinateConvertor::~CoordinateConvertor()
+PixLocConvertor::~PixLocConvertor()
 {
 	--instances;
 	if(instances == 0)
@@ -187,13 +187,13 @@ CoordinateConvertor::~CoordinateConvertor()
 	}
 }
 
-void CoordinateConvertor::convert(Coordinate c, float& x, float& y, bool arcsec) const
+void PixLocConvertor::convert(PixLoc c, float& x, float& y, bool arcsec) const
 {
 	this->convert(coordinateType, c, x, y, arcsec);
 }
 
 
-void CoordinateConvertor::convert(string coord_type, Coordinate c, float& x, float& y, bool arcsec) const
+void PixLocConvertor::convert(string coord_type, PixLoc c, float& x, float& y, bool arcsec) const
 {
 	
 	if(coord_type.empty())
@@ -233,5 +233,5 @@ void CoordinateConvertor::convert(string coord_type, Coordinate c, float& x, flo
 	#endif
 }
 
-unsigned CoordinateConvertor::instances = 0;
-unsigned CoordinateConvertor::lastId = 0;
+unsigned PixLocConvertor::instances = 0;
+unsigned PixLocConvertor::lastId = 0;

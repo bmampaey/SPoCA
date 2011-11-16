@@ -77,25 +77,20 @@ namespace cgt
         void _incr () { _ptr = _ptr->_next; }
 
       public:
-        reference operator*() const;
-        pointer operator->() const;
+        reference operator*() const
+        {
+        	return static_cast<_Item *>(_ptr)->_data;
+        }
+        pointer operator->() const
+        {
+        	return &(operator*());
+        }
 
         _Self& operator++();
         const _Self operator++(int);
     };
 
 
-    template<typename _TpItem, template<typename> class _TpIterator>
-      typename _TpIterator<_TpItem>::reference _ListIterator<_TpItem, _TpIterator>::operator*() const
-      {
-        return static_cast<_Item *>(_ptr)->_data;
-      }
-
-    template<typename _TpItem, template<typename> class _TpIterator>
-      typename _TpIterator<_TpItem>::pointer _ListIterator<_TpItem, _TpIterator>::operator->() const
-      {
-        return &(operator*());
-      }
 
     template<typename _TpItem, template<typename> class _TpIterator>
       _ListIterator<_TpItem, _TpIterator>& _ListIterator<_TpItem, _TpIterator>::operator++()

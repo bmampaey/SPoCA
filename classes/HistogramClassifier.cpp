@@ -177,7 +177,7 @@ void HistogramClassifier::addImages(vector<EUVImage*> images, const unsigned xax
 			for (unsigned p = 0; p < NUMBERCHANNELS && validPixel; ++p)
 			{
 				f.v[p] = images[p]->pixel(x, y);
-				if(f.v[p] == images[p]->nullvalue())
+				if(f.v[p] == images[p]->null())
 					validPixel=false;
 				else
 					f.v[p] = (floor(f.v[p]/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );

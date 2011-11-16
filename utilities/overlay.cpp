@@ -45,8 +45,16 @@
  - TakeLog (Take the log)
  - DivMode (Division by the mode)
  - DivExpTime (Division by the Exposure Time)
-
+ - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
+ - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
+ 
 @param size The size of the image written. i.e. "1024x1024" See <a href="http://www.imagemagick.org/script/command-line-processing.php#geometry" target="_blank">ImageMagick Image Geometry</a>  for specification.
+
+@param colors The list of colors to select separated by commas (no spaces)
+<BR>All colors will be selected if ommited.
+
+@param colorsFilename A file containing a list of colors to select separated by commas
+<BR>All colors will be selected if ommited.
 
 @param outputDirectory	The name for the output directory.
 
@@ -86,146 +94,6 @@ using Magick::Quantum;
 
 string filenamePrefix;
 
-void AIA_contrast_0304(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99941/exposureTime);
-	image->threshold(50, 2000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0335(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(6.99734/exposureTime);
-	image->threshold(3.5, 1000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_1600(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(2.99911/exposureTime);
-	image->threshold(0, 1000);
-}
-
-void AIA_contrast_0193(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(2.99950/exposureTime);
-	image->threshold(120, 6000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0094(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99803/exposureTime);
-	image->threshold(1.5, 50);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = sqrt(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0171(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99803/exposureTime);
-	image->threshold(10, 6000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = sqrt(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0211(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99801/exposureTime);
-	image->threshold(30, 13000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0131(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(6.99685/exposureTime);
-	image->threshold(7, 1200);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_1700(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(1.00026/exposureTime);
-	image->threshold(0, 2500);
-}
-
-void AIA_contrast_4500(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(1.00026/exposureTime);
-	image->threshold(0, 26000);
-}
-void enhance_contrast(EUVImage * image, string preprocessingSteps)
-{
-	if(! preprocessingSteps.empty())
-	{
-		image->preprocessing(preprocessingSteps);
-	}
-	else if(isAIA(image->header))
-	{
-		if(image->Wavelength() == 304.)
-			AIA_contrast_0304(image);
-
-		else if(image->Wavelength() == 335. )
-			AIA_contrast_0335(image);
-
-		else if(image->Wavelength() == 1600. )
-			AIA_contrast_1600(image);
-
-		else if(image->Wavelength() == 193. )
-			AIA_contrast_0193(image);
-
-		else if(image->Wavelength() == 94. )
-			AIA_contrast_0094(image);
-
-		else if(image->Wavelength() == 171. )
-			AIA_contrast_0171(image);
-
-		else if(image->Wavelength() == 211. )
-			AIA_contrast_0211(image);
-
-		else if(image->Wavelength() == 131. )
-			AIA_contrast_0131(image);
-
-		else if(image->Wavelength() == 1700. )
-			AIA_contrast_1700(image);
-
-		else if(image->Wavelength() == 4500. )
-			AIA_contrast_4500(image);
-
-		else
-			cerr<<"Error: unknown wavelength for AIA "<<image->Wavelength()<<endl;
-
-	}
-}
 
 int main(int argc, const char **argv)
 {
@@ -243,7 +111,7 @@ int main(int argc, const char **argv)
 	bool mastic = false;
 	
 	// Options for the labeling
-	string Label = "{CLASTYPE} {CPREPROC}\nCH_AGGREGATION " + dtos(CH_AGGREGATION) + "(a/s)\nMIN_CH_SIZE " + dtos(MIN_CH_SIZE) + "(a/s)²\nCH_CLEANING " + dtos(CH_CLEANING) + "(a/s)";
+	string Label = "{CLASTYPE} {CPREPROC}\ncleaning: {CLEANING}(a/s)\naggregation: {AGGREGAT}(a/s)\nprojection: {PROJECTN}\nmin size: {MINSIZE}(a/s)²";
 	
 	// Options for the background
 	// The list of names of the sun images to process
@@ -259,9 +127,9 @@ int main(int argc, const char **argv)
 	// Option for the output size
 	string size;
 	
-	// Options for the cleaning of the files
-	string keep;
-	string keepFilename;
+	// Options for the colors to overlay
+	string colorsString;
+	string colorsFilename;
 	
 	// option for the output directory
 	string outputDirectory = ".";
@@ -286,8 +154,8 @@ int main(int argc, const char **argv)
 
 	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
 	
-	arguments.new_named_string('k', "keep", "string", "\n\tA list of colors to keep separated by commas (no spaces)\n\tAll other colors will be erased if specified.\n\t", keep);
-	arguments.new_named_string('K', "keepFilename", "string", "\n\tA file containing a list of colors to keep separated by commas\n\tAll other colors will be erased if specified.\n\t", keepFilename);
+	arguments.new_named_string('c', "colors", "string", "\n\tThe list of colors to select separated by commas (no spaces)\n\tAll colors will be selected if ommited.\n\t", colorsString);
+	arguments.new_named_string('C', "colorsFilename", "string", "\n\tA file containing a list of colors to select separated by commas\n\tAll colors will be selected if ommited.\n\t", colorsFilename);
 
 	arguments.new_named_string('O', "outputDirectory","directory name", "\n\tThe name for the output directory.\n\t", outputDirectory);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "The name of the fits files containing the images of the sun.", imagesFilenames);
@@ -313,40 +181,40 @@ int main(int argc, const char **argv)
 		return 2;
 	}
 	
-	set<ColorType> toKeep;
-	// We parse the colors to keep
-	if(! keepFilename.empty())
+	set<ColorType> colors;
+	// We parse the colors to overlay
+	if(! colorsFilename.empty())
 	{
-		ifstream keepFile(keepFilename.c_str());
-		if(keepFile.good())
+		ifstream colorsFile(colorsFilename.c_str());
+		if(colorsFile.good())
 		{
 			vector<ColorType> tmp;
-			keepFile>>tmp;
-			toKeep.insert(tmp.begin(),tmp.end());
+			colorsFile>>tmp;
+			colors.insert(tmp.begin(),tmp.end());
 		}
 		else
 		{
-			cerr << "Error reading list of colors to keep from file: "<<keepFilename<<endl;
+			cerr << "Error reading list of colors to overlay from file: "<<colorsFilename<<endl;
 			return 2;
 		}
 	}
-	if(! keep.empty())
+	if(! colorsString.empty())
 	{
 		vector<ColorType> tmp;
-		istringstream ss(keep);
+		istringstream ss(colorsString);
 		ss>>tmp;
-		toKeep.insert(tmp.begin(),tmp.end());
+		colors.insert(tmp.begin(),tmp.end());
 	}
 	
 	// We create the contour image
 	ColorMap* colorizedMap = getImageFromFile(colorizedMapFileName);
 	
 	// We erase any colors that is not to be kept
-	if(toKeep.size() > 0)
+	if(colors.size() > 0)
 	{
 		for(unsigned j = 0; j < colorizedMap->NumberPixels(); ++j)
-			if (toKeep.count(colorizedMap->pixel(j)) == 0)
-				colorizedMap->pixel(j) = colorizedMap->nullvalue();
+			if (colors.count(colorizedMap->pixel(j)) == 0)
+				colorizedMap->pixel(j) = colorizedMap->null();
 	}
 	
 	//We fill holes if requested
@@ -373,7 +241,7 @@ int main(int argc, const char **argv)
 	MagickImage contours = colorizedMap->magick();
 	if(!Label.empty())
 	{
-		string text = expand(Label, colorizedMap->header);
+		string text = expand(Label, colorizedMap->getHeader());
 		size_t text_size = colorizedMap->Xaxes()/40;
 		contours.fillColor("white");
 		contours.fontPointsize(text_size);
@@ -384,12 +252,12 @@ int main(int argc, const char **argv)
 	contours.write(outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + ".contours.png");
 	#endif
 		
-	Coordinate sunCenter = colorizedMap->SunCenter();
+	RealPixLoc sunCenter = colorizedMap->SunCenter();
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 	
 		// We read the sun image for the background
-		string imageFilename = expand(imagesFilenames[p], colorizedMap->header);
+		string imageFilename = expand(imagesFilenames[p], colorizedMap->getHeader());
 		if(! isFile(imageFilename))
 		{
 			cerr<<"Error : "<<imageFilename<<" is not a regular file!"<<endl;
@@ -398,7 +266,14 @@ int main(int argc, const char **argv)
 		EUVImage* image = getImageFromFile(imageType, imageFilename);
 		image->recenter(sunCenter);
 		// We improve the contrast
-		enhance_contrast(image, preprocessingSteps);
+		if(! preprocessingSteps.empty())
+		{
+			image->preprocessing(preprocessingSteps);
+		}
+		else 
+		{
+			image->enhance_contrast();
+		}
 		
 		#if DEBUG >= 2
 		image->writeFits(outputDirectory + "/" + stripSuffix(stripPath(imageFilename)) + ".background.fits");
@@ -428,4 +303,5 @@ int main(int argc, const char **argv)
 	}
 	return EXIT_SUCCESS;
 }
+
 

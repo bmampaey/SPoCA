@@ -15,22 +15,34 @@ class ColorMap : public SunImage<ColorType>
 {
 	public :
 		//! Constructor
-		ColorMap(const long xAxes = 0, const long yAxes = 0);
+		ColorMap(const unsigned& xAxes = 0, const unsigned& yAxes = 0);
+		
+		//! Constructor for an ColorMap from an header
+		ColorMap(const Header& header, const unsigned& xAxes = 0, const unsigned& yAxes = 0);
+
+		//! Constructor for an ColorMap from a WCS
+		ColorMap(const WCS& wcs, const unsigned& xAxes = 0, const unsigned& yAxes = 0);
+		
 		//! Copy Constructor
 		ColorMap(const SunImage<ColorType>& i);
+		
 		//! Copy Constructor
 		ColorMap(const SunImage<ColorType>* i);
-		//! Constructor
-		ColorMap(const Header& header);
 		
-		//! Destructor
+		//! Destructors
 		~ColorMap();
 		
+		//! Accessor to retrieve the interpolated value of the image in x y
+		ColorType interpolate(float x, float y) const;
+		
+		//! Accessor to retrieve the interpolated value of the image in c
+		ColorType interpolate(const RealPixLoc& c) const;
+		
 		//! Routine to read the sun parameters from the header
-		void postRead();
+		void parseHeader();
 		
 		//! Routine to write the sun parameters to the header
-		void preWrite();
+		void fillHeader();
 		
 		//! Routine to draw the contours 
 		ColorMap* drawContours(const unsigned width, const ColorType unsetValue );
@@ -49,11 +61,11 @@ class ColorMap : public SunImage<ColorType>
 		
 		//! Routine to do dilation with the shape of a disc
 		/*! Much slower than dilateDiamond */
-		ColorMap* dilateCircular(const unsigned size, const ColorType unsetValue);
+		ColorMap* dilateCircular(const Real size, const ColorType unsetValue);
 		
 		//! Routine to do erosion with the shape of a disc
 		/*! Much slower than erodeDiamond */
-		ColorMap* erodeCircular(const unsigned size, const ColorType unsetValue);
+		ColorMap* erodeCircular(const Real size, const ColorType unsetValue);
 		
 		//! Routine to threshold regions by its raw size
 		void thresholdRegionsByRawArea(const double minSize);
@@ -65,7 +77,7 @@ class ColorMap : public SunImage<ColorType>
 		unsigned thresholdConnectedComponents(const unsigned minSize, const ColorType setValue = 0);
 		
 		//! Routine to propagate a color in the connected component specified by firstPixel
-		unsigned propagateColor(const ColorType color, const Coordinate& firstPixel);
+		unsigned propagateColor(const ColorType color, const PixLoc& firstPixel);
 		
 		//! Routine to propagate a color in the connected component specified by firstPixel
 		unsigned propagateColor(const ColorType color, const unsigned firstPixel);
@@ -76,8 +88,8 @@ class ColorMap : public SunImage<ColorType>
 		//! Routine that tries to remove holes in connected components
 		ColorMap* removeHoles(ColorType unusedColor = std::numeric_limits<ColorType>::max() - 1);
 		
-		//! Routine that generate a chaincode for the connected component indicated by firstPixel
-		std::vector<Coordinate> chainCode(const Coordinate firstPixel, const unsigned max_points) const;
+		//! Method to aggregates pixels into blobs by perfoming a closing
+		void aggregateBlobs(const Real& aggregationFactor, const int& projection = SunImage<ColorType>::no_projection);
 		
 		#ifdef MAGICK
 		//! Routine that creates and return a MagickImage with the specified background

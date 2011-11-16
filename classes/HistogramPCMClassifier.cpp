@@ -39,7 +39,7 @@ void HistogramPCMClassifier::computeU()
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = distance_squared(*xj,B[i]) / eta[i] ;
 				*uij = 1. / (1. + *uij * *uij);
 			}
 		}
@@ -50,7 +50,7 @@ void HistogramPCMClassifier::computeU()
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = distance_squared(*xj,B[i]) / eta[i] ;
 				*uij = 1. / (1. + *uij);
 			}
 		}
@@ -61,7 +61,7 @@ void HistogramPCMClassifier::computeU()
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = distance_squared(*xj,B[i]) / eta[i] ;
 				*uij = 1. / (1. + pow(*uij , Real(1./(fuzzifier-1.))));
 			}
 		}
@@ -82,7 +82,7 @@ void HistogramPCMClassifier::computeEta()
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
 				Real uij_m = *uij * *uij * xj->c;
-				eta[i] += uij_m * d2(*xj,B[i]);
+				eta[i] += uij_m * distance_squared(*xj,B[i]);
 				sum[i] += uij_m;
 			}
 		}
@@ -94,7 +94,7 @@ void HistogramPCMClassifier::computeEta()
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
 				Real uij_m = pow(*uij,fuzzifier) * xj->c;
-				eta[i] += uij_m * d2(*xj,B[i]);
+				eta[i] += uij_m * distance_squared(*xj,B[i]);
 				sum[i] += uij_m;
 			}
 		}
@@ -120,7 +120,7 @@ void HistogramPCMClassifier::computeEta(Real alpha)
 		{
 			if (*uij > alpha)
 			{
-				eta[i] += d2(*xj,B[i]);
+				eta[i] += distance_squared(*xj,B[i]);
 				sum[i] +=  xj->c;
 			}
 		}
@@ -150,7 +150,7 @@ Real HistogramPCMClassifier::computeJ() const
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				result += *uij * *uij * d2(*xj,B[i]) * xj->c;
+				result += *uij * *uij * distance_squared(*xj,B[i]) * xj->c;
 				sum[i] += (1 - *uij) * (1 - *uij) * xj->c; 
 			}
 		}
@@ -161,7 +161,7 @@ Real HistogramPCMClassifier::computeJ() const
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				result += pow( *uij, fuzzifier) * d2(*xj,B[i]) * xj->c;
+				result += pow( *uij, fuzzifier) * distance_squared(*xj,B[i]) * xj->c;
 				sum[i] += pow(Real(1. - *uij), fuzzifier) * xj->c; 
 			}
 		}
@@ -261,7 +261,7 @@ Real HistogramPCMClassifier::assess(vector<Real>& V)
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
 		{
-			distBiBii = d2(B[i],B[ii]);
+			distBiBii = distance_squared(B[i],B[ii]);
 			if(distBiBii < minDist[i])
 				minDist[i] = distBiBii;
 			if(distBiBii < minDist[ii])
@@ -276,7 +276,7 @@ Real HistogramPCMClassifier::assess(vector<Real>& V)
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				V[i] += d2(*xj,B[i]) * *uij * *uij * xj->c;
+				V[i] += distance_squared(*xj,B[i]) * *uij * *uij * xj->c;
 				sum[i] += (1 - *uij) * (1 - *uij) * xj->c; 
 				numberElements += xj->c;
 			}
@@ -288,7 +288,7 @@ Real HistogramPCMClassifier::assess(vector<Real>& V)
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				V[i] += d2(*xj,B[i]) * pow(*uij, fuzzifier) * xj->c;
+				V[i] += distance_squared(*xj,B[i]) * pow(*uij, fuzzifier) * xj->c;
 				sum[i] += pow(Real(1. - *uij), fuzzifier) * xj->c; 
 				numberElements += xj->c;
 			}

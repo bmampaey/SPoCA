@@ -1,7 +1,6 @@
 #include "ActiveRegion.h"
 
 using namespace std;
-
 extern std::string filenamePrefix;
 
 /*! Return the indice of the biggest class center */
@@ -22,103 +21,285 @@ unsigned ARclass(const vector<RealFeature>& B)
 	return ARclass;
 }
 
-
-/*!
-@param segmentedMap ColorMap of the segmentation that has already all the keywords correctly set
-@param ARclass The color in the segmentedMap that correspond to the class of AR
-@param thresholdRawArea If set, the threshold fro removing small AR will be computed onthe Raw Area. Otherwise on the Area at disc center
-*/
-ColorMap* ActiveRegionMap(const ColorMap* segmentedMap, unsigned ARclass, bool thresholdRawArea)
+ColorMap* getAggregatedARMap(const ColorMap* ARMap, const int projection)
 {
-	ColorMap* ARMap = new ColorMap(segmentedMap);
 
-	/*! Create a map of the class ARclass */
-	ARMap->bitmap(segmentedMap, ARclass);
+	string filename = filenamePrefix + "ARMap.";
 
-	#if DEBUG >= 2
-	ARMap->writeFits(filenamePrefix + "ARmap.pure.fits");
-	#endif
-
-	/*! Clean the colormap to remove very small components (like protons)*/
-	unsigned cleaningFactor = unsigned(AR_CLEANING / sqrt(ARMap->PixelArea() ));
-	ARMap->erodeCircular(cleaningFactor,0)->dilateCircular(cleaningFactor,0);
+	Real cleaningFactor = Real(AR_CLEANING) / sqrt(ARMap->PixelArea());
+	Real aggregationFactor = Real(AR_AGGREGATION) / sqrt(ARMap->PixelArea());
+	
+	ColorMap* aggregated = new ColorMap(ARMap);
 	
 	#if DEBUG >= 2
-	ARMap->writeFits(filenamePrefix + "ARmap.opened.fits");
+	aggregated->writeFits(filename + "pure.fits");
 	#endif
 	
+	/*! Apply the projection */
+	switch(projection)
+	{
+		case(SunImage<ColorType>::equirectangular):
+			
+			aggregated->equirectangular_projection(ARMap, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "equirectangular_projection.fits");
+			#endif
+			cleaningFactor *= (2./3.);
+			aggregationFactor *= (2./3.);
+		break;
+		
+		case(SunImage<ColorType>::Lambert_cylindrical):
+			aggregated->Lambert_cylindrical_projection(ARMap, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "Lambert_cylindrical_projection.fits");
+			#endif
+			cleaningFactor *= (2./3.);
+			aggregationFactor *= (2./3.);
+		break;
+		
+		case(SunImage<ColorType>::sinuosidal):
+			aggregated->sinuosidal_projection(ARMap, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "sinuosidal_projection.fits");
+			#endif
+			cleaningFactor *= (2./3.);
+			aggregationFactor *= (2./3.);
+		break;
+		
+		case(SunImage<ColorType>::distance_transform):
+			cerr<<"Distance transform is not yet implemented"<<endl;
+		break;
+	}
 	
-	/*! Remove the parts off limb (Added by Cis to avoid large off-limbs AR to combine 2 well separated AR on-disk to be aggregated as one)*/
+	/*! Clean the color map to remove very small components (like protons)*/
+	aggregated->erodeCircular(cleaningFactor, 0);
+	
+	#if DEBUG >= 2
+	aggregated->writeFits(filename + "eroded.fits");
+	#endif
+	
+	/*! Aggregate the blobs together */
+	aggregated->dilateCircular(cleaningFactor + aggregationFactor, 0);
+	
+	#if DEBUG >= 2
+	aggregated->writeFits(filename + "dilated.fits");
+	#endif
+	
+	/*! Give back the original size */
+	aggregated->erodeCircular(aggregationFactor, 0);
+	
+	#if DEBUG >= 2
+	aggregated->writeFits(filename + "closed.fits");
+	#endif
+	
+	/* Apply the deprojection */
+	ColorMap* projeted = NULL;
+	switch(projection)
+	{
+		case(SunImage<ColorType>::equirectangular):
+			projeted = new ColorMap(aggregated);
+			aggregated->equirectangular_deprojection(projeted, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "equirectangular_deprojection.fits");
+			#endif
+		break;
+		
+		case(SunImage<ColorType>::Lambert_cylindrical):
+			projeted = new ColorMap(aggregated);
+			aggregated->Lambert_cylindrical_deprojection(projeted, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "Lambert_cylindrical_deprojection.fits");
+			#endif
+		break;
+		
+		case(SunImage<ColorType>::sinuosidal):
+			projeted = new ColorMap(aggregated);
+			aggregated->sinuosidal_deprojection(projeted, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "sinuosidal_deprojection.fits");
+			#endif
+		break;
+		
+		case(SunImage<ColorType>::distance_transform):
+			cerr<<"Distance transform is not yet implemented"<<endl;
+		break;
+	}
+	delete projeted;
+	
+	/*! Remove the parts off limb and colorize */
+	aggregated->nullifyAboveRadius(1.); 
+	aggregated->colorizeConnectedComponents(1);
+	
+	#if DEBUG >= 2
+	aggregated->writeFits(filename + "aggregated.fits");
+	#endif
+
+	return aggregated;
+}
+
+Header getARMapHeader()
+{
+	Header map_header;
+	string projection;
+	switch(AR_PROJECTION)
+	{
+		case(SunImage<ColorType>::equirectangular):
+			projection = "equirectangular";
+		break;
+		
+		case(SunImage<ColorType>::Lambert_cylindrical):
+			projection = "Lambert cylindrical";
+		break;
+		
+		case(SunImage<ColorType>::sinuosidal):
+			projection = "sinuosidal";
+		break;
+		
+		case(SunImage<ColorType>::distance_transform):
+			projection = "Distance transform";
+		break;
+		
+		default:
+			projection = "None";
+	}
+	
+	map_header.set("CLEANING", AR_CLEANING, "Cleaning factor in arcsec");
+	map_header.set("AGGREGAT", AR_AGGREGATION, "Aggregation factor in arcsec");
+	map_header.set("PROJECTN", projection, "Projection used for the aggregation");
+	map_header.set("MINSIZE", MIN_AR_SIZE, "Min size of regions in arcsec²");
+	map_header.set("THRAWAR", AR_TRA, "Min size threshold on raw area");
+	map_header.set("FRAGGMTD", AR_FRAGMENTED, "Regions are fragmented");
+	return map_header;
+}
+
+void writeARMap(ColorMap*& ARMap, const string& filename, bool compressed, unsigned chaincodeMaxPoints, Real chaincodeMaxDeviation, EUVImage* image)
+{
+	/*! Clean everything above the radius */
 	ARMap->nullifyAboveRadius(1.);
 	
-	/*! Aggregate the blobs together*/
-	blobsIntoAR(ARMap);
+	/*! We get the map of aggregated AR */
+	ColorMap* aggregatedMap = getAggregatedARMap(ARMap, AR_PROJECTION);
 	
-	#if DEBUG >= 2
-	ARMap->writeFits(filenamePrefix + "ARmap.aggregated.fits");
-	#endif
-	
-	/*! Remove the AR post limb*/
-	ARMap->nullifyAboveRadius(1.); 
+	if(AR_FRAGMENTED)
+	{
+		/*! Color the pixels using the aggregated map */
+		for (unsigned j = 0; j < aggregatedMap->NumberPixels(); ++j)
+		{
+			if(ARMap->pixel(j) == 1)
+			{
+				ARMap->pixel(j) = aggregatedMap->pixel(j);
+			}
+		}
+	}
+	else
+	{
+		delete ARMap;
+		ARMap = aggregatedMap;
+	}
 
-	/*! Erase the small regions*/
-	if(thresholdRawArea)
+	#if DEBUG >= 2
+	ARMap->writeFits(filenamePrefix + "ARMap.all.fits");
+	#endif
+
+	/*! Erase the small regions */
+	if(AR_TRA)
 		ARMap->thresholdRegionsByRawArea(MIN_AR_SIZE);
 	else
 		ARMap->thresholdRegionsByRealArea(MIN_AR_SIZE);
 
-	return ARMap;
-}
-
-#if !defined(AR_AGGREGATION_TYPE) || (AR_AGGREGATION_TYPE == AR_AGGREGATION_FRAGMENTED)
-void blobsIntoAR (ColorMap* ARmap)
-{
-	/*! Create a map by dilation */ 
-	unsigned dilateFactor = unsigned(AR_AGGREGATION  / sqrt(ARmap->PixelArea() ));
-	ColorMap* dilated = new ColorMap(ARmap);
-	dilated->dilateCircular(dilateFactor,ARmap->nullvalue());
-	dilated->colorizeConnectedComponents(1);
 	#if DEBUG >= 2
-	dilated->writeFits(filenamePrefix + "ARmap.dilated.fits");
+	ARMap->writeFits(filenamePrefix + "ARMap.large.fits");
 	#endif
 	
-	/*! Color the blobs using the dilated map */
-	for (unsigned j=0; j < ARmap->NumberPixels(); ++j)
+	/*! We write the map of AR to the fits file */
+	FitsFile file(filename, FitsFile::overwrite);
+	ARMap->writeFits(file, compressed ? FitsFile::compress : 0, "ActiveRegionMap");
+	
+	/*! We write some info about the ARMap creation */ 
+	Header ARMapHeader = getARMapHeader();
+	file.writeHeader(ARMapHeader);
+	
+	/*! We get the regions */
+	vector<Region*> regions = getRegions(ARMap);
+	
+	/*! We write the regions to the fits file */
+	file.writeTable("Regions");
+	writeRegions(file, regions);
+	
+	/*! We get the chaincode and write them to the fits file */
+	if(chaincodeMaxPoints > 0)
 	{
-		if (ARmap->pixel(j) != ARmap->nullvalue())
-			ARmap->pixel(j) = dilated->pixel(j);
+		#if DEBUG>= 2
+		ColorMap chaincode_map(ARMap);
+		#endif
+		
+		file.writeTable("Chaincode");
+		for (unsigned r = 0; r < regions.size(); ++r)
+		{
+			vector<PixLoc> chaincode = regions[r]->chainCode(aggregatedMap, chaincodeMaxPoints, chaincodeMaxDeviation);
+			file.writeColumn(itos(regions[r]->Id(),7), chaincode);
+		
+			#if DEBUG>= 2
+			for (unsigned c = 0; c < chaincode.size(); ++c)
+			{
+				chaincode_map.drawCircle(chaincode[c], 3, r+10);
+			}
+			#endif
+		}
+		#if DEBUG>= 2
+		chaincode_map.writeFits(filenamePrefix + "ARMap.chaincodes.fits");
+		#endif
 	}
-	delete dilated;
-
+	
+	/*! We write intensities statistics relative to image */
+	if(image)
+	{
+		/*! We get the stats of the AR */
+		vector<RegionStats*> regions_stats =  getRegionStats(ARMap, image, regions);
+	
+		/*! We write the AR Stats into the fits */
+		file.writeTable("ActiveRegionStats");
+		writeRegions(file, regions_stats);
+		
+		/*! We write some info bout the image in the header of the table */
+		Header tableHeader;
+		tableHeader.set("WAVELNTH", image->Wavelength(), "Wavelength of the intensity image.");
+		
+		const Header& imageHeader = image->getHeader();
+		if(imageHeader.has("LVL_NUM"))
+			tableHeader.set("LVL_NUM", imageHeader.get<float>("LVL_NUM"), "Level number of the intensity image.");
+		if(imageHeader.has("DATE"))
+			tableHeader.set("DATE", imageHeader.get<string>("DATE"), "Creation date of the intensity image.");
+		if(imageHeader.has("QUALITY"))
+			tableHeader.set("QUALITY", imageHeader.get<unsigned>("QUALITY"), "Quality level of the intensity image.");
+		
+		file.writeHeader(tableHeader);
+		
+		#if DEBUG>= 3
+		cerr<<"ActiveRegionStats Table"<<endl;
+		if(regions_stats.size() > 0)
+			cerr<<regions_stats[0]->toString("|", true)<<endl;
+		else
+			cerr<<"Empty"<<endl;
+		for (unsigned r = 0; r < regions_stats.size(); ++r)
+		{
+			cerr<<regions_stats[r]->toString("|")<<endl;
+		}
+		#endif
+		for (unsigned r = 0; r < regions_stats.size(); ++r)
+		{
+			delete regions_stats[r];
+		}
+	}
+	
+	/*! We cleanup */
+	for (unsigned r = 0; r < regions.size(); ++r)
+	{
+		delete regions[r];
+	}
+	
+	if(ARMap != aggregatedMap)
+		delete aggregatedMap;
 }
-#elif AR_AGGREGATION_TYPE == AR_AGGREGATION_CLOSING
-/*! Aggregate the blobs together by closing */
-void blobsIntoAR (ColorMap* ARmap)
-{
-	unsigned dilateFactor = unsigned(AR_AGGREGATION  / sqrt(ARmap->PixelArea() ) );
-	
-	ARmap->dilateCircular(dilateFactor, 0)->erodeCircular(dilateFactor, 0);
-	
-	ARmap->colorizeConnectedComponents(1);
-}
-
-#elif AR_AGGREGATION_TYPE == AR_AGGREGATION_DILATE
-
-/*! Aggregate the blobs together by dilation */
-void blobsIntoAR (ColorMap* ARmap)
-{
-	unsigned dilateFactor = unsigned(AR_AGGREGATION  / sqrt(ARmap->PixelArea() ) );
-	
-	ARmap->dilateCircular(dilateFactor, 0);
-	
-	ARmap->colorizeConnectedComponents(1);
-}
-
-#else
-#warning "Unknown AR_AGGREGATION_TYPE"
-#endif 
-
-
-
 
 

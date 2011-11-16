@@ -8,11 +8,11 @@ LFLAGS=-lcfitsio $(MAGICKLFLAGS)
 DFLAGS= -DMAGICK 
 
 all:bin/RGBcomposite.x
-clean: rm bin/RGBcomposite.x objects/RGBcomposite.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/Image.o objects/Coordinate.o objects/ArgumentHelper.o objects/mainutilities.o objects/ColorMap.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o
+clean: rm bin/RGBcomposite.x objects/RGBcomposite.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/WCS.o objects/Image.o objects/Coordinate.o objects/ArgumentHelper.o objects/mainutilities.o objects/ColorMap.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o
 
 
-bin/RGBcomposite.x : RGBcomposite.mk objects/RGBcomposite.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/Image.o objects/Coordinate.o objects/ArgumentHelper.o objects/mainutilities.o objects/ColorMap.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/RGBcomposite.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/Image.o objects/Coordinate.o objects/ArgumentHelper.o objects/mainutilities.o objects/ColorMap.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o $(LFLAGS) -o bin/RGBcomposite.x
+bin/RGBcomposite.x : RGBcomposite.mk objects/RGBcomposite.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/WCS.o objects/Image.o objects/Coordinate.o objects/ArgumentHelper.o objects/mainutilities.o objects/ColorMap.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/RGBcomposite.o objects/MagickImage.o objects/EUVImage.o objects/SunImage.o objects/FitsFile.o objects/Header.o objects/WCS.o objects/Image.o objects/Coordinate.o objects/ArgumentHelper.o objects/mainutilities.o objects/ColorMap.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/tools.o $(LFLAGS) -o bin/RGBcomposite.x
 
 objects/RGBcomposite.o : RGBcomposite.mk utilities/RGBcomposite.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/EUVImage.h classes/MagickImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) utilities/RGBcomposite.cpp -o objects/RGBcomposite.o
@@ -23,19 +23,22 @@ objects/MagickImage.o : RGBcomposite.mk classes/MagickImage.cpp classes/constant
 objects/EUVImage.o : RGBcomposite.mk classes/EUVImage.cpp classes/Coordinate.h classes/SunImage.h classes/MagickImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/EUVImage.cpp -o objects/EUVImage.o
 
-objects/SunImage.o : RGBcomposite.mk classes/SunImage.cpp classes/Image.h classes/Coordinate.h classes/Header.h classes/FitsFile.h
+objects/SunImage.o : RGBcomposite.mk classes/SunImage.cpp classes/Image.h classes/WCS.h classes/Header.h classes/Coordinate.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SunImage.cpp -o objects/SunImage.o
 
-objects/FitsFile.o : RGBcomposite.mk classes/FitsFile.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Header.h
+objects/FitsFile.o : RGBcomposite.mk classes/FitsFile.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Header.h classes/Coordinate.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/FitsFile.cpp -o objects/FitsFile.o
 
 objects/Header.o : RGBcomposite.mk classes/Header.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Header.cpp -o objects/Header.o
 
+objects/WCS.o : RGBcomposite.mk classes/WCS.cpp classes/constants.h classes/Coordinate.h classes/FitsFile.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/WCS.cpp -o objects/WCS.o
+
 objects/Image.o : RGBcomposite.mk classes/Image.cpp classes/tools.h classes/constants.h classes/Coordinate.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Image.cpp -o objects/Image.o
 
-objects/Coordinate.o : RGBcomposite.mk classes/Coordinate.cpp 
+objects/Coordinate.o : RGBcomposite.mk classes/Coordinate.cpp classes/constants.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o
 
 objects/ArgumentHelper.o : RGBcomposite.mk classes/ArgumentHelper.cpp 

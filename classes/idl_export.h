@@ -1269,7 +1269,7 @@ typedef enum {
 
 typedef struct {
   IDL_GR_PT_TYPE_e  type;   /* Indicates the field of IDL_GR_PT union to use */
-  int               coord;  /* Coordinate system.  IDL_COORD_* */
+  int               coord;  /* PixLoc system.  IDL_COORD_* */
   IDL_GR_PT         pt;
 } IDL_GR_TYPED_PT;
 

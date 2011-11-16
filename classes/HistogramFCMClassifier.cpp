@@ -111,7 +111,7 @@ void HistogramFCMClassifier::computeU()
 	{
 		for (i = 0 ; i < numberClasses ; ++i)
 		{
-			d2XjB[i] = d2(*xj,B[i]);
+			d2XjB[i] = distance_squared(*xj,B[i]);
 			if (d2XjB[i] < precision)
 				break;
 		}
@@ -160,7 +160,7 @@ Real HistogramFCMClassifier::computeJ() const
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				result +=  *uij * *uij * d2(*xj,B[i]);
+				result +=  *uij * *uij * distance_squared(*xj,B[i]);
 			}
 		}
 	}
@@ -170,7 +170,7 @@ Real HistogramFCMClassifier::computeJ() const
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				result +=  pow(*uij, fuzzifier) * d2(*xj,B[i]);
+				result +=  pow(*uij, fuzzifier) * distance_squared(*xj,B[i]);
 			}
 		}
 	}
@@ -242,7 +242,7 @@ Real HistogramFCMClassifier::assess(vector<Real>& V)
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
 		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
 		{
-			distBiBii = d2(B[i],B[ii]);
+			distBiBii = distance_squared(B[i],B[ii]);
 			if(distBiBii < minDist[i])
 				minDist[i] = distBiBii;
 			if(distBiBii < minDist[ii])
@@ -257,7 +257,7 @@ Real HistogramFCMClassifier::assess(vector<Real>& V)
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				V[i] += d2(*xj,B[i]) * *uij * *uij * xj->c;
+				V[i] += distance_squared(*xj,B[i]) * *uij * *uij * xj->c;
 				numberElements += xj->c;
 			}
 		}
@@ -268,7 +268,7 @@ Real HistogramFCMClassifier::assess(vector<Real>& V)
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				V[i] += d2(*xj,B[i]) * pow(*uij, fuzzifier) * xj->c;
+				V[i] += distance_squared(*xj,B[i]) * pow(*uij, fuzzifier) * xj->c;
 				numberElements += xj->c;
 			}
 		}

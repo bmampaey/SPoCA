@@ -6,117 +6,26 @@ import dateutil.parser
 import re
 import sys
 import argparse
+from event import *
 
 gradient = ["#f0f01e","#0000f0","#007800","#5af0f0","#f00096","#960000","#965af0","#009696","#5af03c","#f0785a","#5a0096","#969600","#f03c00","#00f000","#1e78f0","#f05ab4","#1ef096","#001e96","#7800f0","#00d2f0","#f000f0","#f09600","#f0f078","#b41e5a","#96f000","#1eb43c","#f0f000","#001ef0","#3c3cb4","#78f0f0","#b41eb4","#780000","#7878f0","#007878","#78f05a","#f0965a","#5ad21e","#787800","#f00000","#b43c00","#0078f0","#f078f0","#1ed296","#000078","#5a00f0","#00f0f0","#3cb4f0","#d29600","#f0f05a","#d2005a","#780078","#009600","#00f03c","#b4f000","#001ed2","#f05a96","#d200f0","#3c5ad2","#963cd2","#007896","#78f078","#f05a3c","#5ad200","#96001e","#96d23c","#f01e00","#965a00","#f05af0","#00d296","#1eb45a","#5a00d2","#5af0d2","#00b4f0","#f0b41e","#5a96f0","#f0005a","#960078","#1e9600","#00f01e","#d2f000","#000096","#f03c96","#f000d2","#003cf0","#963cf0","#1e78b4","#5af078","#d25a3c","#5af000","#b4001e","#b4f05a","#96b41e","#b47800","#d25ad2","#00f096","#00965a","#5a1eb4","#3cf0f0","#0096f0","#f0b43c","#5a78f0","#3c00f0","#b40078","#3c9600","#1ef03c","#00d200","#0000b4","#f07878","#d200d2","#f01e96","#961ef0","#1e5ab4","#5af096","#f03c1e","#78f000","#961e1e","#96f05a","#1eb4b4","#967800","#f05ad2","#b43cb4","#00963c","#b4d21e","#5ad2f0","#00f0d2","#f0d25a","#5a5af0","#5a00b4","#f0961e","#d2003c","#00f05a","#1ed200","#0000d2","#5ad23c","#d25a5a","#f000b4","#9600f0","#005a96","#005af0","#d23c00","#3cf096","#3c96f0","#d21e78","#00b496","#789600","#f03cf0","#d23cb4","#00961e","#b4f01e","#5ad2d2","#1ef0f0","#d2d25a","#785af0","#780096","#f0b400","#96003c","#3c3cd2","#1ef000","#1e0096","#78d23c","#d2783c","#1ed25a","#b400f0","#f0001e","#005ab4","#963c00","#f05a00","#1e96f0","#f00078","#00d2b4","#5a9600","#1e9696","#f03cd2","#f05a78","#00b41e","#5af0b4","#1e00f0","#d2f05a","#b45af0","#961e96","#f0d200","#b4b41e","#5a5ad2","#3cf000","#3c0096","#78f03c","#f0963c","#1ef05a","#b400d2","#d2001e","#003cb4","#b43c3c","#d25a00","#5ab4f0","#d20078","#00f0b4","#781ef0","#0096d2","#009678","#f03cb4","#1e961e","#3cd296","#961e00","#d2f03c","#d25af0","#1e1ef0","#78d200","#d2b400","#96961e","#f03c5a","#3c00b4","#3c78d2","#f0b45a","#3cf03c","#9600b4","#00d23c","#003c96","#d21e1e","#f0781e","#3cd2f0","#96005a","#b45a00","#783cf0","#00b4d2","#005ad2","#f01eb4","#1eb400","#1eb478","#1ef0b4","#b4f03c","#d23cf0","#00f078","#78d21e","#d2d200","#b4961e","#d23c78","#1e00d2","#3c78f0","#f0d23c","#5af05a","#7800b4","#3cf01e","#1e1e96","#d20000","#f01e3c","#f0783c","#b4005a","#b43c1e","#5a3cd2","#0096b4","#003cd2","#d200b4","#00b400","#00b45a","#3cf0d2","#00d2d2","#b43cf0","#f01ef0","#96f01e","#78b400","#b49600","#d23c96","#b4b43c","#3c96d2","#f0f03c","#3cf078","#961eb4","#3cd21e","#1e00b4","#b40000","#f0003c","#f05a5a","#f07800","#d23c1e","#5a3cf0","#1eb496","#0078b4","#1e5af0","#1e3cb4","#00d25a","#d20096","#1ef0d2","#00d21e","#d21ef0","#78f01e","#b4d200","#b4781e","#78b41e","#d2b43c","#1eb4f0","#b4003c","#5ad25a","#781eb4","#3cd200","#3c00d2","#3cd2b4","#f01e5a","#b41e00","#960096","#f05a1e","#f01e1e","#00b4b4","#5a1ef0","#1e78d2","#001eb4","#1ef078","#d21e96","#1e3cf0","#00b43c","#b41ef0","#96f03c","#f01ed2","#b4b400","#d2f01e","#d2963c","#1ed2f0","#b45a1e","#b41e3c","#00b478","#5ab41e","#1ef01e","#3cf0b4","#3c1eb4","#5af01e","#3cb4b4","#783cd2","#f03c3c","#d21e00","#7800d2","#0078d2","#3cd25a","#b400b4","#f01e78","#3c5af0","#1eb41e","#b43cd2","#3c1ef0","#b41e78","#96d200","#f0d21e","#d2961e","#b4d23c","#1ed2d2","#1e3cd2","#00d278","#5ab400","#d25a1e","#b41e1e","#d21e3c","#d21eb4","#1e96b4","#1e1eb4","#1ed23c","#5a1ed2","#9600d2","#d27800","#3cd278","#b40096","#f03c78","#3cf05a","#3cb41e","#b41ed2","#d23cd2","#3c3cf0","#96b400","#96d21e","#d2b41e","#d2d23c","#3cd2d2","#1e5ad2","#d23c5a","#1ed2b4","#1eb4d2","#d2781e","#1ed21e","#d2d21e","#b41e96","#1e1ed2","#3cd23c","#781ed2","#1e96d2","#d21e5a","#1ed278","#3cb400","#d21ed2","#3c1ed2","#3cb43c","#3cb4d2","#d23c3c","#961ed2"]
 
-class Event:
-	def __init__(self, type=None, time = None, color=None):
-		self.type = type
-		self.time = time
-		self.color = color
-	
-	def set(self, key, value):
-		setattr(self,key.lower(),value)
-	
-	def get(self, key):
-		try:
-			value = getattr(self, key.lower())
-		except AttributeError, why:
-			print "Event does not have the attribute " + str(key)
-			return 'NA'
-		
-		if isinstance(value, datetime):
-			return value.strftime('%Y-%m-%d %H:%M:%S')
-		elif isinstance(value, float):
-			return '%.2f' % value
-		elif isinstance(value, tuple):
-			return '(%.2f, %.2f)' % value
-		else:
-			return str(value)
-	
-	def __str__(self):
-		return self.tostr(['color', 'time'], '\t')
-	
-	def tostr(self, keys=None, sep = '\n'):
-		result = ''
-		if not keys:
-			return result
-		
-		if isinstance(keys, (list, tuple)):
-			seen_keys = []
-			for key in keys:
-				if key.lower() in seen_keys:
-					continue
-				else:
-					seen_keys.append(key.lower())
-				
-				if result:
-					result += sep + str(key) + ': ' + self.get(key)
-				else:
-					result = str(key) + ': ' + self.get(key)
-		else:
-			result = str(keys)+ ': ' + self.get(keys)
-		
-		return result
 
-class MetaEvent:
-	def __init__(self, color=None, events=None):
-		self.color = color
-		self.events = []
-		if events:
-			for event in events:
-				self.add(event)
+timedelta_regex = re.compile(r'((?P<days>\d+?)d)?((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?')
+def parse_duration(duration):
 	
-	def add(self, event):
-		if self.color == None:
-			self.color = event.color
-		elif self.color != event.color:
-			print "Color of event differ from MetaEvent color"
-		
-		self.events.append(event)
+	parts = timedelta_regex.match(duration)
+	if not parts:
+		print "Cannot convert duration to timedelta : " + str(duration)
+		return None
 	
-	def __add__(self, event):
-		self.add(event)
-	
-	def lifetime(self):
-		if not self.events:
-			return timedelta(seconds=0)
-		else:
-			self.events.sort(key=attrgetter('time'))
-			return self.events[-1].time - self.events[0].time
+	parts = parts.groupdict()
+	time_params = {}
+	for (name, param) in parts.iteritems():
+		if param:
+			time_params[name] = int(param)
+	return timedelta(**time_params)
 
-
-def parse_event(filename):
-	def get_coordinates(element):
-		return (float(element.getElementsByTagName('C1')[0].firstChild.data), float(element.getElementsByTagName('C2')[0].firstChild.data))
-
-	def get_date(element):
-		return dateutil.parser.parse(element.getElementsByTagName('ISOTime')[0].firstChild.data)
-
-	def get_uri(value):
-		return re.search(r"([a-zA-Z0-9_]+)$", value).group(1)
-	
-	dom = xml.dom.minidom.parse(filename)
-	event = Event()
-	for p in dom.getElementsByTagName('Param'):
-		event.set(p.getAttribute("name").lower(), p.getAttribute("value"))
-	event.set("time", get_date(dom.getElementsByTagName('TimeInstant')[0]))
-	event.set("start_time", get_date(dom.getElementsByTagName('StartTime')[0]))
-	event.set("stop_time", get_date(dom.getElementsByTagName('StopTime')[0]))
-	event.set("center", get_coordinates(dom.getElementsByTagName('Value2')[0]))
-	event.set("center_error", get_coordinates(dom.getElementsByTagName('Error2')[0]))
-	event.set("box_center", get_coordinates(dom.getElementsByTagName('Center')[0]))
-	event.set("box_size", get_coordinates(dom.getElementsByTagName('Size')[0]))
-	event.set('type', dom.getElementsByTagName('Concept')[0].firstChild.data)
-	event.set('uri', get_uri(dom.getElementsByTagName('AuthorIVORN')[0].firstChild.data))
-	event.set('color', int(re.search(r"(\d+)$", event.frm_specificid).group(1)))
-	
-	event_links = dict()
-	for p in dom.getElementsByTagName('Reference'):
-		if p.getAttribute("name") == "Edge":
-			event_links[get_uri(p.getAttribute("uri"))] = p.getAttribute("type")
-	
-	return event, event_links
 
 
 # Start point of the script
@@ -144,13 +53,13 @@ if __name__ == "__main__":
 	for filename in filenames:
 		
 		# We parse the xml file
-		event, event_links = parse_event(filename)
+		event, event_links = parse_voevent(filename)
 	
 		# We create the label
-		label = event.tostr(keywords, sep='\l') + '\l'
+		label = event.to_str(keywords, sep='\l') + '\l'
 				
 		# We create the tooltip
-		tooltip =  event.tostr(tooltips, sep='&#010; ')
+		tooltip =  event.to_str(tooltips, sep='&#010; ')
 	
 		# We assign the right color
 		color = gradient[event.color % len(gradient)]
@@ -208,7 +117,7 @@ if __name__ == "__main__":
 		graph.add_edge(pydot.Edge(timeline[t], timeline[t+1],style="invis"))
 
 	# We write the graph
-	graph.write(graphname+'.dot')
+	#graph.write(graphname+'.dot')
 	graph.write_png(graphname+'.png')
 	#graph.write_cmapx(graphname+'.cmapx')
 	cmapx = graph.create_cmapx()
@@ -218,7 +127,6 @@ if __name__ == "__main__":
 			f.write(cmapx)
 	except IOError, why:
 		print "Error writing html file: " , str(why)
-
 
 
 

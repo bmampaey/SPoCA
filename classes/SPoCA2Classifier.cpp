@@ -19,7 +19,7 @@ void SPoCA2Classifier::computeU()
 	{
 		for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 		{
-			Real d2BiXj = d2(*xj,B[i]);
+			Real d2BiXj = distance_squared(*xj,B[i]);
 			*uij += d2BiXj;
 			for(Neighborhood::iterator k = Nj->begin(); k!=Nj->end(); ++k)
 			{

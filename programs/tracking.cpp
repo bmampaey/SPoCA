@@ -69,7 +69,7 @@ int main(int argc, const char **argv)
 	cout<<setiosflags(ios::fixed);
 
 	// Program version
-	const char * version = "2.0";
+	string version = "2.0";
 
 	// Options for the tracking
 	unsigned newColorArg = 0;
@@ -77,7 +77,7 @@ int main(int argc, const char **argv)
 	unsigned overlap = 1;
 	bool recolorImages = false;
 	bool derotate = false;
-	string regionTableHdu;
+	string regionTableHdu = "Regions";
 	
 	// Options for the desired outputs 
 	bool uncompressed_results = false;
@@ -103,7 +103,7 @@ int main(int argc, const char **argv)
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
-	arguments.set_version(version);
+	arguments.set_version(version.c_str());
 	arguments.process(argc, argv);
 
 	newColor = newColorArg;
@@ -121,44 +121,42 @@ int main(int argc, const char **argv)
 		// We get the image
 		ColorMap* image = new ColorMap();
 		image->readFits(file);
+		
 		// We crop the image
 		image->nullifyAboveRadius(1);
 		images.push_back(image);
-		// We move to the table of regions
-		file.moveTo(regionTableHdu);
-		//We get the regions from the region table
+		
+		// We get te regions
 		vector<Region* > tmp_regions;
-		readRegions(file, tmp_regions);
-		Header tracking_info;
-		file.readHeader(tracking_info);
-		if(tracking_info.get<bool>("TRACKED") && tracking_info.get<string>("TRACKED").find("yes") != string::npos)
+		
+		// If there is a table of regions, we use it to extract the regions
+		if(file.has(regionTableHdu))
 		{
-			//We get the tracked_colors from the table to update the regions color
-			vector<ColorType> tracked_colors;
-			file.readColumn("TRACKED_COLOR", tracked_colors);
-			if(tracked_colors.size() == tmp_regions.size())
-			{
-				//We assume that the regions and the tracked_colors are in the same order (i.e. same id)
-				for (unsigned r = 0; r < tmp_regions.size(); ++r)
-				{
-					tmp_regions[r]->setColor(tracked_colors[r]);
-					// If the color is bigger than the newColor we increase newColor
-					if(newColor <= tracked_colors[r])
-						newColor = tracked_colors[r] + 1;
-				}
-			}
-			if(tracking_info.get<bool>("TNEWCOLR"))
+			file.moveTo(regionTableHdu);
+			readRegions(file, tmp_regions, true);
+			Header tracking_info;
+			file.readHeader(tracking_info);
+			if(tracking_info.has("TNEWCOLR"))
 			{
 				ColorType latest_color = tracking_info.get<ColorType>("TNEWCOLR");
 				newColor = latest_color > newColor ? latest_color : newColor;
 			}
 		}
-		else //We unset the colors of the region if the map had not been tracked yet
+		else // We extract the regions from the map
 		{
-			for (unsigned r = 0; r < tmp_regions.size(); ++r)
-				tmp_regions[r]->setColor(0);
+			tmp_regions = getRegions(image);
+			if(! (image->getHeader().has("TRACKED") && image->getHeader().get<bool>("TRACKED")))
+			{
+				for (unsigned r = 0; r < tmp_regions.size(); ++r)
+					tmp_regions[r]->setColor(0);
+			}
+			if(image->getHeader().has("TNEWCOLR"))
+			{
+				ColorType latest_color = image->getHeader().get<ColorType>("TNEWCOLR");
+				newColor = latest_color > newColor ? latest_color : newColor;
+			}
 		}
-		
+
 		#ifdef HEK
 		// For the hek we need to know what was the last map that we wrote TrackingRelations in
 		// (see at the end for an explanation)
@@ -182,7 +180,6 @@ int main(int argc, const char **argv)
 		{
 			tracking_graph.insert_vertex(regions[s][r]);
 		}
-
 	}
 
 
@@ -210,7 +207,7 @@ int main(int argc, const char **argv)
 			#if DEBUG >= 2
 			if(derotate)
 			{
-				SunImage<ColorType>* rotated = images[s1]->rotated_like(images[s2]);
+				SunImage<ColorType>* rotated = images[s1]->shifted_like(images[s2]);
 				rotated->writeFits("rotated_"+ stripSuffix(stripPath(imagesFilenames[s1])) + "_to_" + stripSuffix(stripPath(imagesFilenames[s2]))+".fits");
 				delete rotated;
 			}
@@ -281,7 +278,7 @@ int main(int argc, const char **argv)
 		{
 			// We color the image and overwrite them in the fitsfile
 			recolorFromRegions(images[s], regions[s]);
-			images[s]->header.set<string>("TRACKED", "yes", "Map has been tracked");
+			images[s]->getHeader().set("TRACKED", true, "Map has been tracked");
 			images[s]->writeFits(file, FitsFile::update|compressed_fits);
 			delete images[s];
 		}
@@ -290,15 +287,15 @@ int main(int argc, const char **argv)
 		
 		// We write a nice header with info on the tracking
 		Header tracking_info;
-		tracking_info.set<ColorType>("TNEWCOLR", newColor, "Tracking latest color");
-		tracking_info.set<unsigned>("TMAXDELT", max_delta_t, "Tracking max_delta_t");
-		tracking_info.set<unsigned>("TOVERLAP", overlap, "Tracking overlap");
-		tracking_info.set<unsigned>("TDEROT", derotate?1:0, "Tracking derotate");
-		tracking_info.set<unsigned>("TNBRIMG", imagesFilenames.size(), "Tracking number images");
-		tracking_info.set<string>("TRACKED", "yes", "Regions have been tracked");
+		tracking_info.set("TNEWCOLR", newColor, "Tracking latest color");
+		tracking_info.set("TMAXDELT", max_delta_t, "Tracking max_delta_t");
+		tracking_info.set("TOVERLAP", overlap, "Tracking overlap");
+		tracking_info.set("TDEROT", derotate, "Tracking derotate");
+		tracking_info.set("TNBRIMG", unsigned(imagesFilenames.size()), "Tracking number images");
+		tracking_info.set("TRACKED", true, "Regions have been tracked");
 		file.writeHeader(tracking_info);
 		
-		// We update the table of regions with the new colors
+		// We update the table of regions with the new colors and first_date_obs
 		// We assume that the regions are in the same order than in the fits file(i.e. same id)
 		vector<ColorType> tracked_colors(regions[s].size(),0);
 		for (unsigned r = 0; r < regions[s].size(); ++r)
@@ -306,6 +303,13 @@ int main(int argc, const char **argv)
 			tracked_colors[r] = regions[s][r]->Color();
 		}
 		file.writeColumn("TRACKED_COLOR", tracked_colors, FitsFile::overwrite);
+		
+		vector<string> first_observation_dates(regions[s].size());
+		for (unsigned r = 0; r < regions[s].size(); ++r)
+		{
+			first_observation_dates[r] = regions[s][r]->FirstObservationDate();
+		}
+		file.writeColumn("FIRST_DATE_OBS", first_observation_dates, FitsFile::overwrite);
 		
 		//If we recolor the images we update the color column
 		if(recolorImages) 
@@ -440,6 +444,7 @@ int main(int argc, const char **argv)
 	
 	return EXIT_SUCCESS;
 }
+
 
 
 

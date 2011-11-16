@@ -25,6 +25,9 @@ The currently defined transformation are:
 @param TakeLog Take the log
 @param DivMode Division of the intensities by the mode
 @param DivExpTime Division by the Exposure Time
+@param ThrMinzz.z Threshold intensities to minimum the zz.z percentile 
+@param ThrMaxzz.z Threshold intensities to maximum the zz.z percentile
+@param Smoothzz.z Binomial smoothing of zz.z arcsec 
 
 @page ALC Annulus Limb Correction
 The Annulus Limb Correction is a method to correct the limb brightness on EUV Sun Images. It has been described in 

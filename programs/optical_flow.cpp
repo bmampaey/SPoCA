@@ -85,10 +85,10 @@ int main(int argc, const char **argv)
 
 	SunImage* image1 = getImageFromFile("UNKNOWN", imagesFilenames[0]);
 	for(unsigned i = 0; i < image1->NumberPixels(); ++i)
-			if(image1->pixel(i) == image1->nullvalue())
+			if(image1->pixel(i) == image1->null())
 				image1->pixel(i) = 0;
 
-	vector<Coordinate> points_oldlocation;
+	vector<PixLoc> points_oldlocation;
 	
 	// This is for testing only
 	unsigned numberofdots = 10;
@@ -98,16 +98,16 @@ int main(int argc, const char **argv)
 	{
 		for(unsigned x = deltax; x < image1->Xaxes(); x+=deltax)
 		{
-			points_oldlocation.push_back(Coordinate(x,y));
+			points_oldlocation.push_back(PixLoc(x,y));
 		}
 	}*/
 	for(unsigned y = deltay, x = deltax; y < image1->Yaxes() && x < image1->Xaxes(); y+=deltay, x+=deltax)
 	{
-		points_oldlocation.push_back(Coordinate(x,y));
-		points_oldlocation.push_back(Coordinate(x,image1->Yaxes() - y));
+		points_oldlocation.push_back(PixLoc(x,y));
+		points_oldlocation.push_back(PixLoc(x,image1->Yaxes() - y));
 	}
 
-	vector<Coordinate> points_newlocation = points_oldlocation;
+	vector<PixLoc> points_newlocation = points_oldlocation;
 
 
 				
@@ -115,7 +115,7 @@ int main(int argc, const char **argv)
 	{
 		SunImage* image2 = getImageFromFile("UNKNOWN", imagesFilenames[p]);
 		for(unsigned i = 0; i < image2->NumberPixels(); ++i)
-			if(image2->pixel(i) == image2->nullvalue())
+			if(image2->pixel(i) == image2->null())
 				image2->pixel(i) = 0;
 				
 
@@ -123,12 +123,12 @@ int main(int argc, const char **argv)
 	  
 		for(unsigned c = 0; c < points_oldlocation.size(); ++c)
 		{
-			if(points_oldlocation[c] != Coordinate::Max)
+			if(points_oldlocation[c] != PixLoc::Max)
 			{
 				image1->drawCross(c, points_oldlocation[c], 10);
 			}
 			
-			if(points_newlocation[c] == Coordinate::Max)
+			if(points_newlocation[c] == PixLoc::Max)
 			{
 				cout<<c<<": "<<points_oldlocation[c]<<" was lost in second image"<<endl;
 			}
@@ -147,7 +147,7 @@ int main(int argc, const char **argv)
 	
 	for(unsigned c = 0; c < points_oldlocation.size(); ++c)
 	{
-		if(points_oldlocation[c] != Coordinate::Max)
+		if(points_oldlocation[c] != PixLoc::Max)
 		{
 			image1->drawCross(c, points_oldlocation[c], 10);
 		}

@@ -11,7 +11,7 @@ enum KLT_STATUS {KLT_SMALL_DET, KLT_OOB, KLT_LARGE_RESIDUE, KLT_MAX_ITERATIONS, 
 
 void KLTTrackFeatures(
 const SunImage* img1, const SunImage* img2,
-std::vector<Coordinate>& featurelist,
+std::vector<PixLoc>& featurelist,
 int window_width = 28, int window_height = 28,
 unsigned pyramidLevels = 4, int subsampling = 2,
 float pyramid_sigma_fact = 0.9f,

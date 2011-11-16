@@ -3,8 +3,11 @@
 #define HistogramFeatureVector_H
 
 #include <iostream>
+#include <iomanip>
+#include <string>
+#include <sstream>
 #include <cmath>
-#include <vector>
+
 #include "constants.h"
 #include "FeatureVector.h"
 
@@ -32,6 +35,9 @@ class HistogramFeatureVector : public FeatureVector<T, N>
 		//! Constructor
 		HistogramFeatureVector()
 		:FeatureVector<T, N>(),c(0){}
+		
+		//! Destructor
+		virtual ~HistogramFeatureVector(){}
 		
 		//! Constructor
 		/*! Assign all features to value */
@@ -62,6 +68,11 @@ class HistogramFeatureVector : public FeatureVector<T, N>
 			}
 			return false;
 		}
+		
+		std::string toString(const unsigned& precision = 0) const
+		{
+			return FeatureVector<T, N>::toString(precision) + "x" + itos(c);
+		}
 
 };
 
@@ -72,10 +83,7 @@ typedef HistogramFeatureVector<Real, NUMBERCHANNELS> HistoRealFeature;
 template<class T, unsigned N>
 inline std::ostream& operator<<(std::ostream& out, const HistogramFeatureVector<T, N>& fv)
 {
-	out<<"("<<fv.v[0];
-	for (unsigned p = 1; p < N; ++p)
-		out<<","<<fv.v[p];
-	out<<")x"<<fv.c;
+	out<<fv.toString(out.precision());
 	return out;
 }
 

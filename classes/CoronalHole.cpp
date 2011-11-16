@@ -21,101 +21,285 @@ unsigned CHclass(const vector<RealFeature>& B)
 	return CHclass;
 }
 
-
-
-/*!
-@param segmentedMap ColorMap of the segmentation that has already all the keywords correctly set
-@param CHclass The color in the segmentedMap that correspond to the class of CH
-@param thresholdRawArea If set, the threshold fro removing small CH will be computed onthe Raw Area. Otherwise on the Area at disc center
-*/
-ColorMap* CoronalHoleMap(const ColorMap* segmentedMap, unsigned CHclass, bool thresholdRawArea)
+ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 {
-	ColorMap* CHMap = new ColorMap(segmentedMap);
 
-	/*! Create a map of the class CHclass */
-	CHMap->bitmap(segmentedMap, CHclass);
+	string filename = filenamePrefix + "CHMap.";
 
-	#if DEBUG >= 2
-	CHMap->writeFits(filenamePrefix + "CHmap.pure.fits");
-	#endif
-
-	/*! Clean the colormap to remove very small/thin components (like filaments)*/
-	unsigned cleaningFactor = unsigned(CH_CLEANING / sqrt(CHMap->PixelArea() ));
-	CHMap->erodeCircular(cleaningFactor,0)->dilateCircular(cleaningFactor,0);
+	Real cleaningFactor = Real(CH_CLEANING) / sqrt(CHMap->PixelArea());
+	Real aggregationFactor = Real(CH_AGGREGATION) / sqrt(CHMap->PixelArea());
+	
+	ColorMap* aggregated = new ColorMap(CHMap);
 	
 	#if DEBUG >= 2
-	CHMap->writeFits(filenamePrefix + "CHmap.opened.fits");
+	aggregated->writeFits(filename + "pure.fits");
 	#endif
 	
+	/*! Apply the projection */
+	switch(projection)
+	{
+		case(SunImage<ColorType>::equirectangular):
+			
+			aggregated->equirectangular_projection(CHMap, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "equirectangular_projection.fits");
+			#endif
+			cleaningFactor *= (2./3.);
+			aggregationFactor *= (2./3.);
+		break;
+		
+		case(SunImage<ColorType>::Lambert_cylindrical):
+			aggregated->Lambert_cylindrical_projection(CHMap, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "Lambert_cylindrical_projection.fits");
+			#endif
+			cleaningFactor *= (2./3.);
+			aggregationFactor *= (2./3.);
+		break;
+		
+		case(SunImage<ColorType>::sinuosidal):
+			aggregated->sinuosidal_projection(CHMap, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "sinuosidal_projection.fits");
+			#endif
+			cleaningFactor *= (2./3.);
+			aggregationFactor *= (2./3.);
+		break;
+		
+		case(SunImage<ColorType>::distance_transform):
+			cerr<<"Distance transform is not yet implemented"<<endl;
+		break;
+	}
 	
-	/*! Remove the parts off limb (Added by Cis to avoid large off-limbs CH to combine 2 well separated CH on-disk to be aggregated as one)*/
+	/*! Clean the color map to remove very small components (like protons)*/
+	aggregated->erodeCircular(cleaningFactor, 0);
+	
+	#if DEBUG >= 2
+	aggregated->writeFits(filename + "eroded.fits");
+	#endif
+	
+	/*! Aggregate the blobs together */
+	aggregated->dilateCircular(cleaningFactor + aggregationFactor, 0);
+	
+	#if DEBUG >= 2
+	aggregated->writeFits(filename + "dilated.fits");
+	#endif
+	
+	/*! Give back the original size */
+	aggregated->erodeCircular(aggregationFactor, 0);
+	
+	#if DEBUG >= 2
+	aggregated->writeFits(filename + "closed.fits");
+	#endif
+	
+	/* Apply the deprojection */
+	ColorMap* projeted = NULL;
+	switch(projection)
+	{
+		case(SunImage<ColorType>::equirectangular):
+			projeted = new ColorMap(aggregated);
+			aggregated->equirectangular_deprojection(projeted, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "equirectangular_deprojection.fits");
+			#endif
+		break;
+		
+		case(SunImage<ColorType>::Lambert_cylindrical):
+			projeted = new ColorMap(aggregated);
+			aggregated->Lambert_cylindrical_deprojection(projeted, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "Lambert_cylindrical_deprojection.fits");
+			#endif
+		break;
+		
+		case(SunImage<ColorType>::sinuosidal):
+			projeted = new ColorMap(aggregated);
+			aggregated->sinuosidal_deprojection(projeted, false);
+			#if DEBUG >= 2
+			aggregated->writeFits(filename + "sinuosidal_deprojection.fits");
+			#endif
+		break;
+		
+		case(SunImage<ColorType>::distance_transform):
+			cerr<<"Distance transform is not yet implemented"<<endl;
+		break;
+	}
+	delete projeted;
+	
+	/*! Remove the parts off limb and colorize */
+	aggregated->nullifyAboveRadius(1.); 
+	aggregated->colorizeConnectedComponents(1);
+	
+	#if DEBUG >= 2
+	aggregated->writeFits(filename + "aggregated.fits");
+	#endif
+
+	return aggregated;
+}
+
+Header getCHMapHeader()
+{
+	Header map_header;
+	string projection;
+	switch(CH_PROJECTION)
+	{
+		case(SunImage<ColorType>::equirectangular):
+			projection = "equirectangular";
+		break;
+		
+		case(SunImage<ColorType>::Lambert_cylindrical):
+			projection = "Lambert cylindrical";
+		break;
+		
+		case(SunImage<ColorType>::sinuosidal):
+			projection = "sinuosidal";
+		break;
+		
+		case(SunImage<ColorType>::distance_transform):
+			projection = "Distance transform";
+		break;
+		
+		default:
+			projection = "None";
+	}
+	
+	map_header.set("CLEANING", CH_CLEANING, "Cleaning factor in arcsec");
+	map_header.set("AGGREGAT", CH_AGGREGATION, "Aggregation factor in arcsec");
+	map_header.set("PROJECTN", projection, "Projection used for the aggregation");
+	map_header.set("MINSIZE", MIN_CH_SIZE, "Min size of regions in arcsec²");
+	map_header.set("THRAWAR", CH_TRA, "Min size threshold on raw area");
+	map_header.set("FRAGGMTD", CH_FRAGMENTED, "Regions are fragmented");
+	return map_header;
+}
+
+void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsigned chaincodeMaxPoints, Real chaincodeMaxDeviation, EUVImage* image)
+{
+	/*! Clean everything above the radius */
 	CHMap->nullifyAboveRadius(1.);
 	
-	/*! Aggregate the blobs together*/
-	blobsIntoCH(CHMap);
+	/*! We get the map of aggregated CH */
+	ColorMap* aggregatedMap = getAggregatedCHMap(CHMap, CH_PROJECTION);
 	
-	#if DEBUG >= 2
-	CHMap->writeFits(filenamePrefix + "CHmap.aggregated.fits");
-	#endif
-	
-	/*! Remove the CH post limb*/
-	CHMap->nullifyAboveRadius(1.); 
+	if(CH_FRAGMENTED)
+	{
+		/*! Color the pixels using the aggregated map */
+		for (unsigned j = 0; j < aggregatedMap->NumberPixels(); ++j)
+		{
+			if(CHMap->pixel(j) == 1)
+			{
+				CHMap->pixel(j) = aggregatedMap->pixel(j);
+			}
+		}
+	}
+	else
+	{
+		delete CHMap;
+		CHMap = aggregatedMap;
+	}
 
-	/*! Erase the small regions*/
-	if(thresholdRawArea)
+	#if DEBUG >= 2
+	CHMap->writeFits(filenamePrefix + "CHMap.all.fits");
+	#endif
+
+	/*! Erase the small regions */
+	if(CH_TRA)
 		CHMap->thresholdRegionsByRawArea(MIN_CH_SIZE);
 	else
 		CHMap->thresholdRegionsByRealArea(MIN_CH_SIZE);
 
-	return CHMap;
-}
-
-
-#if !defined(CH_AGGREGATION_TYPE) || (CH_AGGREGATION_TYPE == CH_AGGREGATION_FRAGMENTED)
-void blobsIntoCH (ColorMap* CHmap)
-{
-	/*! Create a map by dilation */
-	unsigned dilateFactor = unsigned(CH_AGGREGATION  / sqrt(CHmap->PixelArea() ));
-	ColorMap* dilated = new ColorMap(CHmap);
-	dilated->dilateCircular(dilateFactor,CHmap->nullvalue());
-	dilated->colorizeConnectedComponents(1);
 	#if DEBUG >= 2
-	dilated->writeFits(filenamePrefix + "CHmap.dilated.fits");
+	CHMap->writeFits(filenamePrefix + "CHMap.large.fits");
 	#endif
-	/*! Color the blobs using the dilated map */
-	for (unsigned j=0; j < CHmap->NumberPixels(); ++j)
+	
+	/*! We write the map of CH to the fits file */
+	FitsFile file(filename, FitsFile::overwrite);
+	CHMap->writeFits(file, compressed ? FitsFile::compress : 0, "CoronalHoleMap");
+	
+	/*! We write some info about the CHMap creation */ 
+	Header CHMapHeader = getCHMapHeader();
+	file.writeHeader(CHMapHeader);
+	
+	/*! We get the regions */
+	vector<Region*> regions = getRegions(CHMap);
+	
+	/*! We write the regions to the fits file */
+	file.writeTable("Regions");
+	writeRegions(file, regions);
+	
+	/*! We get the chaincode and write them to the fits file */
+	if(chaincodeMaxPoints > 0)
 	{
-		if (CHmap->pixel(j) != CHmap->nullvalue())
-			CHmap->pixel(j) = dilated->pixel(j);
+		#if DEBUG>= 2
+		ColorMap chaincode_map(CHMap);
+		#endif
+		
+		file.writeTable("Chaincode");
+		for (unsigned r = 0; r < regions.size(); ++r)
+		{
+			vector<PixLoc> chaincode = regions[r]->chainCode(aggregatedMap, chaincodeMaxPoints, chaincodeMaxDeviation);
+			file.writeColumn(itos(regions[r]->Id(),7), chaincode);
+		
+			#if DEBUG>= 2
+			for (unsigned c = 0; c < chaincode.size(); ++c)
+			{
+				chaincode_map.drawCircle(chaincode[c], 3, r+10);
+			}
+			#endif
+		}
+		#if DEBUG>= 2
+		chaincode_map.writeFits(filenamePrefix + "CHMap.chaincodes.fits");
+		#endif
 	}
-	delete dilated;
 	
+	/*! We write intensities statistics relative to image */
+	if(image)
+	{
+		/*! We get the stats of the CH */
+		vector<RegionStats*> regions_stats =  getRegionStats(CHMap, image, regions);
+	
+		/*! We write the CH Stats into the fits */
+		file.writeTable("CoronalHoleStats");
+		writeRegions(file, regions_stats);
+		
+		/*! We write some info bout the image in the header of the table */
+		Header tableHeader;
+		tableHeader.set("WAVELNTH", image->Wavelength(), "Wavelength of the intensity image.");
+		
+		const Header& imageHeader = image->getHeader();
+		if(imageHeader.has("LVL_NUM"))
+			tableHeader.set("LVL_NUM", imageHeader.get<float>("LVL_NUM"), "Level number of the intensity image.");
+		if(imageHeader.has("DATE"))
+			tableHeader.set("DATE", imageHeader.get<string>("DATE"), "Creation date of the intensity image.");
+		if(imageHeader.has("QUALITY"))
+			tableHeader.set("QUALITY", imageHeader.get<unsigned>("QUALITY"), "Quality level of the intensity image.");
+		
+		file.writeHeader(tableHeader);
+		
+		#if DEBUG>= 3
+		cerr<<"CoronalHoleStats Table"<<endl;
+		if(regions_stats.size() > 0)
+			cerr<<regions_stats[0]->toString("|", true)<<endl;
+		else
+			cerr<<"Empty"<<endl;
+		for (unsigned r = 0; r < regions_stats.size(); ++r)
+		{
+			cerr<<regions_stats[r]->toString("|")<<endl;
+		}
+		#endif
+		for (unsigned r = 0; r < regions_stats.size(); ++r)
+		{
+			delete regions_stats[r];
+		}
+	}
+	
+	/*! We cleanup */
+	for (unsigned r = 0; r < regions.size(); ++r)
+	{
+		delete regions[r];
+	}
+	
+	if(CHMap != aggregatedMap)
+		delete aggregatedMap;
 }
 
-#elif CH_AGGREGATION_TYPE == CH_AGGREGATION_CLOSING
-/*! Aggregate the blobs together by closing */
-void blobsIntoCH (ColorMap* CHmap)
-{
-	unsigned dilateFactor = unsigned(CH_AGGREGATION  / sqrt(CHmap->PixelArea() ) );
-	
-	CHmap->dilateCircular(dilateFactor, 0)->erodeCircular(dilateFactor, 0);
-	
-	CHmap->colorizeConnectedComponents(1);
-}
-
-#elif CH_AGGREGATION_TYPE == CH_AGGREGATION_DILATE
-
-/*! Aggregate the blobs together by dilation */
-void blobsIntoCH (ColorMap* CHmap)
-{
-	unsigned dilateFactor = unsigned(CH_AGGREGATION  / sqrt(CHmap->PixelArea() ) );
-	
-	CHmap->dilateCircular(dilateFactor, 0);
-	
-	CHmap->colorizeConnectedComponents(1);
-}
-
-#else
-#warning "Unknown CH_AGGREGATION_TYPE"
-#endif
 

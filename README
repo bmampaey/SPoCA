@@ -41,8 +41,9 @@ List of executables to run SPoCA.
 <BR>@subpage classification
 <BR>@subpage attribution
 <BR>@subpage cumulative_classification
-<BR>@subpage get_region_stats
+<BR>@subpage get_regions_stats
 <BR>@subpage tracking
+<BR>@subpage get_STAFF_stats
 
 @page utilities Utilities
 List of utilities executable to help visualising the results of SPoCA, or to test and use spoca.

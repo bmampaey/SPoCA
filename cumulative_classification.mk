@@ -8,11 +8,11 @@ LFLAGS=-lcfitsio
 DFLAGS=
 
 all:bin/cumulative_classification.x
-clean: rm bin/cumulative_classification.x objects/cumulative_classification.o objects/ArgumentHelper.o objects/FeatureVector.o objects/CumulativeSPoCAClassifier.o objects/SPoCAClassifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Coordinate.o objects/Region.o objects/FitsFile.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/Image.o objects/CumulativeSPoCA2Classifier.o objects/SPoCA2Classifier.o objects/PCM2Classifier.o objects/CumulativePCMClassifier.o objects/HistogramPCMClassifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/CumulativePCM2Classifier.o objects/HistogramPCM2Classifier.o objects/CumulativeFCMClassifier.o objects/CumulativeClassifier.o objects/EUVImage.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+clean: rm bin/cumulative_classification.x objects/cumulative_classification.o objects/ArgumentHelper.o objects/FeatureVector.o objects/CumulativeSPoCAClassifier.o objects/SPoCAClassifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Coordinate.o objects/Region.o objects/FitsFile.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/WCS.o objects/Image.o objects/CumulativeSPoCA2Classifier.o objects/SPoCA2Classifier.o objects/PCM2Classifier.o objects/CumulativePCMClassifier.o objects/HistogramPCMClassifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/CumulativePCM2Classifier.o objects/HistogramPCM2Classifier.o objects/CumulativeFCMClassifier.o objects/CumulativeClassifier.o objects/EUVImage.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
 
 
-bin/cumulative_classification.x : cumulative_classification.mk objects/cumulative_classification.o objects/ArgumentHelper.o objects/FeatureVector.o objects/CumulativeSPoCAClassifier.o objects/SPoCAClassifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Coordinate.o objects/Region.o objects/FitsFile.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/Image.o objects/CumulativeSPoCA2Classifier.o objects/SPoCA2Classifier.o objects/PCM2Classifier.o objects/CumulativePCMClassifier.o objects/HistogramPCMClassifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/CumulativePCM2Classifier.o objects/HistogramPCM2Classifier.o objects/CumulativeFCMClassifier.o objects/CumulativeClassifier.o objects/EUVImage.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/cumulative_classification.o objects/ArgumentHelper.o objects/FeatureVector.o objects/CumulativeSPoCAClassifier.o objects/SPoCAClassifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Coordinate.o objects/Region.o objects/FitsFile.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/Image.o objects/CumulativeSPoCA2Classifier.o objects/SPoCA2Classifier.o objects/PCM2Classifier.o objects/CumulativePCMClassifier.o objects/HistogramPCMClassifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/CumulativePCM2Classifier.o objects/HistogramPCM2Classifier.o objects/CumulativeFCMClassifier.o objects/CumulativeClassifier.o objects/EUVImage.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/cumulative_classification.x
+bin/cumulative_classification.x : cumulative_classification.mk objects/cumulative_classification.o objects/ArgumentHelper.o objects/FeatureVector.o objects/CumulativeSPoCAClassifier.o objects/SPoCAClassifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Coordinate.o objects/Region.o objects/FitsFile.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/WCS.o objects/Image.o objects/CumulativeSPoCA2Classifier.o objects/SPoCA2Classifier.o objects/PCM2Classifier.o objects/CumulativePCMClassifier.o objects/HistogramPCMClassifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/CumulativePCM2Classifier.o objects/HistogramPCM2Classifier.o objects/CumulativeFCMClassifier.o objects/CumulativeClassifier.o objects/EUVImage.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/cumulative_classification.o objects/ArgumentHelper.o objects/FeatureVector.o objects/CumulativeSPoCAClassifier.o objects/SPoCAClassifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Classifier.o objects/Coordinate.o objects/Region.o objects/FitsFile.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/WCS.o objects/Image.o objects/CumulativeSPoCA2Classifier.o objects/SPoCA2Classifier.o objects/PCM2Classifier.o objects/CumulativePCMClassifier.o objects/HistogramPCMClassifier.o objects/HistogramFCMClassifier.o objects/HistogramClassifier.o objects/CumulativePCM2Classifier.o objects/HistogramPCM2Classifier.o objects/CumulativeFCMClassifier.o objects/CumulativeClassifier.o objects/EUVImage.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/cumulative_classification.x
 
 objects/cumulative_classification.o : cumulative_classification.mk programs/cumulative_classification.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/EUVImage.h classes/CumulativeClassifier.h classes/CumulativeFCMClassifier.h classes/CumulativePCM2Classifier.h classes/CumulativePCMClassifier.h classes/CumulativeSPoCA2Classifier.h classes/CumulativeSPoCAClassifier.h classes/FeatureVector.h classes/ArgumentHelper.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) programs/cumulative_classification.cpp -o objects/cumulative_classification.o
@@ -38,13 +38,13 @@ objects/FCMClassifier.o : cumulative_classification.mk classes/FCMClassifier.cpp
 objects/Classifier.o : cumulative_classification.mk classes/Classifier.cpp classes/tools.h classes/constants.h classes/Image.h classes/EUVImage.h classes/ColorMap.h classes/FeatureVector.h classes/Region.h classes/Coordinate.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Classifier.cpp -o objects/Classifier.o
 
-objects/Coordinate.o : cumulative_classification.mk classes/Coordinate.cpp 
+objects/Coordinate.o : cumulative_classification.mk classes/Coordinate.cpp classes/constants.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o
 
-objects/Region.o : cumulative_classification.mk classes/Region.cpp classes/constants.h classes/Coordinate.h classes/ColorMap.h classes/FitsFile.h
+objects/Region.o : cumulative_classification.mk classes/Region.cpp classes/constants.h classes/tools.h classes/Coordinate.h classes/ColorMap.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Region.cpp -o objects/Region.o
 
-objects/FitsFile.o : cumulative_classification.mk classes/FitsFile.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Header.h
+objects/FitsFile.o : cumulative_classification.mk classes/FitsFile.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Header.h classes/Coordinate.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/FitsFile.cpp -o objects/FitsFile.o
 
 objects/Header.o : cumulative_classification.mk classes/Header.cpp 
@@ -53,8 +53,11 @@ objects/Header.o : cumulative_classification.mk classes/Header.cpp
 objects/ColorMap.o : cumulative_classification.mk classes/ColorMap.cpp classes/Header.h classes/SunImage.h classes/gradient.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ColorMap.cpp -o objects/ColorMap.o
 
-objects/SunImage.o : cumulative_classification.mk classes/SunImage.cpp classes/Image.h classes/Coordinate.h classes/Header.h classes/FitsFile.h
+objects/SunImage.o : cumulative_classification.mk classes/SunImage.cpp classes/Image.h classes/WCS.h classes/Header.h classes/Coordinate.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SunImage.cpp -o objects/SunImage.o
+
+objects/WCS.o : cumulative_classification.mk classes/WCS.cpp classes/constants.h classes/Coordinate.h classes/FitsFile.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/WCS.cpp -o objects/WCS.o
 
 objects/Image.o : cumulative_classification.mk classes/Image.cpp classes/tools.h classes/constants.h classes/Coordinate.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Image.cpp -o objects/Image.o

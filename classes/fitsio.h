@@ -1855,13 +1855,13 @@ int ffgmrm(fitsfile *fptr, long member, int rmopt, int *status);
 int	fits_execute_template(fitsfile *ff, char *ngp_template, int *status);
 
 int fits_img_stats_short(short *array,long nx, long ny, int nullcheck,   
-    short nullvalue,long *ngoodpix, short *minvalue, short *maxvalue, double *mean,  
+    short null,long *ngoodpix, short *minvalue, short *maxvalue, double *mean,  
     double *sigma, double *noise1, double *noise3, int *status);
 int fits_img_stats_int(int *array,long nx, long ny, int nullcheck,   
-    int nullvalue,long *ngoodpix, int *minvalue, int *maxvalue, double *mean,  
+    int null,long *ngoodpix, int *minvalue, int *maxvalue, double *mean,  
     double *sigma, double *noise1, double *noise3, int *status);
 int fits_img_stats_float(float *array, long nx, long ny, int nullcheck,   
-    float nullvalue,long *ngoodpix, float *minvalue, float *maxvalue, double *mean,  
+    float null,long *ngoodpix, float *minvalue, float *maxvalue, double *mean,  
     double *sigma, double *noise1, double *noise3, int *status);
 
 /*--------------------- image compression routines ------------------*/

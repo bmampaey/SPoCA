@@ -1,73 +1,165 @@
 #include "ColorMap.h"
+#include <assert.h>
+#include <map>
+#include <deque>
+
+extern std::string filenamePrefix;
 
 using namespace std;
 
 ColorMap::~ColorMap()
 {}
 
-ColorMap::ColorMap(const long xAxes, const long yAxes)
+ColorMap::ColorMap(const unsigned& xAxes, const unsigned& yAxes)
 :SunImage<ColorType>(xAxes, yAxes)
 {
-	nullvalue_ = 0;
+	nullpixelvalue = 0;
 
 }
 
+ColorMap::ColorMap(const Header& header, const unsigned& xAxes, const unsigned& yAxes)
+:SunImage<ColorType>(header, xAxes, yAxes)
+{
+	nullpixelvalue = 0;
+}
+
+ColorMap::ColorMap(const WCS& wcs, const unsigned& xAxes, const unsigned& yAxes)
+:SunImage<ColorType>(wcs, xAxes, yAxes)
+{
+	nullpixelvalue = 0;
+}
 
 ColorMap::ColorMap(const SunImage<ColorType>& i)
 :SunImage<ColorType>(i)
 {
-	nullvalue_ = 0;
+	nullpixelvalue = 0;
 
 }
-
 
 ColorMap::ColorMap(const SunImage<ColorType>* i)
 :SunImage<ColorType>(i)
 {
-	nullvalue_ = 0;
-
+	nullpixelvalue = 0;
 }
 
-
-ColorMap::ColorMap(const Header& header)
-:SunImage<ColorType>(header)
+inline ColorType ColorMap::interpolate(float x, float y) const
 {
-	postRead();
+	if(x < 0)
+		x = 0;
+	if(y < 0)
+		y = 0;
+	if(x > xAxes-1.)
+		x = xAxes-1.;
+	if(y > yAxes-1.)
+		y = yAxes-1.;
+	
+	unsigned ix = unsigned(x), iy = unsigned(y);
+	
+	float dx = x - ix, dy = y - iy;
+	Real cdx = 1. - dx, cdy = 1. - dy;
+	ColorType colors[] = {pixel(ix, iy), pixel(ix+1, iy), pixel(ix, iy+1), pixel(ix+1, iy+1)};
+	float quantity[] = {cdx*cdy, dx*cdy, cdx*dy, dx*dy};
+	for(unsigned i = 0; i < 3; ++i)
+		for(unsigned j = i+1; j < 4; ++j)
+			if(colors[i] == colors[j])
+			{
+				quantity[i] += quantity[j];
+				quantity[j] = 0;
+			}
+	unsigned max = 0;
+	for(unsigned i = 1; i < 4; ++i)
+		max = quantity[i] > quantity[max] ? i : max;
+	
+	return colors[max];
 }
 
-void ColorMap::postRead()
+inline ColorType ColorMap::interpolate(const RealPixLoc& c) const
 {
-	suncenter.x = header.get<int>("CRPIX1") - 1;
-	suncenter.y = header.get<int>("CRPIX2") - 1;
-	cdelt1 = header.get<double>("CDELT1");
-	cdelt2 = header.get<double>("CDELT2");
+	return interpolate(c.x, c.y);
+}
+
+void ColorMap::parseHeader()
+{
+	// We parse the header to extract the wcs coordinate system
+	if(header.has("CRPIX1") and header.has("CRPIX2"))
+		wcs.setSunCenter(header.get<Real>("CRPIX1") - 1, header.get<Real>("CRPIX2") - 1);
+	else
+		cerr<<"Error: Fits header not conform: No CRPIX1 or CRPIX2 keyword."<<endl;
+	
+	if (header.has("T_OBS"))
+		wcs.setDateObs(header.get<string>("T_OBS"));
+	else if (header.has("DATE_OBS"))
+		wcs.setDateObs(header.get<string>("DATE_OBS"));
+	else if (header.has("DATE-OBS"))
+		wcs.setDateObs(header.get<string>("DATE-OBS"));
+	
+	if(header.has("CDELT1") and header.has("CDELT2"))
+		wcs.setCDelt(header.get<Real>("CDELT1"), header.get<Real>("CDELT2"));
+	else
+		cerr<<"Error: Fits header not conform: No CDELT1 or CDELT2 keyword."<<endl;
+	
+	if (header.has("HGLT_OBS"))
+		wcs.setB0(header.get<Real>("HGLT_OBS"));
+	else if (header.has("CRLT_OBS"))
+		wcs.setB0(header.get<Real>("CRLT_OBS"));
+	else if(header.has("SOLAR_B0"))
+		wcs.setB0(header.get<Real>("SOLAR_B0"));
+	else if (wcs.time_obs != 0)
+		wcs.setB0(earth_latitude(wcs.time_obs));
+	
+	if (header.has("HGLN_OBS"))
+		wcs.setL0(header.get<Real>("HGLN_OBS"));
+	else
+		wcs.setL0(0);
+	
+	if (header.has("CRLN_OBS"))
+		wcs.setCarringtonL0(header.get<Real>("CRLN_OBS"));
+	
+	if (header.has("DSUN_OBS"))
+		wcs.setDistanceSunObs(header.get<Real>("DSUN_OBS")/1000000.);
+	else if (wcs.time_obs != 0)
+		wcs.setDistanceSunObs(distance_sun_earth(wcs.time_obs));
+	
+	if (header.has("CD1_1") and header.has("CD1_2") and header.has("CD2_1") and header.has("CD2_2"))
+	{
+		wcs.setCD(header.get<Real>("CD1_1"), header.get<Real>("CD1_2"), header.get<Real>("CD2_1"), header.get<Real>("CD2_2"));
+	}
+	else if (header.has("PC1_1") and header.has("PC1_2") and header.has("PC2_1") and header.has("PC2_2"))
+	{
+		wcs.setPC(header.get<Real>("PC1_1"), header.get<Real>("PC1_2"), header.get<Real>("PC2_1"), header.get<Real>("PC2_2"));
+	}
+	else if (header.has("CROTA2"))
+	{
+		wcs.setCrota2(header.get<Real>("CROTA2"));
+	}
 	
 	// We read the radius
-	radius = header.get<double>("RADIUS");
-	b0 = (header.get<double>("SOLAR_B0")/180.)*PI;
-	date_obs = header.get<string>("DATE-OBS");
-	//Sometimes the date is appended with a z
-	if(date_obs.find_first_of("Zz") != string::npos)
-		date_obs.erase(date_obs.find_first_of("Zz"));
-	observationTime = iso2ctime(date_obs);
+	if (header.has("R_SUN"))
+		wcs.setSunradius(header.get<Real>("R_SUN"));
 }
 
-void ColorMap::preWrite()
+void ColorMap::fillHeader()
 {
-	header.set<string>("INSTRUME", "SPoCA");
-	header.set<double>("RADIUS", radius);
-	header.set<int>("CRPIX1", suncenter.x + 1);
-	header.set<int>("CRPIX2", suncenter.y + 1);
-	header.set<double>("CDELT1", cdelt1);
-	header.set<double>("CDELT2",cdelt2);
-	header.set<string>("DATE-OBS", date_obs);
-	header.set<double>("SOLAR_B0", (b0 * 180)/PI);
+	header.set<Real>("CRPIX1", wcs.sun_center.x + 1);
+	header.set<Real>("CRPIX2", wcs.sun_center.y + 1);
+	header.set<Real>("CDELT1", wcs.cdelt1);
+	header.set<Real>("CDELT2", wcs.cdelt2);
+	header.set<Real>("HGLT_OBS", wcs.b0 * RADEG);
+	header.set<Real>("HGLN_OBS", wcs.l0 * RADEG);
+	header.set<Real>("CRLN_OBS", wcs.carrington_l0 * RADEG);
+	header.set<Real>("DSUN_OBS", wcs.dsun_obs*1000000.);
+	header.set<Real>("CD1_1", wcs.cd[0][0]);
+	header.set<Real>("CD1_2", wcs.cd[0][1]);
+	header.set<Real>("CD2_1", wcs.cd[1][0]);
+	header.set<Real>("CD2_2", wcs.cd[1][1]);
+	header.set<string>("DATE_OBS",  wcs.date_obs);
+	header.set<Real>("R_SUN", wcs.sun_radius);
 }
 
 
 bool isColorMap(const Header& header)
 {
-	return header.get<bool>("INSTRUME") && header.get<string>("INSTRUME").find("SPoCA") != string::npos;	
+	return header.has("INSTRUME") && header.get<string>("INSTRUME").find("SPoCA") != string::npos;	
 }
 
 
@@ -84,7 +176,7 @@ void ColorMap::thresholdRegionsByRawArea(const double minSize)
 	{
 		for (unsigned x = 0 ; x < xAxes; ++x)
 		{
-			if(*p != nullvalue_)
+			if(*p != nullpixelvalue)
 			{
 				if (areas.count(*p) == 0)
 					areas[*p] = pixelarea;
@@ -100,9 +192,9 @@ void ColorMap::thresholdRegionsByRawArea(const double minSize)
 	
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-		if(*p != nullvalue_ && areas[*p] < minSize)
+		if(*p != nullpixelvalue && areas[*p] < minSize)
 		{
-			*p = nullvalue_;
+			*p = nullpixelvalue;
 		}
 		++p;
 	}
@@ -111,31 +203,31 @@ void ColorMap::thresholdRegionsByRawArea(const double minSize)
 
 void ColorMap::thresholdRegionsByRealArea(const double minSize)
 {
-	const double R0 = radius * PixelArea();
-	const double R2 = radius * radius;
+	const Real R0 = wcs.sun_radius * PixelArea();
+	const Real R2 =  wcs.sun_radius *  wcs.sun_radius;
 	
 	//First we compute the area for each color
-	map<ColorType,double> areas;
+	map<ColorType,Real> areas;
 
 	ColorType* p = pixels;
 	
-	const int xmax = xAxes - suncenter.x;
-	const int ymax = yAxes - suncenter.y;
+	const Real xmax = Real(xAxes) - wcs.sun_center.x;
+	const Real ymax = Real(yAxes) - wcs.sun_center.y;
 	
-	for (int y = - suncenter.y; y < ymax; ++y)
+	for (Real y = - wcs.sun_center.y; y < ymax; ++y)
 	{
-		for (int x = - suncenter.x ; x < xmax; ++x)
+		for (Real x = - wcs.sun_center.x ; x < xmax; ++x)
 		{
-			if(*p != nullvalue_)
+			if(*p != nullpixelvalue)
 			{
 				if (areas.count(*p) == 0)
 					areas[*p] = 0;
 				
-				double pixelArea2 = R2 - (x * x) - (y * y);			
+				Real pixelArea2 = R2 - (x * x) - (y * y);
 				if(pixelArea2 > 0)
 					areas[*p] += R0 / sqrt(pixelArea2);
 				else
-					areas[*p] = numeric_limits<double>::infinity();
+					areas[*p] = numeric_limits<Real>::infinity();
 			}
 			++p;
 		}
@@ -146,9 +238,9 @@ void ColorMap::thresholdRegionsByRealArea(const double minSize)
 	
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-		if(*p != nullvalue_ && areas[*p] < minSize)
+		if(*p != nullpixelvalue && areas[*p] < minSize)
 		{
-			*p = nullvalue_;
+			*p = nullpixelvalue;
 		}
 		++p;
 	}
@@ -211,7 +303,7 @@ ColorMap* ColorMap::dilateDiamond(unsigned size, ColorType pixelValueToDilate)
 ColorMap* ColorMap::erodeDiamond(unsigned size, ColorType pixelValueToErode)
 {
 
-	ColorType fillPixelValue = nullvalue_;
+	ColorType fillPixelValue = nullpixelvalue;
 	unsigned *manthanDistance = new unsigned[xAxes * yAxes];
 	unsigned maxDistance = xAxes + yAxes;
 
@@ -260,50 +352,46 @@ ColorMap* ColorMap::erodeDiamond(unsigned size, ColorType pixelValueToErode)
 
 
 
-ColorMap* ColorMap::dilateCircular(const unsigned size, const ColorType unsetValue)
+ColorMap* ColorMap::dilateCircular(const Real size, const ColorType unsetValue)
 {
 	ColorType * newPixels = new ColorType[numberPixels];
-	fill(newPixels, newPixels + numberPixels, unsetValue);
-	vector<unsigned> shape;
-	shape.reserve(size*size*3);
+	memcpy(newPixels, pixels, numberPixels * sizeof(ColorType));
+	vector<int> shape;
+	shape.reserve(unsigned(size*size*3));
 	for(unsigned x = 1; x <= size; ++x)
 		shape.push_back(x);
-	for(int x = -size; x <= int(size); ++x)
+	for(int x = -int(size); x <= int(size); ++x)
 		for(unsigned y = 1; y <= size; ++y)
-			if(sqrt(x * x + y *y) <= size)
+			if(sqrt(x * x + y * y) <= size)
 				shape.push_back(y * xAxes + x);
 	
-				
-	int j;
-	unsigned y, x;
-	for(y = size; y < yAxes - size; ++y)
-	{		
-		j = 	y * xAxes + size;
-		for(x = size; x < xAxes - size; ++x)
+	int offset = xAxes + 1;
+	ColorType * j = pixels + offset;
+	ColorType * nj = newPixels + offset;
+	for(unsigned y = 1; y < yAxes - 1; ++y)
+	{
+		for(unsigned x = 1; x < xAxes - 1; ++x)
 		{
-			
-			if(pixels[j] != unsetValue)
+			if(*j != unsetValue)
 			{
-				newPixels[j] = pixels[j];
-				if(pixels[j-1] == unsetValue || pixels[j+1] == unsetValue || pixels[j-xAxes] == unsetValue || pixels[j+xAxes] == unsetValue)
+				if(*(j-1) == unsetValue || *(j+1) == unsetValue || *(j-xAxes) == unsetValue || *(j+xAxes) == unsetValue)
 				{
-					
 					for(unsigned s = 0; s < shape.size(); ++s)
 					{
-						#if DEBUG >= 1
-							if(j + shape[s] >= numberPixels || j - shape[s] < 0)
-							{
-								cerr<<"Error : trying to access pixel out of image in drawContours"<<endl;
-								exit(EXIT_FAILURE);
-							}	
-						#endif
-						newPixels[j + shape[s]] = newPixels[j - shape[s]] = pixels[j];
+						if(offset + shape[s] < int(numberPixels))
+							*(nj + shape[s]) = *j;
+						if(shape[s] <= offset)
+							*(nj - shape[s]) = *j;
 					}
 				}
-
 			}
 			++j;
+			++nj;
+			++offset;
 		}
+		j+=2;
+		nj+=2;
+		offset+=2;
 	}
 	
 	delete[] pixels;
@@ -313,45 +401,45 @@ ColorMap* ColorMap::dilateCircular(const unsigned size, const ColorType unsetVal
 
 
 
-ColorMap* ColorMap::erodeCircular(const unsigned size, const ColorType unsetValue)
+ColorMap* ColorMap::erodeCircular(const Real size, const ColorType unsetValue)
 {
 	ColorType * newPixels = new ColorType[numberPixels];
 	memcpy(newPixels, pixels, numberPixels * sizeof(ColorType));
-	vector<unsigned> shape;
-	shape.reserve(size*size*3);
+	vector<int> shape;
+	shape.reserve(unsigned(size*size*3));
 	for(unsigned x = 1; x <= size; ++x)
 		shape.push_back(x);
-	for(int x = -size; x <= int(size); ++x)
+	for(int x = -int(size); x <= int(size); ++x)
 		for(unsigned y = 1; y <= size; ++y)
 			if(sqrt(x * x + y *y) <= size)
 				shape.push_back(y * xAxes + x);
 	
-				
-	int j;
-	for(unsigned y = size; y < yAxes - size; ++y)
+	int offset = xAxes + 1;
+	ColorType * j = pixels + offset;
+	ColorType * nj = newPixels + offset;
+	for(unsigned y = 1; y < yAxes - 1; ++y)
 	{		
-		j = 	y * xAxes + size;
-		for(unsigned x = size; x < xAxes - size; ++x)
+		for(unsigned x = 1; x < xAxes - 1; ++x)
 		{
-			
-			if(pixels[j] != unsetValue && (pixels[j-1] != pixels[j] || pixels[j+1] != pixels[j] || pixels[j-xAxes] != pixels[j] || pixels[j+xAxes] != pixels[j]))
+			if(*j != unsetValue && (*(j-1) != *j || *(j+1) != *j || *(j-xAxes) != *j || *(j+xAxes) != *j))
 			{
-				newPixels[j] = unsetValue;
+				*nj = unsetValue;
 				for(unsigned s = 0; s < shape.size(); ++s)
 				{
-					#if DEBUG >= 1
-						if(j + shape[s] >= numberPixels || j - shape[s] < 0)
-						{
-							cerr<<"Error : trying to access pixel out of image in drawContours"<<endl;
-							exit(EXIT_FAILURE);
-						}	
-					#endif
-					newPixels[j + shape[s]] = newPixels[j - shape[s]] = unsetValue;
+					if(offset + shape[s] < int(numberPixels))
+						*(nj + shape[s]) = unsetValue;
+					if(shape[s] <= offset)
+						*(nj - shape[s]) = unsetValue;
 				}
 				
 			}
+			++offset;
 			++j;
+			++nj;
 		}
+		j+=2;
+		nj+=2;
+		offset+=2;
 	}
 	
 	delete[] pixels;
@@ -363,11 +451,11 @@ ColorMap* ColorMap::erodeCircular(const unsigned size, const ColorType unsetValu
 ColorMap* ColorMap::drawInternContours(const unsigned width, const ColorType unsetValue)
 {
 
-	ColorMap * eroded = new ColorMap (this);
+	ColorMap* eroded = new ColorMap(this);
 	eroded->erodeCircular(width, unsetValue);
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-		if(eroded->pixels[j] != eroded->nullvalue_)
+		if(eroded->pixels[j] != eroded->nullpixelvalue)
 			pixels[j] = unsetValue;
 	}
 	delete eroded;
@@ -466,7 +554,7 @@ unsigned ColorMap::colorizeConnectedComponents(const ColorType setValue)
 
 
 
-unsigned ColorMap::propagateColor(const ColorType color, const Coordinate& firstPixel)
+unsigned ColorMap::propagateColor(const ColorType color, const PixLoc& firstPixel)
 {
 	return propagateColor(color, firstPixel.x + firstPixel.y * xAxes);
 }
@@ -475,7 +563,7 @@ unsigned ColorMap::propagateColor(const ColorType color, const Coordinate& first
 
 unsigned ColorMap::propagateColor(const ColorType color, const unsigned firstPixel)
 {
-	vector<unsigned> pixelList;
+	deque<unsigned> pixelList;
 	ColorType setValue = pixels[firstPixel];
 	unsigned h;
 	unsigned numberColoredPixels = 0;
@@ -506,14 +594,14 @@ unsigned ColorMap::propagateColor(const ColorType color, const unsigned firstPix
 
 unsigned ColorMap::thresholdConnectedComponents(const unsigned minSize, const ColorType setValue)
 {
-	vector<unsigned> treatedPixels;
+	deque<unsigned> treatedPixels;
 	ColorType color = setValue + 1;
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
 		if(pixels[j] == setValue)
 		{
 			if (propagateColor(color, j) < minSize)
-				propagateColor(nullvalue_, j);
+				propagateColor(nullpixelvalue, j);
 			else
 			{
 				++color;
@@ -534,10 +622,10 @@ unsigned ColorMap::thresholdConnectedComponents(const unsigned minSize, const Co
 ColorMap* ColorMap::removeHoles(ColorType unusedColor)
 {
 	propagateColor(unusedColor, 0);
-	ColorType lastColor = nullvalue_;
+	ColorType lastColor = nullpixelvalue;
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-		if(pixels[j] != nullvalue_)
+		if(pixels[j] != nullpixelvalue)
 		{
 			lastColor = pixels[j];
 		}
@@ -546,206 +634,105 @@ ColorMap* ColorMap::removeHoles(ColorType unusedColor)
 			pixels[j] = lastColor;
 		}
 	}
-	propagateColor(nullvalue_, 0);
+	propagateColor(nullpixelvalue, 0);
 	return this;
 }
 
 
-/*!
-To extract the chain code of a connected component, we first list all the points along the boundary starting at the firstPixel.
-Once The list is made, it is reduced by trying to find the most relevant points.
-First we take the firstpixel point and it's furthest point in the list, and add them to the chain code.
-Then we search the point that is the furthest from the line passing by each pair of consecutive point in the chain code, and add it to the chain code.
-We repeat that last step until we have enough points  
-*/
 
-vector<Coordinate> ColorMap::chainCode(const Coordinate firstPixel, const unsigned max_points) const
+//! Method to aggregates pixels into blobs by perfoming a closing
+void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projection)
 {
-	vector<Coordinate> chain;
-	chain.reserve(1000);
+	ColorMap* projeted = NULL;
 	
-	// We list all the directions
-	int directions[] = {	0 + xAxes, //Norh
-				1 + xAxes, //NE
-				1 + 0, //East
-				1 - xAxes, //SE
-				0 - xAxes, //South
-				-1 - xAxes, //SW
-				-1 + 0, //West
-				-1 + xAxes, //NW
-				//We repeat for simplicity 
-				0 + xAxes, 1 + xAxes, 1 + 0, 1 - xAxes, 0 - xAxes, -1 - xAxes, -1 + 0, -1 + xAxes
-			};
-	
-	// We start at the first pixel, and we search for the first direction
-	chain.push_back(firstPixel);
-	unsigned cur_p = firstPixel.x + firstPixel.y * xAxes;
-	int first_direction = 0;
-	bool found = false;
-	for (unsigned i = 0; i <= 8; ++i)
+	// We do the dilation
+	switch(projection)
 	{
-		int next_p = cur_p + directions[first_direction];
-		if(next_p >= 0 && next_p < int(numberPixels))
-		{
-			if(pixels[next_p] == nullvalue_)
-			{
-				found=true;
-			}
-			else if (found)
-			{
-				break;
-			}
-		}
-		++first_direction;
-	}
-	first_direction%=8;
-	// If we are a single pixel, we return
-	if(!found)
-	{
-		return chain;
-	}
-
-	// We create a classical chaincode of all pixels locations along the boundary
-	// until we come back to the first pixel, with the same direction
-	Coordinate current_pixel = firstPixel;
-	int next_direction = first_direction;
-	
-	// At the same time I search for the pixel the furthest away from the first_pixel
-	// See below
-	Real biggest_distance = 0.;
-	unsigned furthest_pixel_indice = 0;
-	
-	do
-	{
-		// We move the current pixel into the next direction
-		cur_p = cur_p + directions[next_direction];
-		// I add the current pixel to the chain
-		current_pixel.x = cur_p%xAxes;
-		current_pixel.y = unsigned(cur_p/xAxes);
-		chain.push_back(current_pixel);
-		// I check if it is the furthest pixel
-		Real distance = firstPixel.d2(current_pixel);
-		if(distance > biggest_distance)
-		{
-			biggest_distance = distance;
-			furthest_pixel_indice = chain.size() - 1;
-		}
-		// We search the direction of the following pixel on the border by looking at all directions
-		// Starting at the opposite direction +1
-		next_direction = (next_direction + 5) % 8;
-		for (unsigned i = 0; i < 8; ++i)
-		{
-			int next_p = cur_p + directions[next_direction];
-			if(next_p >= 0 && next_p < int(numberPixels) && pixels[next_p] != nullvalue_)
-			{
-				break;
-			}
-			++next_direction;
-		}
-		next_direction %= 8;
+		case(SunImage<ColorType>::equirectangular):
+			projeted = new ColorMap(getWCS(), Xaxes(), Yaxes());
+			projeted->equirectangular_projection(this, false);
+			#if DEBUG >= 2
+			projeted->writeFits(filenamePrefix + "equirectangular_projection.fits");
+			#endif
+			projeted->dilateCircular((2./3.)*aggregationFactor, null());
+			#if DEBUG >= 2
+			projeted->writeFits(filenamePrefix + "dilated.fits");
+			#endif
+		break;
 		
-	}while (!((firstPixel == current_pixel) && (next_direction == first_direction)));
-
-
-	if(chain.size() <= max_points)
-	{
-		return chain;
-	}
-
-	// Now we reduce the chain code to max_points
-	// The good_indices is a sorted list of the indices of most important points in the chain code
-	vector<unsigned> good_indices;
-	good_indices.reserve(max_points);
-	good_indices.push_back(0);
-	// The tmp_indices is a list of the indices of some important points in the chain code
-	// The corresponding distances list specify for each tmp_indice the distance to the current reduced chain code 
-	vector<unsigned> tmp_indices;
-	vector<Real> distances;
-	tmp_indices.reserve(max_points);
-	distances.reserve(max_points);
-	tmp_indices.push_back(furthest_pixel_indice);
-	distances.push_back(biggest_distance);
-	while(good_indices.size() < max_points)
-	{
-		// I search in the tmp_indices for the worst point, i.e. with the biggest distance
-		unsigned worst_indice = 0;
-		Real max_distance = distances[worst_indice];
-		for(unsigned i = 1; i < tmp_indices.size(); ++i)
-		{
-			if(max_distance < distances[i])
-			{
-				max_distance = distances[i];
-				worst_indice = i;
-			}
-		}
+		case(SunImage<ColorType>::Lambert_cylindrical):
+			projeted = new ColorMap(getWCS(), Xaxes(), Yaxes());
+			projeted->Lambert_cylindrical_projection(this, false);
+			#if DEBUG >= 2
+			projeted->writeFits(filenamePrefix + "Lambert_cylindrical_projection.fits");
+			#endif
+			projeted->dilateCircular((2./3.)*aggregationFactor, null());
+			#if DEBUG >= 2
+			projeted->writeFits(filenamePrefix + "dilated.fits");
+			#endif
+		break;
 		
-		// I remove the worst point from the tmp_indices
-		unsigned worst_point_indice = tmp_indices[worst_indice];
-		tmp_indices.erase(tmp_indices.begin()+worst_indice);
-		distances.erase(distances.begin()+worst_indice);
-		// I add the worst point indice to the good_indices
-		vector<unsigned>::iterator it;
-		for(it = good_indices.begin(); it != good_indices.end() && worst_point_indice > *it; ++it){}
-		it = good_indices.insert(it, worst_point_indice);
+		case(SunImage<ColorType>::sinuosidal):
+			projeted = new ColorMap(getWCS(), Xaxes(), Yaxes());
+			projeted->sinuosidal_projection(this, false);
+			#if DEBUG >= 2
+			projeted->writeFits(filenamePrefix + "sinuosidal_projection.fits");
+			#endif
+			projeted->dilateCircular((2./3.)*aggregationFactor, null());
+			#if DEBUG >= 2
+			projeted->writeFits(filenamePrefix + "dilated.fits");
+			#endif
+		break;
+		
+		case(SunImage<ColorType>::distance_transform):
+			cerr<<"Distance transform is not yet implemented"<<endl;
+			
+		case(SunImage<ColorType>::no_projection):
+			dilateCircular(aggregationFactor, null());
+			#if DEBUG >= 2
+			writeFits(filenamePrefix + "dilated.fits");
+			#endif
+		break;
+		
+		default:
+		cerr<<"Unknown projection type for blob aggregation"<<endl;
+		return;
+		
+	}
+	
 
-		// I search for the worst point between the worst_point_indice and the previous point from the good_indices
-		unsigned previous_indice = *(it-1);
-		// We compute the line equation ax+by+c=0 passing between points chain[previous_indice] and chain[worst_point_indice]
-		Real a = Real(chain[worst_point_indice].y) - chain[previous_indice].y;
-		Real b = Real(chain[previous_indice].x) - chain[worst_point_indice].x;
-		Real c = - (b * chain[previous_indice].y + a * chain[previous_indice].x);
-		// We search the pixel in the chain that is the furthest to the line
-		max_distance = 0;
-		worst_indice = previous_indice+1;
-		for(unsigned i = previous_indice+1; i < worst_point_indice; ++i)
-		{
-			Real d =  abs(a * chain[i].x + b * chain[i].y + c);
-			if(d >= max_distance)
-			{
-				max_distance = d;
-				worst_indice = i;
-			}
-		}
-		max_distance/=sqrt(a*a+b*b);
-		// We add that new worst point to the tmp_indices
-		if(worst_indice != worst_point_indice)
-		{
-			tmp_indices.push_back(worst_indice);
-			distances.push_back(max_distance);
-		}
-		// I search for the worst point between the worst_point_indice and the next point from the good_indices
-		unsigned next_indice = (it+1 != good_indices.end()) ? *(it+1) : chain.size()-1;
-		// We compute the line equation ax+by+c=0 passing between points chain[worst_point_indice] and chain[next_indice]
-		a = Real(chain[next_indice].y) - chain[worst_point_indice].y;
-		b = Real(chain[worst_point_indice].x) - chain[next_indice].x;
-		c = - (b * chain[worst_point_indice].y + a * chain[worst_point_indice].x);
-		// We search the pixel in the chain that is the furthest to the line
-		max_distance = 0;
-		worst_indice = worst_point_indice+1;
-		for(unsigned i = worst_point_indice+1; i < next_indice; ++i)
-		{
-			Real d =  abs(a * chain[i].x + b * chain[i].y + c);
-			if(d >= max_distance)
-			{
-				max_distance = d;
-				worst_indice = i;
-			}
-		}
-		max_distance/=sqrt(a*a+b*b);
-		// We add that new worst point to the tmp_indices
-		if(worst_indice != next_indice)
-		{
-			tmp_indices.push_back(worst_indice);
-			distances.push_back(max_distance);
-		}
-	}
-	// I compute the reduced chain by using the good_indices
-	vector<Coordinate> reduced_chain(good_indices.size());
-	for(unsigned i=0; i < good_indices.size(); ++i)
+	
+	// We do the erosion
+	switch(projection)
 	{
-		reduced_chain[i]=chain[good_indices[i]];
+		case(SunImage<ColorType>::equirectangular):
+			projeted->erodeCircular((2./3.)*aggregationFactor, null());
+			this->equirectangular_deprojection(projeted, false);
+		break;
+		
+		case(SunImage<ColorType>::Lambert_cylindrical):
+			projeted->erodeCircular((2./3.)*aggregationFactor, null());
+			this->Lambert_cylindrical_deprojection(projeted, false);
+		break;
+		
+		case(SunImage<ColorType>::sinuosidal):
+			projeted->erodeCircular((2./3.)*aggregationFactor, null());
+			this->sinuosidal_deprojection(projeted, false);
+		break;
+		
+		case(SunImage<ColorType>::distance_transform):
+			cerr<<"Distance transform is not yet implemented"<<endl;
+			
+		case(SunImage<ColorType>::no_projection):
+			erodeCircular(aggregationFactor, null());
+		break;
+		
+		default:
+		cerr<<"Unknown projection type for blob aggregation"<<endl;
+		return;
+		
 	}
-	return reduced_chain;
+	delete projeted;
 }
 
 #ifdef MAGICK
@@ -756,7 +743,7 @@ MagickImage ColorMap::magick(const Magick::Color background)
 	{
 		for (unsigned x = 0; x < xAxes; ++x)
 		{	
-			if(pixel(x, y) != nullvalue_)
+			if(pixel(x, y) != nullpixelvalue)
 			{
 				image.pixelColor(x, yAxes - y - 1, Magick::Color(gradient[pixel(x, y) % gradientMax]));
 			}
@@ -770,5 +757,6 @@ MagickImage ColorMap::magick()
 	return magick(Magick::Color(0, 0 ,0, MaxRGB));
 }
 #endif
+
 
 

@@ -78,7 +78,7 @@ int main(int argc, const char **argv)
 	vector<Region*> regions = getRegions(image);
 	for (unsigned r = 0; r < regions.size(); ++r)
 	{
-		vector<Coordinate> chain_code = image->chainCode(regions[r]->FirstPixel(), 20);
+		vector<PixLoc> chain_code = image->chainCode(regions[r]->FirstPixel(), 20);
 		for (unsigned i=0; i < chain_code.size(); ++i)
 		{
 			image->drawCross(30, chain_code[i]);

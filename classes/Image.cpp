@@ -1,14 +1,16 @@
 #include "Image.h"
+#include <deque>
+#include <assert.h>
 
 //!@file Image.cpp
 
 using namespace std;
 
 template<class T>
-Image<T>::Image(const long xAxes, const long yAxes)
+Image<T>::Image(const unsigned& xAxes, const unsigned& yAxes)
 :xAxes(xAxes),yAxes(yAxes),numberPixels(xAxes * yAxes),pixels(NULL)
 {
-	nullvalue_ = numeric_limits<T>::has_infinity?numeric_limits<T>::infinity():numeric_limits<T>::max();
+	nullpixelvalue = numeric_limits<T>::has_infinity?numeric_limits<T>::infinity():numeric_limits<T>::max();
 	if(numberPixels > 0)
 		pixels = new T[numberPixels];
 
@@ -16,7 +18,7 @@ Image<T>::Image(const long xAxes, const long yAxes)
 
 template<class T>
 Image<T>::Image(const Image<T>& i)
-:xAxes(i.xAxes),yAxes(i.yAxes),numberPixels(i.numberPixels),nullvalue_(i.nullvalue_)
+:xAxes(i.xAxes),yAxes(i.yAxes),numberPixels(i.numberPixels),nullpixelvalue(i.nullpixelvalue)
 {
 	pixels = new T[numberPixels];
 	memcpy(pixels, i.pixels, numberPixels * sizeof(T));
@@ -25,7 +27,7 @@ Image<T>::Image(const Image<T>& i)
 
 template<class T>
 Image<T>::Image(const Image<T>* i)
-:xAxes(i->xAxes),yAxes(i->yAxes),numberPixels(i->numberPixels),nullvalue_(i->nullvalue_)
+:xAxes(i->xAxes),yAxes(i->yAxes),numberPixels(i->numberPixels),nullpixelvalue(i->nullpixelvalue)
 {
 	pixels = new T[numberPixels];
 	memcpy(pixels, i->pixels, numberPixels * sizeof(T));
@@ -43,31 +45,70 @@ Image<T>::~Image()
 }
 
 template<class T>
-inline unsigned Image<T>::Xaxes() const{return xAxes;}
+inline unsigned Image<T>::Xaxes() const
+{
+	return xAxes;
+}
+
 template<class T>
-inline unsigned Image<T>::Yaxes() const{return yAxes;}
+inline unsigned Image<T>::Yaxes() const
+{
+	return yAxes;
+}
+
 template<class T>
-inline unsigned Image<T>::NumberPixels() const{return numberPixels;}
+inline unsigned Image<T>::NumberPixels() const
+{
+	return numberPixels;
+}
+
 template<class T>
-inline Coordinate Image<T>::coordinate (const unsigned j)const{return Coordinate(j%xAxes, unsigned(j/xAxes));}
+inline PixLoc Image<T>::coordinate(const unsigned j) const
+{
+	if (j < numberPixels)
+		return PixLoc(j%xAxes, unsigned(j/xAxes));
+	else
+		return PixLoc::null();
+}
+
 template<class T>
 inline T& Image<T>::pixel(const unsigned& j)
-{return pixels[j];}
+{
+	assert(j < numberPixels);
+	return pixels[j];
+}
+
 template<class T>
 inline const T& Image<T>::pixel(const unsigned& j)const
-{return pixels[j];}
+{
+	assert(j < numberPixels);
+	return pixels[j];
+}
+
 template<class T>
 inline T& Image<T>::pixel(const unsigned& x, const unsigned& y)
 {return pixels[x+(y*xAxes)];}
+
 template<class T>
 inline const T& Image<T>::pixel(const unsigned& x, const unsigned& y)const
-{return pixels[x+(y*xAxes)];}
+{
+	assert(x < xAxes && y < yAxes);
+	return pixels[x+(y*xAxes)];
+}
+
 template<class T>
-inline T& Image<T>::pixel(const Coordinate& c)
-{return pixels[c.x+(c.y*xAxes)];};
+inline T& Image<T>::pixel(const PixLoc& c)
+{
+	assert(c.x < xAxes && c.y < yAxes);
+	return pixels[c.x+(c.y*xAxes)];
+}
+
 template<class T>
-inline const T& Image<T>::pixel(const Coordinate& c)const
-{return pixels[c.x+(c.y*xAxes)];};
+inline const T& Image<T>::pixel(const PixLoc& c)const
+{
+	assert(c.x < xAxes && c.y < yAxes);
+	return pixels[c.x+(c.y*xAxes)];
+}
 
 
 
@@ -96,7 +137,7 @@ Image<T>* Image<T>::zero(T value)
 
 
 template<class T>
-Image<T>* Image<T>::drawBox(const T color, Coordinate min, Coordinate max)
+Image<T>* Image<T>::drawBox(const T color, PixLoc min, PixLoc max)
 {
 
 	if (min.x >= xAxes || min.y >= yAxes)	  //The box is out of the picture
@@ -121,7 +162,7 @@ Image<T>* Image<T>::drawBox(const T color, Coordinate min, Coordinate max)
 
 
 template<class T>
-Image<T>* Image<T>::drawCross(const T color, Coordinate c, const unsigned size)
+Image<T>* Image<T>::drawCross(const T color, PixLoc c, const unsigned size)
 {
 	unsigned min, max;
 	min = c.x < size + 1 ? 0 : c.x - size - 1;
@@ -142,17 +183,17 @@ Image<T>* Image<T>::drawCross(const T color, Coordinate c, const unsigned size)
 }
 
 template<class T>
-Image<T>* Image<T>::drawCircle(Coordinate center, double radius, T color)
+Image<T>* Image<T>::drawCircle(PixLoc center, double radius, T color)
 {
 	unsigned x0 = center.x;
 	unsigned y0 = center.y;
 	for(Real y = 0; y <= radius; ++y)
 	{
 		unsigned dx = unsigned((radius*cos(asin(y/radius)))+0.5);
-		pixel(x0+dx,y0+y) = color;
-		pixel(x0-dx,y0+y) = color;
-		pixel(x0+dx,y0+y) = color;
-		pixel(x0-dx,y0-y) = color;
+		pixel(x0+dx,unsigned(y0+y)) = color;
+		pixel(x0-dx,unsigned(y0+y)) = color;
+		pixel(x0+dx,unsigned(y0-y)) = color;
+		pixel(x0-dx,unsigned(y0-y)) = color;
 	}
 	return this;
 }
@@ -164,9 +205,9 @@ void Image<T>::diff(const Image<T> * img)
 {
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-		if(img->pixels[j] == nullvalue_)
-			pixels[j] = nullvalue_;
-		else if (pixels[j] != nullvalue_)
+		if(img->pixels[j] == nullpixelvalue)
+			pixels[j] = nullpixelvalue;
+		else if (pixels[j] != nullpixelvalue)
 			pixels[j] -= img->pixels[j];
 		
 	}
@@ -178,9 +219,9 @@ void Image<T>::div(const Image<T> * img)
 {
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-		if(img->pixels[j] == nullvalue_ || img->pixels[j] == 0)
-			pixels[j] = nullvalue_;
-		else if (pixels[j] != nullvalue_)
+		if(img->pixels[j] == nullpixelvalue || img->pixels[j] == 0)
+			pixels[j] = nullpixelvalue;
+		else if (pixels[j] != nullpixelvalue)
 			pixels[j] /= img->pixels[j];
 	}
 }
@@ -196,7 +237,7 @@ void Image<T>::div(const T value)
 	{
 		for (unsigned j = 0; j < numberPixels; ++j)
 		{
-			if(pixels[j] != nullvalue_)
+			if(pixels[j] != nullpixelvalue)
 				pixels[j] /= value;
 		}
 	}
@@ -207,7 +248,7 @@ void Image<T>::mul(const T value)
 {
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-		if(pixels[j] != nullvalue_)
+		if(pixels[j] != nullpixelvalue)
 			pixels[j] *= value;
 	}
 	
@@ -218,7 +259,7 @@ void Image<T>::threshold(const T min, const T max = numeric_limits<T>::max())
 {
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-		if(pixels[j] != nullvalue_)
+		if(pixels[j] != nullpixelvalue)
 		{
 			pixels[j] = pixels[j] < min ? min : pixels[j];
 			pixels[j] = pixels[j] > max ? max : pixels[j];
@@ -229,26 +270,36 @@ void Image<T>::threshold(const T min, const T max = numeric_limits<T>::max())
 
 
 template<class T>
+Image<T>* Image<T>::bitmap(T setValue)
+{
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		pixels[j] = pixels[j] == setValue ? 1 : nullpixelvalue;
+	}
+	return this;
+
+}
+
+template<class T>
 Image<T>* Image<T>::bitmap(const Image<T>* bitMap, T setValue)
 {
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-			pixels[j] = bitMap->pixel(j) == setValue ? 1 : nullvalue_;
+		pixels[j] = bitMap->pixel(j) == setValue ? 1 : nullpixelvalue;
 	}
 	return this;
 
 }
 
 
-
 template<class T>
 void Image<T>::minmax(T& min, T& max) const
 {
 	min = numeric_limits<T>::max();
-	max = 0;
+	max = numeric_limits<T>::is_signed ? - numeric_limits<T>::max() : 0;
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-		if(pixels[j] != nullvalue_)
+		if(pixels[j] != nullpixelvalue)
 		{
 			min = pixels[j] < min ? pixels[j] : min;
 			max = pixels[j] > max ? pixels[j] : max;
@@ -258,6 +309,174 @@ void Image<T>::minmax(T& min, T& max) const
 }
 
 
+
+#define ELEM_SWAP(a,b) { register T t=(a);(a)=(b);(b)=t; }
+/* !
+This Quickselect routine is based on the algorithm described in
+"Numerical recipes in C", Second Edition,
+Cambridge University Press, 1992, Section 8.5, ISBN 0-521-43108-5
+This code by Nicolas Devillard - 1998. Public domain.
+ */
+template<class T>
+T Image<T>::quickselect(vector<T>& arr, Real percentil) const
+{
+
+	int low = 0 ;
+	int high = arr.size()-1 ;
+	int median = low + int((high - low) * percentil);
+	
+	int middle, ll, hh;
+	
+	for (;;)
+	{
+		if (high <= low)						  /* One element only */
+			return arr[median] ;
+
+		if (high == low + 1)					  /* Two elements only */
+		{
+			if (arr[low] > arr[high])
+				ELEM_SWAP(arr[low], arr[high]) ;
+			return arr[median] ;
+		}
+
+		/* Find median of low, middle and high items; swap into position low */
+		middle = low + int((high - low) * percentil);
+		if (arr[middle] > arr[high])    ELEM_SWAP(arr[middle], arr[high]) ;
+		if (arr[low] > arr[high])       ELEM_SWAP(arr[low], arr[high]) ;
+		if (arr[middle] > arr[low])     ELEM_SWAP(arr[middle], arr[low]) ;
+
+		/* Swap low item (now in position middle) into position (low+1) */
+		ELEM_SWAP(arr[middle], arr[low+1]) ;
+
+		/* Nibble from each end towards middle, swapping items when stuck */
+		ll = low + 1;
+		hh = high;
+		for (;;)
+		{
+			do ll++; while (arr[low] > arr[ll]) ;
+			do hh--; while (arr[hh]  > arr[low]) ;
+
+			if (hh < ll)
+				break;
+
+			ELEM_SWAP(arr[ll], arr[hh]) ;
+		}
+
+		/* Swap middle item (in position low) back into correct position */
+		ELEM_SWAP(arr[low], arr[hh]) ;
+
+		/* Re-set active partition */
+		if (hh <= median)
+			low = ll;
+		if (hh >= median)
+			high = hh - 1;
+	}
+}
+#undef ELEM_SWAP
+
+template<class T>
+T Image<T>::median() const
+{
+	vector<T> arr;
+	arr.reserve(numberPixels);
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if(pixels[j] != nullpixelvalue)
+		{
+			arr.push_back(pixels[j]);
+		}
+	}
+	return quickselect(arr, 0.5);
+}
+
+template<class T>
+vector<T> Image<T>::percentiles(const vector<Real>& p) const
+{
+	vector<T> arr;
+	arr.reserve(numberPixels);
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if(pixels[j] != nullpixelvalue)
+		{
+			arr.push_back(pixels[j]);
+		}
+	}
+	vector<T> results;
+	for (unsigned i = 0; i < p.size(); ++i)
+	{
+		if (p[i] >= 0 && p[i] <= 1)
+		{
+			results.push_back(quickselect(arr, p[i]));
+		}
+		else
+		{
+			cerr<<"Error: Percentiles must be values between 0 and 1"<<endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+	return results;
+}
+
+template<class T>
+T Image<T>::percentiles(const Real& p) const
+{
+	if (p < 0 || p > 1)
+	{
+		cerr<<"Error: Percentiles must be values between 0 and 1"<<endl;
+		exit(EXIT_FAILURE);
+	}
+	
+	vector<T> arr;
+	arr.reserve(numberPixels);
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if(pixels[j] != nullpixelvalue)
+		{
+			arr.push_back(pixels[j]);
+		}
+	}
+	return quickselect(arr, p);
+}
+
+template<class T>
+Real Image<T>::mode(Real binSize) const
+{
+	// If the binSize was not given or wrong, we compute by taking NUMBER_BINS in 2 times the variance
+	if (binSize <= 0)
+	{
+		binSize = 2. * variance() / NUMBER_BINS;
+	}
+	// We build an histogram
+	deque<unsigned> histo(2 * NUMBER_BINS, 0);
+	T* pixelValue = pixels;
+	T* endpixel = pixels + numberPixels;
+	while(pixelValue != endpixel)
+	{
+		if ((*pixelValue) != nullpixelvalue)
+		{
+			unsigned bin = unsigned((*pixelValue)/binSize);
+			if (bin >= histo.size())
+				histo.resize(bin + 1024, 0);
+			++histo[bin];
+		}
+		++pixelValue;
+	}
+
+	// We search for the mode
+	unsigned max = 0;
+	Real mode = 0;
+	for (unsigned h = 0; h < histo.size(); ++h)
+	{
+		if (max < histo[h])
+		{
+			max = histo[h];
+			mode = h;
+		}
+	}
+	mode = mode * binSize + (binSize / 2);
+	return mode;
+}
+
 template<class T>
 Real Image<T>::mean() const
 {
@@ -265,7 +484,7 @@ Real Image<T>::mean() const
 	Real card = 0;
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
-		if(pixels[j] != nullvalue_)
+		if(pixels[j] != nullpixelvalue)
 		{
 			sum += pixels[j];
 			++card;
@@ -286,7 +505,7 @@ Real Image<T>::variance() const
 	Real card = 0;
 	Real meanValue = mean();
 	for (unsigned j = 0; j < numberPixels; ++j)
-		if(pixels[j] != nullvalue_)
+		if(pixels[j] != nullpixelvalue)
 	{
 		temp = (pixels[j] - meanValue);
 		m2 += temp * temp;
@@ -307,7 +526,7 @@ Real Image<T>::skewness() const
 	Real card = 0;
 	Real meanValue = mean(), temp;
 	for (unsigned j = 0; j < numberPixels; ++j)
-		if(pixels[j] != nullvalue_)
+		if(pixels[j] != nullpixelvalue)
 	{
 		temp = (pixels[j] - meanValue);
 		temp *= temp;
@@ -335,16 +554,17 @@ Real Image<T>::kurtosis() const
 	Real card = 0;
 	Real meanValue = mean(), temp;
 	for (unsigned j = 0; j < numberPixels; ++j)
-		if(pixels[j] != nullvalue_)
 	{
-		temp = (pixels[j] - meanValue);
-		temp *= temp;
-		m2 += temp;
-		temp *= temp;
-		m4 += temp;
-		++card;
+		if(pixels[j] != nullpixelvalue)
+		{
+			temp = (pixels[j] - meanValue);
+			temp *= temp;
+			m2 += temp;
+			temp *= temp;
+			m4 += temp;
+			++card;
+		}
 	}
-
 	if(card == 0)
 		return 0;
 
@@ -380,7 +600,7 @@ void Image<T>::localMean(const Image<T>* image, int Nradius)
 		for (unsigned n = 0; n < neigboorhood.size(); ++n)
 		{
 			unsigned neighboor = j + neigboorhood[n];
-			if(neighboor >= 0 && neighboor < numberPixels && image->pixels[neighboor] != nullvalue_ )
+			if(neighboor >= 0 && neighboor < numberPixels && image->pixels[neighboor] != nullpixelvalue )
 			{
 				m1 += image->pixels[neighboor];
 				++card;
@@ -389,7 +609,7 @@ void Image<T>::localMean(const Image<T>* image, int Nradius)
 		}
 		if(card == 0)
 		{
-			pixels[j] = nullvalue_;
+			pixels[j] = nullpixelvalue;
 		}
 		else
 		{
@@ -429,7 +649,7 @@ void Image<T>::localVariance(const Image<T>* image, int Nradius)
 		for (unsigned n = 0; n < neigboorhood.size(); ++n)
 		{
 			unsigned neighboor = j + neigboorhood[n];
-			if( neighboor >= 0 && neighboor < numberPixels && image->pixels[neighboor] != nullvalue_ )
+			if( neighboor >= 0 && neighboor < numberPixels && image->pixels[neighboor] != nullpixelvalue )
 			{
 				temp = (image->pixels[neighboor] - meanImage->pixels[j]);
 				m2 += temp * temp;
@@ -439,7 +659,7 @@ void Image<T>::localVariance(const Image<T>* image, int Nradius)
 		}
 		if(card == 0)
 		{
-			pixels[j] = nullvalue_;
+			pixels[j] = nullpixelvalue;
 		}
 		else
 		{
@@ -481,7 +701,7 @@ void Image<T>::localSkewness(const Image<T>* image, int Nradius)
 		for (unsigned n = 0; n < neigboorhood.size(); ++n)
 		{
 			unsigned neighboor = j + neigboorhood[n];
-			if( neighboor >= 0 && neighboor < numberPixels && image->pixels[neighboor] != nullvalue_ )
+			if( neighboor >= 0 && neighboor < numberPixels && image->pixels[neighboor] != nullpixelvalue )
 			{
 				temp = (image->pixels[neighboor] - meanImage->pixels[j]);
 				m2 += temp * temp;
@@ -492,7 +712,7 @@ void Image<T>::localSkewness(const Image<T>* image, int Nradius)
 		}
 		if(card == 0 || m2 == 0)
 		{
-			pixels[j] = nullvalue_;
+			pixels[j] = nullpixelvalue;
 		}
 		else
 		{
@@ -502,7 +722,7 @@ void Image<T>::localSkewness(const Image<T>* image, int Nradius)
 			if(m2 != 0)
 				pixels[j] = T(m3 / sqrt(m2));
 			else
-				pixels[j] = nullvalue_;
+				pixels[j] = nullpixelvalue;
 
 		}
 
@@ -540,7 +760,7 @@ void Image<T>::localKurtosis(const Image<T>* image, int Nradius)
 		for (unsigned n = 0; n < neigboorhood.size(); ++n)
 		{
 			unsigned neighboor = j + neigboorhood[n];
-			if( neighboor >= 0 && neighboor < numberPixels && image->pixels[neighboor] != nullvalue_ )
+			if( neighboor >= 0 && neighboor < numberPixels && image->pixels[neighboor] != nullpixelvalue )
 			{
 				temp = (image->pixels[neighboor] - meanImage->pixels[j]);
 				temp *= temp;
@@ -553,7 +773,7 @@ void Image<T>::localKurtosis(const Image<T>* image, int Nradius)
 		}
 		if(card == 0)
 		{
-			pixels[j] = nullvalue_;
+			pixels[j] = nullpixelvalue;
 		}
 		else
 		{
@@ -562,7 +782,7 @@ void Image<T>::localKurtosis(const Image<T>* image, int Nradius)
 			if(m2 != 0)
 				pixels[j] = T(( m4 / (m2 * m2) ) - 3);
 			else
-				pixels[j] = nullvalue_;
+				pixels[j] = nullpixelvalue;
 		}
 
 	}
@@ -586,9 +806,9 @@ Image<T>* Image<T>::convolution(const Image<T> * img, const float kernel[3][3])
 	{
 		for(unsigned x = 1; x < xAxes-1; ++x)
 		{
-			pixels[j++] =	kernel[0][0] * p0[0] + kernel[0][1] * p0[1] + kernel[0][2] * p0[2] +
+			pixels[j++] =	T(kernel[0][0] * p0[0] + kernel[0][1] * p0[1] + kernel[0][2] * p0[2] +
 						kernel[1][0] * p1[0] + kernel[1][1] * p1[1] + kernel[1][2] * p1[2] +
-						kernel[2][0] * p2[0] + kernel[2][1] * p2[1] + kernel[2][2] * p2[2] ;
+						kernel[2][0] * p2[0] + kernel[2][1] * p2[1] + kernel[2][2] * p2[2] );
 			++p0;
 			++p1;
 			++p2;
@@ -598,12 +818,6 @@ Image<T>* Image<T>::convolution(const Image<T> * img, const float kernel[3][3])
 	return this;
 }
 
-template<class T>
-Image<T>* Image<T>::convolution(const Image<T> * img, const float kernel[5][5])
-{
-	resize(img->xAxes, img->yAxes);
-	return this;
-}
 
 // There is no abs function for unsigned
 inline unsigned abs(unsigned x)
@@ -623,7 +837,7 @@ Image<T>* Image<T>::sobel_approx(const Image<T> * img)
 	{
 		for(unsigned x = 0; x < xAxes-2; ++x)
 		{
-			pixels[j++] = ( abs((p0[0] + 2*p0[1] + p0[2]) - (p2[0] + 2*p2[1]+ p2[2])) + abs((p0[2] + 2*p1[2] + p2[2]) - (p0[0] + 2*p1[0] + p2[0])) ) / 6;
+			pixels[j++] = T((abs((p0[0] + 2*p0[1] + p0[2]) - (p2[0] + 2*p2[1]+ p2[2])) + abs((p0[2] + 2*p1[2] + p2[2]) - (p0[0] + 2*p1[0] + p2[0])) ) / 6.);
 			++p0;
 			++p1;
 			++p2;
@@ -646,13 +860,13 @@ Image<T>* Image<T>::sobel(const Image<T> * img)
 	Cy.convolution(img, sobel_kernely);
 	for (unsigned j= 0; j < numberPixels; ++j) 
 	{
-		pixels[j] = sqrt(Cx.pixels[j] * Cx.pixels[j] + Cy.pixels[j] * Cy.pixels[j]);
+		pixels[j] = T(sqrt(Cx.pixels[j] * Cx.pixels[j] + Cy.pixels[j] * Cy.pixels[j]));
 	}
 	return this;
 }
 
 template<class T>
-Image<T>* Image<T>::convolveHoriz(const Image<T>* img,  const vector<float>& kernel)
+Image<T>* Image<T>::horizontal_convolution(const Image<T>* img,  const vector<float>& kernel)
 {
 
 	const T* ptrrow = img->pixels;
@@ -687,21 +901,21 @@ Image<T>* Image<T>::convolveHoriz(const Image<T>* img,  const vector<float>& ker
 		unsigned x = 0;
 		/* Zero leftmost columns */
 		for ( ; x < radius ; x++)
-			*ptrout++ = 0.0;
+			*ptrout++ = 0;
 
 		/* Convolve middle columns with kernel */
 		for ( ; x < img->xAxes - radius ; x++)
 		{
 			ppp = ptrrow + x - radius;
-			register T sum = 0.0;
+			register float sum = 0;
 			for (int k = kernel.size()-1 ; k >= 0 ; k--)
 				sum += *ppp++ * kernel[k];
-			*ptrout++ = sum;
+			*ptrout++ = T(sum);
 		}
 
 		/* Zero rightmost columns */
 		for ( ; x < img->xAxes; x++)
-			*ptrout++ = 0.0;
+			*ptrout++ = 0;
 
 		ptrrow += img->xAxes;
 	}
@@ -716,12 +930,12 @@ Image<T>* Image<T>::convolveHoriz(const Image<T>* img,  const vector<float>& ker
 
 
 template<class T>
-Image<T>* Image<T>::convolveVert(const Image<T>* img, const vector<float>& kernel)
+Image<T>* Image<T>::vertical_convolution(const Image<T>* img, const vector<float>& kernel)
 {
 
 	
-	const T* ptrcol = img->pixels;	 			
-	const T* ppp;												 
+	const T* ptrcol = img->pixels;
+	const T* ppp;
 	T* ptrout;
 	
 	// I can't convolve myself
@@ -752,7 +966,7 @@ Image<T>* Image<T>::convolveVert(const Image<T>* img, const vector<float>& kerne
 		/* Zero leftmost columns */
 		for ( ; y < radius ; y++)
 		{
-			*ptrout = 0.0;
+			*ptrout = 0;
 			ptrout += img->xAxes;
 		}
 
@@ -760,20 +974,20 @@ Image<T>* Image<T>::convolveVert(const Image<T>* img, const vector<float>& kerne
 		for ( ; y < img->yAxes - radius ; y++)
 		{
 			ppp = ptrcol + img->xAxes* (y - radius);
-			register T sum = 0.0;
+			register float sum = 0;
 			for (int k = kernel.size()-1 ; k >= 0 ; k--)
 			{
 				sum += *ppp * kernel[k];
 				ppp += img->xAxes;
 			}
-			*ptrout = sum;
+			*ptrout = T(sum);
 			ptrout += img->xAxes;
 		}
 
 		/* Zero rightmost columns */
 		for ( ; y < img->yAxes ; y++)
 		{
-			*ptrout = 0.0;
+			*ptrout = 0;
 			ptrout += img->xAxes;
 		}
 
@@ -789,46 +1003,93 @@ Image<T>* Image<T>::convolveVert(const Image<T>* img, const vector<float>& kerne
 }
 
 template<class T>
-Image<T>* Image<T>::convolveSeparate(const Image<T>* img,  const vector<float>& horiz_kernel, const vector<float>& vert_kernel)
+Image<T>* Image<T>::convolution(const Image<T>* img,  const vector<float>& horiz_kernel, const vector<float>& vert_kernel)
 {
 
 	Image<T> imgtmp;
-	imgtmp.convolveHoriz(img, horiz_kernel);
-	convolveVert(&imgtmp, vert_kernel);
+	imgtmp.horizontal_convolution(img, horiz_kernel);
+	vertical_convolution(&imgtmp, vert_kernel);
 	return this;
 }
 
 template<class T>
-T Image<T>::interpolate(const float x, const float y) const
+Image<T>* Image<T>::binomial_smoothing(unsigned width, const Image<T>* img)
 {
-	int xt = (int) x;/* coordinates of top-left corner */
-	int yt = (int) y;
-	float ax = x - xt;
-	float ay = y - yt;
-	return ( (1-ax)*(1-ay)*pixel(xt,yt) + ax*(1-ay)*pixel(xt+1,yt) + (1-ax)*ay*pixel(xt,yt+1) + ax*ay*pixel(xt+1,yt+1));
+	if(width <= 1)
+		return this;
+	if (img == NULL)
+		img = this;
+	
+	if(width%2 == 0)
+		width += 1;
+	
+	unsigned N = width - 1;
+	vector<double> factoriel(width, 1.);
+	for(unsigned i = 2; i < width; ++i)
+		factoriel[i] = factoriel[i-1]*i;
+		
+	double den = exp2(double(N));
+	
+	vector<float> kernel(width, 1./den);
+
+	for(unsigned i = 1; i < N; ++i)
+		kernel[i] = (factoriel[N] / (factoriel[i] * factoriel[N-i])) / den;
+	#if DEBUG >= 3
+		cerr<<"Binomial smoothing kernel: "<<kernel<<endl;
+	#endif
+	
+	convolution(img, kernel, kernel);
+	return this;
+}
+
+template<class T>
+inline T Image<T>::interpolate(float x, float y) const
+{
+	if(x < 0)
+		x = 0;
+	if(y < 0)
+		y = 0;
+	if(x > xAxes-1.)
+		x = xAxes-1.;
+	if(y > yAxes-1.)
+		y = yAxes-1.;
+	
+	unsigned ix = (unsigned) x;
+	unsigned iy = (unsigned) y;
+	Real dx = x - ix;
+	Real dy = y - iy;
+	Real cdx = 1. - dx;
+	Real cdy = 1. - dy;
+	T* p = pixels + iy * xAxes + ix;
+	return T(cdx*cdy*Real(*p) + dx*cdy*Real(*(p+1)) + cdx*dy*Real(*(p+xAxes)) + dx*dy*Real(*(p+xAxes+1)));
+}
+
+template<class T>
+inline T Image<T>::interpolate(const RealPixLoc& c) const
+{
+	return interpolate(c.x, c.y);
 }
 
 
-
 template<class T>
-FitsFile& Image<T>::writeFits(FitsFile& file, int mode)
+FitsFile& Image<T>::writeFits(FitsFile& file, int mode, const string imagename)
 {
-	return file.writeImage(pixels, xAxes, yAxes, mode);
+	return file.writeImage(pixels, xAxes, yAxes, mode, imagename);
 }
 
 template<class T>
 FitsFile& Image<T>::readFits(FitsFile& file)
 {
-	file.readImage(pixels, xAxes, yAxes, &(nullvalue_));
+	file.readImage(pixels, xAxes, yAxes, &(nullpixelvalue));
 	numberPixels = xAxes * yAxes;
 	return file;
 }
 
 template<class T>
-bool Image<T>::writeFits(const std::string& filename, int mode)
+bool Image<T>::writeFits(const std::string& filename, int mode, const string imagename)
 {
 	FitsFile file(filename, FitsFile::overwrite);
-	this->writeFits(file, mode);
+	this->writeFits(file, mode, imagename);
 	return file.isGood();
 }
 

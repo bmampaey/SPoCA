@@ -8,40 +8,34 @@ LFLAGS=-lcfitsio
 DFLAGS=
 
 all:bin/attribution.x
-clean: rm bin/attribution.x objects/attribution.o objects/FitsFile.o objects/Header.o objects/CoronalHoleStats.o objects/Coordinate.o objects/Region.o objects/CoronalHole.o objects/ActiveRegionStats.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Classifier.o objects/ColorMap.o objects/SunImage.o objects/EUVImage.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+clean: rm bin/attribution.x objects/attribution.o objects/FitsFile.o objects/Coordinate.o objects/Header.o objects/CoronalHole.o objects/Region.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Classifier.o objects/ColorMap.o objects/SunImage.o objects/WCS.o objects/EUVImage.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
 
 
-bin/attribution.x : attribution.mk objects/attribution.o objects/FitsFile.o objects/Header.o objects/CoronalHoleStats.o objects/Coordinate.o objects/Region.o objects/CoronalHole.o objects/ActiveRegionStats.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Classifier.o objects/ColorMap.o objects/SunImage.o objects/EUVImage.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/attribution.o objects/FitsFile.o objects/Header.o objects/CoronalHoleStats.o objects/Coordinate.o objects/Region.o objects/CoronalHole.o objects/ActiveRegionStats.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Classifier.o objects/ColorMap.o objects/SunImage.o objects/EUVImage.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/attribution.x
+bin/attribution.x : attribution.mk objects/attribution.o objects/FitsFile.o objects/Coordinate.o objects/Header.o objects/CoronalHole.o objects/Region.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Classifier.o objects/ColorMap.o objects/SunImage.o objects/WCS.o objects/EUVImage.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/attribution.o objects/FitsFile.o objects/Coordinate.o objects/Header.o objects/CoronalHole.o objects/Region.o objects/ActiveRegion.o objects/RegionStats.o objects/FeatureVector.o objects/SPoCA2Classifier.o objects/SPoCAClassifier.o objects/PCM2Classifier.o objects/PCMClassifier.o objects/FCMClassifier.o objects/Image.o objects/Classifier.o objects/ColorMap.o objects/SunImage.o objects/WCS.o objects/EUVImage.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/attribution.x
 
-objects/attribution.o : attribution.mk programs/attribution.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/EUVImage.h classes/ColorMap.h classes/Classifier.h classes/FCMClassifier.h classes/PCMClassifier.h classes/PCM2Classifier.h classes/SPoCAClassifier.h classes/SPoCA2Classifier.h classes/FeatureVector.h classes/RegionStats.h classes/ActiveRegion.h classes/ActiveRegionStats.h classes/CoronalHole.h classes/CoronalHoleStats.h classes/FitsFile.h
+objects/attribution.o : attribution.mk programs/attribution.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/EUVImage.h classes/ColorMap.h classes/Classifier.h classes/FCMClassifier.h classes/PCMClassifier.h classes/PCM2Classifier.h classes/SPoCAClassifier.h classes/SPoCA2Classifier.h classes/FeatureVector.h classes/RegionStats.h classes/ActiveRegion.h classes/CoronalHole.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) programs/attribution.cpp -o objects/attribution.o
 
-objects/FitsFile.o : attribution.mk classes/FitsFile.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Header.h
+objects/FitsFile.o : attribution.mk classes/FitsFile.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Header.h classes/Coordinate.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/FitsFile.cpp -o objects/FitsFile.o
+
+objects/Coordinate.o : attribution.mk classes/Coordinate.cpp classes/constants.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o
 
 objects/Header.o : attribution.mk classes/Header.cpp 
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Header.cpp -o objects/Header.o
 
-objects/CoronalHoleStats.o : attribution.mk classes/CoronalHoleStats.cpp classes/constants.h classes/Region.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/CoronalHoleStats.cpp -o objects/CoronalHoleStats.o
-
-objects/Coordinate.o : attribution.mk classes/Coordinate.cpp 
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o
-
-objects/Region.o : attribution.mk classes/Region.cpp classes/constants.h classes/Coordinate.h classes/ColorMap.h classes/FitsFile.h
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Region.cpp -o objects/Region.o
-
-objects/CoronalHole.o : attribution.mk classes/CoronalHole.cpp classes/FeatureVector.h classes/ColorMap.h
+objects/CoronalHole.o : attribution.mk classes/CoronalHole.cpp classes/FeatureVector.h classes/EUVImage.h classes/ColorMap.h classes/Region.h classes/RegionStats.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/CoronalHole.cpp -o objects/CoronalHole.o
 
-objects/ActiveRegionStats.o : attribution.mk classes/ActiveRegionStats.cpp classes/constants.h classes/Region.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h
-	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ActiveRegionStats.cpp -o objects/ActiveRegionStats.o
+objects/Region.o : attribution.mk classes/Region.cpp classes/constants.h classes/tools.h classes/Coordinate.h classes/ColorMap.h classes/FitsFile.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Region.cpp -o objects/Region.o
 
-objects/ActiveRegion.o : attribution.mk classes/ActiveRegion.cpp classes/FeatureVector.h classes/ColorMap.h
+objects/ActiveRegion.o : attribution.mk classes/ActiveRegion.cpp classes/FeatureVector.h classes/EUVImage.h classes/ColorMap.h classes/Region.h classes/RegionStats.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ActiveRegion.cpp -o objects/ActiveRegion.o
 
-objects/RegionStats.o : attribution.mk classes/RegionStats.cpp classes/constants.h classes/Region.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h
+objects/RegionStats.o : attribution.mk classes/RegionStats.cpp classes/constants.h classes/tools.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h classes/Region.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/RegionStats.cpp -o objects/RegionStats.o
 
 objects/FeatureVector.o : attribution.mk classes/FeatureVector.cpp classes/constants.h
@@ -71,8 +65,11 @@ objects/Classifier.o : attribution.mk classes/Classifier.cpp classes/tools.h cla
 objects/ColorMap.o : attribution.mk classes/ColorMap.cpp classes/Header.h classes/SunImage.h classes/gradient.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ColorMap.cpp -o objects/ColorMap.o
 
-objects/SunImage.o : attribution.mk classes/SunImage.cpp classes/Image.h classes/Coordinate.h classes/Header.h classes/FitsFile.h
+objects/SunImage.o : attribution.mk classes/SunImage.cpp classes/Image.h classes/WCS.h classes/Header.h classes/Coordinate.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SunImage.cpp -o objects/SunImage.o
+
+objects/WCS.o : attribution.mk classes/WCS.cpp classes/constants.h classes/Coordinate.h classes/FitsFile.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/WCS.cpp -o objects/WCS.o
 
 objects/EUVImage.o : attribution.mk classes/EUVImage.cpp classes/Coordinate.h classes/SunImage.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/EUVImage.cpp -o objects/EUVImage.o

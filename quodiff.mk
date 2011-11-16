@@ -8,11 +8,11 @@ LFLAGS=-lcfitsio
 DFLAGS=
 
 all:bin/quodiff.x
-clean: rm bin/quodiff.x objects/quodiff.o objects/mainutilities.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o
+clean: rm bin/quodiff.x objects/quodiff.o objects/mainutilities.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/WCS.o objects/Image.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o
 
 
-bin/quodiff.x : quodiff.mk objects/quodiff.o objects/mainutilities.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/quodiff.o objects/mainutilities.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/Image.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o $(LFLAGS) -o bin/quodiff.x
+bin/quodiff.x : quodiff.mk objects/quodiff.o objects/mainutilities.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/WCS.o objects/Image.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/quodiff.o objects/mainutilities.o objects/Header.o objects/ColorMap.o objects/SunImage.o objects/FitsFile.o objects/Coordinate.o objects/WCS.o objects/Image.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/FeatureVector.o objects/ArgumentHelper.o objects/EUVImage.o objects/tools.o $(LFLAGS) -o bin/quodiff.x
 
 objects/quodiff.o : quodiff.mk utilities/quodiff.cpp classes/tools.h classes/constants.h classes/EUVImage.h classes/ArgumentHelper.h classes/mainutilities.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) utilities/quodiff.cpp -o objects/quodiff.o
@@ -26,14 +26,17 @@ objects/Header.o : quodiff.mk classes/Header.cpp
 objects/ColorMap.o : quodiff.mk classes/ColorMap.cpp classes/Header.h classes/SunImage.h classes/gradient.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/ColorMap.cpp -o objects/ColorMap.o
 
-objects/SunImage.o : quodiff.mk classes/SunImage.cpp classes/Image.h classes/Coordinate.h classes/Header.h classes/FitsFile.h
+objects/SunImage.o : quodiff.mk classes/SunImage.cpp classes/Image.h classes/WCS.h classes/Header.h classes/Coordinate.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SunImage.cpp -o objects/SunImage.o
 
-objects/FitsFile.o : quodiff.mk classes/FitsFile.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Header.h
+objects/FitsFile.o : quodiff.mk classes/FitsFile.cpp classes/fitsio.h classes/longnam.h classes/tools.h classes/constants.h classes/Header.h classes/Coordinate.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/FitsFile.cpp -o objects/FitsFile.o
 
-objects/Coordinate.o : quodiff.mk classes/Coordinate.cpp 
+objects/Coordinate.o : quodiff.mk classes/Coordinate.cpp classes/constants.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o
+
+objects/WCS.o : quodiff.mk classes/WCS.cpp classes/constants.h classes/Coordinate.h classes/FitsFile.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/WCS.cpp -o objects/WCS.o
 
 objects/Image.o : quodiff.mk classes/Image.cpp classes/tools.h classes/constants.h classes/Coordinate.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Image.cpp -o objects/Image.o

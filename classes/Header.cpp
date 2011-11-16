@@ -76,6 +76,7 @@ string Header::get<string>(const string& key) const
 	return it->second;
 }
 
+
 template<>
 string Header::get<string>(const char* key) const
 {
@@ -90,14 +91,14 @@ string Header::get<string>(const char* key) const
 	return it->second;
 }
 
-template<>
-bool Header::get<bool>(const string& key) const
+
+bool Header::has(const string& key) const
 {
 	return keywords.find(key) != keywords.end();
 }
 
-template<>
-bool Header::get<bool>(const char* key) const
+
+bool Header::has(const char* key) const
 {
 	return  keywords.find(key) != keywords.end();
 }
@@ -178,7 +179,10 @@ template double Header::get<double>(const string& key)const;
 template double Header::get<double>(const char* key)const;
 template void Header::set<double>(const string& key, const double& value);
 template void Header::set<double>(const char* key, const double& value);
-
+template bool Header::get<bool>(const string& key)const;
+template bool Header::get<bool>(const char* key)const;
+template void Header::set<bool>(const string& key, const bool& value);
+template void Header::set<bool>(const char* key, const bool& value);
 
 template void Header::set<int>(const string& key, const int& value, const string& comment);
 template void Header::set<int>(const char* key, const int& value, const char* comment);
@@ -190,6 +194,7 @@ template void Header::set<float>(const string& key, const float& value, const st
 template void Header::set<float>(const char* key, const float& value, const char* comment);
 template void Header::set<double>(const string& key, const double& value, const string& comment);
 template void Header::set<double>(const char* key, const double& value, const char* comment);
-
+template void Header::set<bool>(const string& key, const bool& value, const string& comment);
+template void Header::set<bool>(const char* key, const bool& value, const char* comment);
 
 

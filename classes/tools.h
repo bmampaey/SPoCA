@@ -3,6 +3,7 @@
 #define Tools_H
 
 #include <vector>
+#include <deque>
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -13,6 +14,7 @@
 #include <ctime>
 #include <sys/stat.h>
 #include <locale>
+#include <map>
 #include "constants.h"
 
 /*!
@@ -93,6 +95,27 @@ std::string& operator>>(std::string& input, T& value)
 	return input;
 }
 
+//! Return a vector of a map keys
+template<class K, class V>
+std::vector<K> keys(const std::map<K,V>& M)
+{
+	std::vector<K> result;
+	result.reserve(M.size());
+	for(typename std::map<K, V>::const_iterator m = M.begin(); m != M.end(); ++m)
+		result.push_back(m->first);
+	return result;
+}
+
+//! Return a vector of the map values
+template<class K, class V>
+std::vector<V> values(const std::map<K,V>& M)
+{
+	std::vector<V> result;
+	result.reserve(M.size());
+	for(typename std::map<K, V>::const_iterator m = M.begin(); m != M.end(); ++m)
+		result.push_back(m->second);
+	return result;
+}
 
 //! Convert a integer as a string
 /*! @param size Minimal size of the integer. It will be padded on the left with 0 if needed */
@@ -120,5 +143,10 @@ bool isDir(const std::string path);
 bool isFile(const std::string path);
 //! Return a time as a string of the form yyyymmdd_hhmmss
 std::string time2string(const time_t time);
+
+//! Routine that return the requested percentil of an array
+/* The array will be modified */ 
+EUVPixelType quickselect(std::deque<EUVPixelType>& arr, Real percentil);
+
 
 #endif

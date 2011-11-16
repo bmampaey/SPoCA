@@ -17,30 +17,46 @@ class Header
 		std::map<std::string,std::string> keywords;
 	public :
 		
-		//Constructors and destructors
+		//! Constructor
 		Header();
+		//! Copy Constructor
 		Header(const Header& i);
+		//! Copy Constructor
 		Header(const Header* i);
+		//! Destructor
 		~Header();
 		
-		//Accessors
+		//! Return the value of the keyword key
 		template<class T>
 		T get(const std::string& key) const;
+		//! Return the value of the keyword key
 		template<class T>
 		T get(const char* key) const;
-
+		
+		//! Ckeck if the keyword key is in the header
+		bool has(const std::string& key) const;
+		//! Ckeck if the keyword key is in the header
+		bool has(const char* key) const;
+		
+		//! Set/Update the value of the keyword key
 		template<class T>
 		void set(const std::string& key, const T& value);
+		//! Set/Update the value of the keyword key
 		template<class T>
 		void set(const char* key, const T& value);
 		
+		//! Set/Update the value and the comment of the keyword key
+		/*! (Not yet implemented) */
 		template<class T>
 		void set(const std::string& key, const T& value, const std::string& comment);
+		//! Set/Update the value and the comment of the keyword key
+		/*! (Not yet implemented) */
 		template<class T>
 		void set(const char* key, const T& value, const char* comment);
 		
-		// Iterator
+		//! Iterator
 		typedef std::map<std::string,std::string>::iterator iterator;
+		//! Const Iterator
 		typedef std::map<std::string,std::string>::const_iterator const_iterator;
 		iterator begin() { return keywords.begin(); }
 		iterator end() { return keywords.end(); }

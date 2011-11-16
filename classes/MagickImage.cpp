@@ -59,6 +59,7 @@ MagickImage::MagickImage(const Color& background, const unsigned X, const unsign
 
 template MagickImage::MagickImage(ColorType* image, const unsigned X, const unsigned Y, const string channel);
 template MagickImage::MagickImage(EUVPixelType* image, const unsigned X, const unsigned Y, const string channel);
+template MagickImage::MagickImage(char* image, const unsigned X, const unsigned Y, const string channel);
 
 
 

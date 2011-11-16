@@ -56,6 +56,8 @@
  - TakeLog (Take the log)
  - DivMode (Division by the mode)
  - DivExpTime (Division by the Exposure Time)
+ - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
+ - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
  
 @param radiusratio	The ratio of the radius of the sun that will be processed.
 
@@ -110,7 +112,7 @@ int main(int argc, const char **argv)
 	cout<<setiosflags(ios::fixed);
 
 	// Program version
-	const char * version = "2.0";
+	string version = "2.0";
 
 	// The list of names of the sun images to process
 	string imageType = "UNKNOWN";
@@ -171,7 +173,7 @@ int main(int argc, const char **argv)
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
-	arguments.set_version(version);
+	arguments.set_version(version.c_str());
 	arguments.process(argc, argv);
 
 	
@@ -215,9 +217,10 @@ int main(int argc, const char **argv)
 	
 	
 	// We read the bin size
-	if(!sbinSize.empty())
+	if(! readbinSize(binSize, sbinSize))
 	{
-		sbinSize>>binSize;
+		cerr<<"Error reading bin size: "<<sbinSize<<endl;
+		return EXIT_FAILURE;
 	}
 
 	

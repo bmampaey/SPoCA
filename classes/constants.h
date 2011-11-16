@@ -47,7 +47,7 @@ See constants.h for the actual values.
 <BR> It should be an integer, preferably a unsigned
 */
 #if ! defined(ColorType)
-#define ColorType short unsigned 
+#define ColorType unsigned 
 #endif
 
 /*!
@@ -59,6 +59,16 @@ See constants.h for the actual values.
 */
 #if ! defined(NUMBERCHANNELS)
 #define NUMBERCHANNELS 2
+#endif
+
+/*!
+@page Compilation_Options
+@param NUMBER_BINS The default number of bins to use in 2 times the variance when constructing an histogram
+<BR> It should be a positive integer
+*/
+
+#if ! defined(NUMBER_BINS)
+#define NUMBER_BINS 100
 #endif
 
 /*!
@@ -131,7 +141,7 @@ See Classifier::merge and Classifier::sursegmentation
 
 /*!
 @page Compilation_Options
-@param SSW_PATH Path to solarsoft for CoordinateConvertor
+@param SSW_PATH Path to solarsoft for PixLocConvertor
 */
 #define SSW_PATH "/usr/local/ssw/"
 #define WCS_ROUTINES_SAV "./idl/wcs_routines.sav"
@@ -183,34 +193,69 @@ See ActiveRegion.h and CoronalHole.h for information about how these parameters 
 #define CH_AGGREGATION 32. // Equivalent to 12 EIT pixels
 #endif
 
-
 /*!
 @page Compilation_Options
-@param AR_AGGREGATION_TYPE Type of aggregation to use for AR
+@param AR_PROJECTION The projection to improve the aggregation. (By changing the projection it is possible to improve tha aggragation nar the limb.)
 <BR> Possible values are:
- -# AR_AGGREGATION_DILATE: The AR map is dilated by a disc of radius AR_AGGREGATION.
- -# AR_AGGREGATION_FRAGMENTED: A dilated map like the one described above is used to tell wich blobs correspond to the same AR.
- This means that the resulting AR can be fragmented.
- -# AR_AGGREGATION_CLOSING: A closing of factor AR_AGGREGATION is done on the AR map.
+ -# NO_PROJECTION	No projection will be made
+ -# EQUIRECTANGULAR_PROJECTION	
+ -# LAMBERT_CYLINDRICAL_PROJECTION
+ -# SINUOSIDAL_PROJECTION
+ -# DISTANCE_TRANSFORM	This is not a projection per se, but the exact disance along the sphere will be used in the morphological transformations
 */
-
-#if ! defined(AR_AGGREGATION_TYPE)
-#define AR_AGGREGATION_TYPE AR_AGGREGATION_FRAGMENTED
+#if ! defined(AR_PROJECTION)
+#define AR_PROJECTION SINUOSIDAL_PROJECTION
 #endif
 
 /*!
 @page Compilation_Options
-@param CH_AGGREGATION_TYPE Type of aggregation to use for CH
+@param CH_PROJECTION The projection to improve the aggregation. (By changing the projection it is possible to improve tha aggragation nar the limb.)
 <BR> Possible values are:
- -# CH_AGGREGATION_DILATE: The CH map is dilated by a disc of radius CH_AGGREGATION.
- -# CH_AGGREGATION_FRAGMENTED: A dilated map like the one described above is used to tell wich blobs correspond to the same CH.
- This means that the resulting CH can be fragmented.
- -# CH_AGGREGATION_CLOSING: A closing of factor CH_AGGREGATION is done on the CH map.
+ -# NO_PROJECTION	No projection will be made
+ -# EQUIRECTANGULAR_PROJECTION	
+ -# LAMBERT_CYLINDRICAL_PROJECTION
+ -# SINUOSIDAL_PROJECTION
+ -# DISTANCE_TRANSFORM	This is not a projection per se, but the exact disance along the sphere will be used in the morphological transformations
+*/
+#if ! defined(CH_PROJECTION)
+#define CH_PROJECTION SINUOSIDAL_PROJECTION
+#endif
+
+
+/*!
+@page Compilation_Options
+@param AR_FRAGMENTED If want the map of AR to be fragmented set to true, if you want it to be single blobs set to false
 */
 
-#if ! defined(CH_AGGREGATION_TYPE)
-#define CH_AGGREGATION_TYPE CH_AGGREGATION_CLOSING
+#if ! defined(AR_FRAGMENTED)
+#define AR_FRAGMENTED true
 #endif
+
+/*!
+@page Compilation_Options
+@param CH_FRAGMENTED If want the map of CH to be fragmented set to true, if you want it to be single blobs set to false
+*/
+
+#if ! defined(CH_FRAGMENTED)
+#define CH_FRAGMENTED true
+#endif
+
+/*!
+@page Compilation_Options
+@param AR_TRA If set to true, the threshold for removing small AR will be computed on the Raw Area, otherwise on the arae At Disk Center
+*/
+#if ! defined(AR_TRA)
+#define AR_TRA false
+#endif
+
+/*!
+@page Compilation_Options
+@param CH_TRA If set to true, the threshold for removing small CH will be computed on the Raw Area, otherwise on the arae At Disk Center
+*/
+#if ! defined(CH_TRA)
+#define CH_TRA false
+#endif
+
 
 /*!
 @page Compilation_Options
@@ -235,11 +280,18 @@ See ActiveRegion.h and CoronalHole.h for information about how these parameters 
 @section ALC_corr Annulus Limb Correction
 See @ref ALC.
 
+@param ANNULUS_WIDTH Parameters for the width of an annulus in the Annulus Limb Correction
+*/
+
+#define ANNULUS_WIDTH (2.)
+
+/*
+@page Compilation_Options
 @param EIT_ALC_PARAMETERS Parameters for Annulus Limb Correction of EIT images
 
 */
 
-#define EIT_ALC_PARAMETERS {95, 100, 105, 110}
+#define EIT_ALC_PARAMETERS {75, 85, 110, 112}
 
 /*!
 @page Compilation_Options
@@ -247,7 +299,7 @@ See @ref ALC.
 
 */
 
-#define EUVI_ALC_PARAMETERS {95, 100, 105, 110}
+#define EUVI_ALC_PARAMETERS {70, 95, 108, 112}
 
 /*!
 @page Compilation_Options
@@ -255,7 +307,7 @@ See @ref ALC.
 
 */
 
-#define AIA_ALC_PARAMETERS {80, 102, 105, 112}
+#define AIA_ALC_PARAMETERS {70, 95, 108, 112} 
 
 /*!
 @page Compilation_Options
@@ -263,7 +315,7 @@ See @ref ALC.
 
 */
 
-#define SWAP_ALC_PARAMETERS {95, 100, 105, 110}
+#define SWAP_ALC_PARAMETERS {70, 95, 108, 112} 
 
 /*!
 @page Compilation_Options
@@ -271,7 +323,7 @@ See @ref ALC.
 
 */
 
-#define EUV_ALC_PARAMETERS {95, 100, 105, 110}
+#define EUV_ALC_PARAMETERS {95, 100, 105, 110} 
 
 /*!
 @page Compilation_Options
@@ -293,19 +345,39 @@ See @ref ALC.
 
 @section solar_constants Solar Constants
 
-@param SUNRADIUS The radius of the sun in Mmeters (R0)
+@param SUN_RADIUS The average radius of the sun in meters
 */
-#define SUNRADIUS 695.508
+#define SUN_RADIUS 695.508
+
 /*!
 @page Compilation_Options
-@param DR0 Something. Maximal variation in the distance between satellite and Sun, in Mm.
+
+@param DISTANCE_EARTH_SUN The average distance between the earth and the sun in Mmeters
 */
-#define DR0 0.026
+#define DISTANCE_EARTH_SUN 149597.870691
+
 /*!
 @page Compilation_Options
-@param DR Maximal variation in the distance between satellite and Sun, in pixels.
+@param EARTH_ORBIT_ECCENTRICITY  
 */
-#define DR 2.
+#define EARTH_ORBIT_ECCENTRICITY 0.0167
+
+/*!
+@page Compilation_Options
+@param YEARLY_MAXIMAL_ERROR 
+*/
+#define YEARLY_MAXIMAL_ERROR (DISTANCE_EARTH_SUN * EARTH_ORBIT_ECCENTRICITY)
+
+/*!
+@page Compilation_Options
+@param SUN_RADIUS_VARIATION Maximal variation of the radius of the sun, in Mm.
+*/
+#define SUN_RADIUS_VARIATION 0.026
+/*!
+@page Compilation_Options
+@param SUN_RADIUS_VARIATION_PIXELS Maximal variation of the radius of the sun, in pixels.
+*/
+#define SUN_RADIUS_VARIATION_PIXELS 2.
 
 /*!
 @page Compilation_Options
@@ -313,23 +385,6 @@ See @ref ALC.
 */
 #define HIGGINS_FACTOR 16
 
-/*!
-@page Compilation_Options
-@param distance_observer_sun distance between the earth and the sun
-*/
-#define distance_observer_sun 149597.871
-
-/*!
-@page Compilation_Options
-@param earth_orbit_eccentricity 
-*/
-#define earth_orbit_eccentricity 0.0167
-
-/*!
-@page Compilation_Options
-@param yearly_maximal_error 
-*/
-#define yearly_maximal_error (distance_observer_sun * earth_orbit_eccentricity)
 
 /*!
 @page Compilation_Options
@@ -338,6 +393,14 @@ See @ref ALC.
 */
 
 #define rad2arcsec 206264.806247096
+
+/*!
+@page Compilation_Options
+@section universal_constants Universal Constants
+@param arcsec2rad Conversion between arcsec and radians
+*/
+
+#define arcsec2rad 0.000004848
 
 /*!
 @page Compilation_Options
@@ -383,15 +446,14 @@ See @ref ALC.
 #define ColorType short unsigned 
 #endif
 
-#define AR_AGGREGATION_DILATE 1
-#define AR_AGGREGATION_FRAGMENTED 2
-#define AR_AGGREGATION_CLOSING 3
-#define CH_AGGREGATION_DILATE 1
-#define CH_AGGREGATION_FRAGMENTED 2
-#define CH_AGGREGATION_CLOSING 3
 #define MERGEMAX 1
 #define MERGECIS 2
 #define MERGESUM 3
 #define MERGEVINCENT 4
+#define NO_PROJECTION 0 
+#define EQUIRECTANGULAR_PROJECTION 1
+#define LAMBERT_CYLINDRICAL_PROJECTION 2
+#define SINUOSIDAL_PROJECTION 3
+#define DISTANCE_TRANSFORM 4
 
 #endif //end of Constants_H

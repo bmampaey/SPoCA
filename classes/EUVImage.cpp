@@ -1,4 +1,5 @@
 #include "EUVImage.h"
+#include "colortables.h"
 
 using namespace std;
 
@@ -10,45 +11,66 @@ using namespace std;
 #endif
 
 EUVImage::~EUVImage()
-{
+{}
 
-}
 
-EUVImage::EUVImage(const long xAxes, const long yAxes)
-:SunImage<EUVPixelType>(xAxes,yAxes),wavelength(0),median(0),mode(0),datap01(0), datap95(RealMAX), exposureTime(1)
-{
-	Real parameters[] = EUV_ALC_PARAMETERS;
-	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
-	setALCParameters(temp);
-}
+EUVImage::EUVImage(const unsigned& xAxes, const unsigned& yAxes)
+:SunImage<EUVPixelType>(xAxes,yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap95(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+{}
 
-EUVImage::EUVImage(const long xAxes, const long yAxes, const Coordinate suncenter, const double radius)
-:SunImage<EUVPixelType>(xAxes,yAxes,suncenter,radius),wavelength(0),median(0),mode(0),datap01(0), datap95(RealMAX), exposureTime(1)
-{
-	Real parameters[] = EUV_ALC_PARAMETERS;
-	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
-	setALCParameters(temp);
-}
+
+EUVImage::EUVImage(const unsigned& xAxes, const unsigned& yAxes, const RealPixLoc& suncenter, const Real& radius)
+:SunImage<EUVPixelType>(xAxes,yAxes,suncenter,radius),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap95(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+{}
+
+
+EUVImage::EUVImage(const Header& header, const unsigned& xAxes, const unsigned& yAxes)
+:SunImage<EUVPixelType>(header, xAxes, yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap95(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+{}
+
+
+EUVImage::EUVImage(const WCS& wcs, const unsigned& xAxes, const unsigned& yAxes)
+:SunImage<EUVPixelType>(wcs, xAxes, yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap95(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+{}
 
 
 EUVImage::EUVImage(const EUVImage& i)
-:SunImage<EUVPixelType>(i),wavelength(i.wavelength),median(i.median),datap01(i.datap01),datap95(i.datap95),exposureTime(i.exposureTime)
+:SunImage<EUVPixelType>(i)
 {
+	wavelength = i.wavelength;
+	median = i.median;
+	mode = i.mode;
+	datap01 = i.datap01;
+	datap95 = i.datap95;
+	exposureTime = i.exposureTime;
+	ALCParameters = i.ALCParameters;
 }
 
 
 EUVImage::EUVImage(const EUVImage* i)
-:SunImage<EUVPixelType>(i),wavelength(i->wavelength),median(i->median),datap01(i->datap01),datap95(i->datap95), exposureTime(i->exposureTime)
+:SunImage<EUVPixelType>(i)
 {
+	wavelength = i->wavelength;
+	median = i->median;
+	mode = i->mode;
+	datap01 = i->datap01;
+	datap95 = i->datap95;
+	exposureTime = i->exposureTime;
+	ALCParameters = i->ALCParameters;
 }
 
-EUVImage::EUVImage(const Header& header)
-:SunImage<EUVPixelType>(header)
+vector<Real> EUVImage::getALCParameters()
 {
-	postRead();
+	Real parameters[] = EUV_ALC_PARAMETERS;
+	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
+	for(unsigned p = 0; p < temp.size(); ++p)
+		temp[p] /= 100.;
+	return temp;
 }
 
-void EUVImage::postRead()
+
+
+void EUVImage::parseHeader()
 {
 	#if DEBUG >= 1
 	//If pixel values are negative this can cause problems in some functions
@@ -56,60 +78,70 @@ void EUVImage::postRead()
 	{
 		if (pixels[j] < 0)
 		{
-			pixels[j] = nullvalue_;
+			pixels[j] = nullpixelvalue;
 		}
 	}
 	#endif
+	
+	SunImage<EUVPixelType>::parseHeader();
+	
+	if (header.has("WAVELNTH"))
+		wavelength = header.get<Real>("WAVELNTH");
+	if (header.has("DATAMEDN"))
+		median = header.get<Real>("DATAMEDN");
+	if (header.has("DATAP01"))
+		datap01 = header.get<EUVPixelType>("DATAP01");
+	if (header.has("DATAP95"))
+		datap95 = header.get<EUVPixelType>("DATAP95");
+	
+	if (header.has("EXPTIME"))
+		exposureTime = header.get<Real>("EXPTIME");
+	else
+		exposureTime = 1;
 }
 
 
-void EUVImage::preWrite()
+void EUVImage::fillHeader()
 {
-
+	SunImage<EUVPixelType>::fillHeader();
+	header.set<Real>("EXPTIME", exposureTime);
+	header.set<Real>("DATAMEDN", median);
+	header.set<EUVPixelType>("DATAP01",datap01);
+	header.set<EUVPixelType>("DATAP95", datap95);
 }
 
-double EUVImage::Wavelength() const
-{return wavelength;}
-double EUVImage::Median() const
-{return median;}
-double EUVImage::ExposureTime() const
-{return exposureTime;}
-
-void EUVImage::copySunParameters(const EUVImage* i)
+inline string EUVImage::Channel() const
 {
-	SunImage<EUVPixelType>::copySunParameters(i);
-	wavelength = i->wavelength;
-	median = i->median;
-	mode = i->mode;
-	datap01 = i->datap01;
-	datap95 = i->datap95;
-	exposureTime = i->exposureTime;
+	return Instrument() + "_" + itos(int(Wavelength()));
 }
 
-void EUVImage::setALCParameters(const vector<Real>& ALCParameters)
+
+inline Real EUVImage::Wavelength() const
 {
-	if(ALCParameters.size() != 4)
-	{
-		cerr<<"Error setting ALC parameters. 4 values must be provided"<<endl;
-		exit(EXIT_FAILURE);
-	}
-	this->ALCParameters.resize(4);
-	this->ALCParameters[0] = ALCParameters[0]/100.;
-	for(unsigned a = 1; a < 4; ++a)
-	{
-		if(ALCParameters[a] < ALCParameters[a-1])
-		{
-			cerr<<"Error setting ALC parameters. Values must be increasing"<<endl;
-			exit(EXIT_FAILURE);
-		}
-		this->ALCParameters[a] = ALCParameters[a]/100.;
-	}
+	return wavelength;
 }
 
-vector<Real> EUVImage::getALCParameters()
+inline Real EUVImage::Median() const
 {
-	return ALCParameters;
+	if (median != nullpixelvalue)
+		return median;
+	else
+		return percentiles(0.5);
 }
+
+inline Real EUVImage::Mode() const
+{
+	if (mode != nullpixelvalue)
+		return mode;
+	else
+		return static_cast<const Image<EUVPixelType>*>(this)->mode();
+}
+
+inline Real EUVImage::ExposureTime() const
+{
+	return exposureTime;
+}
+
 
 string nextStep(string& preprocessingList)
 {
@@ -140,7 +172,7 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 		}
 		else if( preprocessingStep == "ALC")
 		{
-			//The successive operations ALC + DivMode and ALC + DivMedian have been optimized
+			//The successive operations ALC + DivMedian have been optimized
 			preprocessingStep = nextStep(preprocessingList);
 			if( preprocessingStep == "DivMedian")
 			{
@@ -150,95 +182,133 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 				datap95 /= median;
 				mode /= median;
 			}
-			else if( preprocessingStep == "DivMode")
-			{
-				ALCDivMode(radiusRatio, MINRADIUS());
-				median /= mode;
-				datap01 /= mode;
-				datap95 /= mode;
-				mode /= mode;
-			}
 			else
 			{
 				annulusLimbCorrection(radiusRatio, MINRADIUS());
 				preprocessingList = preprocessingStep + "," + preprocessingList;
 			}
 		}
-		
-		else if( preprocessingStep == "DivMedian")
+		else if(preprocessingStep.find("Div") == 0)
 		{
-			if(median == 0)
+			Real denominator = 1.;
+			while(preprocessingStep.find("Div") == 0)
 			{
-				cerr<<"Error during preprocessing step DivMedian : median = 0."<<endl;
-				exit(EXIT_FAILURE);
+				if(preprocessingStep == "DivMedian")
+					denominator *= Median();
+				else if(preprocessingStep == "DivMode")
+					denominator *= Mode();
+				else if(preprocessingStep == "DivExpTime")
+					denominator *= exposureTime;
+				else
+					cerr<<"Error during preprocessing : Unknown preprocessing step "<<preprocessingStep<<endl;
+				
+				if(denominator == 0)
+				{
+					cerr<<"Error during preprocessing step "<<preprocessingStep<<". Division by 0."<<endl;
+					exit(EXIT_FAILURE);
+				}
+				preprocessingStep = nextStep(preprocessingList);
 			}
-			for (unsigned j=0; j < numberPixels; ++j)
+			
+			preprocessingList = preprocessingStep + "," + preprocessingList;
+			
+			if(denominator != 1)
 			{
-				if (pixels[j] != nullvalue_)
-					pixels[j] = pixels[j] / median;
+				for (unsigned j=0; j < numberPixels; ++j)
+				{
+					if (pixels[j] != nullpixelvalue)
+						pixels[j] = pixels[j] / denominator;
+				}
+				median /= denominator;
+				datap01 /= denominator;
+				datap95 /= denominator;
+				mode /= denominator;
 			}
-			median /= median;
-			datap01 /= median;
-			datap95 /= median;
-			mode /= median;
-		}	
-		else if( preprocessingStep == "DivMode")
-		{
-			if(mode == 0)
-			{
-				cerr<<"Error during preprocessing step DivMode : mode = 0."<<endl;
-				exit(EXIT_FAILURE);
-			}
-			for (unsigned j=0; j < numberPixels; ++j)
-			{
-				if (pixels[j] != nullvalue_)
-					pixels[j] = pixels[j] / mode;
-			}
-			median /= mode;
-			datap01 /= mode;
-			datap95 /= mode;
-			mode /= mode;
 		}	
 		else if( preprocessingStep == "TakeSqrt")
 		{
 			for (unsigned j=0; j < numberPixels; ++j)
 			{
-				if (pixels[j] != nullvalue_)
-					pixels[j] = pixels[j] >= 0 ? sqrt(pixels[j]) : nullvalue_;
+				if (pixels[j] != nullpixelvalue)
+					pixels[j] = pixels[j] >= 0 ? sqrt(pixels[j]) : nullpixelvalue;
 			}
 			median = sqrt(median);
+			mode = nullpixelvalue;
 			datap01 = sqrt(datap01);
 			datap95 = sqrt(datap95);
-			mode = NAN;
 		}	
 		else if( preprocessingStep == "TakeLog")
 		{
 			for (unsigned j=0; j < numberPixels; ++j)
 			{
-				if (pixels[j] != nullvalue_)
-					pixels[j] = pixels[j] > 0 ? log(pixels[j]) : nullvalue_;
+				if (pixels[j] != nullpixelvalue)
+					pixels[j] = pixels[j] > 0 ? log(pixels[j]) : nullpixelvalue;
 			}
 			median = log(median);
+			mode = nullpixelvalue;
 			datap01 = log(datap01);
 			datap95 = log(datap95);
-			mode = NAN;
+			
 		}
-		else if( preprocessingStep == "DivExpTime")
+		else if(preprocessingStep.find("Thr") == 0)
 		{
-			if(exposureTime == 0)
+			double upper = 100, lower = 0;
+			while(preprocessingStep.find("Thr") == 0)
 			{
-				cerr<<"Error during preprocessing step DivExpTime : exposureTime = 0."<<endl;
-				exit(EXIT_FAILURE);
+				if(preprocessingStep.find("ThrMin") == 0)
+				{
+					lower = stod(preprocessingStep.substr(6));
+				}
+				else if (preprocessingStep.find("ThrMax") == 0)
+				{
+					upper = stod(preprocessingStep.substr(6));
+				}
+				else
+					cerr<<"Error during preprocessing : Unknown preprocessing step "<<preprocessingStep<<endl;
+				preprocessingStep = nextStep(preprocessingList);
 			}
-			for (unsigned j=0; j < numberPixels; ++j)
+			
+			preprocessingList = preprocessingStep + "," + preprocessingList;
+			
+			vector<Real> percents;
+			if(lower > 0)
+				percents.push_back(lower/100.);
+			if(upper < 100)
+				percents.push_back(upper/100.);
+				
+			
+			if(percents.size() > 0)
 			{
-				if (pixels[j] != nullvalue_)
-					pixels[j] = pixels[j] / exposureTime;
+				vector<EUVPixelType> temp(pixels, pixels+numberPixels);
+				vector<EUVPixelType> limits = percentiles(percents);
+				
+				EUVPixelType max = RealMAX;
+				if(upper < 100)
+				{
+					max = limits.back();
+					limits.pop_back();
+					#if DEBUG >= 3
+					cerr<<"Percentile "<<upper<<": "<<max<<endl;
+					#endif
+				}
+				
+				EUVPixelType min = -RealMAX;
+				if(lower > 0)
+				{
+					min = limits.back();
+					limits.pop_back();
+					#if DEBUG >= 3
+					cerr<<"Percentile "<<lower<<": "<<min<<endl;
+					#endif
+				}
+				
+				threshold(min, max);
 			}
-			median /= exposureTime;
-			datap01 /= exposureTime;
-			datap95 /= exposureTime;
-			mode /= exposureTime;
+		}
+		else if(preprocessingStep.find("Smooth") == 0)
+		{
+			double factor = stod(preprocessingStep.substr(6));
+			binomial_smoothing(int(factor/PixelWidth()+0.5));
 		}
 		else
 		{
@@ -327,143 +397,57 @@ inline Real EUVImage::percentCorrection(const Real r)const
 
 */
 
-/*
- *  This Quickselect routine is based on the algorithm described in
- *  "Numerical recipes in C", Second Edition,
- *  Cambridge University Press, 1992, Section 8.5, ISBN 0-521-43108-5
- *  This code by Nicolas Devillard - 1998. Public domain.
- */
 
-#define ELEM_SWAP(a,b) { register EUVPixelType t=(a);(a)=(b);(b)=t; }
-
-EUVPixelType quick_select(vector<EUVPixelType>& arr, int n)
-{
-	int low, high ;
-	int median;
-	int middle, ll, hh;
-
-	low = 0 ; high = n-1 ; median = (low + high) / 2;
-	for (;;)
-	{
-		if (high <= low)						  /* One element only */
-			return arr[median] ;
-
-		if (high == low + 1)					  /* Two elements only */
-		{
-			if (arr[low] > arr[high])
-				ELEM_SWAP(arr[low], arr[high]) ;
-			return arr[median] ;
-		}
-
-		/* Find median of low, middle and high items; swap into position low */
-		middle = (low + high) / 2;
-		if (arr[middle] > arr[high])    ELEM_SWAP(arr[middle], arr[high]) ;
-		if (arr[low] > arr[high])       ELEM_SWAP(arr[low], arr[high]) ;
-		if (arr[middle] > arr[low])     ELEM_SWAP(arr[middle], arr[low]) ;
-
-		/* Swap low item (now in position middle) into position (low+1) */
-		ELEM_SWAP(arr[middle], arr[low+1]) ;
-
-		/* Nibble from each end towards middle, swapping items when stuck */
-		ll = low + 1;
-		hh = high;
-		for (;;)
-		{
-			do ll++; while (arr[low] > arr[ll]) ;
-			do hh--; while (arr[hh]  > arr[low]) ;
-
-			if (hh < ll)
-				break;
-
-			ELEM_SWAP(arr[ll], arr[hh]) ;
-		}
-
-		/* Swap middle item (in position low) back into correct position */
-		ELEM_SWAP(arr[low], arr[hh]) ;
-
-		/* Re-set active partition */
-		if (hh <= median)
-			low = ll;
-		if (hh >= median)
-			high = hh - 1;
-	}
-}
-
-
-#undef ELEM_SWAP
 
 void EUVImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
-{						  
-	minLimbRadius *= radius;
-	maxLimbRadius *= radius;
+{
+	minLimbRadius *= SunRadius();
+	maxLimbRadius *= SunRadius();
 	Real minLimbRadius2 = minLimbRadius*minLimbRadius;
 	Real maxLimbRadius2 = maxLimbRadius*maxLimbRadius;
-	const Real deltaR = 1.0;	//This is the width of an annulus in pixel
+	const Real deltaR = ANNULUS_WIDTH;	//This is the width of an annulus in pixel
 	vector<Real> annulusMean(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 	vector<unsigned> annulusNbrPixels(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 
 	EUVPixelType* pixelValue = pixels;
-	const int xmax = Xaxes() - suncenter.x;
-	const int ymax = Yaxes() - suncenter.y;
+	const Real xmax = Real(Xaxes()) - SunCenter().x;
+	const Real ymax = Real(Yaxes()) - SunCenter().y;
 	Real pixelRadius2 = 0;
 	unsigned indice = 0;
-	if (median == 0) // I don't know the median value yet
-	{
-		vector<EUVPixelType> onDiscList;
-		onDiscList.reserve(numberValidPixelsEstimate());
-
 	
-		for (int y = - suncenter.y; y < ymax; ++y)
-		{
-			for (int x = - suncenter.x ; x < xmax; ++x)
-			{
-				if ((*pixelValue) != nullvalue_)
-				{
-					pixelRadius2 = x*x + y*y;
+	vector<EUVPixelType> onDiscList;
+	onDiscList.reserve(unsigned(BIPI * minLimbRadius * minLimbRadius));
 
-					if (pixelRadius2 <=  minLimbRadius2)
-					{
-						onDiscList.push_back((*pixelValue));
-					}
-					else if (pixelRadius2 <=  maxLimbRadius2)
-					{
-						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) += (*pixelValue);
-						annulusNbrPixels.at(indice) += 1;
-					}
-
-				}
-				++pixelValue;
-			}
-		}
-
-		median = quick_select(onDiscList, onDiscList.size());
-		#if DEBUG >= 3
-		cout<<"Image preprocessing found median: "<<median<<endl;
-		#endif
-	}
-	else
+	// During the first pass we compute the total value of the annulus post limb, and the median value of the ante limb disc
+	for (Real y = - SunCenter().y; y < ymax; ++y)
 	{
-		for (int y = - suncenter.y; y < ymax; ++y)
+		for (Real x = - SunCenter().x ; x < xmax; ++x)
 		{
-			for (int x = - suncenter.x ; x < xmax; ++x)
+			if ((*pixelValue) != nullpixelvalue)
 			{
-				if ((*pixelValue) != nullvalue_)
+				pixelRadius2 = x*x + y*y;
+
+				if (pixelRadius2 <=  minLimbRadius2)
 				{
-					pixelRadius2 = x*x + y*y;
-
-					if (pixelRadius2 >  minLimbRadius2 && pixelRadius2 <=  maxLimbRadius2)
-					{
-						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) += (*pixelValue);
-						annulusNbrPixels.at(indice) += 1;
-					}
-
+					onDiscList.push_back((*pixelValue));
 				}
-				++pixelValue;
+				else if (pixelRadius2 <=  maxLimbRadius2)
+				{
+					indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
+					annulusMean.at(indice) += (*pixelValue);
+					annulusNbrPixels.at(indice) += 1;
+				}
+
 			}
+			++pixelValue;
 		}
 	}
+
+	median = quickselect(onDiscList);
+	#if DEBUG >= 3
+	cout<<"Image preprocessing found median: "<<median<<endl;
+	#endif
+
 
 	// We calculate the mean value of each annulus
 	for (unsigned i=0; i<annulusMean.size(); ++i)
@@ -471,27 +455,28 @@ void EUVImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 		if(annulusNbrPixels.at(i)>0)
 			annulusMean.at(i) = annulusMean.at(i) / Real(annulusNbrPixels.at(i));
 	}
+	
 	// We correct the limb
 	pixelValue = pixels;
-	for (int y = - suncenter.y; y < ymax; ++y)
+	for (Real y = - SunCenter().y; y < ymax; ++y)
 	{
-		for (int x = - suncenter.x ; x < xmax; ++x)
+		for (Real x = - SunCenter().x ; x < xmax; ++x)
 		{
-			if ((*pixelValue) != nullvalue_)
+			if ((*pixelValue) != nullpixelvalue)
 			{
 				pixelRadius2 = x*x + y*y;
 				if (maxLimbRadius2 < pixelRadius2)
 				{
-					(*pixelValue) = nullvalue_;
+					(*pixelValue) = nullpixelvalue;
 				}
 				else if (pixelRadius2 > minLimbRadius2)	  //We are in the limb
 				{
 					Real pixelRadius = sqrt(pixelRadius2);
-					Real fraction = percentCorrection(pixelRadius/radius);
+					Real fraction = percentCorrection(pixelRadius/SunRadius());
 					indice = unsigned((pixelRadius-minLimbRadius)/deltaR);
 					(*pixelValue) = (1. - fraction) * (*pixelValue) + (fraction * (*pixelValue) * median) / annulusMean.at(indice);
-
 				}
+
 			}
 			++pixelValue;
 		}
@@ -501,76 +486,53 @@ void EUVImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 
 void EUVImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 {						  
-	minLimbRadius *= radius;
-	maxLimbRadius *= radius;
+	minLimbRadius *= SunRadius();
+	maxLimbRadius *= SunRadius();
 	Real minLimbRadius2 = minLimbRadius*minLimbRadius;
 	Real maxLimbRadius2 = maxLimbRadius*maxLimbRadius;
-	const Real deltaR = 1.0;	//This is the width of an annulus in pixel
+	const Real deltaR = ANNULUS_WIDTH;	//This is the width of an annulus in pixel
 	vector<Real> annulusMean(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 	vector<unsigned> annulusNbrPixels(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 
 	EUVPixelType* pixelValue = pixels;
-	const int xmax = Xaxes() - suncenter.x;
-	const int ymax = Yaxes() - suncenter.y;
+	const Real xmax = Real(Xaxes()) - SunCenter().x;
+	const Real ymax = Real(Yaxes()) - SunCenter().y;
 	Real pixelRadius2 = 0;
 	unsigned indice = 0;
-	if (median == 0) // I don't know the median value yet
+
+	vector<EUVPixelType> onDiscList;
+	onDiscList.reserve(unsigned(BIPI * minLimbRadius * minLimbRadius));
+
+	// During the first pass we compute the total value of the annulus post limb, and the median value of the ante limb disc
+	for (Real y = - SunCenter().y; y < ymax; ++y)
 	{
-		vector<EUVPixelType> onDiscList;
-		onDiscList.reserve(numberValidPixelsEstimate());
-
-	
-		for (int y = - suncenter.y; y < ymax; ++y)
+		for (Real x = - SunCenter().x ; x < xmax; ++x)
 		{
-			for (int x = - suncenter.x ; x < xmax; ++x)
+			if ((*pixelValue) != nullpixelvalue)
 			{
-				if ((*pixelValue) != nullvalue_)
+				pixelRadius2 = x*x + y*y;
+
+				if (pixelRadius2 <=  minLimbRadius2)
 				{
-					pixelRadius2 = x*x + y*y;
-
-					if (pixelRadius2 <=  minLimbRadius2)
-					{
-						onDiscList.push_back((*pixelValue));
-					}
-					else if (pixelRadius2 <=  maxLimbRadius2)
-					{
-						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) += (*pixelValue);
-						annulusNbrPixels.at(indice) += 1;
-					}
-
+					onDiscList.push_back((*pixelValue));
 				}
-				++pixelValue;
-			}
-		}
-
-		median = quick_select(onDiscList, onDiscList.size());
-		#if DEBUG >= 3
-		cout<<"Image preprocessing found median: "<<median<<endl;
-		#endif
-	}
-	else
-	{
-		for (int y = - suncenter.y; y < ymax; ++y)
-		{
-			for (int x = - suncenter.x ; x < xmax; ++x)
-			{
-				if ((*pixelValue) != nullvalue_)
+				else if (pixelRadius2 <=  maxLimbRadius2)
 				{
-					pixelRadius2 = x*x + y*y;
-
-					if (pixelRadius2 >  minLimbRadius2 && pixelRadius2 <=  maxLimbRadius2)
-					{
-						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) += (*pixelValue);
-						annulusNbrPixels.at(indice) += 1;
-					}
-
+					indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
+					annulusMean.at(indice) += (*pixelValue);
+					annulusNbrPixels.at(indice) += 1;
 				}
-				++pixelValue;
+
 			}
+			++pixelValue;
 		}
 	}
+
+	median = quickselect(onDiscList);
+	#if DEBUG >= 3
+	cout<<"Image preprocessing found median: "<<median<<endl;
+	#endif
+
 
 	// We calculate the mean value of each annulus
 	for (unsigned i=0; i<annulusMean.size(); ++i)
@@ -580,21 +542,21 @@ void EUVImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 	}
 	// We correct the limb
 	pixelValue = pixels;
-	for (int y = - suncenter.y; y < ymax; ++y)
+	for (Real y = - SunCenter().y; y < ymax; ++y)
 	{
-		for (int x = - suncenter.x ; x < xmax; ++x)
+		for (Real x = - SunCenter().x ; x < xmax; ++x)
 		{
-			if ((*pixelValue) != nullvalue_)
+			if ((*pixelValue) != nullpixelvalue)
 			{
 				pixelRadius2 = x*x + y*y;
 				if (maxLimbRadius2 < pixelRadius2)
 				{
-					(*pixelValue) = nullvalue_;
+					(*pixelValue) = nullpixelvalue;
 				}
 				else if (pixelRadius2 > minLimbRadius2)	  //We are in the limb
 				{
 					Real pixelRadius = sqrt(pixelRadius2);
-					Real fraction = percentCorrection(pixelRadius/radius);
+					Real fraction = percentCorrection(pixelRadius/SunRadius());
 					indice = unsigned((pixelRadius-minLimbRadius)/deltaR);
 					(*pixelValue) = (1. - fraction) * (*pixelValue) / median + (fraction * (*pixelValue)) / annulusMean.at(indice);
 
@@ -610,149 +572,24 @@ void EUVImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 
 }
 
-void EUVImage::ALCDivMode(Real maxLimbRadius, Real minLimbRadius)
-{						  
-	minLimbRadius *= radius;
-	maxLimbRadius *= radius;
-	Real minLimbRadius2 = minLimbRadius*minLimbRadius;
-	Real maxLimbRadius2 = maxLimbRadius*maxLimbRadius;
-	const Real deltaR = 1.0;	//This is the width of an annulus in pixel
-	vector<Real> annulusMean(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
-	vector<unsigned> annulusNbrPixels(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
 
-	// I need to construct a quick histogram to find the mode
-	const Real binSize = 5;
-	vector<unsigned> histo(1024, 0);
-
-
-	EUVPixelType* pixelValue = pixels;
-	const int xmax = Xaxes() - suncenter.x;
-	const int ymax = Yaxes() - suncenter.y;
-	Real pixelRadius2 = 0;
-	unsigned indice = 0;
-	if (median == 0) // I don't know the median value yet
+void EUVImage::enhance_contrast()
+{
+	if (datap01 == nullpixelvalue || datap95 == nullpixelvalue)
 	{
-		vector<EUVPixelType> onDiscList;
-		onDiscList.reserve(numberValidPixelsEstimate());
-
-	
-		for (int y = - suncenter.y; y < ymax; ++y)
-		{
-			for (int x = - suncenter.x ; x < xmax; ++x)
-			{
-				if ((*pixelValue) != nullvalue_)
-				{
-					pixelRadius2 = x*x + y*y;
-
-					if (pixelRadius2 <=  minLimbRadius2)
-					{
-						onDiscList.push_back((*pixelValue));
-						unsigned bin = unsigned((*pixelValue)/binSize);
-						if (bin >= histo.size())
-							histo.resize(bin + 1024, 0);
-						++histo[bin];
-					}
-					else if (pixelRadius2 <=  maxLimbRadius2)
-					{
-						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) += (*pixelValue);
-						annulusNbrPixels.at(indice) += 1;
-					}
-
-				}
-				++pixelValue;
-			}
-		}
-
-		median = quick_select(onDiscList, onDiscList.size());
-		#if DEBUG >= 3
-		cout<<"Image preprocessing found median: "<<median<<endl;
-		#endif
+		vector<Real> values(2, 0.01);
+		values[1] = 0.99;
+		vector<EUVPixelType> p = percentiles(values);
+		datap01 = p[0];
+		datap95 = p[1];
 	}
-	else
-	{
-		for (int y = - suncenter.y; y < ymax; ++y)
-		{
-			for (int x = - suncenter.x ; x < xmax; ++x)
-			{
-				if ((*pixelValue) != nullvalue_)
-				{
-					pixelRadius2 = x*x + y*y;
+	threshold(datap01, datap95);
+}
 
-					if (pixelRadius2 <=  minLimbRadius2)
-					{
-						unsigned bin = unsigned((*pixelValue)/binSize);
-						if (bin >= histo.size())
-							histo.resize(bin + 1024, 0);
-						++histo[bin];
-					}
-					else if (pixelRadius2 <=  maxLimbRadius2)
-					{
-						indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-						annulusMean.at(indice) += (*pixelValue);
-						annulusNbrPixels.at(indice) += 1;
-					}
-
-				}
-				++pixelValue;
-			}
-		}
-	}
-
-
-	// We search for the mode
-	unsigned max = 0;
-	Real mode = 0;
-	for (unsigned h = 0; h < histo.size(); ++h)
-	{
-		if (max < histo[h])
-		{
-			max = histo[h];
-			mode = h;
-		}
-	}
-	mode = mode * binSize + (binSize / 2);
-	#if DEBUG >= 3
-	cout<<"Image preprocessing found mode: "<<mode<<endl;
-	#endif
-
-	// We calculate the mean value of each annulus
-	for (unsigned i=0; i<annulusMean.size(); ++i)
-	{
-		if(annulusNbrPixels.at(i)>0)
-			annulusMean.at(i) = annulusMean.at(i) / Real(annulusNbrPixels.at(i));
-	}
-	// We correct the limb
-	pixelValue = pixels;
-	for (int y = - suncenter.y; y < ymax; ++y)
-	{
-		for (int x = - suncenter.x ; x < xmax; ++x)
-		{
-			
-			if ((*pixelValue) != nullvalue_)
-			{
-				pixelRadius2 = x*x + y*y;
-				if (maxLimbRadius2 < pixelRadius2)
-				{
-					(*pixelValue) = nullvalue_;
-				}
-				else
-				{
-					if (pixelRadius2 > minLimbRadius2)	  //We are in the limb
-					{
-						Real pixelRadius = sqrt(pixelRadius2);
-						Real fraction = percentCorrection(pixelRadius/radius);
-						indice = unsigned((pixelRadius-minLimbRadius)/deltaR);
-						(*pixelValue) = (1. - fraction) * (*pixelValue) + (fraction * (*pixelValue) * median) / annulusMean.at(indice);
-
-					}
-					(*pixelValue) /= mode;
-				}
-			}
-			++pixelValue;
-		}
-	}
-
+vector<char> EUVImage::color_table() const
+{
+	char colorTable[][3] = CT_BLUE_RED;
+	return vector<char>(colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 }
 
 #ifdef MAGICK
@@ -764,12 +601,13 @@ MagickImage EUVImage::magick()
 	Real scale = 1./ (max - min);
 	for(unsigned j = 0; j < numberPixels; ++j)
 	{
-		rescaledPixels[j] = pixels[j] == nullvalue_ ? 0 : (pixels[j] - min) * scale;
+		rescaledPixels[j] = pixels[j] == nullpixelvalue ? 0 : (pixels[j] - min) * scale;
 	}
 	MagickImage rescaledImage(rescaledPixels, xAxes, yAxes, "I");
 	rescaledImage.flip();
 	return rescaledImage;
 }
+
 #endif
 
 

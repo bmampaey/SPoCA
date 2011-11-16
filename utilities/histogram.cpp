@@ -94,7 +94,7 @@ void histogram(const vector<EUVImage*>& images, RealFeature binSize)
 		bool valid = true;
 		for (unsigned p = 0; p < images.size() && valid; ++p)
 		{
-			valid = images[p]->pixel(j) != images[p]->nullvalue();
+			valid = images[p]->pixel(j) != images[p]->null();
 			xj.v[p] = (int(images[p]->pixel(j)/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
 		}
 		if(valid)
@@ -160,10 +160,11 @@ int main(int argc, const char **argv)
 		images[p]->preprocessing(preprocessingSteps, radiusRatio);
 	}
 
-	// We read the histogram bin size
-	if(!sbinSize.empty())
+	// We read the bin size
+	if(! readbinSize(binSize, sbinSize))
 	{
-		sbinSize>>binSize;
+		cerr<<"Error reading bin size: "<<sbinSize<<endl;
+		return EXIT_FAILURE;
 	}
 	
 	RealFeature histoChannels;

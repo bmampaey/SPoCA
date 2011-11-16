@@ -337,7 +337,7 @@ float max_residue								  /* residue threshold for declaring KLT_LARGE_RESIDUE 
 
 void KLTTrackFeatures(
 const SunImage* img1, const SunImage* img2,
-vector<Coordinate>& featurelist,
+vector<PixLoc>& featurelist,
 int window_width, int window_height,
 unsigned pyramidLevels, int subsampling,
 float pyramid_sigma_fact,
@@ -441,7 +441,7 @@ float min_displacement)
 				cerr<<featurelist[indx]<<" was lost. "<<(val==KLT_SMALL_DET ? "Small determinant":"Out of boundary")<<endl;
 			#endif
 
-			featurelist[indx] = Coordinate::Max;
+			featurelist[indx] = PixLoc::Max;
 		}
 		else
 		{

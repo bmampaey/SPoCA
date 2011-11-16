@@ -430,7 +430,7 @@ int FitsFile::get_CHDU_type()
 }
 
 template<class T>
-FitsFile& FitsFile::readImage(T*& image, unsigned &X, unsigned& Y, T* nullvalue)
+FitsFile& FitsFile::readImage(T*& image, unsigned &X, unsigned& Y, T* null)
 {
 	if (isClosed())
 	{
@@ -485,7 +485,7 @@ FitsFile& FitsFile::readImage(T*& image, unsigned &X, unsigned& Y, T* nullvalue)
 	
 	// We read the pixels
 	int anynull;
-	if (fits_read_img(fptr, datatype, 1, numberPixels, nullvalue, image, &anynull, &status))
+	if (fits_read_img(fptr, datatype, 1, numberPixels, null, image, &anynull, &status))
 	{
 		cerr<<"Error : reading image from file "<<filename<<" :"<< status <<endl;			
 		fits_report_error(stderr, status);
@@ -541,7 +541,7 @@ FitsFile& FitsFile::readImage(T*& image, unsigned &X, unsigned& Y, T* nullvalue)
 
 
 template<class T>
-FitsFile& FitsFile::writeImage(T* image, const unsigned X, const unsigned Y, int mode)
+FitsFile& FitsFile::writeImage(T* image, const unsigned X, const unsigned Y, int mode, const string name)
 {
 	if (isClosed())
 	{
@@ -668,7 +668,15 @@ FitsFile& FitsFile::writeImage(T* image, const unsigned X, const unsigned Y, int
 		
 		return *this;
 	} 
-
+	if(! name.empty())
+	{
+		if(fits_update_key(fptr, TSTRING, "EXTNAME", const_cast<char *>(name.c_str()), NULL, &status))
+		{
+			cerr<<"Error : setting image name to file "<<filename<<" :"<< status <<endl;
+			fits_report_error(stderr, status);
+			status = 0;
+		} 
+	}
 	return *this;
 
 }
@@ -854,17 +862,18 @@ FitsFile& FitsFile::readColumn(const string &name, vector<T>& data)
 }
 
 
-template FitsFile& FitsFile::writeImage(ColorType* image, const unsigned X, const unsigned Y, int mode);
-template FitsFile& FitsFile::readImage(ColorType*& image, unsigned &X, unsigned& Y, ColorType* nullvalue);
+template FitsFile& FitsFile::writeImage(ColorType* image, const unsigned X, const unsigned Y, int mode, const string name);
+template FitsFile& FitsFile::readImage(ColorType*& image, unsigned &X, unsigned& Y, ColorType* null);
 
-template FitsFile& FitsFile::writeImage(EUVPixelType* image, const unsigned X, const unsigned Y, int mode);
-template FitsFile& FitsFile::readImage(EUVPixelType*& image, unsigned &X, unsigned& Y, EUVPixelType* nullvalue);
+template FitsFile& FitsFile::writeImage(EUVPixelType* image, const unsigned X, const unsigned Y, int mode, const string name);
+template FitsFile& FitsFile::readImage(EUVPixelType*& image, unsigned &X, unsigned& Y, EUVPixelType* null);
 
 template FitsFile& FitsFile::writeColumn(const string &name, const vector<int>& array, const int mode);
 template FitsFile& FitsFile::writeColumn(const string &name, const vector<unsigned>& array, const int mode);
 template FitsFile& FitsFile::writeColumn(const string &name, const vector<unsigned short>& array, const int mode);
 template FitsFile& FitsFile::writeColumn(const string &name, const vector<float>& array, const int mode);
 template FitsFile& FitsFile::writeColumn(const string &name, const vector<double>& array, const int mode);
+template FitsFile& FitsFile::writeColumn(const string &name, const vector<char>& array, const int mode);
 
 
 template FitsFile& FitsFile::readColumn(const string &name,  vector<int>& array);
@@ -872,6 +881,7 @@ template FitsFile& FitsFile::readColumn(const string &name,  vector<unsigned>& a
 template FitsFile& FitsFile::readColumn(const string &name,  vector<unsigned short>& array);
 template FitsFile& FitsFile::readColumn(const string &name,  vector<float>& array);
 template FitsFile& FitsFile::readColumn(const string &name,  vector<double>& array);
+template FitsFile& FitsFile::readColumn(const string &name,  vector<char>& array);
 
 template<>
 FitsFile& FitsFile::writeColumn(const string &name, const vector<string>& data, const int mode)
@@ -1010,6 +1020,100 @@ FitsFile& FitsFile::readColumn(const string &name, vector<string>& data)
 			data[firstrow - 1] = value;
 	}
 	delete []value;
+	return *this;
+}
+
+//! Write a list of PixLoc coordinates to a FitsFile, adding 1 to conform to fits standard 
+template<>
+FitsFile& FitsFile::writeColumn(const string &name, const vector<PixLoc>& data, const int mode)
+{
+	string xname = 'X' + name;
+	string yname = 'Y' + name;
+	
+	vector<unsigned> xarray(data.size());
+	vector<unsigned> yarray(data.size());
+	for (unsigned d = 0; d < data.size(); ++d)
+	{
+		xarray[d] = data[d].x + 1;
+		yarray[d] = data[d].y + 1;
+	}
+	writeColumn(xname, xarray, mode);
+	writeColumn(yname, yarray, mode);
+	return *this;
+}
+
+//! Read a list of PixLoc coordinates from a FitsFile, substracting 1 to conform to fits standard 
+template<>
+FitsFile& FitsFile::readColumn(const string &name, vector<PixLoc>& data)
+{
+	string xname = 'X' + name;
+	string yname = 'Y' + name;
+	
+	vector<unsigned> xarray;
+	vector<unsigned> yarray;
+	readColumn(xname, xarray);
+	readColumn(yname, yarray);
+	if (xarray.size() != yarray.size())
+	{
+		cerr<<"Error reading column "<<name<<", number of x coordinate is different than y coordinate!"<<endl;
+		data.clear();
+	}
+	else
+	{
+		data.resize(xarray.size());
+		for (unsigned d = 0; d < data.size(); ++d)
+		{
+			data[d].x = xarray[d] - 1;
+			data[d].y = yarray[d] - 1;
+		}
+	}
+	return *this;
+}
+
+//! Write a list of RealPixLoc coordinates to a FitsFile, adding 1 to conform to fits standard 
+template<>
+FitsFile& FitsFile::writeColumn(const string &name, const vector<RealPixLoc>& data, const int mode)
+{
+	string xname = 'X' + name;
+	string yname = 'Y' + name;
+	
+	vector<Real> xarray(data.size());
+	vector<Real> yarray(data.size());
+	for (unsigned d = 0; d < data.size(); ++d)
+	{
+		xarray[d] = data[d].x + 1;
+		yarray[d] = data[d].y + 1;
+	}
+	writeColumn(xname, xarray, mode);
+	writeColumn(yname, yarray, mode);
+	return *this;
+}
+
+//! Read a list of RealPixLoc coordinates from a FitsFile, substracting 1 to conform to fits standard 
+template<>
+FitsFile& FitsFile::readColumn(const string &name, vector<RealPixLoc>& data)
+{
+	string xname = 'X' + name;
+	string yname = 'Y' + name;
+	
+	vector<Real> xarray;
+	vector<Real> yarray;
+	readColumn(xname, xarray);
+	readColumn(yname, yarray);
+	if (xarray.size() != yarray.size())
+	{
+		cerr<<"Error reading column "<<name<<", number of x coordinate is different than y coordinate!"<<endl;
+		data.clear();
+	}
+	else
+	{
+		data.resize(xarray.size());
+		for (unsigned d = 0; d < data.size(); ++d)
+		{
+			data[d].x = xarray[d] - 1;
+			data[d].y = yarray[d] - 1;
+		}
+	}
 	return *this;
 }
 

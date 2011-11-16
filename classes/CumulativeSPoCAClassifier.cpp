@@ -23,14 +23,12 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 	}
 	
 	ordonateImages(images);
-	unsigned numberValidPixelsEstimate = images[0]->numberValidPixelsEstimate();
-	unsigned xaxes = images[0]->Xaxes();
-	unsigned yaxes = images[0]->Yaxes();
+	int xaxes = images[0]->Xaxes();
+	int yaxes = images[0]->Yaxes();
 	for (unsigned p = 1; p <  NUMBERCHANNELS; ++p)
 	{
 		xaxes = images[p]->Xaxes() < xaxes ? images[p]->Xaxes() : xaxes;
 		yaxes = images[p]->Yaxes() < yaxes ? images[p]->Yaxes() : yaxes;
-		numberValidPixelsEstimate = images[p]->numberValidPixelsEstimate() > numberValidPixelsEstimate ? : numberValidPixelsEstimate;
 	}
 	if(Xaxes == 0)
 	{
@@ -44,9 +42,9 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 	}
 	#endif
 
-	X.reserve(numberFeatureVectors + numberValidPixelsEstimate);
-	smoothedX.reserve(numberFeatureVectors + numberValidPixelsEstimate);
-	coordinates.reserve(numberFeatureVectors + numberValidPixelsEstimate);
+	X.reserve(numberFeatureVectors + images[0]->NumberPixels());
+	smoothedX.reserve(numberFeatureVectors + images[0]->NumberPixels());
+	coordinates.reserve(numberFeatureVectors + images[0]->NumberPixels());
 
 	//Temporary vectors to build the neihboorhood
 	vector<unsigned> caardNeighbors(xaxes * yaxes, 0);
@@ -55,35 +53,29 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 	bool validPixel;
 	RealFeature f;
 	//We initialise the valid pixels vector X, and the neighbors N
-	for (unsigned y = 0; y < yaxes; ++y)
+	for (int y = 0; y < yaxes; ++y)
 	{
-		for (unsigned x = 0; x < xaxes; ++x)
+		for (int x = 0; x < xaxes; ++x)
 		{
 			validPixel = true;
 			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
 			{
 				f.v[p] = images[p]->pixel(x,y);
-				if(f.v[p] == images[p]->nullvalue())
+				if(f.v[p] == images[p]->null())
 					validPixel=false;
 			}
 			
 			if(! validPixel)
 				continue;
 			
-			//In a normal situation, we can suppose that the sun disc isn't going to touch the borders of the picture. Otherwise just take a radiusRatio smaller.
-			#if DEBUG >= 1
-			#define ASSERTBOUNDARIES neighbor > 0 && neighbor < images[0]->NumberPixels()
-			#else
-			#define ASSERTBOUNDARIES true
-			#endif
-
-			//Since I am the neigboor of my neigboors, I can add myself to their neigboorhood
-			for (unsigned ny = y - Nradius; ny <= y + Nradius; ++ny)
+			
+			//Since I am the neigboor of my neigboors, I can add myself to their neigboorhood (my index == X.size())
+			for (int ny = y - int(Nradius); ny <= y + int(Nradius); ++ny)
 			{
-				NeighborIndex neighbor = ny * Xaxes;
-				for (unsigned nx = x - Nradius; nx <= x + Nradius; ++nx)
+				NeighborIndex neighbor = (ny * xaxes + x) - Nradius;
+				for (int nx = x - int(Nradius); nx <= x + int(Nradius); ++nx)
 				{
-					if(!(nx == x && ny == y) && ASSERTBOUNDARIES)
+					if(!(nx == x && ny == y) && neighbor > 0 && neighbor < images[0]->NumberPixels())
 					{
 						neighbors[neighbor].push_back(X.size());
 						++caardNeighbors[neighbor];
@@ -93,7 +85,7 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 			}
 			X.push_back(x);
 			smoothedX.push_back(x);
-			coordinates.push_back(Coordinate(x,y + Yaxes));
+			coordinates.push_back(PixLoc(x,y + Yaxes));
 			
 		}
 	}

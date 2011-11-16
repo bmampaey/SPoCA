@@ -28,7 +28,7 @@ extern template class Image<Real>;
 int main(int argc, const char **argv)
 {
 	#if DEBUG >= 1
-	feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
+	//feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
 	cout<<setiosflags(ios::fixed);
 	#endif
 
@@ -74,8 +74,10 @@ int main(int argc, const char **argv)
 		image->preprocessing("NAR", 1);
 		if(reference_image)
 		{
-			image->rotate_like(reference_image);
-			image->writeFits(stripSuffix(stripPath(imagesFilenames[p])) + "_rotated2_" + stripSuffix(stripPath(reference))+".fits");
+			image->shift_like(reference_image);
+			image->writeFits(stripSuffix(stripPath(imagesFilenames[p])) + "_shiftedlike_" + stripSuffix(stripPath(reference))+".fits");
+			image->diff(reference_image);
+			image->writeFits(stripSuffix(stripPath(imagesFilenames[p])) + "_diffrot.fits");
 		}
 		else
 		{

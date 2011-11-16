@@ -97,7 +97,6 @@ sub parse_arguments
 	{
 		$CFLAGS .= ' -O3';
 	}
-
 	if (! defined $executable)
 	{
 		$executable = fileparse($main, @suffixes);
@@ -218,6 +217,7 @@ while (my $file = shift @untreated)
 		
 		push @lines, $line;
 		push @objects, $object;
+		
 	}
 	
 	push @treated, $file;

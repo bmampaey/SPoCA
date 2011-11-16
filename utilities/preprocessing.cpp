@@ -34,6 +34,8 @@ The program will generate the following files:
  - TakeLog (Take the log)
  - DivMode (Division by the mode)
  - DivExpTime (Division by the Exposure Time)
+ - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
+ - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
  
 @param radiusratio	The ratio of the radius of the sun that will be processed.
 
@@ -82,13 +84,13 @@ void percentCorrectionImage(EUVImage* image)
 {
 	image->zero(0);
 	double sunRadius = image->SunRadius();
-	Coordinate sunCenter = image->SunCenter();
+	PixLoc sunCenter = image->SunCenter();
 	
 	for (unsigned y=0; y < image->Yaxes(); ++y)
 	{
 		for (unsigned x=0; x < image->Xaxes(); ++x)
 		{
-			double pixelRadius = sunCenter.d(Coordinate(x,y)) / sunRadius;
+			double pixelRadius = sunCenter.d(PixLoc(x,y)) / sunRadius;
 			image->pixel(x,y) = image->percentCorrection(pixelRadius);
 		}
 	}

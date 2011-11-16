@@ -1,8 +1,8 @@
 // To use this class you need to have installed open-motif libraries libmotif3 and lesstif2
 
 #pragma once
-#ifndef CoordinateConvertor_H
-#define CoordinateConvertor_H
+#ifndef PixLocConvertor_H
+#define PixLocConvertor_H
 
 
 #warning "To use this class you need to have installed open-motif libraries libmotif3 and lesstif2"
@@ -14,7 +14,7 @@
 #include <cstdlib>
 
 #include "idl_export.h"
-#include "Coordinate.h"
+#include "PixLoc.h"
 #include "SunImage.h"
 
 	/*Possible types are
@@ -26,7 +26,7 @@
 	Carrington-Heliographic         (HG, /CARRINGTON)
 	*/
 
-class CoordinateConvertor
+class PixLocConvertor
 {
 	private :
 		static unsigned instances;
@@ -36,12 +36,12 @@ class CoordinateConvertor
 
 	public :
 		//Constructors
-		CoordinateConvertor(SunImage* image);
-		CoordinateConvertor(SunImage* image, std::string coordinateType);
-		~CoordinateConvertor();
-		CoordinateConvertor(const CoordinateConvertor& cc);
-		void convert(std::string coord_type, Coordinate c, float& x, float& y, bool arcsec = false) const;
-		void convert(Coordinate c, float& x, float& y, bool arcsec = false) const;
+		PixLocConvertor(SunImage* image);
+		PixLocConvertor(SunImage* image, std::string coordinateType);
+		~PixLocConvertor();
+		PixLocConvertor(const PixLocConvertor& cc);
+		void convert(std::string coord_type, PixLoc c, float& x, float& y, bool arcsec = false) const;
+		void convert(PixLoc c, float& x, float& y, bool arcsec = false) const;
 };
 
 #endif

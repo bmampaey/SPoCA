@@ -50,12 +50,12 @@ void Classifier::addImages(vector<EUVImage*> images)
 			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
 			{
 				f.v[p] = images[p]->pixel(x, y);
-				if(f.v[p] == images[p]->nullvalue())
+				if(f.v[p] == images[p]->null())
 					validPixel=false;
 			}
 			if(validPixel)
 			{
-				coordinates.push_back(Coordinate(x,y));
+				coordinates.push_back(PixLoc(x,y));
 				X.push_back(f);
 			}
 
@@ -293,7 +293,7 @@ ColorMap* Classifier::segmentedMap_maxUij(ColorMap* segmentedMap)
 	}
 	
 	segmentedMap->zero();
-	segmentedMap->setNullvalue(0);
+	segmentedMap->setNullValue(0);
 	
 	MembershipSet::iterator uij = U.begin();
 	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
@@ -332,15 +332,15 @@ ColorMap* Classifier::segmentedMap_closestCenter(ColorMap* segmentedMap)
 	}
 	
 	segmentedMap->zero();
-	segmentedMap->setNullvalue(0);
+	segmentedMap->setNullValue(0);
 	
 	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 	{
-		Real minDistance = d2(X[j], B[0]);
+		Real minDistance = distance_squared(X[j], B[0]);
 		segmentedMap->pixel(coordinates[j]) = 1;
 		for (unsigned i = 1 ; i < numberClasses ; ++i)
 		{
-			Real d2XjBi = d2(X[j], B[i]);
+			Real d2XjBi = distance_squared(X[j], B[i]);
 			if (d2XjBi < minDistance)
 			{
 				minDistance = d2XjBi;
@@ -388,7 +388,7 @@ ColorMap* Classifier::segmentedMap_classThreshold(unsigned middleClass, Real low
 	}
 	
 	segmentedMap->zero();
-	segmentedMap->setNullvalue(0);
+	segmentedMap->setNullValue(0);
 	
 	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 	{

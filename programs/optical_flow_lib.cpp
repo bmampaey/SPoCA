@@ -58,7 +58,7 @@ int main(int argc, const char **argv)
 		images[p]->writeFits(filenamePrefix + "preprocessed." +  stripPath(imagesFilenames[p]) );
 		#endif
 		for(unsigned i = 0; i < images[p]->NumberPixels(); ++i)
-			if(images[p]->pixel(i) == images[p]->nullvalue())
+			if(images[p]->pixel(i) == images[p]->null())
 				images[p]->pixel(i) = 0;
 	}
 
@@ -91,7 +91,7 @@ int main(int argc, const char **argv)
     printf("Feature #%d:  (%f,%f) with value of %d\n",
            i, fl->feature[i]->x, fl->feature[i]->y,
            fl->feature[i]->val);
-    temp->drawCross(0, Coordinate(fl->feature[i]->x, fl->feature[i]->y), 5+2*i);
+    temp->drawCross(0, PixLoc(fl->feature[i]->x, fl->feature[i]->y), 5+2*i);
   }
   temp->writeFits(filenamePrefix + "features." +  stripPath(imagesFilenames[0]) );
 	delete temp;
@@ -107,7 +107,7 @@ int main(int argc, const char **argv)
            i, fl->feature[i]->x, fl->feature[i]->y,
            fl->feature[i]->val);
     if(fl->feature[i]->val == 0)
-    temp->drawCross(0, Coordinate(fl->feature[i]->x, fl->feature[i]->y), 5+2*i);
+    temp->drawCross(0, PixLoc(fl->feature[i]->x, fl->feature[i]->y), 5+2*i);
   }
  temp->writeFits(filenamePrefix + "features." +  stripPath(imagesFilenames[1]) );
 	delete temp;

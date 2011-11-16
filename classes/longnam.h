@@ -50,7 +50,7 @@
 #define fits_compare_str    ffcmps
 #define fits_test_keyword   fftkey
 #define fits_test_record    fftrec
-#define fits_null_check     ffnchk
+#define fits_nullpixelvaluecheck     ffnchk
 #define fits_make_keyn      ffkeyn
 #define fits_make_nkey      ffnkey
 #define fits_get_keyclass   ffgkcl
@@ -304,17 +304,17 @@
 #define fits_read_img_flt     ffgpve
 #define fits_read_img_dbl     ffgpvd
 
-#define fits_read_imgnull_byt ffgpfb
-#define fits_read_imgnull_sbyt ffgpfsb
-#define fits_read_imgnull_usht ffgpfui
-#define fits_read_imgnull_ulng ffgpfuj
-#define fits_read_imgnull_sht ffgpfi
-#define fits_read_imgnull_lng ffgpfj
-#define fits_read_imgnull_lnglng ffgpfjj
-#define fits_read_imgnull_uint ffgpfuk
-#define fits_read_imgnull_int ffgpfk
-#define fits_read_imgnull_flt ffgpfe
-#define fits_read_imgnull_dbl ffgpfd
+#define fits_read_imgnullpixelvaluebyt ffgpfb
+#define fits_read_imgnullpixelvaluesbyt ffgpfsb
+#define fits_read_imgnullpixelvalueusht ffgpfui
+#define fits_read_imgnullpixelvalueulng ffgpfuj
+#define fits_read_imgnullpixelvaluesht ffgpfi
+#define fits_read_imgnullpixelvaluelng ffgpfj
+#define fits_read_imgnullpixelvaluelnglng ffgpfjj
+#define fits_read_imgnullpixelvalueuint ffgpfuk
+#define fits_read_imgnullpixelvalueint ffgpfk
+#define fits_read_imgnullpixelvalueflt ffgpfe
+#define fits_read_imgnullpixelvaluedbl ffgpfd
 
 #define fits_read_2d_byt      ffg2db
 #define fits_read_2d_sbyt     ffg2dsb
@@ -353,17 +353,17 @@
 #define fits_read_subset_flt  ffgsve
 #define fits_read_subset_dbl  ffgsvd
 
-#define fits_read_subsetnull_byt ffgsfb
-#define fits_read_subsetnull_sbyt ffgsfsb
-#define fits_read_subsetnull_usht ffgsfui
-#define fits_read_subsetnull_ulng ffgsfuj
-#define fits_read_subsetnull_sht ffgsfi
-#define fits_read_subsetnull_lng ffgsfj
-#define fits_read_subsetnull_lnglng ffgsfjj
-#define fits_read_subsetnull_uint ffgsfuk
-#define fits_read_subsetnull_int ffgsfk
-#define fits_read_subsetnull_flt ffgsfe
-#define fits_read_subsetnull_dbl ffgsfd
+#define fits_read_subsetnullpixelvaluebyt ffgsfb
+#define fits_read_subsetnullpixelvaluesbyt ffgsfsb
+#define fits_read_subsetnullpixelvalueusht ffgsfui
+#define fits_read_subsetnullpixelvalueulng ffgsfuj
+#define fits_read_subsetnullpixelvaluesht ffgsfi
+#define fits_read_subsetnullpixelvaluelng ffgsfj
+#define fits_read_subsetnullpixelvaluelnglng ffgsfjj
+#define fits_read_subsetnullpixelvalueuint ffgsfuk
+#define fits_read_subsetnullpixelvalueint ffgsfk
+#define fits_read_subsetnullpixelvalueflt ffgsfe
+#define fits_read_subsetnullpixelvaluedbl ffgsfd
 
 #define ffcpimg fits_copy_image_section
 #define fits_compress_img fits_comp_img
@@ -390,21 +390,21 @@
 #define fits_read_col_bit_usht ffgcxui
 #define fits_read_col_bit_uint ffgcxuk
 
-#define fits_read_colnull_str    ffgcfs
-#define fits_read_colnull_log    ffgcfl
-#define fits_read_colnull_byt    ffgcfb
-#define fits_read_colnull_sbyt    ffgcfsb
-#define fits_read_colnull_usht    ffgcfui
-#define fits_read_colnull_ulng    ffgcfuj
-#define fits_read_colnull_sht    ffgcfi
-#define fits_read_colnull_lng    ffgcfj
-#define fits_read_colnull_lnglng    ffgcfjj
-#define fits_read_colnull_uint    ffgcfuk
-#define fits_read_colnull_int    ffgcfk
-#define fits_read_colnull_flt    ffgcfe
-#define fits_read_colnull_dbl    ffgcfd
-#define fits_read_colnull_cmp    ffgcfc
-#define fits_read_colnull_dblcmp ffgcfm
+#define fits_read_colnullpixelvaluestr    ffgcfs
+#define fits_read_colnullpixelvaluelog    ffgcfl
+#define fits_read_colnullpixelvaluebyt    ffgcfb
+#define fits_read_colnullpixelvaluesbyt    ffgcfsb
+#define fits_read_colnullpixelvalueusht    ffgcfui
+#define fits_read_colnullpixelvalueulng    ffgcfuj
+#define fits_read_colnullpixelvaluesht    ffgcfi
+#define fits_read_colnullpixelvaluelng    ffgcfj
+#define fits_read_colnullpixelvaluelnglng    ffgcfjj
+#define fits_read_colnullpixelvalueuint    ffgcfuk
+#define fits_read_colnullpixelvalueint    ffgcfk
+#define fits_read_colnullpixelvalueflt    ffgcfe
+#define fits_read_colnullpixelvaluedbl    ffgcfd
+#define fits_read_colnullpixelvaluecmp    ffgcfc
+#define fits_read_colnullpixelvaluedblcmp ffgcfm
 
 #define fits_read_descript ffgdes
 #define fits_read_descriptll ffgdesll
@@ -442,20 +442,20 @@
 #define fits_write_img_dbl    ffpprd
 
 #define fits_write_imgnull     ffppn
-#define fits_write_imgnull_byt ffppnb
-#define fits_write_imgnull_sbyt ffppnsb
-#define fits_write_imgnull_usht ffppnui
-#define fits_write_imgnull_ulng ffppnuj
-#define fits_write_imgnull_sht ffppni
-#define fits_write_imgnull_lng ffppnj
-#define fits_write_imgnull_lnglng ffppnjj
-#define fits_write_imgnull_uint ffppnuk
-#define fits_write_imgnull_int ffppnk
-#define fits_write_imgnull_flt ffppne
-#define fits_write_imgnull_dbl ffppnd
+#define fits_write_imgnullpixelvaluebyt ffppnb
+#define fits_write_imgnullpixelvaluesbyt ffppnsb
+#define fits_write_imgnullpixelvalueusht ffppnui
+#define fits_write_imgnullpixelvalueulng ffppnuj
+#define fits_write_imgnullpixelvaluesht ffppni
+#define fits_write_imgnullpixelvaluelng ffppnj
+#define fits_write_imgnullpixelvaluelnglng ffppnjj
+#define fits_write_imgnullpixelvalueuint ffppnuk
+#define fits_write_imgnullpixelvalueint ffppnk
+#define fits_write_imgnullpixelvalueflt ffppne
+#define fits_write_imgnullpixelvaluedbl ffppnd
 
 #define fits_write_img_null ffppru
-#define fits_write_null_img ffpprn
+#define fits_write_nullpixelvalueimg ffpprn
 
 #define fits_write_2d_byt   ffp2db
 #define fits_write_2d_sbyt   ffp2dsb
@@ -516,19 +516,19 @@
 #define fits_write_nullrows    ffprwu
 
 #define fits_write_colnull ffpcn
-#define fits_write_colnull_str ffpcns
-#define fits_write_colnull_log ffpcnl
-#define fits_write_colnull_byt ffpcnb
-#define fits_write_colnull_sbyt ffpcnsb
-#define fits_write_colnull_usht ffpcnui
-#define fits_write_colnull_ulng ffpcnuj
-#define fits_write_colnull_sht ffpcni
-#define fits_write_colnull_lng ffpcnj
-#define fits_write_colnull_lnglng ffpcnjj
-#define fits_write_colnull_uint ffpcnuk
-#define fits_write_colnull_int ffpcnk
-#define fits_write_colnull_flt ffpcne
-#define fits_write_colnull_dbl ffpcnd
+#define fits_write_colnullpixelvaluestr ffpcns
+#define fits_write_colnullpixelvaluelog ffpcnl
+#define fits_write_colnullpixelvaluebyt ffpcnb
+#define fits_write_colnullpixelvaluesbyt ffpcnsb
+#define fits_write_colnullpixelvalueusht ffpcnui
+#define fits_write_colnullpixelvalueulng ffpcnuj
+#define fits_write_colnullpixelvaluesht ffpcni
+#define fits_write_colnullpixelvaluelng ffpcnj
+#define fits_write_colnullpixelvaluelnglng ffpcnjj
+#define fits_write_colnullpixelvalueuint ffpcnuk
+#define fits_write_colnullpixelvalueint ffpcnk
+#define fits_write_colnullpixelvalueflt ffpcne
+#define fits_write_colnullpixelvaluedbl ffpcnd
 
 #define fits_write_ext ffpextn
 #define fits_read_ext  ffgextn

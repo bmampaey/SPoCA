@@ -9,6 +9,7 @@
 ; 	header: in, required, struct containing the keywords of a fits file
 ;	imageRejected: out, required, flag to tell if the image is to be rejected
 ;	rejectionString: out, optional, type string, reason for the rejection
+; -
 
 
 PRO checkQuality, header, imageRejected, rejectionString
@@ -112,6 +113,40 @@ ENDIF
 END; of checkQuality
 
 
+; +
+; Description:
+;	IDL code to convert pixel coordinates to helio coordinates using the wcs formulas
+; Authors:
+; 	Benjamin Mampaey
+; Date:
+; 	27 October 2011
+; Params:
+; 	wcs: in, required, a wcs structure 
+;	x: in, required, the array with the x portion of the coordinates to convert
+;	y: in, required, the array with the y portion of the coordinates to convert
+;	coordinate: in, require, a string representing the type of helio coordinate (e.g. HPC, HGS, HGC, ...)
+;	arcsec: in, optional, a flag indicating if the HPC coordinates should be in arcsec
+;
+;	return: an array [x, y] of the converted coordinates
+; -
+
+FUNCTION convert_coordinate, wcs, x, y, coordinate, arcsec=arcsec
+	
+	cartesian_coodinates = FLTARR(2, N_ELEMENTS(x))
+	cartesian_coodinates[0,*] = x
+	cartesian_coodinates[1,*] = y
+	
+	wcs_coodinates = WCS_GET_COORD(wcs, cartesian_coodinates)
+	
+	CASE coordinate OF 
+		"HGS" : WCS_CONVERT_FROM_COORD, wcs, wcs_coodinates, 'HG', helio_x, helio_y
+		"HGC" : WCS_CONVERT_FROM_COORD, wcs, wcs_coodinates, 'HG', /CARRINGTON, helio_x, helio_y
+		ELSE : WCS_CONVERT_FROM_COORD, wcs, wcs_coodinates, coordinate, helio_x, helio_y, arcsec=arcsec
+	ENDCASE
+	
+	RETURN, [helio_x, helio_y]
+
+END
 
 
 ; +

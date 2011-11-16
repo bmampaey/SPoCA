@@ -22,7 +22,7 @@ PRO hmi2png, filename=filename, filelist=filelist, dir=dir, outdir=outdir
 	 FOR i = 0, N_ELEMENTS(filelist) - 1 DO BEGIN
 		read_sdo, filelist[i], header, data , /UNCOMP_DELETE
 		data = SMOOTH(data, 4 , /EDGE_TRUNCATE, MISSING=0, /NAN)
-		data = data >(-30) <30
+		data = data >(-30) < 30
 		data = ((data + 30) / 60) * 255
 		pngfile = outdir + '/' + header.T_OBS + ".png" 
 		WRITE_PNG, pngfile, data

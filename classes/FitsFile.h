@@ -13,6 +13,7 @@
 #include "tools.h"
 #include "constants.h"
 #include "Header.h"
+#include "Coordinate.h"
 
 
 //! Class that manage i/o to a fits file
@@ -40,8 +41,6 @@ class FitsFile
 		int getBitpix(int datatype);
 		//! Routine to get the best column format value for a cfitsio datatype
 		std::string getFormat(int datatype);
-		//! Routine to find a column by it's name in a table
-		int find_column(const std::string &name);
 		//! Routine to get the Current HDU type
 		int get_CHDU_type();
 		
@@ -79,7 +78,7 @@ class FitsFile
 		//! Routine to read a 2D image
 		//! @tparam T Type of the pixels
 		template<class T>
-		FitsFile& readImage(T*& image, unsigned &X, unsigned& Y, T* nullvalue = NULL);
+		FitsFile& readImage(T*& image, unsigned &X, unsigned& Y, T* null = NULL);
 		//! Routine to write a 2D image
 		//! @tparam T Type of the pixels
 		/*! @param mode The mode specifies how to write the image.
@@ -87,7 +86,7 @@ class FitsFile
 				By default a new image will be appended to the fits file.
 		*/
 		template<class T>
-		FitsFile& writeImage(T* image, const unsigned X, const unsigned Y, int mode = 0);
+		FitsFile& writeImage(T* image, const unsigned X, const unsigned Y, int mode = 0, const std::string name = "");
 		
 		//! Routine to write a binary table
 		FitsFile& writeTable(const std::string &name, const unsigned number_rows = 0);
@@ -103,6 +102,9 @@ class FitsFile
 		//! @tparam T Type of the column data
 		template<class T>
 		FitsFile& readColumn(const std::string &name, std::vector<T>& data);
+	
+		//! Routine to find a column by it's name in a table
+		int find_column(const std::string &name);
 	
 	public:
 		//! Constants for mode options

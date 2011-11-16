@@ -21,7 +21,7 @@ void PFCMClassifier::computeT()
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij)
 			{
-				*tij = d2(*xj,B[i]) * beta[i] ;
+				*tij = distance_squared(*xj,B[i]) * beta[i] ;
 				*tij *=  *tij;
 				*tij = 1. / (1. + *tij);
 			}
@@ -33,7 +33,7 @@ void PFCMClassifier::computeT()
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij)
 			{
-				*tij = d2(*xj,B[i]) * beta[i] ;
+				*tij = distance_squared(*xj,B[i]) * beta[i] ;
 				*tij = 1. / (1. + *tij);
 			}
 		}
@@ -44,7 +44,7 @@ void PFCMClassifier::computeT()
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij)
 			{
-				*tij = d2(*xj,B[i]) * beta[i] ;
+				*tij = distance_squared(*xj,B[i]) * beta[i] ;
 				*tij = pow( *tij , Real(1./(nfuzzifier-1.)));
 				*tij = 1. / (1. + *tij);
 			}
@@ -69,7 +69,7 @@ void PFCMClassifier::computeUT()
 	{
 		for (i = 0 ; i < numberClasses ; ++i)
 		{
-			d2XjB[i] = d2(*xj,B[i]);
+			d2XjB[i] = distance_squared(*xj,B[i]);
 			if (d2XjB[i] < precision)
 				break;
 		}
@@ -265,7 +265,7 @@ Real PFCMClassifier::computeJ() const
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
 			{
-				result += (a * *uij * *uij) + (b * *tij * *tij) * d2(*xj,B[i]);
+				result += (a * *uij * *uij) + (b * *tij * *tij) * distance_squared(*xj,B[i]);
 				sum[i] += (1. - *tij) * (1. - *tij);
 			}
 		}
@@ -276,7 +276,7 @@ Real PFCMClassifier::computeJ() const
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
 			{
-				result += (a * *uij * *uij) + (b * pow(*tij,nfuzzifier)) * d2(*xj,B[i]);
+				result += (a * *uij * *uij) + (b * pow(*tij,nfuzzifier)) * distance_squared(*xj,B[i]);
 				sum[i] += pow(Real(1. - *tij), nfuzzifier);
 			}
 		}
@@ -287,7 +287,7 @@ Real PFCMClassifier::computeJ() const
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
 			{
-				result += (a * pow(*uij,fuzzifier)) + (b * *tij * *tij) * d2(*xj,B[i]);
+				result += (a * pow(*uij,fuzzifier)) + (b * *tij * *tij) * distance_squared(*xj,B[i]);
 				sum[i] += (1. - *tij) * (1. - *tij);
 			}
 		}
@@ -298,7 +298,7 @@ Real PFCMClassifier::computeJ() const
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
 			{
-				result += (a * pow(*uij,fuzzifier)) + (b * pow(*tij,nfuzzifier)) * d2(*xj,B[i]);
+				result += (a * pow(*uij,fuzzifier)) + (b * pow(*tij,nfuzzifier)) * distance_squared(*xj,B[i]);
 				sum[i] += pow(Real(1. - *tij), nfuzzifier);
 			}
 		}
@@ -327,7 +327,7 @@ Real PFCMClassifier::assess(vector<Real>& V)
 	{
 		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
 		{
-			distBiBii = d2(B[i],B[ii]);
+			distBiBii = distance_squared(B[i],B[ii]);
 			if(distBiBii < minDist[i])
 				minDist[i] = distBiBii;
 			if(distBiBii < minDist[ii])
@@ -343,9 +343,9 @@ Real PFCMClassifier::assess(vector<Real>& V)
 		{
 
 			if(fuzzifier == 2)
-				sum1 +=  *uij * *uij * d2(*xj,B[i]);
+				sum1 +=  *uij * *uij * distance_squared(*xj,B[i]);
 			else
-				sum1 +=  pow(*uij, fuzzifier) * d2(*xj,B[i]);
+				sum1 +=  pow(*uij, fuzzifier) * distance_squared(*xj,B[i]);
 
 			if(fuzzifier == 2)
 				sum2 += (1 - *uij) * (1 - *uij);

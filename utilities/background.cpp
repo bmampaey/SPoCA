@@ -27,6 +27,8 @@
  - TakeLog (Take the log)
  - DivMode (Division by the mode)
  - DivExpTime (Division by the Exposure Time)
+ - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
+ - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
 
 @param size The size of the image written. i.e. "1024x1024" See <a href="http://www.imagemagick.org/script/command-line-processing.php#geometry" target="_blank">ImageMagick Image Geometry</a>  for specification.
 
@@ -67,149 +69,6 @@ string filenamePrefix;
 
 
 
-
-void AIA_contrast_0304(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99941/exposureTime);
-	image->threshold(50, 2000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0335(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(6.99734/exposureTime);
-	image->threshold(3.5, 1000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_1600(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(2.99911/exposureTime);
-	image->threshold(0, 1000);
-}
-
-void AIA_contrast_0193(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(2.99950/exposureTime);
-	image->threshold(120, 6000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0094(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99803/exposureTime);
-	image->threshold(1.5, 50);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = sqrt(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0171(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99803/exposureTime);
-	image->threshold(10, 6000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = sqrt(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0211(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(4.99801/exposureTime);
-	image->threshold(30, 13000);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_0131(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(6.99685/exposureTime);
-	image->threshold(7, 1200);
-	for(unsigned j = 0; j < image->NumberPixels(); ++j)
-	{
-		image->pixel(j) = log10(image->pixel(j));
-	}
-}
-
-void AIA_contrast_1700(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(1.00026/exposureTime);
-	image->threshold(0, 2500);
-}
-
-void AIA_contrast_4500(EUVImage * image)
-{
-	Real exposureTime = image->ExposureTime();
-	image->mul(1.00026/exposureTime);
-	image->threshold(0, 26000);
-}
-void enhance_contrast(EUVImage * image, string preprocessingSteps)
-{
-	if(! preprocessingSteps.empty())
-	{
-		image->preprocessing(preprocessingSteps);
-	}
-	else if(isAIA(image->header))
-	{
-		if(image->Wavelength() == 304.)
-			AIA_contrast_0304(image);
-
-		else if(image->Wavelength() == 335. )
-			AIA_contrast_0335(image);
-
-		else if(image->Wavelength() == 1600. )
-			AIA_contrast_1600(image);
-
-		else if(image->Wavelength() == 193. )
-			AIA_contrast_0193(image);
-
-		else if(image->Wavelength() == 94. )
-			AIA_contrast_0094(image);
-
-		else if(image->Wavelength() == 171. )
-			AIA_contrast_0171(image);
-
-		else if(image->Wavelength() == 211. )
-			AIA_contrast_0211(image);
-
-		else if(image->Wavelength() == 131. )
-			AIA_contrast_0131(image);
-
-		else if(image->Wavelength() == 1700. )
-			AIA_contrast_1700(image);
-
-		else if(image->Wavelength() == 4500. )
-			AIA_contrast_4500(image);
-
-		else
-			cerr<<"Error: unknown wavelength for AIA "<<image->Wavelength()<<endl;
-
-	}
-}
-
-
 int main(int argc, const char **argv)
 {
 
@@ -220,6 +79,7 @@ int main(int argc, const char **argv)
 	string preprocessingSteps = "";
 	
 	// Options for the colorisation
+	bool color = false;
 	string colorTableName;
 	
 	// Options for the labeling
@@ -238,6 +98,7 @@ int main(int argc, const char **argv)
 
 	ArgumentHelper arguments;
 	arguments.new_flag('l', "label", "\n\tSet this flag if you want a label on the background.\n\t", label);
+	arguments.new_flag('c', "color", "\n\tSet this flag if you want the background to be colorized.\n\t", color);
 	arguments.new_named_string('C', "colorTable", "image name", "\n\tImage to use as a color table if you want to colorize the image.\n\t" , colorTableName);
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
 	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
@@ -263,31 +124,55 @@ int main(int argc, const char **argv)
 		cerr << "Error parsing size argument: "<<size<<" is not a valid specification."<< endl;
 		return 2;
 	}
-	// We verify the colorTable
-	if(!colorTableName.empty() && !isFile(colorTableName))
+	// We create the colorTable
+	MagickImage colorTable;
+	if(color && !colorTableName.empty())
 	{
-		cerr<<"Error : "<<colorTableName<<" is not a file!"<<endl;
-		return EXIT_FAILURE;
+		if(!isFile(colorTableName))
+		{
+			cerr<<"Error : "<<colorTableName<<" is not a file!"<<endl;
+			return EXIT_FAILURE;
+		}
+		else
+		{
+			colorTable = MagickImage(colorTableName);
+		}
 	}
 	
-	MagickImage colorTable;
-	if(!colorTableName.empty())
-	{
-		colorTable = MagickImage(colorTableName);
-	}
 
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 		EUVImage* image = getImageFromFile("UNKNOWN", imagesFilenames[p]);
-		enhance_contrast(image, preprocessingSteps);
+		// We improve the contrast
+		if(! preprocessingSteps.empty())
+		{
+			image->preprocessing(preprocessingSteps);
+		}
+		else 
+		{
+			image->enhance_contrast();
+		}
 		#if DEBUG >= 2
 		image->writeFits(outputDirectory + "/" + stripSuffix(stripPath(imagesFilenames[p])) + ".fits");
 		#endif
 		MagickImage background = image->magick();
-		if(!colorTableName.empty())
+		if(color)
 		{
-			MagickCore::ClutImage(background.image(), colorTable.image());
+			if(!colorTableName.empty())
+			{
+				MagickCore::ClutImage(background.image(), colorTable.image());
+			}
+			else
+			{
+				vector<char> intrumentColorTable = image->color_table();
+				colorTable = MagickImage(&(intrumentColorTable[0]), 1, intrumentColorTable.size()/3, "RGB");
+				//#if DEBUG >= 2
+				colorTable.write(outputDirectory + "/" + "colortable.png");
+				//#endif
+				MagickCore::ClutImage(background.image(), colorTable.image());
+			}
 		}
+
 		if(label)
 		{
 			string text = image->Instrument() + " " + dtos(image->Wavelength()) + "Å " + image->ObservationDate();

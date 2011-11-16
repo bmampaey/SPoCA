@@ -67,15 +67,12 @@ namespace cgt
         _VertexIterator (const _SelfCommon& _it) : _Base (_it) { }
 
       public:
-        reference operator*() const;
+        reference operator*() const
+            {
+      return _Base::operator*().vertex ();
+    		}
     };
 
-
-  template<typename _TpVertex, typename _TpEdge, template<typename> class _TpIterator>
-    typename _TpIterator<_GraphVertex<_TpVertex> >::reference _VertexIterator<_TpVertex, _TpEdge, _TpIterator>::operator*() const
-    {
-      return _Base::operator*().vertex ();
-    }
 }
 
 #endif // __CGTL__CGT_VERTEX_ITERATOR_H_

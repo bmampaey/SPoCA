@@ -17,7 +17,7 @@ void PCM2Classifier::computeU()
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = distance_squared(*xj,B[i]) / eta[i] ;
 				*uij *= *uij;
 				*uij = 1. / (1. + *uij * *uij);
 			}
@@ -29,7 +29,7 @@ void PCM2Classifier::computeU()
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = distance_squared(*xj,B[i]) / eta[i] ;
 				*uij = 1. / (1. + *uij * *uij);
 			}
 		}
@@ -40,7 +40,7 @@ void PCM2Classifier::computeU()
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
 			{
-				*uij = d2(*xj,B[i]) / eta[i] ;
+				*uij = distance_squared(*xj,B[i]) / eta[i] ;
 				*uij = 1. / (1. + pow(*uij , Real(2./(fuzzifier-1.))));
 			}
 		}

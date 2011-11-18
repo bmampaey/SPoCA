@@ -69,7 +69,7 @@ class STAFFStats
 		std::string toString(const std::string& separator, bool header = false) const;
 
 		//! Routine to update a region with a new pixel
-		void add(const PixLoc& coordinate, const EUVPixelType& pixelIntensity, const RealPixLoc& sunCenter, const bool& atBorder, const Real& R);
+		void add(const EUVPixelType& pixelIntensity, const Real& sunRadius);
 };
 
 //! Compute STAFF statistics of an image using a ColorMap as a cache
@@ -78,7 +78,7 @@ class STAFFStats
 @param color The color for wich to extract the stats
 @param image The image to compute the intensities statistics.
 */
-STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVImage* image)
+STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVImage* image);
 
 //! Compute STAFF statistics of an image using 2 ColorMaps as caches
 /* 

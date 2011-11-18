@@ -67,7 +67,8 @@
  - DivMode (Division by the mode)
  - DivExpTime (Division by the Exposure Time)
  - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
- - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
+ - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile)
+ - Smoothzz.z Binomial smoothing of zz.z arcsec
  
 @param radiusratio	The ratio of the radius of the sun that will be processed.
 

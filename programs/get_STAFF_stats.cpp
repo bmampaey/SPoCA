@@ -42,7 +42,8 @@
  - DivMode (Division by the mode)
  - DivExpTime (Division by the Exposure Time)
  - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
- - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
+ - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile)
+ - Smoothzz.z Binomial smoothing of zz.z arcsec
 
 @param colors The list of colors to select separated by commas (no spaces)
 <BR>All colors will be selected if ommited.
@@ -141,13 +142,13 @@ int main(int argc, const char **argv)
 	// We read the CHSegmentedMap
 	ColorMap* CHMap = getImageFromFile(CHSegmentedMap);
 	// If the ARSegmentedMap is different from the CHSegmentedMap, we read it and check if they are similar
-	ColorMap* ARMAp = CHMap;
+	ColorMap* ARMap = CHMap;
 	if(CHSegmentedMap != ARSegmentedMap)
 	{
-		ARMAp = getImageFromFile(ARSegmentedMap);
-		ARMAp->recenter(CHMap->SunCenter());
+		ARMap = getImageFromFile(ARSegmentedMap);
+		ARMap->recenter(CHMap->SunCenter());
 		
-		string dissimilarity = checkSimilar(CHMap, ARMAp);
+		string dissimilarity = checkSimilar(CHMap, ARMap);
 		if(! dissimilarity.empty())
 		{
 			cerr<<"Warning: "<<CHSegmentedMap<<" and "<<ARSegmentedMap<<" are not similar: "<<dissimilarity<<endl;
@@ -176,14 +177,14 @@ int main(int argc, const char **argv)
 		
 		// We extract the STAFF stats on the whole image
 		STAFFStats AR_staff_stats = getSTAFFStats(ARMap, ARClass, image);
-		cout<<staff_stats->toString(separator)<<endl;
+		cout<<AR_staff_stats.toString(separator)<<endl;
 		
 		// We extract the STAFF stats on the disc
 		image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
 		vector<STAFFStats> staff_stats = getSTAFFStats(CHMap, CHClass, ARMap, ARClass, image);
 		for (unsigned r = 0; r < staff_stats.size(); ++r)
 		{
-			cout<<staff_stats[r]->toString(separator)<<endl;
+			cout<<staff_stats[r].toString(separator)<<endl;
 		}
 		delete image;
 	}

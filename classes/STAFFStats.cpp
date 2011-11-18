@@ -13,7 +13,7 @@ using namespace std;
 
 
 STAFFStats::STAFFStats(const unsigned id)
-:id(id), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0), 
+:id(id), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0)
 {}
 
 
@@ -228,7 +228,7 @@ STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVI
 		if(coloredMap->pixel(j) == color)
 		{
 			// We add the pixel to the region
-			stats->add(image->pixel(j), sunRadius);
+			stats.add(image->pixel(j), sunRadius);
 		}
 	}
 	
@@ -246,17 +246,17 @@ vector<STAFFStats> getSTAFFStats(const ColorMap* CHMap, ColorType CHClass, const
 		if(CHMap->pixel(j) == CHClass)
 		{
 			// We add the pixel to the CH stats
-			stats[0]->add(image->pixel(j), sunRadius);
+			stats[0].add(image->pixel(j), sunRadius);
 		}
 		else if(ARMap->pixel(j) == ARClass)
 		{
 			// We add the pixel to the AR stats
-			stats[1]->add(image->pixel(j), sunRadius);
+			stats[1].add(image->pixel(j), sunRadius);
 		}
 		else
 		{
 			// We add remaining pixels to the QS stats
-			stats[2]->add(image->pixel(j), sunRadius);
+			stats[2].add(image->pixel(j), sunRadius);
 		}
 	}
 	

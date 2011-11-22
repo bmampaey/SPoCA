@@ -183,7 +183,7 @@ int main(int argc, const char **argv)
 			vector<RegionStats*> regions_stats = getRegionStats(colorizedMap, image, regions);
 			// We output them both
 			if(regions.size() > 0 && regions_stats.size() > 0)
-				cout<<regions[0]->toString(separator, true)<<separator<<regions_stats[0]->toString(separator, true)<<endl;
+				cout<<regions[0]->toString(separator, true)<<separator<<"Channel"<<separator<<regions_stats[0]->toString(separator, true)<<endl;
 			else
 				cout<<"Empty"<<endl;
 			
@@ -203,7 +203,7 @@ int main(int argc, const char **argv)
 			}
 			for (unsigned r = 0; r < regions_stats.size() && r < regions.size(); ++r)
 			{
-				cout<<regions[r]->toString(separator)<<separator<<regions_stats[r]->toString(separator)<<endl;
+				cout<<regions[r]->toString(separator)<<separator<<image->Channel()<<separator<<regions_stats[r]->toString(separator)<<endl;
 				delete regions_stats[r];
 				delete regions[r];
 			}
@@ -213,7 +213,7 @@ int main(int argc, const char **argv)
 			// We get only the regions stats and output them
 			vector<RegionStats*> regions_stats = getRegionStats(colorizedMap, image);
 			if(regions_stats.size() > 0)
-				cout<<regions_stats[0]->toString(separator, true)<<endl;
+				cout<<"Channel"<<separator<<regions_stats[0]->toString(separator, true)<<endl;
 			else
 				cout<<"Empty"<<endl;
 			if(append)
@@ -225,7 +225,7 @@ int main(int argc, const char **argv)
 			}
 			for (unsigned r = 0; r < regions_stats.size(); ++r)
 			{
-				cout<<regions_stats[r]->toString(separator)<<endl;
+				cout<<image->Channel()<<separator<<regions_stats[r]->toString(separator)<<endl;
 				delete regions_stats[r];
 			}
 		}

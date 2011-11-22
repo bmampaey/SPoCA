@@ -211,7 +211,7 @@ int main(int argc, const char **argv)
 		}
 		
 		if(segmentation_stats.size() > 0)
-			cout<<segmentation_stats[0]->toString(separator, true)<<endl;
+			cout<<"Channel"<<separator<<segmentation_stats[0]->toString(separator, true)<<endl;
 		else
 			cout<<"Empty"<<endl;
 		
@@ -224,7 +224,7 @@ int main(int argc, const char **argv)
 		}
 		for (unsigned r = 0; r < segmentation_stats.size(); ++r)
 		{
-			cout<<segmentation_stats[r]->toString(separator)<<endl;
+			cout<<image->Channel()<<separator<<segmentation_stats[r]->toString(separator)<<endl;
 			delete segmentation_stats[r];
 		}
 		delete image;

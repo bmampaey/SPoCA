@@ -375,9 +375,9 @@ FitsFile& writeRegions(FitsFile& file, const vector<RegionStats*>& regions_stats
 	}
 	
 	{
-		vector<string> data(regions.size());
-		for(unsigned r = 0; r < regions.size(); ++r)
-			data[r] = regions[r]->ObservationDate();
+		vector<string> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->ObservationDate();
 		file.writeColumn("DATE_OBS", data);
 	}
 	

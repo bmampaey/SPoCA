@@ -54,12 +54,12 @@ void STAFFStats::setId(const unsigned& id)
 	this->id = id;
 }
 
-time_t SegmentationStats::ObservationTime() const
+time_t STAFFStats::ObservationTime() const
 {
 	return observationTime;
 }
 
-string SegmentationStats::ObservationDate() const
+string STAFFStats::ObservationDate() const
 {
 	tm* date_obs;
 	date_obs = gmtime(&observationTime);
@@ -286,9 +286,9 @@ FitsFile& writeRegions(FitsFile& file, const vector<STAFFStats>& regions_stats)
 	}
 	
 	{
-		vector<string> data(regions.size());
-		for(unsigned r = 0; r < regions.size(); ++r)
-			data[r] = regions[r]->ObservationDate();
+		vector<string> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r].ObservationDate();
 		file.writeColumn("DATE_OBS", data);
 	}
 	

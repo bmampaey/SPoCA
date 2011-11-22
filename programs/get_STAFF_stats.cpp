@@ -177,15 +177,14 @@ int main(int argc, const char **argv)
 		
 		// We extract the STAFF stats on the whole image
 		STAFFStats AR_staff_stats = getSTAFFStats(ARMap, ARClass, image);
-		cout<<AR_staff_stats.toString(separator)<<endl;
+		cout<<image->Channel()<<"AR_all"<<AR_staff_stats.toString(separator)<<endl;
 		
 		// We extract the STAFF stats on the disc
 		image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
 		vector<STAFFStats> staff_stats = getSTAFFStats(CHMap, CHClass, ARMap, ARClass, image);
-		for (unsigned r = 0; r < staff_stats.size(); ++r)
-		{
-			cout<<staff_stats[r].toString(separator)<<endl;
-		}
+		cout<<image->Channel()<<separator<<"CH_ondisc"<<separator<<staff_stats[0].toString(separator)<<endl;
+		cout<<image->Channel()<<separator<<"AR_ondisc"<<separator<<staff_stats[1].toString(separator)<<endl;
+		cout<<image->Channel()<<separator<<"QS_ondisc"<<separator<<staff_stats[2].toString(separator)<<endl;
 		delete image;
 	}
 	

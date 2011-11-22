@@ -27,6 +27,8 @@ class RegionStats
 	private :
 		//! Unique and invariable identifier for a region at time observationTime
 		unsigned id;
+		//! Observation Time for the stats
+		time_t observationTime;
 		//! Total number of pixels in the region
 		unsigned numberPixels;
 		// Moments
@@ -42,12 +44,20 @@ class RegionStats
 
 	public :
 		//! Constructor
-		RegionStats(const unsigned id = 0);
+		RegionStats(const time_t& observationTime, const unsigned id = 0);
 		
 		//! Accessor to retrieve the id
-		unsigned  Id() const;
+		unsigned Id() const;
+
 		//! Accessor to set the id
 		void setId(const unsigned& id);
+		
+		//! Accessor to retrieve the observation time
+		time_t ObservationTime() const;
+		
+		//! Accessor to retrieve the observation time as a string
+		std::string ObservationDate() const;
+		
 		//! Accessor to retrieve the number of pixels
 		unsigned NumberPixels() const;
 		//! Mean of the intensities the region

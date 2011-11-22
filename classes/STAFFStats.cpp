@@ -12,8 +12,8 @@ using namespace std;
 
 
 
-STAFFStats::STAFFStats(const unsigned id)
-:id(id), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0)
+STAFFStats::STAFFStats(const time_t& observationTime, const unsigned id)
+:id(id),observationTime(observationTime), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0)
 {}
 
 
@@ -54,6 +54,19 @@ void STAFFStats::setId(const unsigned& id)
 	this->id = id;
 }
 
+time_t SegmentationStats::ObservationTime() const
+{
+	return observationTime;
+}
+
+string SegmentationStats::ObservationDate() const
+{
+	tm* date_obs;
+	date_obs = gmtime(&observationTime);
+	ostringstream ss;
+	ss<<setfill('0')<<setw(4)<<date_obs->tm_year+1900<<"-"<<setw(2)<<date_obs->tm_mon + 1<<"-"<<setw(2)<<date_obs->tm_mday<<"T"<<setw(2)<<date_obs->tm_hour<<":"<<setw(2)<<date_obs->tm_min<<":"<<setw(2)<<date_obs->tm_sec;
+	return ss.str();
+}
 
 Real STAFFStats::MinIntensity() const
 {
@@ -173,12 +186,12 @@ string STAFFStats::toString(const string& separator, bool header) const
 {
 	if (header)
 	{
-		return "Id"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"Area_Raw";
+		return "Id"+separator+"ObservationDate"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"Area_Raw";
 	}
 	else
 	{
 		ostringstream out;
-		out<<setiosflags(ios::fixed)<<Id()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<Area_Raw();
+		out<<setiosflags(ios::fixed)<<Id()<<separator<<ObservationDate()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<Area_Raw();
 		return out.str();
 	}
 }
@@ -190,7 +203,7 @@ vector<STAFFStats*> getSTAFFStats(const ColorMap* coloredMap, const EUVImage* im
 	for(unsigned r = 0; r < regions.size(); ++r)
 	{
 		if (regions_stats.count(regions[r]->Color()) == 0)
-			regions_stats[regions[r]->Color()] = new STAFFStats(regions[r]->Id());
+			regions_stats[regions[r]->Color()] = new STAFFStats(image->ObservationTime(), regions[r]->Id());
 	}
 	
 	RealPixLoc sunCenter = image->SunCenter();
@@ -219,7 +232,7 @@ vector<STAFFStats*> getSTAFFStats(const ColorMap* coloredMap, const EUVImage* im
 
 STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVImage* image)
 {
-	STAFFStats stats;
+	STAFFStats stats(image->ObservationTime());
 	
 	Real sunRadius = image->SunRadius();
 	
@@ -237,7 +250,7 @@ STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVI
 
 vector<STAFFStats> getSTAFFStats(const ColorMap* CHMap, ColorType CHClass, const ColorMap* ARMap, ColorType ARClass, const EUVImage* image)
 {
-	vector<STAFFStats> stats(3);
+	vector<STAFFStats> stats(3, image->ObservationTime());
 	
 	Real sunRadius = image->SunRadius();
 	
@@ -271,7 +284,14 @@ FitsFile& writeRegions(FitsFile& file, const vector<STAFFStats>& regions_stats)
 			data[r] = regions_stats[r].Id();
 		file.writeColumn("ID", data);
 	}
-
+	
+	{
+		vector<string> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->ObservationDate();
+		file.writeColumn("DATE_OBS", data);
+	}
+	
 	{
 		vector<Real> data(regions_stats.size());
 		for(unsigned r = 0; r < regions_stats.size(); ++r)

@@ -27,6 +27,8 @@ class STAFFStats
 	private :
 		//! Unique and invariable identifier for a region at time observationTime
 		unsigned id;
+		//! Observation Time for the stats
+		time_t observationTime;
 		// Moments
 		mutable Real m2, m3, m4;
 		Real minIntensity, maxIntensity, totalIntensity, area_Raw;
@@ -37,12 +39,20 @@ class STAFFStats
 
 	public :
 		//! Constructor
-		STAFFStats(const unsigned id = 0);
+		STAFFStats(const time_t& observationTime, const unsigned id = 0);
 		
 		//! Accessor to retrieve the id
 		unsigned  Id() const;
+		
 		//! Accessor to set the id
 		void setId(const unsigned& id);
+		
+		//! Accessor to retrieve the observation time
+		time_t ObservationTime() const;
+		
+		//! Accessor to retrieve the observation time as a string
+		std::string ObservationDate() const;
+		
 		//! Accessor to retrieve the number of pixels
 		unsigned NumberPixels() const;
 		//! Mean of the intensities the region

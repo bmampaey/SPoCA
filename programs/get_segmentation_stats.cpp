@@ -196,9 +196,9 @@ int main(int argc, const char **argv)
 		{
 			cerr<<"Warning: image "<<imageFilename<<" and the colorizedMap "<<colorizedMapFileName<<" are not similar: "<<dissimilarity<<endl;
 		}
-		
+		#if DEBUG >= 3
 		cout<<"Segmentation statistics for file "<<stripPath(imageFilename)<<endl;
-
+		#endif
 		// We get the segmentation stats and output them
 		vector<SegmentationStats*> segmentation_stats;
 		if(classes.size() > 0)
@@ -219,7 +219,7 @@ int main(int argc, const char **argv)
 		{
 			FitsFile file(colorizedMapFileName, FitsFile::update);
 			// We write the SegmentationStats into the fits
-			file.writeTable(image->Instrument()+"_SegmentationStats");
+			file.writeTable(image->Channel()+"_SegmentationStats");
 			writeRegions(file, segmentation_stats);
 		}
 		for (unsigned r = 0; r < segmentation_stats.size(); ++r)

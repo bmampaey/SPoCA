@@ -172,9 +172,9 @@ int main(int argc, const char **argv)
 		{
 			cerr<<"Warning: image "<<imageFilename<<" and the colorizedMap "<<colorizedMapFileName<<" are not similar: "<<dissimilarity<<endl;
 		}
-		
+		#if DEBUG >= 3
 		cout<<"Region statistics for file "<<stripPath(imageFilename)<<endl;
-
+		#endif
 		if(getRegionsInfo)
 		{
 			// We get the regions
@@ -198,7 +198,7 @@ int main(int argc, const char **argv)
 				}
 				
 				// We write the RegionStats into the fits
-				file.writeTable(image->Instrument()+"RegionStats");
+				file.writeTable(image->Channel()+"_RegionStats");
 				writeRegions(file, regions_stats);
 			}
 			for (unsigned r = 0; r < regions_stats.size() && r < regions.size(); ++r)
@@ -220,7 +220,7 @@ int main(int argc, const char **argv)
 			{
 				FitsFile file(colorizedMapFileName, FitsFile::update);
 				// We write the RegionStats into the fits
-				file.writeTable(image->Instrument()+"RegionStats");
+				file.writeTable(image->Channel()+"_RegionStats");
 				writeRegions(file, regions_stats);
 			}
 			for (unsigned r = 0; r < regions_stats.size(); ++r)

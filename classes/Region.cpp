@@ -325,7 +325,7 @@ We repeat that last step until we have enough points
 
 */
 
-vector<PixLoc> Region::chainCode(const ColorMap* image, const unsigned max_points, Real max_deviation) const
+vector<PixLoc> Region::chainCode(const ColorMap* image, const unsigned min_points, const unsigned max_points, Real max_deviation) const
 {
 	deque<PixLoc> chain;
 	
@@ -467,7 +467,7 @@ vector<PixLoc> Region::chainCode(const ColorMap* image, const unsigned max_point
 			}
 		}
 		
-		if (max_distance <  max_deviation)
+		if (max_distance <  max_deviation && good_indices.size() >= min_points)
 			break;
 		
 		// I remove the worst point from the tmp_indices

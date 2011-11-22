@@ -172,7 +172,7 @@ Header getCHMapHeader()
 	return map_header;
 }
 
-void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsigned chaincodeMaxPoints, Real chaincodeMaxDeviation, EUVImage* image)
+void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsigned chaincodeMinPoints, unsigned chaincodeMaxPoints, Real chaincodeMaxDeviation, EUVImage* image)
 {
 	/*! Clean everything above the radius */
 	CHMap->nullifyAboveRadius(1.);
@@ -236,7 +236,7 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 		file.writeTable("Chaincode");
 		for (unsigned r = 0; r < regions.size(); ++r)
 		{
-			vector<PixLoc> chaincode = regions[r]->chainCode(aggregatedMap, chaincodeMaxPoints, chaincodeMaxDeviation);
+			vector<PixLoc> chaincode = regions[r]->chainCode(aggregatedMap, chaincodeMinPoints, chaincodeMaxPoints, chaincodeMaxDeviation);
 			file.writeColumn(itos(regions[r]->Id(),7), chaincode);
 		
 			#if DEBUG>= 2

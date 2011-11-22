@@ -101,7 +101,7 @@ class Region
 		void add(const PixLoc& coordinate);
 		
 		//! Routine that generate a chaincode for the connected component indicated by firstPixel
-		std::vector<PixLoc> chainCode(const ColorMap* image, const unsigned max_points, Real max_deviation = 0.) const;
+		std::vector<PixLoc> chainCode(const ColorMap* image, const unsigned min_points, const unsigned max_points, Real max_deviation = 0.) const;
 
 	public :
 		friend FitsFile& readRegions(FitsFile& file, std::vector<Region*>& regions, bool getTrackedColors);

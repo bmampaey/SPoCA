@@ -216,6 +216,7 @@ int main(int argc, const char **argv)
 	bool getARStats = true, getCHStats = true, getSegmentedStats = false;
 	
 	// Options for the chain code
+	unsigned chaincodeMinPoints = 3;
 	unsigned chaincodeMaxPoints = 20;
 	double chaincodeMaxDeviation = 0;
 
@@ -544,9 +545,9 @@ int main(int argc, const char **argv)
 	
 		// And write the map of AR
 		if(getARStats)
-			writeARMap(ARMap, filenamePrefix + "ARMap.fits", !uncompressedMaps, chaincodeMaxPoints, chaincodeMaxDeviation, image);
+			writeARMap(ARMap, filenamePrefix + "ARMap.fits", !uncompressedMaps, chaincodeMinPoints, chaincodeMaxPoints, chaincodeMaxDeviation, image);
 		else
-			writeARMap(ARMap, filenamePrefix + "ARMap.fits", !uncompressedMaps, chaincodeMaxPoints, chaincodeMaxDeviation, NULL);
+			writeARMap(ARMap, filenamePrefix + "ARMap.fits", !uncompressedMaps, chaincodeMinPoints, chaincodeMaxPoints, chaincodeMaxDeviation, NULL);
 		
 		delete ARMap;
 	}
@@ -566,9 +567,9 @@ int main(int argc, const char **argv)
 	
 		// And write the map of CH
 		if(getCHStats)
-			writeCHMap(CHMap, filenamePrefix + "CHMap.fits", !uncompressedMaps, chaincodeMaxPoints, chaincodeMaxDeviation, image);
+			writeCHMap(CHMap, filenamePrefix + "CHMap.fits", !uncompressedMaps, chaincodeMinPoints, chaincodeMaxPoints, chaincodeMaxDeviation, image);
 		else
-			writeCHMap(CHMap, filenamePrefix + "CHMap.fits", !uncompressedMaps, chaincodeMaxPoints, chaincodeMaxDeviation, NULL);
+			writeCHMap(CHMap, filenamePrefix + "CHMap.fits", !uncompressedMaps, chaincodeMinPoints, chaincodeMaxPoints, chaincodeMaxDeviation, NULL);
 		
 		delete CHMap;
 	}

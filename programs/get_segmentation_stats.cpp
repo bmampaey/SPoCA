@@ -99,8 +99,6 @@ int main(int argc, const char **argv)
 	double segmentationStatsRadiusRatio = 1;
 	string segmentationStatsPreprocessing = "";
 	
-	// Options for the type of coordinate
-	string coordinateType;
 
 	// The segmented map
 	string colorizedMapFileName;
@@ -126,7 +124,6 @@ int main(int argc, const char **argv)
 	arguments.new_named_double('R', "segmentationStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the segmentation stats.\n\t",segmentationStatsRadiusRatio);
 	arguments.new_named_string('G', "segmentationStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",segmentationStatsPreprocessing);
 	arguments.new_named_string('M',"colorizedMap","file name", "\n\tA segmented map (i.e. each class must have a different color).\n\t", colorizedMapFileName);
-	arguments.new_named_string('T', "coordinateType", "string", "\n\tThe type of coordinates to output positions.\n\tPossible values are : HGS, HGC, HPC, HPR, HCC, HCR\n\t", coordinateType);
 	arguments.new_named_string('s', "separator", "string", "\n\tThe separator to put between columns.\n\t", separator);
 	arguments.new_named_string('c', "classes", "string", "\n\tThe list of classes to select separated by commas (no spaces)\n\tAll classes will be selected if ommited.\n\t", classesString);
 	arguments.new_named_string('C', "classesFilename", "string", "\n\tA file containing a list of classes to select separated by commas\n\tAll classes will be selected if ommited.\n\t", classesFilename);

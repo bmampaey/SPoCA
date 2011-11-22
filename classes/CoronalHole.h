@@ -26,6 +26,6 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection = SunIm
 Header getCHMapHeader();
 
 //! Method to write a CH map to a fits file
-void writeCHMap(ColorMap*& CHMap, const std::string& filename, bool compressed = true, unsigned chaincodeMaxPoints = 0, Real chaincodeMaxDeviation = 0., EUVImage* image = NULL);
+void writeCHMap(ColorMap*& CHMap, const std::string& filename, bool compressed = true, unsigned chaincodeMinPoints = 3, unsigned chaincodeMaxPoints = 0, Real chaincodeMaxDeviation = 0., EUVImage* image = NULL);
 #endif
 

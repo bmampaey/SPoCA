@@ -26,7 +26,7 @@ ColorMap* getAggregatedARMap(const ColorMap* ARMap, const int projection = SunIm
 Header getARMapHeader();
 
 //! Method to write a AR map to a fits file
-void writeARMap(ColorMap*& ARMap, const std::string& filename, bool compressed = true, unsigned chaincodeMaxPoints = 0, Real chaincodeMaxDeviation = 0., EUVImage* image = NULL);
+void writeARMap(ColorMap*& ARMap, const std::string& filename, bool compressed = true, unsigned chaincodeMinPoints = 3, unsigned chaincodeMaxPoints = 0, Real chaincodeMaxDeviation = 0., EUVImage* image = NULL);
 
 #endif
 

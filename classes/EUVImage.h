@@ -73,6 +73,9 @@ class EUVImage : public SunImage<EUVPixelType>
 		//! Accessor to retrieve the Channel
 		virtual std::string Channel() const;
 		
+		//! Return a label for the image
+		std::string Label() const;
+		
 		//! Accessor to retrieve the Wavelength in Angstrom
 		Real Wavelength() const;
 		

@@ -3,7 +3,7 @@
 using namespace std;
 
 Classifier::Classifier(Real fuzzifier)
-:fuzzifier(fuzzifier),numberClasses(0),numberFeatureVectors(0),Xaxes(0),Yaxes(0),channels(0)
+:fuzzifier(fuzzifier),numberClasses(0),numberFeatureVectors(0),Xaxes(0),Yaxes(0)
 {}
 
 Classifier::~Classifier()
@@ -558,7 +558,7 @@ vector<RealFeature> Classifier::getB()
 	return B;
 }
 
-RealFeature Classifier::getChannels()
+vector<string> Classifier::getChannels()
 {
 	return channels;
 }
@@ -608,7 +608,7 @@ void Classifier::initB(const vector<RealFeature>& B)
 	numberClasses = B.size();
 }
 
-void Classifier::initB(const vector<RealFeature>& B, const RealFeature& channels)
+void Classifier::initB(const vector<RealFeature>& B, const vector<string>& channels)
 {
 	this->B = B;
 	numberClasses = B.size();
@@ -622,14 +622,14 @@ void Classifier::sortB()
 
 void Classifier::ordonateImages(vector<EUVImage*>& images)
 {
-	if(! channels.is_null())
+	if(channels.size() == NUMBERCHANNELS)
 	{
 		for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
 		{
-			if(channels.v[p] != images[p]->Wavelength())
+			if(channels[p] != images[p]->Channel())
 			{
 				unsigned pp = p+1;
-				while(pp < NUMBERCHANNELS && channels.v[p] != images[pp]->Wavelength())
+				while(pp < NUMBERCHANNELS && channels[p] != images[pp]->Channel())
 					++pp;
 				if(pp < NUMBERCHANNELS)
 				{
@@ -648,8 +648,9 @@ void Classifier::ordonateImages(vector<EUVImage*>& images)
 	}
 	else
 	{
+		channels.resize(NUMBERCHANNELS);
 		for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
-			channels.v[p] = images[p]->Wavelength();
+			channels[p] = images[p]->Channel();
 	}
 	
 }

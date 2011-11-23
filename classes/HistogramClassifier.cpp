@@ -6,15 +6,15 @@ using namespace std;
 extern string filenamePrefix;
 
 HistogramClassifier::HistogramClassifier()
-:binSize(0),numberBins(0),histoChannels(0)
+:binSize(0),numberBins(0)
 {}
 
 HistogramClassifier::HistogramClassifier(const RealFeature& binSize)
-:binSize(binSize),numberBins(0),histoChannels(0)
+:binSize(binSize),numberBins(0)
 {}
 
 HistogramClassifier::HistogramClassifier(const std::string& histogramFilename)
-:binSize(0),numberBins(0),histoChannels(0)
+:binSize(0),numberBins(0)
 {
 	initHistogram(histogramFilename);
 }

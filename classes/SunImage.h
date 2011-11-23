@@ -77,6 +77,9 @@ class SunImage : public Image<T>
 		//! Accessor to retrieve the Instrument
 		virtual std::string Instrument() const;
 		
+		//! Return a label for the image
+		virtual std::string Label() const;
+		
 		//! Accessor to retrieve the PixelLength in arcsec (i.e. cdelt1)
 		Real PixelLength() const;
 		

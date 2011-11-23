@@ -144,6 +144,11 @@ inline string HMIImage::Channel() const
 	return Instrument();
 }
 
+inline string HMIImage::Label() const
+{
+	return Instrument() + " " + ObservationDate();
+}
+
 inline string HMIImage::Instrument() const
 {
 	if (header.has("CONTENT"))

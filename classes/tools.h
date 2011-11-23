@@ -84,6 +84,17 @@ std::istream& operator>>(std::istream& in, std::vector<T>& v)
 
 }
 
+
+
+//! Convert a vector to a string
+template<class T>
+std::string vtos(const std::vector<T>& v)
+{
+	std::ostringstream Z;
+	Z << v;
+	return Z.str();
+}
+
 //! General string parsing
 template<class T>
 std::string& operator>>(std::string& input, T& value)

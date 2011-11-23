@@ -191,7 +191,7 @@ int main(int argc, const char **argv)
 	
 	if(label)
 	{
-		string text = image->Instrument() + " " + dtos(image->Wavelength()) + "Å " + image->ObservationDate();
+		string text = image->Label();
 		size_t text_size = image->Xaxes()/40;
 		blue_channel.fillColor("white");
 		blue_channel.fontPointsize(text_size);

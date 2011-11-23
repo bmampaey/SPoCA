@@ -19,7 +19,7 @@
 class CumulativeClassifier 
 {
 	protected :
-		unsigned    numberImages;
+		unsigned numberImages;
 
 	public :
 		//Constructors & Destructors

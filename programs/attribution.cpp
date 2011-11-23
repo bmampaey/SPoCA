@@ -144,6 +144,7 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 
 #include "../classes/FeatureVector.h"
 #include "../classes/RegionStats.h"
+#include "../classes/SegmentationStats.h"
 #include "../classes/ActiveRegion.h"
 #include "../classes/CoronalHole.h"
 #include "../classes/FitsFile.h"
@@ -213,7 +214,7 @@ int main(int argc, const char **argv)
 	// Options for the desired maps
 	bool uncompressedMaps = false;
 	string desiredMaps;
-	bool getARStats = true, getCHStats = true, getSegmentedStats = false;
+	bool getARStats = true, getCHStats = true, getSegmentedStats = true;
 	
 	// Options for the chain code
 	unsigned chaincodeMinPoints = 3;
@@ -264,7 +265,7 @@ int main(int argc, const char **argv)
 	
 	// General variables
 	vector<RealFeature> B;
-	RealFeature wavelengths = 0;
+	vector<string> channels;
 	Classifier* F;
 	vector<Real> eta;
 
@@ -292,8 +293,8 @@ int main(int argc, const char **argv)
 		}
 	}
 	
-	// We read the wavelengths and the initial centers from the centers file
-	if(readCentersFromFile(B, wavelengths, centersFileName))
+	// We read the channels and the initial centers from the centers file
+	if(readCentersFromFile(B, channels, centersFileName))
 	{
 		if(B.size() == 0)
 		{
@@ -375,7 +376,7 @@ int main(int argc, const char **argv)
 		
 		
 	// We initialize the Classifier with the centers from the centers file
-	F->initB(B, wavelengths);
+	F->initB(B, channels);
 
 	if(classifierIsPossibilistic)
 	{
@@ -396,7 +397,7 @@ int main(int argc, const char **argv)
 		else
 		{	// We probably shouldn't come here
 			dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
-			F->initB(B, wavelengths);
+			F->initB(B, channels);
 		}
 	}	
 	
@@ -460,7 +461,7 @@ int main(int argc, const char **argv)
 		header.set("SFIXCH", coronalHole);
 	if(! threshold.empty())
 		header.set("STRSHLD", threshold);
-	header.set("CHANNELS", F->getChannels().toString(), "Classification Channels");
+	header.set("CHANNELS", vtos(F->getChannels()), "Classification Channels");
 	
 	B = F->getB();
 	for (unsigned i = 0; i < numberClasses; ++i)
@@ -582,28 +583,29 @@ int main(int argc, const char **argv)
 		
 		if(getSegmentedStats)
 		{
+			
 			// We get the RegionStats
-			vector<RegionStats*> regions_stats = getRegionStats(segmentedMap, image);
+			vector<SegmentationStats*> segmentation_stats = getSegmentationStats(segmentedMap, image);
 		
 			// We write the RegionStats into the fits
-			file.writeTable("RegionStats");
-			writeRegions(file, regions_stats);
+			file.writeTable(image->Channel()+"_SegmentationStats");
+			writeRegions(file, segmentation_stats);
 		
 			#if DEBUG>= 3
-			cerr<<"RegionStats Table"<<endl;
-			if(regions_stats.size() > 0)
-				cerr<<regions_stats[0]->toString("|", true)<<endl;
+			cerr<<"SegmentationStats Table"<<endl;
+			if(segmentation_stats.size() > 0)
+				cerr<<segmentation_stats[0]->toString("|", true)<<endl;
 			else
 				cerr<<"Empty"<<endl;
-			for (unsigned r = 0; r < regions_stats.size(); ++r)
+			for (unsigned r = 0; r < segmentation_stats.size(); ++r)
 			{
-				cerr<<regions_stats[r]->toString("|")<<endl;
+				cerr<<segmentation_stats[r]->toString("|")<<endl;
 			}
 			#endif
 		
-			for (unsigned r = 0; r < regions_stats.size(); ++r)
+			for (unsigned r = 0; r < segmentation_stats.size(); ++r)
 			{
-				delete regions_stats[r];
+				delete segmentation_stats[r];
 			}
 		}
 	}

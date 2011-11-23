@@ -31,29 +31,51 @@ void HistogramFCMClassifier::attribution()
 void HistogramFCMClassifier::addImages(vector<EUVImage*> images)
 {
 
-	// We must verify that the channels of the histogram are the same as the channels of the classifier
-	if(! channels.is_null())
+	if(images.size() < NUMBERCHANNELS)
 	{
-		if(histoChannels.is_null())
+		cerr<<"Error : The number of images is not equal to "<<NUMBERCHANNELS<<endl;
+		exit(EXIT_FAILURE);
+	}
+	else if(images.size() > NUMBERCHANNELS)
+	{
+		cerr<<"Warning : The number of images is not equal to "<<NUMBERCHANNELS<<". Only using the first ones."<<endl;
+	}
+	
+	// We must verify that the channels of the histogram are the same as the channels of the classifier
+	if(channels.size() > 0)
+	{
+		if(histoChannels.empty())
 		{
 			histoChannels = channels;
 		}
-		else if(histoChannels != channels)
+		else if(histoChannels.size() != channels.size())
 		{
-			cerr<<"Error : channels in the histogram file do not correspond to channels of the classifier (check centers file or order of the images)."<<endl;
+			cerr<<"Error : number of channels of the histogram differ from the number of channels of the classifier, check centers file or histogram file."<<endl;
 			exit(EXIT_FAILURE);
+		}
+		else
+		{
+			for(unsigned p = 0; p < channels.size(); ++p)
+			{
+				if(histoChannels[p] != channels[p])
+				{
+					cerr<<"Error : channel "<<p<<" of the histogram ("<<histoChannels[p]<<") differ from classifier ("<<channels[p]<<"), check centers file or histogram file."<<endl;
+					exit(EXIT_FAILURE);
+				}
+			}
 		}
 	}
 	else 
 	{
-		if(histoChannels.is_null())
+		if(histoChannels.empty())
 		{
-			for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
-				histoChannels.v[p] = images[p]->Wavelength();
+			histoChannels.resize(NUMBERCHANNELS);
+			for (unsigned p = 0; p< NUMBERCHANNELS; ++p)
+				histoChannels[p] = images[p]->Channel();
 		}
 		channels = histoChannels;
 	}
-		
+	
 
 	// I will need the images in the end to show the classification
 	// so I add them to the FCM Classifier, and use it's Feture vectors to build the histogram
@@ -506,16 +528,27 @@ vector<RealFeature> HistogramFCMClassifier::classAverage() const
 	return class_average;
 }
 
-void HistogramFCMClassifier::initB(const vector<RealFeature>& B, const RealFeature& channels)
+void HistogramFCMClassifier::initB(const vector<RealFeature>& B, const vector<string>& channels)
 {
-	if(histoChannels.is_null())
+	if(histoChannels.empty())
 	{
 		histoChannels = channels;
 	}
-	else if(histoChannels != channels)
+	else if(histoChannels.size() != channels.size())
 	{
-		cerr<<"Error : channels in the histogram file do not correspond to channels of the classifier (check centers file or order of the images)."<<endl;
+		cerr<<"Error : number of channels of the histogram differ from the number of channels of the classifier, check centers file or histogram file."<<endl;
 		exit(EXIT_FAILURE);
+	}
+	else
+	{
+		for(unsigned p = 0; p < channels.size(); ++p)
+		{
+			if(histoChannels[p] != channels[p])
+			{
+				cerr<<"Error : channel "<<p<<" of the histogram ("<<histoChannels[p]<<") differ from classifier ("<<channels[p]<<"), check centers file or histogram file."<<endl;
+				exit(EXIT_FAILURE);
+			}
+		}
 	}
 	FCMClassifier::initB(B, channels);
 }

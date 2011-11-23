@@ -113,6 +113,11 @@ inline string SunImage<T>::Instrument() const
 		return "UNKNOWN";
 }
 
+template<class T>
+inline string SunImage<T>::Label() const
+{
+	return Instrument() + " " + ObservationDate();
+}
 
 template<class T>
 inline void SunImage<T>::nullifyAboveRadius(const Real radiusRatio)

@@ -25,26 +25,47 @@ CumulativeFCMClassifier::CumulativeFCMClassifier(const std::string& histogramFil
 
 void CumulativeFCMClassifier::addImages(std::vector<EUVImage*> images)
 {
-
-	// We must verify that the channels of the histogram are the same as the channels of the classifier
-	if(! channels.is_null())
+	if(images.size() < NUMBERCHANNELS)
 	{
-		if(histoChannels.is_null())
+		cerr<<"Error : The number of images is not equal to "<<NUMBERCHANNELS<<endl;
+		exit(EXIT_FAILURE);
+	}
+	else if(images.size() > NUMBERCHANNELS)
+	{
+		cerr<<"Warning : The number of images is not equal to "<<NUMBERCHANNELS<<". Only using the first ones."<<endl;
+	}
+	
+	// We must verify that the channels of the histogram are the same as the channels of the classifier
+	if(channels.size() > 0)
+	{
+		if(histoChannels.empty())
 		{
 			histoChannels = channels;
 		}
-		else if(histoChannels != channels)
+		else if(histoChannels.size() != channels.size()
 		{
-			cerr<<"Error : channels in the histogram file do not correspond to channels of the classifier (check centers file or order of the images)."<<endl;
+			cerr<<"Error : number of channels of the histogram differ from the number of channels of the classifier, check centers file or histogram file."<<endl;
 			exit(EXIT_FAILURE);
+		}
+		else
+		{
+			for(unsigned p = 0; p < channels.size(); ++p)
+			{
+				if(histoChannels[p] != channels[p])
+				{
+					cerr<<"Error : channel "<<p<<" of the histogram ("<<histoChannels[p]<<") differ from classifier ("<<channels[p]<<"), check centers file or histogram file."<<endl;
+					exit(EXIT_FAILURE);
+				}
+			}
 		}
 	}
 	else 
 	{
-		if(histoChannels.is_null())
+		if(histoChannels.empty())
 		{
+			histoChannels.resize(NUMBERCHANNELS);
 			for (unsigned p = 0; p< NUMBERCHANNELS; ++p)
-				histoChannels.v[p] = images[p]->Wavelength();
+				histoChannels[p] = images[p]->Channel();
 		}
 		channels = histoChannels;
 	}

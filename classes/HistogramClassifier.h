@@ -51,7 +51,7 @@ class HistogramClassifier
 		unsigned numberBins;
 		
 		//! Channels of the histogram
-		RealFeature histoChannels;
+		std::vector<std::string> histoChannels;
 
 	protected :
 		//! Function to insert a new HistoFeatureVector into HistoX

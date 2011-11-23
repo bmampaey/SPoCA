@@ -115,6 +115,10 @@ inline string EUVImage::Channel() const
 	return Instrument() + "_" + itos(int(Wavelength()));
 }
 
+inline string EUVImage::Label() const
+{
+		return Instrument() + " " + itos(int(Wavelength())) + "Å " + ObservationDate();
+}
 
 inline Real EUVImage::Wavelength() const
 {

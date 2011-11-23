@@ -108,7 +108,7 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 			image.pixel(coordinates[j]) = smoothedX[j].v[p];
 
-		image.writeFits(filenamePrefix + "smoothed." + itos(int(images[p]->Wavelength())) + ".fits");
+		image.writeFits(filenamePrefix + "smoothed." + images[p]->Channel() + ".fits");
 
 	}
 	#endif

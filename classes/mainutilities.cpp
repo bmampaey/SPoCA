@@ -4,7 +4,7 @@
 using namespace std;
 
 
-inline bool readCentersFromStream(vector<RealFeature>& B, RealFeature& wavelengths, istream& stream)
+inline bool readCentersFromStream(vector<RealFeature>& B, vector<string>& channels, istream& stream)
 {
 	B.clear();
 	while(stream.good() && isspace(char(stream.peek())))
@@ -12,7 +12,7 @@ inline bool readCentersFromStream(vector<RealFeature>& B, RealFeature& wavelengt
 		stream.get();
 	}
 	if (stream.good())
-		stream>>wavelengths;
+		stream>>channels;
 	while(stream.good() && isspace(char(stream.peek())))
 	{
 		stream.get();
@@ -22,41 +22,56 @@ inline bool readCentersFromStream(vector<RealFeature>& B, RealFeature& wavelengt
 	return stream.good();
 }
 
-inline unsigned readCentersFromFile(vector<RealFeature>& B, RealFeature& wavelengths, const string& centersFileName)
+inline unsigned readCentersFromFile(vector<RealFeature>& B, vector<string>& channels, const string& centersFileName)
 {
 	B.clear();
 	ifstream centersFile(centersFileName.c_str());
-	if (not readCentersFromStream(B, wavelengths, centersFile))
+	if (not readCentersFromStream(B, channels, centersFile))
 	{
 		cerr<<"Error : could not read class centers from file "<<centersFileName<<endl;
 	}
 	return B.size();
 }
 
-inline unsigned readCentersFromFile(vector< vector<RealFeature> >& Bs, RealFeature& wavelengths, const string& centersFileName)
+inline unsigned readCentersFromFile(vector< vector<RealFeature> >& Bs, vector<string>& channels, const string& centersFileName)
 {
 	Bs.clear();
 	vector<RealFeature> B;
 	ifstream centersFile(centersFileName.c_str());
-	if (not readCentersFromStream(B, wavelengths, centersFile))
+	if (not readCentersFromStream(B, channels, centersFile))
 	{
 		cerr<<"Error : could not read class centers from file "<<centersFileName<<endl;
 	}
 	else
 	{
 		Bs.push_back(B);
-		RealFeature wavelengths2;
-		while(readCentersFromStream(B, wavelengths2, centersFile))
+		vector<string> channels2;
+		while(readCentersFromStream(B, channels2, centersFile))
 		{
-			if(wavelengths2 != wavelengths)
+			bool ok = true;
+			if(channels2.size() != channels.size())
 			{
-				cerr<<"Warning : Reading class centers from file "<<centersFileName<<". Wavelengths do not match, omitting centers "<<B<<endl;
-			}
-			else if(B.size() != Bs[0].size())
-			{
-				cerr<<"Warning : Reading class centers from file "<<centersFileName<<". Number of classes do not match, omitting centers "<<B<<endl;
+				cerr<<"Warning : Reading class centers from file "<<centersFileName<<". Number of channels do not match, omitting centers "<<B<<endl;
+				ok = false;
 			}
 			else
+			{
+				for(unsigned p = 0; p < channels.size() && ok; ++p)
+				{
+					if(channels2[p] != channels[p])
+					{
+						cerr<<"Warning : Reading class centers from file "<<centersFileName<<". Channels do not match, omitting centers "<<B<<endl;
+						ok = false;
+					}
+				}
+				
+			}
+			if( ok && B.size() != Bs[0].size())
+			{
+				cerr<<"Warning : Reading class centers from file "<<centersFileName<<". Number of classes do not match, omitting centers "<<B<<endl;
+				ok = false;
+			}
+			if(ok)
 			{
 				Bs.push_back(B);
 			}
@@ -65,19 +80,19 @@ inline unsigned readCentersFromFile(vector< vector<RealFeature> >& Bs, RealFeatu
 	return Bs.size();
 }
 
-inline bool writeCentersToStream(const vector<RealFeature> & B, const RealFeature& wavelengths, ostream& stream)
+inline bool writeCentersToStream(const vector<RealFeature> & B, const vector<string>& channels, ostream& stream)
 {
 	if (stream.good())
-		stream<<wavelengths;
+		stream<<channels;
 	if (stream.good())
 		stream<<"\t"<<B<<endl;
 	return stream.good();
 }
 
-inline void writeCentersToFile(const vector<RealFeature> & B, const RealFeature& wavelengths, const string& centersFileName)
+inline void writeCentersToFile(const vector<RealFeature> & B, const vector<string>& channels, const string& centersFileName)
 {
 	ofstream centersFile(centersFileName.c_str(), ios_base::trunc);
-	if (not writeCentersToStream(B, wavelengths, centersFile))
+	if (not writeCentersToStream(B, channels, centersFile))
 	{
 		cerr<<"Error : could not write class centers to file "<<centersFileName<<endl;
 	}
@@ -85,12 +100,12 @@ inline void writeCentersToFile(const vector<RealFeature> & B, const RealFeature&
 }
 
 
-inline void writeCentersToFile(const vector< vector<RealFeature> >& Bs, const RealFeature& wavelengths, const string& centersFileName)
+inline void writeCentersToFile(const vector< vector<RealFeature> >& Bs, const vector<string>& channels, const string& centersFileName)
 {
 	ofstream centersFile(centersFileName.c_str(), ios_base::trunc);
 	for(unsigned b = 0; b < Bs.size() && centersFile.good(); ++b)
 	{
-		if (not writeCentersToStream(Bs[b], wavelengths, centersFile))
+		if (not writeCentersToStream(Bs[b], channels, centersFile))
 		{
 			cerr<<"Error : could not write class centers to file "<<centersFileName<<endl;
 		}

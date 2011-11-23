@@ -30,9 +30,9 @@
 
 @param separator	The separator to put between columns.
 
-@param segmentationStatsRadiusRatio	The ratio of the radius of the sun that will be used for the segmentation stats.
+@param intensitiesRadiusRatio	The ratio of the radius of the sun that will be used for the segmentation stats.
 
-@param segmentationStatsPreprocessing	The steps of preprocessing to apply to the sun images
+@param intensitiesPreprocessing	The steps of preprocessing to apply to the sun images
 <BR>Possible values :
  - NAR (Nullify above radius)
  - ALC (Annulus Limb Correction)
@@ -96,8 +96,9 @@ int main(int argc, const char **argv)
 	vector<string> imagesFilenames;
 
 	// Options for the preprocessing of images
-	double segmentationStatsRadiusRatio = 1;
-	string segmentationStatsPreprocessing = "";
+	double areaRadiusratio = 1;
+	double intensitiesRadiusRatio = 0.95;
+	string intensitiesPreprocessing = "";
 	
 
 	// The segmented map
@@ -121,8 +122,9 @@ int main(int argc, const char **argv)
 	ArgumentHelper arguments;
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP, HMI\n\t", imageType);
 	arguments.new_flag('a', "append", "\n\tSet this flag if you want append a new table in the fitsfile with the segmentation stats.\n\t", append);
-	arguments.new_named_double('R', "segmentationStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the segmentation stats.\n\t",segmentationStatsRadiusRatio);
-	arguments.new_named_string('G', "segmentationStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",segmentationStatsPreprocessing);
+	arguments.new_named_double('r', "areaRadiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the area stats.\n\t",areaRadiusratio);
+	arguments.new_named_double('R', "intensitiesRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the intensities stats.\n\t",intensitiesRadiusRatio);
+	arguments.new_named_string('G', "intensitiesPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images for the intensities stats.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",intensitiesPreprocessing);
 	arguments.new_named_string('M',"colorizedMap","file name", "\n\tA segmented map (i.e. each class must have a different color).\n\t", colorizedMapFileName);
 	arguments.new_named_string('s', "separator", "string", "\n\tThe separator to put between columns.\n\t", separator);
 	arguments.new_named_string('c', "classes", "string", "\n\tThe list of classes to select separated by commas (no spaces)\n\tAll classes will be selected if ommited.\n\t", classesString);
@@ -165,6 +167,9 @@ int main(int argc, const char **argv)
 	}
 	
 	ColorMap* colorizedMap = getImageFromFile(colorizedMapFileName);
+	colorizedMap->nullifyAboveRadius(areaRadiusratio);
+	
+	
 	RealPixLoc sunCenter = colorizedMap->SunCenter();
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
@@ -180,8 +185,8 @@ int main(int argc, const char **argv)
 		
 		image->recenter(sunCenter);
 		// We preprocess the sun image if necessary
-		if(! segmentationStatsPreprocessing.empty())
-			image->preprocessing(segmentationStatsPreprocessing, segmentationStatsRadiusRatio);
+		if(! intensitiesPreprocessing.empty())
+			image->preprocessing(intensitiesPreprocessing, intensitiesRadiusRatio);
 		
 		#if DEBUG >= 2
 		image->writeFits(filenamePrefix + "preprocessed." +  stripPath(imageFilename) );

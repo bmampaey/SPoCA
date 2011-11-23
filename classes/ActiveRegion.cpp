@@ -233,7 +233,7 @@ void writeARMap(ColorMap*& ARMap, const string& filename, bool compressed, unsig
 		ColorMap chaincode_map(ARMap);
 		#endif
 		
-		file.writeTable("Chaincode");
+		file.writeTable("ChainCodes");
 		for (unsigned r = 0; r < regions.size(); ++r)
 		{
 			vector<PixLoc> chaincode = regions[r]->chainCode(aggregatedMap, chaincodeMinPoints, chaincodeMaxPoints, chaincodeMaxDeviation);
@@ -258,7 +258,7 @@ void writeARMap(ColorMap*& ARMap, const string& filename, bool compressed, unsig
 		vector<RegionStats*> regions_stats =  getRegionStats(ARMap, image, regions);
 	
 		/*! We write the AR Stats into the fits */
-		file.writeTable("ActiveRegionStats");
+		file.writeTable(image->Channel()+"_ActiveRegionStats");
 		writeRegions(file, regions_stats);
 		
 		/*! We write some info bout the image in the header of the table */

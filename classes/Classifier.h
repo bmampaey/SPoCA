@@ -54,8 +54,8 @@ class Classifier
 		//! Size of the axes
 		unsigned Xaxes, Yaxes;
 		
-		//! Feature vector descibing the channels (usually the wavelength)
-		RealFeature channels;
+		//! Vector describing the channels
+		std::vector<std::string> channels;
 
 		//! Set of membership/probability
 		MembershipSet U;
@@ -122,7 +122,7 @@ class Classifier
 		virtual void attribution();
 
 		//! Function to initialise the centers of classes
-		virtual void initB(const std::vector<RealFeature>& B, const RealFeature& channels);
+		virtual void initB(const std::vector<RealFeature>& B, const std::vector<std::string>& channels);
 		
 		//! Function to randomly initialise the centers of classes
 		virtual void randomInitB(unsigned C);
@@ -170,7 +170,7 @@ class Classifier
 		std::vector<RealFeature> getB();
 		
 		//! Accessor to retrieve the channels
-		RealFeature getChannels();
+		std::vector<std::string> getChannels();
 		
 		//! Accessor to retrieve the percentiles of the feature vectors
 		std::vector<RealFeature> percentiles(std::vector<Real> percentileValues);

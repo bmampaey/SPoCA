@@ -2,6 +2,75 @@
 
 using namespace std;
 
+//! String vector input
+template<>
+istream& operator>>(istream& in, vector<string>& v)
+{
+	v.clear();
+	while(in.good() && isspace(char(in.peek())))
+	{
+		in.get();
+	}
+	if(! in.good())
+	{
+		cerr<<"Error parsing Vector from stream"<<endl;
+		return in;
+	}
+	if(in.peek() == '[')
+	{
+		in.get();
+		char c;
+		in.get(c);
+		string value; 
+		while (in.good())
+		{
+			if(c == ',')
+			{
+				v.push_back(value);
+				value = "";
+			}
+			else
+			{
+				value += c;
+			}
+			in.get(c);
+			if(c == ']')
+			{
+				v.push_back(value);
+				break;
+			}
+		}
+	}
+	else
+	{
+		char c;
+		in.get(c);
+		string value;
+		while (in.good())
+		{
+			if(c == ',')
+			{
+				v.push_back(value);
+				value = "";
+			}
+			else
+			{
+				value += c;
+			}
+			in.get(c);
+			if(isspace(c))
+			{
+				v.push_back(value);
+				break;
+			}
+		}
+	}
+	return in;
+
+}
+
+
+
 inline string itos(const int& i, const int size)
 {
 	ostringstream ss;

@@ -176,7 +176,7 @@ int main(int argc, const char **argv)
 
 		if(label)
 		{
-			string text = image->Instrument() + " " + dtos(image->Wavelength()) + "Å " + image->ObservationDate();
+			string text = image->Label();
 			size_t text_size = image->Xaxes()/40;
 			background.fillColor("white");
 			background.fontPointsize(text_size);

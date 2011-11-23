@@ -27,15 +27,15 @@ extern std::string filenamePrefix;
 extern const char * instruments[];
 extern const char * limb_corrections[];
 
-//! Read class centers and their associated wavelength from a file
-unsigned readCentersFromFile(std::vector<RealFeature>& B, RealFeature& wavelengths, const std::string& centersFileName);
-//! Read a list of class centers and their associated wavelength from a file
-unsigned readCentersFromFile(std::vector< std::vector<RealFeature> >& Bs, RealFeature& wavelengths, const std::string& centersFileName);
+//! Read class centers and their associated channels from a file
+unsigned readCentersFromFile(std::vector<RealFeature>& B, std::vector<std::string>& channels, const std::string& centersFileName);
+//! Read a list of class centers and their associated channels from a file
+unsigned readCentersFromFile(std::vector< std::vector<RealFeature> >& Bs, std::vector<std::string>& channels, const std::string& centersFileName);
 
-//! Write class centers and their associated wavelength from a file
-void writeCentersToFile(const std::vector<RealFeature>& B, const RealFeature& wavelengths, const std::string& centersFileName);
-//! Write a list of class centers and their associated wavelength from a file
-void writeCentersToFile(const std::vector< std::vector<RealFeature> >& Bs, const RealFeature& wavelengths, const std::string& centersFileName);
+//! Write class centers and their associated channels from a file
+void writeCentersToFile(const std::vector<RealFeature>& B, const std::vector<std::string>& channels, const std::string& centersFileName);
+//! Write a list of class centers and their associated channels from a file
+void writeCentersToFile(const std::vector< std::vector<RealFeature> >& Bs, const std::vector<std::string>& channels, const std::string& centersFileName);
 
 //! Read and parse the binsize from a string
 bool readbinSize(RealFeature& binSize, std::string sbinSize);

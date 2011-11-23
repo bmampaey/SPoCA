@@ -38,6 +38,9 @@ class HMIImage : public EUVImage
 		//! Accessor to retrieve the Channel
 		std::string Channel() const;
 		
+		//! Return a label for the image
+		std::string Label() const;
+		
 		//! Routine that improves the contrast for visualization
 		void enhance_contrast();
 		

@@ -47,9 +47,6 @@ void SegmentationStats::add(const PixLoc& coordinate, const EUVPixelType& pixelI
 	
 	++numberPixels;
 	
-	// We compute the filling factor
-	fillingFactor += 1./(BIPI*radius_squared);
-	
 	// We compute the contribution of the pixel to the raw area in Mm², and it's uncertainity
 	const Real raw_pixel_area = (SUN_RADIUS) * (SUN_RADIUS) / radius_squared;
 	
@@ -58,7 +55,11 @@ void SegmentationStats::add(const PixLoc& coordinate, const EUVPixelType& pixelI
 	// We compute the contribution of the pixel to the area at disk center in Mm², and it's uncertainity
 	Real area_correction_factor = HIGGINS_FACTOR + 1;
 	if(sigma > 0)
+	{
 		area_correction_factor = sun_radius/sqrt(sigma);
+		// We compute the filling factor
+		fillingFactor += 1./(PI*radius_squared);
+	}
 
 	// If the area correction factor is more than some value (i.e. the pixel is near the limb)
 	if (area_correction_factor <= HIGGINS_FACTOR)

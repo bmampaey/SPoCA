@@ -233,7 +233,7 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 		ColorMap chaincode_map(CHMap);
 		#endif
 		
-		file.writeTable("Chaincode");
+		file.writeTable("ChainCodes");
 		for (unsigned r = 0; r < regions.size(); ++r)
 		{
 			vector<PixLoc> chaincode = regions[r]->chainCode(aggregatedMap, chaincodeMinPoints, chaincodeMaxPoints, chaincodeMaxDeviation);
@@ -258,7 +258,7 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 		vector<RegionStats*> regions_stats =  getRegionStats(CHMap, image, regions);
 	
 		/*! We write the CH Stats into the fits */
-		file.writeTable("CoronalHoleStats");
+		file.writeTable(image->Channel()+"_CoronalHoleStats");
 		writeRegions(file, regions_stats);
 		
 		/*! We write some info bout the image in the header of the table */

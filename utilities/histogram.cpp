@@ -167,9 +167,9 @@ int main(int argc, const char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	RealFeature histoChannels;
+	vector<string> histoChannels;
 	for (unsigned p = 0; p< NUMBERCHANNELS; ++p)
-			histoChannels.v[p] = images[p]->Wavelength();
+			histoChannels[p] = images[p]->Channel();
 			
 			
 	histogram(images, binSize);

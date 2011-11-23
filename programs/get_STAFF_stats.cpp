@@ -105,7 +105,6 @@ int main(int argc, const char **argv)
 	
 	// Option for the output
 	string separator = "\t";
-	bool append = false;
 	
 	string programDescription = "This Programm output regions info and statistics.\n";
 	programDescription+="Compiled with options :";
@@ -116,7 +115,6 @@ int main(int argc, const char **argv)
 
 	ArgumentHelper arguments;
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP, HMI\n\t", imageType);
-	arguments.new_flag('a', "append", "\n\tSet this flag if you want append a new table in the fitsfile with the region stats.\n\t", append);
 	arguments.new_named_double('R', "intensitiesStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",intensitiesStatsRadiusRatio);
 	arguments.new_named_string('G', "intensitiesStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",intensitiesStatsPreprocessing);
 	arguments.new_named_unsigned_int('c', "CHClass", "unsigned integer", "\n\tThe color corresponding to the CH class in the CHSegmentedMap.\n\t", CHClass);

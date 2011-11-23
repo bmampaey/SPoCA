@@ -35,7 +35,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Generate a graph of the voevents.')
 	parser.add_argument('--graphname', '-g', default='voevents', help='Name of the graph.')
 	parser.add_argument('--inversed', '-i', default=False, action='store_true', help='Inverse the graph for a more natural way of reading.')
-	parser.add_argument('--keyword', '-k', metavar='key', default=["Color"], action='append', help='The desired keywords to appear in the graph nodes. Can be specified multiple times to have more than one keyword.')
+	parser.add_argument('--keyword', '-k', metavar='key', default=["Time", "Color"], action='append', help='The desired keywords to appear in the graph nodes. Can be specified multiple times to have more than one keyword.')
 	parser.add_argument('--tooltip', '-t', metavar='tip', default=["Time", "Center"], action='append', help='The desired tooltips to appear on the html. Can be specified multiple times to have more than one keyword.')
 	parser.add_argument('filename', nargs='+', help='The names of the xml files')
 	args = parser.parse_args()
@@ -49,7 +49,6 @@ if __name__ == "__main__":
 	
 	nodes_times = dict()
 	events_links = dict()
-	timeline = list()
 	for filename in filenames:
 		
 		# We parse the xml file
@@ -83,16 +82,11 @@ if __name__ == "__main__":
 	
 		subg = pydot.Subgraph('"'+time.strftime('%Y%m%dT%H%M%S')+'"', label='"'+time.strftime('%Y%m%dT%H%M%S')+'"', rank='same')
 		
-		timeline_node = pydot.Node(name='"'+time.strftime('%Y%m%dT%H%M%S')+'"', label='"'+time.strftime('%Y-%m-%d %H:%M:%S')+'"', shape='plaintext')
-		subg.add_node(timeline_node)
-		
 		for node in nodes:
 			subg.add_node(node)
 		
 		graph.add_subgraph(subg)
-		
-		timeline.append('"'+time.strftime('%Y%m%dT%H%M%S')+'"')
-
+	
 	# We create the edges and add them to the graph
 	if inversed:
 		for src_node, links in events_links.items():
@@ -110,11 +104,6 @@ if __name__ == "__main__":
 					graph.add_edge(pydot.Edge(src_node, dest_node , label=label, weight=10))
 				else:
 					graph.add_edge(pydot.Edge(src_node, dest_node , label=label, weight=1))
-	
-	# We create the timeline
-	timeline.sort()
-	for t in range(len(timeline)-1):
-		graph.add_edge(pydot.Edge(timeline[t], timeline[t+1],style="invis"))
 
 	# We write the graph
 	#graph.write(graphname+'.dot')

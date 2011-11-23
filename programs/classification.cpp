@@ -77,9 +77,9 @@
  - C (Coronal Hole)
  - S (Segmented)
 
-@param regionStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
+@param intensitiesStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
 
-@param regionStatsPreprocessing	The steps of preprocessing to apply to the sun images (see preprocessingSteps for possible values).
+@param intensitiesStatsPreprocessing	The steps of preprocessing to apply to the sun images (see preprocessingSteps for possible values).
 
 @param neighboorhoodRadius	The neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3. <BR>Only for spatial classifiers like SPoCA.
 
@@ -225,11 +225,11 @@ int main(int argc, const char **argv)
 	bool getARStats = true, getCHStats = true, getSegmentedStats = true;
 	
 	// Options for the region stats
-	double regionStatsRadiusRatio = 0.95;
-	string regionStatsPreprocessing = "NAR";
+	double intensitiesStatsRadiusRatio = 0.95;
+	string intensitiesStatsPreprocessing = "NAR";
 	
 	// Options for the chain code
-	unsigned chaincodeMinPoints = 3;
+	unsigned chaincodeMinPoints = 4;
 	unsigned chaincodeMaxPoints = 0;
 	double chaincodeMaxDeviation = 0;
 
@@ -255,8 +255,8 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
 	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
 	arguments.new_named_string('M', "maps", "comma separated list of char (no spaces)", "\n\tThe kind of maps to generate.\n\tPossible values :\n\t\tA (Active Region)\n\t\tC (Coronal Hole)\n\t\tS (Segmented)\n\t", desiredMaps);
-	arguments.new_named_double('R', "regionStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",regionStatsRadiusRatio);
-	arguments.new_named_string('G', "regionStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images (see preprocessingSteps for possible values).\n\t",regionStatsPreprocessing);
+	arguments.new_named_double('R', "intensitiesStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",intensitiesStatsRadiusRatio);
+	arguments.new_named_string('G', "intensitiesStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images (see preprocessingSteps for possible values).\n\t",intensitiesStatsPreprocessing);
 	arguments.new_named_unsigned_int('N', "neighboorhoodRadius", "positive integer", "\n\tOnly for spatial classifiers like SPoCA.\n\tThe neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.\n\t", neighboorhoodRadius);
 	arguments.new_named_string('H', "histogramFile","file name", "\n\tThe name of a file containing an histogram.\n\t", histogramFile);
 	arguments.new_named_string('z', "binSize","comma separated list of positive real (no spaces)", "\n\tThe size of the bins of the histogram.\n\tNB : Be carreful that the histogram is built after the preprocessing.\n\t", sbinSize);
@@ -561,7 +561,7 @@ int main(int argc, const char **argv)
 	
 	// I need the first image for the region stats
 	EUVImage* image = getImageFromFile(imageType, imagesFilenames[0]);
-	image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
+	image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
 	
 	// We declare the segmented map with the WCS of the first image
 	ColorMap* segmentedMap = new ColorMap(image->getWCS());
@@ -583,8 +583,8 @@ int main(int argc, const char **argv)
 	header.set("CMAXITER", maxNumberIteration, "Max Number Iteration");
 	header.set("CFUZFIER", fuzzifier, "Classifier Fuzzifier");
 	header.set("CBINSIZE", sbinSize, "Histogram bin size");
-	header.set("RPREPROC", regionStatsPreprocessing, "Region Stats Preprocesing");
-	header.set("RRADRATI", regionStatsRadiusRatio, "Region Stats Radius Ratio");
+	header.set("RPREPROC", intensitiesStatsPreprocessing, "Region Stats Preprocesing");
+	header.set("RRADRATI", intensitiesStatsRadiusRatio, "Region Stats Radius Ratio");
 
 	header.set("SEGMTYPE", segmentation, "Segmentation type");
 	if(! activeRegion.empty())

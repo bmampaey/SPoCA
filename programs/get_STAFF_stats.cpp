@@ -30,9 +30,9 @@
 
 @param separator	The separator to put between columns.
 
-@param regionStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
+@param intensitiesStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
 
-@param regionStatsPreprocessing	The steps of preprocessing to apply to the sun images
+@param intensitiesStatsPreprocessing	The steps of preprocessing to apply to the sun images
 <BR>Possible values :
  - NAR (Nullify above radius)
  - ALC (Annulus Limb Correction)
@@ -96,8 +96,8 @@ int main(int argc, const char **argv)
 	vector<string> imagesFilenames;
 
 	// Options for the preprocessing of images
-	double regionStatsRadiusRatio = 1;
-	string regionStatsPreprocessing = "NAR";
+	double intensitiesStatsRadiusRatio = 1;
+	string intensitiesStatsPreprocessing = "NAR";
 
 	// The Segmented Maps and corresponding classes color
 	string CHSegmentedMap, ARSegmentedMap;
@@ -117,8 +117,8 @@ int main(int argc, const char **argv)
 	ArgumentHelper arguments;
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP, HMI\n\t", imageType);
 	arguments.new_flag('a', "append", "\n\tSet this flag if you want append a new table in the fitsfile with the region stats.\n\t", append);
-	arguments.new_named_double('R', "regionStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",regionStatsRadiusRatio);
-	arguments.new_named_string('G', "regionStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",regionStatsPreprocessing);
+	arguments.new_named_double('R', "intensitiesStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",intensitiesStatsRadiusRatio);
+	arguments.new_named_string('G', "intensitiesStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",intensitiesStatsPreprocessing);
 	arguments.new_named_unsigned_int('c', "CHClass", "unsigned integer", "\n\tThe color corresponding to the CH class in the CHSegmentedMap.\n\t", CHClass);
 	arguments.new_named_string('C', "CHSegmentedMap", "string", "\n\tA segmented map for the Coronal Hole class.\n\t", CHSegmentedMap);
 	arguments.new_named_unsigned_int('a', "ARClass", "unsigned integer", "\n\tThe color corresponding to the AR class in the ARSegmentedMap.\n\t", ARClass);
@@ -180,7 +180,7 @@ int main(int argc, const char **argv)
 		cout<<image->Channel()<<"AR_all"<<AR_staff_stats.toString(separator)<<endl;
 		
 		// We extract the STAFF stats on the disc
-		image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
+		image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
 		vector<STAFFStats> staff_stats = getSTAFFStats(CHMap, CHClass, ARMap, ARClass, image);
 		cout<<image->Channel()<<separator<<"CH_ondisc"<<separator<<staff_stats[0].toString(separator)<<endl;
 		cout<<image->Channel()<<separator<<"AR_ondisc"<<separator<<staff_stats[1].toString(separator)<<endl;

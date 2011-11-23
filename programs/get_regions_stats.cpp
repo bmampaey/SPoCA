@@ -30,9 +30,9 @@
 
 @param separator	The separator to put between columns.
 
-@param regionStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
+@param intensitiesStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
 
-@param regionStatsPreprocessing	The steps of preprocessing to apply to the sun images
+@param intensitiesStatsPreprocessing	The steps of preprocessing to apply to the sun images
 <BR>Possible values :
  - NAR (Nullify above radius)
  - ALC (Annulus Limb Correction)
@@ -96,8 +96,8 @@ int main(int argc, const char **argv)
 	vector<string> imagesFilenames;
 
 	// Options for the preprocessing of images
-	double regionStatsRadiusRatio = 0.95;
-	string regionStatsPreprocessing = "NAR";
+	double intensitiesStatsRadiusRatio = 0.95;
+	string intensitiesStatsPreprocessing = "NAR";
 	
 	// Options for the type of coordinate
 	string coordinateType;
@@ -125,8 +125,8 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP, HMI\n\t", imageType);
 	arguments.new_flag('r', "getRegionsInfo", "\n\tSet this flag if you want also to get region information.\n\t", getRegionsInfo);
 	arguments.new_flag('a', "append", "\n\tSet this flag if you want append a new table in the fitsfile with the region stats.\n\t", append);
-	arguments.new_named_double('R', "regionStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",regionStatsRadiusRatio);
-	arguments.new_named_string('G', "regionStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",regionStatsPreprocessing);
+	arguments.new_named_double('R', "intensitiesStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",intensitiesStatsRadiusRatio);
+	arguments.new_named_string('G', "intensitiesStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",intensitiesStatsPreprocessing);
 	arguments.new_named_string('M',"colorizedMap","file name", "\n\tA colorized Map of regions (i.e. each one must have a different color).\n\t", colorizedMapFileName);
 	arguments.new_named_string('T', "coordinateType", "string", "\n\tThe type of coordinates to output positions.\n\tPossible values are : HGS, HGC, HPC, HPR, HCC, HCR\n\t", coordinateType);
 	arguments.new_named_string('s', "separator", "string", "\n\tThe separator to put between columns.\n\t", separator);
@@ -161,7 +161,7 @@ int main(int argc, const char **argv)
 		}
 		EUVImage* image = getImageFromFile(imageType, imageFilename);
 		image->recenter(sunCenter);
-		image->preprocessing(regionStatsPreprocessing, regionStatsRadiusRatio);
+		image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
 		#if DEBUG >= 2
 		image->writeFits(filenamePrefix + "preprocessed." +  stripPath(imageFilename) );
 		#endif

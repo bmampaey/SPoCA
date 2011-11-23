@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta
 import dateutil.parser
+import logging
+from Queue import Queue
+import os.path
 
 class Event:
 	def __init__(self, type = None, time = None, color = None):
@@ -14,7 +17,7 @@ class Event:
 		return cmp(self.time, other.time)
 	
 	def set(self, key, value):
-		if key.lower() in ['event_npixels', 'area_raw', 'area_uncert', 'area_atdiskcenter','area_atdiskcenteruncert', 'ar_intensmin', 'ar_intensmax', 'ar_intensmean','ar_intensvar', 'ar_intensskew', 'ar_intenskurt', 'ar_intenstotal', 'ar_intenskurt']:
+		if key.lower() in ['event_npixels', 'area_raw', 'area_uncert', 'area_atdiskcenter','area_atdiskcenteruncert', 'intensmin', 'intensmax', 'intensmean','intensvar', 'intensskew', 'intenskurt', 'intenstotal', 'intensmedian']:
 			try:
 				value = float(value)
 			except Exception:
@@ -25,7 +28,7 @@ class Event:
 		try:
 			value = getattr(self, key.lower())
 		except AttributeError, why:
-			print "Event does not have the attribute " + str(key)
+			logging.info("Event does not have the attribute %s", key)
 			return 'NA'
 		
 		if isinstance(value, datetime):
@@ -75,7 +78,7 @@ class MetaEvent:
 		if self.color == None:
 			self.color = event.color
 		elif self.color != event.color:
-			print "Color of event differ from MetaEvent color"
+			logging.critical("Color of event %s differ from MetaEvent color %s", event.color, self.color)
 		
 		self.events.append(event)
 		return self
@@ -87,6 +90,13 @@ class MetaEvent:
 		else:
 			self.events.sort()
 			return self.events[-1].time - self.events[0].time
+	
+	def estimated_lifetime(self):
+		if not self.events:
+			return timedelta(seconds=0)
+		else:
+			self.events.sort()
+			return self.events[-1].time - min(self.get("first_time"))
 	
 	def start_time(self):
 		if not self.events:
@@ -134,26 +144,44 @@ class MetaEvent:
 
 def parse_map(filename):
 	import pyfits
-	events = list()
+	events = dict()
 	try:
 		hdulist = pyfits.open(filename)
 		for hdu in hdulist:
-			if isinstance(hdu, pyfits.BinTableHDU):
+			if type(hdu) is pyfits.BinTableHDU:
 				attributes = [column.name.lower() for column in hdu.columns]
+				try:
+					id_column = attributes.index('id')
+				except ValueError:
+					logging.debug("%s is not a region table, skipping", hdu.name)
+					continue
+				
 				for row in hdu.data:
-					event = Event()
+					event_id = row[id_column]
+					if event_id not in events:
+						events[event_id] = Event()
+					event = events[event_id]
 					for i, attribute in enumerate(attributes):
 						event.set(attribute, row[i])
-					if 'xcenter' in attributes and 'xcenter' in attributes:
+					if 'date_obs' in attributes:
+						event.set('time', dateutil.parser.parse(event.date_obs))
+					if 'first_date_obs' in attributes:
+						event.set('first_time', dateutil.parser.parse(event.first_date_obs))
+					if 'raw_area' in attributes:
+						event.set('area_raw', event.raw_area)
+					if 'xcenter' in attributes and 'ycenter' in attributes:
 						event.set('center', (event.xcenter, event.ycenter))
+					if 'xboxmin' in attributes and 'yboxmin' in attributes:
+						event.set('boxmin', (event.xboxmin, event.yboxmin))
+					if 'xboxmax' in attributes and 'yboxmax' in attributes:
+						event.set('boxmax', (event.xboxmax, event.yboxmax))
 					if 'tracked_color' in attributes:
 						event.set('color', event.tracked_color)
-					events.append(event)
 		
 		hdulist.close()
 	except IOError, why:
-		log.warning("Error reading file " + fitsfile + ": "+ str(why))
-	return events
+		logging.warning("Error reading file %s: %s", filename ,why)
+	return events.values()
 
 def parse_voevent(filename):
 	import re
@@ -189,7 +217,7 @@ def parse_voevent(filename):
 		event.set('color', int(re.search(r"(\d+)$", event.frm_specificid).group(1)))
 		
 	except Exception, why:
-		print "Error parsing voevent from file " + str(filename) + ": " + str(why)
+		logging.critical("Error parsing voevent from file %s: %s", filename, why)
 	
 	event_links = dict()
 	for p in dom.getElementsByTagName('Reference'):
@@ -197,3 +225,35 @@ def parse_voevent(filename):
 			event_links[get_uri(p.getAttribute("uri"))] = p.getAttribute("type")
 	
 	return event, event_links
+
+def parse_events(filenames, events = list()):
+	
+	for filename in filenames:
+		
+		if os.path.splitext(filename)[1].lower() == ".xml":
+			# We parse the xml file
+			event, links = parse_voevent(filename)
+			logging.info("Event from file %s: %s", filename, event)
+			if isinstance(events, list):
+				events.append(event)
+			else:
+				events.put(event)
+		
+		elif os.path.splitext(filename)[1].lower() == ".fits":
+			# We parse the map
+			new_events = parse_map(filename)
+			logging.info("Parsed %s events from file %s", len(new_events), filename)
+			logging.debug("\n".join([str(e) for e in new_events]))
+			if isinstance(events, list):
+				events.extend(new_events)
+			else:
+				for event in new_events:
+					events.put(event)
+		
+		else:
+			log.critical("Unknown file type %s", filename)
+	
+	if isinstance(events, list):
+		return events
+	else:
+		events.put(None)

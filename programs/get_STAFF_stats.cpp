@@ -175,7 +175,8 @@ int main(int argc, const char **argv)
 		
 		// We extract the STAFF stats on the whole image
 		STAFFStats AR_staff_stats = getSTAFFStats(ARMap, ARClass, image);
-		cout<<image->Channel()<<"AR_all"<<AR_staff_stats.toString(separator)<<endl;
+		cout<<"Channel"<<separator<<AR_staff_stats.toString(separator, true)<<endl;
+		cout<<image->Channel()<<separator<<"AR_all"<<separator<<AR_staff_stats.toString(separator)<<endl;
 		
 		// We extract the STAFF stats on the disc
 		image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
@@ -191,6 +192,7 @@ int main(int argc, const char **argv)
 	delete CHMap;
 	return EXIT_SUCCESS;
 }
+
 
 
 

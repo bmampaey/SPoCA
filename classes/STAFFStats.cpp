@@ -186,12 +186,12 @@ string STAFFStats::toString(const string& separator, bool header) const
 {
 	if (header)
 	{
-		return "Id"+separator+"ObservationDate"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"Area_Raw";
+		return "ObservationDate"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"Area_Raw";
 	}
 	else
 	{
 		ostringstream out;
-		out<<setiosflags(ios::fixed)<<Id()<<separator<<ObservationDate()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<Area_Raw();
+		out<<setiosflags(ios::fixed)<<ObservationDate()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<Area_Raw();
 		return out.str();
 	}
 }

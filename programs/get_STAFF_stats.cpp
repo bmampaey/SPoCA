@@ -26,7 +26,11 @@
  - SWAP
  - HMI
 
-@param CHMap	A colorized Map of regions (i.e. each one must have a different color).
+@param CHSegmentedMap	A segmented map for the Coronal Hole class.
+@param CHClass The color corresponding to the CH class in the CHSegmentedMap.
+
+@param ARSegmentedMap	A segmented map for the Active Region class.
+@param ARClass The color corresponding to the AR class in the ARSegmentedMap.
 
 @param separator	The separator to put between columns.
 
@@ -44,12 +48,6 @@
  - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
  - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile)
  - Smoothzz.z Binomial smoothing of zz.z arcsec
-
-@param colors The list of colors to select separated by commas (no spaces)
-<BR>All colors will be selected if ommited.
-
-@param colorsFilename A file containing a list of colors to select separated by commas
-<BR>All colors will be selected if ommited.
 
 See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
 
@@ -117,6 +115,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP, HMI\n\t", imageType);
 	arguments.new_named_double('R', "intensitiesStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",intensitiesStatsRadiusRatio);
 	arguments.new_named_string('G', "intensitiesStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",intensitiesStatsPreprocessing);
+	arguments.new_named_string('s', "separator", "string", "\n\tThe separator to put between columns.\n\t", separator);
 	arguments.new_named_unsigned_int('c', "CHClass", "unsigned integer", "\n\tThe color corresponding to the CH class in the CHSegmentedMap.\n\t", CHClass);
 	arguments.new_named_string('C', "CHSegmentedMap", "string", "\n\tA segmented map for the Coronal Hole class.\n\t", CHSegmentedMap);
 	arguments.new_named_unsigned_int('a', "ARClass", "unsigned integer", "\n\tThe color corresponding to the AR class in the ARSegmentedMap.\n\t", ARClass);

@@ -368,8 +368,8 @@ inline HPC SunImage<T>::toHPC(const HCC& hcc) const
 	{
 		double zeta =  wcs.dsun_obs - hcc.z;
 		double dist = sqrt(hcc.x * hcc.x + hcc.y * hcc.y + zeta * zeta);
-		double rx = atan2(hcc.x, zeta);
-		double ry = asin(hcc.y / dist);
+		double rx = atan2(double(hcc.x), zeta);
+		double ry = asin(double(hcc.y) / dist);
 		return HPC(rx*RADIAN2ARCSEC, ry*RADIAN2ARCSEC);
 	}
 }

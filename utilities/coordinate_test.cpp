@@ -138,8 +138,6 @@ int main(int argc, const char **argv)
 	
 	
 	vector<RealPixLoc> dots;
-	dots.push_back(RealPixLoc(3122,818));
-	dots.push_back(RealPixLoc(3127,818));
 	Real miradius = image->SunRadius()/2;
 	for (Real y = image->SunCenter().y-miradius; y <= image->SunCenter().y+miradius+1; y+=miradius)
 	{

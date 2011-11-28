@@ -185,7 +185,9 @@ int main(int argc, const char **argv)
 		colorizedMap->nullifyAboveLongLat(areaLimitValue);
 	if(areaLimitType == "Lat")
 		colorizedMap->nullifyAboveLongLat(360, areaLimitValue);
-	
+	#if DEBUG >= 2
+	colorizedMap->writeFits(filenamePrefix + "limited." +  stripPath(colorizedMapFileName) );
+	#endif
 	
 	RealPixLoc sunCenter = colorizedMap->SunCenter();
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)

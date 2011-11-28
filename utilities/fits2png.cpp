@@ -167,9 +167,9 @@ int main(int argc, const char **argv)
 			{
 				vector<char> intrumentColorTable = image->color_table();
 				colorTable = MagickImage(&(intrumentColorTable[0]), 1, intrumentColorTable.size()/3, "RGB");
-				//#if DEBUG >= 2
+				#if DEBUG >= 2
 				colorTable.write(outputDirectory + "/" + "colortable.png");
-				//#endif
+				#endif
 				MagickCore::ClutImage(background.image(), colorTable.image());
 			}
 		}

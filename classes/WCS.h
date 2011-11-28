@@ -40,10 +40,10 @@ class WCS
 		Real carrington_l0;
 		
 		//! Distance between observer/satellite and sun in Mmeters
-		Real dsun_obs;
+		double dsun_obs;
 		
 		//! Radius of the sun in Mmeters
-		Real sunradius_Mm;
+		double sunradius_Mm;
 
 		//! Time of observation
 		time_t time_obs;
@@ -67,13 +67,13 @@ class WCS
 		WCS(const RealPixLoc& sun_center, const Real& sun_radius = 0);
 		
 		void setSunCenter(const Real& crpix1, const Real& crpix2);
-		void setSunradius(const Real& sun_radius);
+		void setSunradius(const double& sun_radius);
 		void setDateObs(std::string date_obs);
 		void setCDelt(const Real& cdelt1, const Real& cdelt2);
 		void setB0(const Real& b0);
 		void setL0(const Real& l0);
 		void setCarringtonL0(const Real& l0);
-		void setDistanceSunObs(const Real& dsun_obs);
+		void setDistanceSunObs(const double& dsun_obs);
 		//! Set the CD matrix from a CROTA2
 		void setCrota2(const Real& crota2);
 		//! Set the CD matrix from a PC matrix

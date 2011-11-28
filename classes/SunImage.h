@@ -101,6 +101,10 @@ class SunImage : public Image<T>
 		
 		//! Routine to set the pixels above a certain radius ratio to null
 		void nullifyAboveRadius(const Real radiusRatio = 1.0);
+		
+		//! Routine to set the pixels above a certain longitude and/or latitude to null
+		/*! Longitude and latitudes are absolute values and in Heliographic Stonyhurst coordinates*/
+		void nullifyAboveLongLat(Real longitude = 360, Real latitude = 360);
 
 		//! Routine to align the SunImage on the newCenter
 		void recenter(const RealPixLoc& newCenter);

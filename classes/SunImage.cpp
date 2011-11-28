@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <limits>
 #include <cmath>
 #include <assert.h>
@@ -135,6 +136,30 @@ inline void SunImage<T>::nullifyAboveRadius(const Real radiusRatio)
 				*pixel_value = this->nullpixelvalue;
 			
 			++pixel_value;
+		}
+	}
+}
+
+template<class T>
+inline void SunImage<T>::nullifyAboveLongLat(Real longitude, Real latitude)
+{
+	longitude = longitude < 0 ? - longitude * DEGREE2RADIAN : longitude * DEGREE2RADIAN;
+	latitude = latitude < 0 ? - latitude * DEGREE2RADIAN : latitude * DEGREE2RADIAN;
+
+
+	for (unsigned y = 0; y < this->yAxes; ++y)
+	{
+		for (unsigned x = 0; x < this->xAxes; ++x)
+		{
+			HGS hgs = toHGS(RealPixLoc(x, y));
+			if (!hgs)
+			{
+				this->pixel(x, y) = this->nullpixelvalue;
+			}
+			else if(abs(hgs.longitude) > longitude || abs(hgs.latitude) > latitude)
+			{
+				this->pixel(x, y) = this->nullpixelvalue;
+			}
 		}
 	}
 }
@@ -300,18 +325,19 @@ inline RealPixLoc SunImage<T>::toRealPixLoc(const HPC& hpc) const
 template<class T>
 inline HCC SunImage<T>::toHCC(const HPC& hpc) const
 {
-	Real cosx = cos(hpc.x * arcsec2rad);
-	Real sinx = sin(hpc.x * arcsec2rad);
-	Real cosy = cos(hpc.y * arcsec2rad);
-	Real siny = sin(hpc.y * arcsec2rad);
-	
-	// We compute the distance between the sun observer and the surface of the sun
-	Real q =  wcs.dsun_obs * cosy * cosx;
-	Real distance = q*q -  wcs.dsun_obs* wcs.dsun_obs + wcs.sunradius_Mm*wcs.sunradius_Mm;
-	if (distance >= 0)
+	double hpc_x = hpc.x * ARCSEC2RADIAN;
+	double hpc_y = hpc.y * ARCSEC2RADIAN;
+	double cosx = cos(hpc_x);
+	double sinx = sin(hpc_x);
+	double cosy = cos(hpc_y);
+	double siny = sin(hpc_y);
+	// We compute the dist between the sun observer and the surface of the sun
+	double q =  wcs.dsun_obs * cosy * cosx;
+	double dist = (q*q) -  (wcs.dsun_obs* wcs.dsun_obs) + (wcs.sunradius_Mm*wcs.sunradius_Mm);
+	if (dist >= 0)
 	{
-		distance = q - sqrt(distance); 
-		return HCC(distance * cosy * sinx, distance * siny,  wcs.dsun_obs - distance * cosy * cosx);
+		dist = q - sqrt(dist); 
+		return HCC(dist * cosy * sinx, dist * siny,  wcs.dsun_obs - (dist * cosy * cosx));
 	}
 	else
 		return HCC::null();
@@ -340,11 +366,11 @@ inline HPC SunImage<T>::toHPC(const HCC& hcc) const
 		return HPC::null();
 	else
 	{
-		Real zeta =  wcs.dsun_obs - hcc.z;
-		Real distance = sqrt(hcc.x * hcc.x + hcc.y * hcc.y + zeta * zeta);
-		Real rx = atan2(hcc.x, zeta);
-		Real ry = asin(hcc.y / distance);
-		return HPC(rx*rad2arcsec, ry*rad2arcsec);
+		double zeta =  wcs.dsun_obs - hcc.z;
+		double dist = sqrt(hcc.x * hcc.x + hcc.y * hcc.y + zeta * zeta);
+		double rx = atan2(hcc.x, zeta);
+		double ry = asin(hcc.y / dist);
+		return HPC(rx*RADIAN2ARCSEC, ry*RADIAN2ARCSEC);
 	}
 }
 
@@ -360,10 +386,19 @@ inline HGS SunImage<T>::toHGS(const HCC& hcc) const
 		if((hcc.y * wcs.cos_b0 + hcc.z * wcs.sin_b0)/wcs.sunradius_Mm < 1)
 			latitude = asin((hcc.y * wcs.cos_b0 + hcc.z * wcs.sin_b0)/wcs.sunradius_Mm);
 		Real longitude = atan2(hcc.x, hcc.z * wcs.cos_b0 - hcc.y * wcs.sin_b0) + wcs.l0;
+		
 		while (longitude < -PI)
+		{
+			cout<<"longitude correction from "<<longitude;
 			longitude += BIPI;
+			cout<<" to "<<longitude;
+		}
 		while (longitude > PI)
-			longitude -= BIPI;
+		{
+			cout<<"longitude correction from "<<longitude;
+			longitude += BIPI;
+			cout<<" to "<<longitude;
+		}
 		
 		return HGS(longitude, latitude);
 	}
@@ -580,9 +615,9 @@ void SunImage<T>::fillHeader()
 	header.set<Real>("CDELT2", wcs.cdelt2);
 	header.set<string>("DATE_OBS", wcs.date_obs);
 	header.set<Real>("R_SUN", wcs.sun_radius);
-	header.set<Real>("HGLT_OBS", wcs.b0 * RADEG);
-	header.set<Real>("HGLN_OBS", wcs.l0 * RADEG);
-	header.set<Real>("CRLN_OBS", wcs.carrington_l0 * RADEG);
+	header.set<Real>("HGLT_OBS", wcs.b0 * RADIAN2DEGREE);
+	header.set<Real>("HGLN_OBS", wcs.l0 * RADIAN2DEGREE);
+	header.set<Real>("CRLN_OBS", wcs.carrington_l0 * RADIAN2DEGREE);
 	header.set<Real>("DSUN_OBS", wcs.dsun_obs*1000000.);
 	header.set<Real>("CD1_1", wcs.cd[0][0]);
 	header.set<Real>("CD1_2", wcs.cd[0][1]);
@@ -901,7 +936,7 @@ inline Real SunDifferentialAngularSpeed(const Real& latitude)
 	const Real C =  -1.78;
 	Real sin_latitude_squared = sin(latitude);
 	sin_latitude_squared *= sin_latitude_squared;
-	return (A + (B + C * sin_latitude_squared) * sin_latitude_squared) * DEGRA / (24 * 3600);
+	return (A + (B + C * sin_latitude_squared) * sin_latitude_squared) * DEGREE2RADIAN / (24 * 3600);
 }
 
 //! Routine that computes the julian day number from a time_t
@@ -934,39 +969,39 @@ void sun_position(const Real& jdn, Real& longitude, Real& ra, Real& dec, Real& a
 		cout<<"Sun mean longitude: "<<app_longitude<<endl;
 	#endif
 	double me = 358.475844 + fmod(35999.049750 * t, 360.0);
-	double ellcor = (6910.1 - 17.2*t)*sin(me * DEGRA) + 72.3 * sin(2.0 * me* DEGRA);
+	double ellcor = (6910.1 - 17.2*t)*sin(me * DEGREE2RADIAN) + 72.3 * sin(2.0 * me* DEGREE2RADIAN);
 	app_longitude = app_longitude + ellcor;
 	#if DEBUG >= 3
 		cout<<"Earth ellipticity correction: "<<app_longitude<<endl;
 	#endif
 
 	double mv = 212.603219 + fmod(58517.803875*t, 360.0) ;
-	double vencorr = 4.8 * cos((299.1017 + mv - me)* DEGRA) + 5.5 * cos((148.3133 + 2.0 * mv - 2.0 * me)* DEGRA) + 2.5 * cos((315.9433 + 2.0 * mv - 3.0 * me)* DEGRA) + 1.6 * cos((345.2533 + 3.0 * mv - 4.0 * me)* DEGRA) + 1.0 * cos((318.15 + 3.0 * mv - 5.0 * me)* DEGRA);
+	double vencorr = 4.8 * cos((299.1017 + mv - me)* DEGREE2RADIAN) + 5.5 * cos((148.3133 + 2.0 * mv - 2.0 * me)* DEGREE2RADIAN) + 2.5 * cos((315.9433 + 2.0 * mv - 3.0 * me)* DEGREE2RADIAN) + 1.6 * cos((345.2533 + 3.0 * mv - 4.0 * me)* DEGREE2RADIAN) + 1.0 * cos((318.15 + 3.0 * mv - 5.0 * me)* DEGREE2RADIAN);
 	app_longitude = app_longitude + vencorr;
 	#if DEBUG >= 3
 		cout<<"Venus perturbation correction: "<<app_longitude<<endl;
 	#endif
 
 	double mm = 319.529425 + fmod(19139.858500 * t, 360.0);
-	double marscorr = 2.0 * cos((343.8883 - 2.0 * mm + 2.0 * me)* DEGRA) + 1.8 * cos((200.4017 - 2.0 * mm + me) * DEGRA);
+	double marscorr = 2.0 * cos((343.8883 - 2.0 * mm + 2.0 * me)* DEGREE2RADIAN) + 1.8 * cos((200.4017 - 2.0 * mm + me) * DEGREE2RADIAN);
 	app_longitude = app_longitude + marscorr;
 	#if DEBUG >= 3
 		cout<<"Mars perturbation correction: "<<app_longitude<<endl;
 	#endif
 
 	double mj = 225.328328 + fmod(3034.6920239 * t, 360.0);
-	double jupcorr = 7.2 * cos((179.5317 - mj + me)* DEGRA) + 2.6 * cos((263.2167 - mj) * DEGRA) + 2.7 * cos((87.1450 - 2.0 * mj + 2.0 * me) * DEGRA) + 1.6 * cos((109.4933 - 2.0 * mj + me) * DEGRA);
+	double jupcorr = 7.2 * cos((179.5317 - mj + me)* DEGREE2RADIAN) + 2.6 * cos((263.2167 - mj) * DEGREE2RADIAN) + 2.7 * cos((87.1450 - 2.0 * mj + 2.0 * me) * DEGREE2RADIAN) + 1.6 * cos((109.4933 - 2.0 * mj + me) * DEGREE2RADIAN);
 	app_longitude = app_longitude + jupcorr;
 	#if DEBUG >= 3
 		cout<<"Jupiter perturbation correction: "<<app_longitude<<endl;
 	#endif
 	double d = 350.7376814 + fmod(445267.11422 * t, 360.0);
-	double mooncorr = 6.5 * sin(d* DEGRA);
+	double mooncorr = 6.5 * sin(d* DEGREE2RADIAN);
 	app_longitude = app_longitude + mooncorr;
 	#if DEBUG >= 3
 		cout<<"Moon perturbation correction: "<<app_longitude<<endl;
 	#endif
-	double longterm = + 6.4 * sin((231.19 + 20.20 * t)* DEGRA);
+	double longterm = + 6.4 * sin((231.19 + 20.20 * t)* DEGREE2RADIAN);
 	app_longitude = app_longitude + longterm;
 	app_longitude = fmod(app_longitude + 2592000.0, 1296000.0);
 	#if DEBUG >= 3
@@ -979,21 +1014,21 @@ void sun_position(const Real& jdn, Real& longitude, Real& ra, Real& dec, Real& a
 		cout<<"Aberration correction: "<<app_longitude<<endl;
 	#endif
 	double omega = 259.183275 - fmod(1934.142008 * t , 360.0);
-	app_longitude = app_longitude - 17.2 * sin(omega* DEGRA);
+	app_longitude = app_longitude - 17.2 * sin(omega* DEGREE2RADIAN);
 	#if DEBUG >= 3
 		cout<<"Nutation correction: "<<app_longitude<<endl;
 	#endif
-	obliquity = 23.452294 - 0.0130125*t + (9.2*cos(omega* DEGRA))/3600.0;
+	obliquity = 23.452294 - 0.0130125*t + (9.2*cos(omega* DEGREE2RADIAN))/3600.0;
 	app_longitude = app_longitude/3600.0;
-	ra = atan2(sin(app_longitude* DEGRA) * cos(obliquity* DEGRA) , cos(app_longitude* DEGRA)) * RADEG;
+	ra = atan2(sin(app_longitude* DEGREE2RADIAN) * cos(obliquity* DEGREE2RADIAN) , cos(app_longitude* DEGREE2RADIAN)) * RADIAN2DEGREE;
 	if (ra < 0.0)
 		ra += 360.0;
-	dec = asin(sin(app_longitude* DEGRA) * sin(obliquity* DEGRA)) * RADEG;
+	dec = asin(sin(app_longitude* DEGREE2RADIAN) * sin(obliquity* DEGREE2RADIAN)) * RADIAN2DEGREE;
 }
 
 
 /*! Code taken from the Solar Soft procedure pb0r
-	@return The distance in Mmeters
+	@return The dist in Mmeters
 */
 Real distance_sun_earth(const time_t& time_obs)
 {
@@ -1008,14 +1043,14 @@ Real distance_sun_earth(const time_t& time_obs)
 	double mm = 319.5 + fmod(19139.86 * t, 360.0);
 	double mj = 225.3 + fmod(3034.69 * t, 360.0);
 	double d = 350.7 + fmod(445267.11 * t, 360.0);
-	double r = 1.000141 - (0.016748 - 0.0000418*t) * cos(me*DEGRA) - 0.000140 * cos(2.0*me*DEGRA) + 0.000016 * cos((58.3 + 2.0*mv - 2.0*me)*DEGRA) + 0.000005 * cos((209.1 + mv - me)*DEGRA) + 0.000005 * cos((253.8 - 2.0*mm + 2.0*me)*DEGRA) + 0.000016 * cos((89.5 - mj + me)*DEGRA) + 0.000009 * cos((357.1 - 2.0*mj + 2.0*me)*DEGRA) + 0.000031 * cos(d*DEGRA);
+	double r = 1.000141 - (0.016748 - 0.0000418*t) * cos(me*DEGREE2RADIAN) - 0.000140 * cos(2.0*me*DEGREE2RADIAN) + 0.000016 * cos((58.3 + 2.0*mv - 2.0*me)*DEGREE2RADIAN) + 0.000005 * cos((209.1 + mv - me)*DEGREE2RADIAN) + 0.000005 * cos((253.8 - 2.0*mm + 2.0*me)*DEGREE2RADIAN) + 0.000016 * cos((89.5 - mj + me)*DEGREE2RADIAN) + 0.000009 * cos((357.1 - 2.0*mj + 2.0*me)*DEGREE2RADIAN) + 0.000031 * cos(d*DEGREE2RADIAN);
 	// Distance to the sun in arcmin
-	double distance = asin((695508000.0 / 149597870691.0)/r)*10800./PI;
+	double dist = asin((695508000.0 / 149597870691.0)/r)*10800./PI;
 	#if DEBUG >= 3
-		cout<<"distance_sun_earth (arcmin): "<<distance<<endl;
+		cout<<"distance_sun_earth (arcmin): "<<dist<<endl;
 	#endif
 	// We convert in Mmeters
-	return SUN_RADIUS * (60. * 180. / PI) / distance;
+	return SUN_RADIUS * (60. * 180. / PI) / dist;
 }
 
 
@@ -1037,8 +1072,8 @@ Real earth_latitude(const time_t& time_obs)
 	double lambda = longitude - (20.5/3600.0);
 	double node = 73.666666 + (50.25/3600.0)*((jdn/365.25) + 50.0);
 	double arg = lambda - node;
-	//p = (atan(-tan(obliquity*DEGRA) * cos(app_longitude*DEGRA)) + atan(-0.12722 * cos(arg*DEGRA))) * RADEG;
-	Real b = asin(0.12620 * sin(arg*DEGRA)) * RADEG;
+	//p = (atan(-tan(obliquity*DEGREE2RADIAN) * cos(app_longitude*DEGREE2RADIAN)) + atan(-0.12722 * cos(arg*DEGREE2RADIAN))) * RADIAN2DEGREE;
+	Real b = asin(0.12620 * sin(arg*DEGREE2RADIAN)) * RADIAN2DEGREE;
 	return b;
 }
 

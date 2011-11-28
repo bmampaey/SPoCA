@@ -85,15 +85,15 @@ istream& operator>>(istream& in, HCC& c)
 
 ostream& operator<<(ostream& out, const HeliographicCoordinate& c)
 {
-	out<<"("<<c.longitude*RADEG<<","<<c.latitude*RADEG<<")";
+	out<<"("<<c.longitude*RADIAN2DEGREE<<","<<c.latitude*RADIAN2DEGREE<<")";
 	return out;
 }
 
 ostream& operator<<(ostream& out, HeliographicCoordinate& c)
 {
 	out<<"("<<c.longitude<<","<<c.latitude<<")";
-	c.longitude *= DEGRA;
-	c.latitude *= DEGRA;
+	c.longitude *= DEGREE2RADIAN;
+	c.latitude *= DEGREE2RADIAN;
 	return out;
 }
 

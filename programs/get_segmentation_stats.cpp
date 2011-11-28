@@ -30,9 +30,17 @@
 
 @param separator	The separator to put between columns.
 
-@param intensitiesRadiusRatio	The ratio of the radius of the sun that will be used for the segmentation stats.
+@param areaLimitValue	The value for the areaLimitType.
 
-@param intensitiesPreprocessing	The steps of preprocessing to apply to the sun images
+@param areaLimitType	The type of the limit of the area of the map taken into account the computation of stats.
+<BR>Possible values :
+ - NAR (Nothing above radius)
+ - Long (Limit to absolute longitude)
+ - Lat (Limit to absolute latitude)
+
+@param intensitiesStatsRadiusRatio	The ratio of the radius of the sun that will be used for the segmentation stats.
+
+@param intensitiesStatsPreprocessing	The steps of preprocessing to apply to the sun images
 <BR>Possible values :
  - NAR (Nullify above radius)
  - ALC (Annulus Limb Correction)
@@ -95,11 +103,13 @@ int main(int argc, const char **argv)
 	string imageType = "UNKNOWN";
 	vector<string> imagesFilenames;
 
-	// Options for the preprocessing of images
-	double areaRadiusratio = 1;
-	double intensitiesRadiusRatio = 0.95;
-	string intensitiesPreprocessing = "";
-	
+	// Options for the preprocessing of maps
+	double areaLimitValue = 1.;
+	string areaLimitType = "NAR";
+
+	// Options for the preprocessing of intensity images
+	double intensitiesStatsRadiusRatio = 0.95;
+	string intensitiesStatsPreprocessing = "NAR";
 
 	// The segmented map
 	string colorizedMapFileName;
@@ -122,9 +132,10 @@ int main(int argc, const char **argv)
 	ArgumentHelper arguments;
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP, HMI\n\t", imageType);
 	arguments.new_flag('a', "append", "\n\tSet this flag if you want append a new table in the fitsfile with the segmentation stats.\n\t", append);
-	arguments.new_named_double('r', "areaRadiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the area stats.\n\t",areaRadiusratio);
-	arguments.new_named_double('R', "intensitiesRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the intensities stats.\n\t",intensitiesRadiusRatio);
-	arguments.new_named_string('G', "intensitiesPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images for the intensities stats.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",intensitiesPreprocessing);
+	arguments.new_named_double('r', "areaLimitValue", "positive real", "\n\tThe value for the areaLimitType.\n\t",areaLimitValue);
+	arguments.new_named_string('g', "areaLimitType", "string", "\n\tThe type of the limit of the area of the map taken into account the computation of stats.\n\tPossible values :\n\t\tNAR\n\t\tLong\n\t\tLat\n\t", areaLimitType);
+	arguments.new_named_double('R', "intensitiesStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the intensities stats.\n\t",intensitiesStatsRadiusRatio);
+	arguments.new_named_string('G', "intensitiesStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images for the intensities stats.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",intensitiesStatsPreprocessing);
 	arguments.new_named_string('M',"colorizedMap","file name", "\n\tA segmented map (i.e. each class must have a different color).\n\t", colorizedMapFileName);
 	arguments.new_named_string('s', "separator", "string", "\n\tThe separator to put between columns.\n\t", separator);
 	arguments.new_named_string('c', "classes", "string", "\n\tThe list of classes to select separated by commas (no spaces)\n\tAll classes will be selected if ommited.\n\t", classesString);
@@ -167,7 +178,13 @@ int main(int argc, const char **argv)
 	}
 	
 	ColorMap* colorizedMap = getImageFromFile(colorizedMapFileName);
-	colorizedMap->nullifyAboveRadius(areaRadiusratio);
+	// We apply the arealimit if any
+	if(areaLimitType == "NAR")
+		colorizedMap->nullifyAboveRadius(areaLimitValue);
+	if(areaLimitType == "Long")
+		colorizedMap->nullifyAboveLongLat(areaLimitValue);
+	if(areaLimitType == "Lat")
+		colorizedMap->nullifyAboveLongLat(360, areaLimitValue);
 	
 	
 	RealPixLoc sunCenter = colorizedMap->SunCenter();
@@ -185,8 +202,8 @@ int main(int argc, const char **argv)
 		
 		image->recenter(sunCenter);
 		// We preprocess the sun image if necessary
-		if(! intensitiesPreprocessing.empty())
-			image->preprocessing(intensitiesPreprocessing, intensitiesRadiusRatio);
+		if(! intensitiesStatsPreprocessing.empty())
+			image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
 		
 		#if DEBUG >= 2
 		image->writeFits(filenamePrefix + "preprocessed." +  stripPath(imageFilename) );

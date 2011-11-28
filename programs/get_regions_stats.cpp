@@ -26,9 +26,22 @@
  - SWAP
  - HMI
 
+@param wcs	The type of World Coordinate System to output positions.
+<BR>Possible values are : HGS, HPC, HCC, PixLoc
+
+
 @param colorizedMap	A colorized Map of regions (i.e. each one must have a different color).
 
 @param separator	The separator to put between columns.
+
+@param areaLimitValue	The value for the areaLimitType.
+
+@param areaLimitType	The type of the limit of the area of the map taken into account the computation of stats.
+<BR>Possible values :
+ - NAR (Nothing above radius)
+ - Long (Limit to absolute longitude)
+ - Lat (Limit to absolute latitude)
+
 
 @param intensitiesStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
 
@@ -95,12 +108,16 @@ int main(int argc, const char **argv)
 	string imageType = "UNKNOWN";
 	vector<string> imagesFilenames;
 
-	// Options for the preprocessing of images
+	// Options for the preprocessing of maps
+	double areaLimitValue = 1.;
+	string areaLimitType = "NAR";
+
+	// Options for the preprocessing of intensity images
 	double intensitiesStatsRadiusRatio = 0.95;
 	string intensitiesStatsPreprocessing = "NAR";
 	
 	// Options for the type of coordinate
-	string coordinateType;
+	string wcs = "PixLoc";
 
 	// The map of colored regions
 	string colorizedMapFileName;
@@ -112,6 +129,7 @@ int main(int argc, const char **argv)
 	// Option for the output
 	string separator = "\t";
 	bool getRegionsInfo = false;
+	bool totalStats = false;
 	bool append = false;
 	
 	string programDescription = "This Programm output regions info and statistics.\n";
@@ -123,12 +141,15 @@ int main(int argc, const char **argv)
 
 	ArgumentHelper arguments;
 	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP, HMI\n\t", imageType);
-	arguments.new_flag('r', "getRegionsInfo", "\n\tSet this flag if you want also to get region information.\n\t", getRegionsInfo);
+	arguments.new_flag('i', "getRegionsInfo", "\n\tSet this flag if you want also to get region information.\n\t", getRegionsInfo);
 	arguments.new_flag('a', "append", "\n\tSet this flag if you want append a new table in the fitsfile with the region stats.\n\t", append);
+	arguments.new_flag('t', "totalStats", "\n\tSet this flag if you want to get stats on all regions taken together.\n\tThis will actuallu compute segmentation stats.\n\t", totalStats);
+	arguments.new_named_double('r', "areaLimitValue", "positive real", "\n\tThe value for the areaLimitType.\n\t",areaLimitValue);
+	arguments.new_named_string('g', "areaLimitType", "string", "\n\tThe type of the limit of the area of the map taken into account the computation of stats.\n\tPossible values :\n\t\tNAR\n\t\tLong\n\t\tLat\n\t", areaLimitType);
 	arguments.new_named_double('R', "intensitiesStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",intensitiesStatsRadiusRatio);
 	arguments.new_named_string('G', "intensitiesStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",intensitiesStatsPreprocessing);
 	arguments.new_named_string('M',"colorizedMap","file name", "\n\tA colorized Map of regions (i.e. each one must have a different color).\n\t", colorizedMapFileName);
-	arguments.new_named_string('T', "coordinateType", "string", "\n\tThe type of coordinates to output positions.\n\tPossible values are : HGS, HGC, HPC, HPR, HCC, HCR\n\t", coordinateType);
+	arguments.new_named_string('w', "wcs", "string", "\n\tThe type of World Coordinate System to output positions.\n\tPossible values are : HGS, HPC, HCC, PixLoc\n\t", wcs);
 	arguments.new_named_string('s', "separator", "string", "\n\tThe separator to put between columns.\n\t", separator);
 	arguments.new_named_string('c', "colors", "string", "\n\tThe list of colors to select separated by commas (no spaces)\n\tAll colors will be selected if ommited.\n\t", colorsString);
 	arguments.new_named_string('C', "colorsFilename", "string", "\n\tA file containing a list of colors to select separated by commas\n\tAll colors will be selected if ommited.\n\t", colorsFilename);
@@ -141,6 +162,11 @@ int main(int argc, const char **argv)
 	arguments.set_version(version.c_str());
 	arguments.process(argc, argv);
 
+	if(wcs != "PixLoc")
+	{
+		cerr<<"WCS coordinates conversion has not been implemented yet!"<<endl;
+		return EXIT_FAILURE;
+	}
 
 	if(imagesFilenames.size() < 1)
 	{
@@ -149,6 +175,14 @@ int main(int argc, const char **argv)
 	}
 		
 	ColorMap* colorizedMap = getImageFromFile(colorizedMapFileName);
+	// We apply the arealimit if any
+	if(areaLimitType == "NAR")
+		colorizedMap->nullifyAboveRadius(areaLimitValue);
+	if(areaLimitType == "Long")
+		colorizedMap->nullifyAboveLongLat(areaLimitValue);
+	if(areaLimitType == "Lat")
+		colorizedMap->nullifyAboveLongLat(360, areaLimitValue);
+	
 	RealPixLoc sunCenter = colorizedMap->SunCenter();
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
@@ -175,7 +209,28 @@ int main(int argc, const char **argv)
 		#if DEBUG >= 3
 		cout<<"Region statistics for file "<<stripPath(imageFilename)<<endl;
 		#endif
-		if(getRegionsInfo)
+		if(totalStats)
+		{
+			// We get the total regions stats
+			vector<SegmentationStats*> regions_stats = getTotalRegionStats(colorizedMap, image);
+			if(regions_stats.size() > 0)
+				cout<<"Channel"<<separator<<regions_stats[0]->toString(separator, true)<<endl;
+			else
+				cout<<"Empty"<<endl;
+			if(append)
+			{
+				FitsFile file(colorizedMapFileName, FitsFile::update);
+				// We write the RegionStats into the fits
+				file.writeTable(image->Channel()+"_TotalRegionStats");
+				writeRegions(file, regions_stats);
+			}
+			for (unsigned r = 0; r < regions_stats.size(); ++r)
+			{
+				cout<<image->Channel()<<separator<<regions_stats[r]->toString(separator)<<endl;
+				delete regions_stats[r];
+			}
+		}
+		else if(getRegionsInfo)
 		{
 			// We get the regions
 			vector<Region*> regions = getRegions(colorizedMap);

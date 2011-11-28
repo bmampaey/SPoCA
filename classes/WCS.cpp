@@ -31,7 +31,7 @@ void WCS::setSunCenter(const Real& crpix1, const Real& crpix2)
 	sun_center = RealPixLoc(crpix1, crpix2);
 }
 
-void WCS::setSunradius(const Real& sun_radius)
+void WCS::setSunradius(const double& sun_radius)
 {
 	this->sun_radius = sun_radius;
 }
@@ -57,22 +57,22 @@ void WCS:: setCDelt(const Real& cdelt1, const Real& cdelt2)
 
 void WCS:: setB0(const Real& b0)
 {
-	this->b0 = b0*DEGRA;
+	this->b0 = b0*DEGREE2RADIAN;
 	sin_b0 = sin(this->b0);
 	cos_b0 = cos(this->b0);
 }
 
 void WCS:: setL0(const Real& l0)
 {
-	this->l0 = l0 * DEGRA;
+	this->l0 = l0 * DEGREE2RADIAN;
 }
 
 void WCS:: setCarringtonL0(const Real& l0)
 {
-	this->carrington_l0 = l0 * DEGRA;
+	this->carrington_l0 = l0 * DEGREE2RADIAN;
 }
 
-void WCS:: setDistanceSunObs(const Real& dsun_obs)
+void WCS:: setDistanceSunObs(const double& dsun_obs)
 {
 	this->dsun_obs = dsun_obs;
 }
@@ -81,8 +81,8 @@ void WCS:: setDistanceSunObs(const Real& dsun_obs)
 void WCS:: setCrota2(const Real& crota2)
 {
 	assert(cdelt1 != 0 && cdelt2 != 0);
-	Real sin_crota2 = sin(crota2*DEGRA);
-	Real cos_crota2 = cos(crota2*DEGRA);
+	Real sin_crota2 = sin(crota2*DEGREE2RADIAN);
+	Real cos_crota2 = cos(crota2*DEGREE2RADIAN);
 	setPC(cos_crota2, -sin_crota2 * (cdelt2/cdelt1), sin_crota2 * (cdelt2/cdelt1), cos_crota2);
 }
 

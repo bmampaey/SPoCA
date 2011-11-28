@@ -345,7 +345,7 @@ See @ref ALC.
 
 @section solar_constants Solar Constants
 
-@param SUN_RADIUS The average radius of the sun in meters
+@param SUN_RADIUS The average radius of the sun in Mmeters
 */
 #define SUN_RADIUS 695.508
 
@@ -385,37 +385,6 @@ See @ref ALC.
 */
 #define HIGGINS_FACTOR 16
 
-
-/*!
-@page Compilation_Options
-@section universal_constants Universal Constants
-@param rad2arcsec Conversion between radians and arcsec
-*/
-
-#define rad2arcsec 206264.806247096
-
-/*!
-@page Compilation_Options
-@section universal_constants Universal Constants
-@param arcsec2rad Conversion between arcsec and radians
-*/
-
-#define arcsec2rad 0.000004848
-
-/*!
-@page Compilation_Options
-
-@param RADEG Conversion between radians and degrees
-*/
-#define RADEG 57.295779513
-
-/*!
-@page Compilation_Options
-
-@param DEGRA Conversion between degrees and radians 
-*/
-#define DEGRA 0.017453293
-
 /*!
 @page Compilation_Options
 
@@ -423,9 +392,41 @@ See @ref ALC.
 @param MIPI Value of PI/2
 @param BIPI Value of PI*2
 */
-#define PI 3.14159265358979323846
-#define MIPI 1.57079632679489661923
-#define BIPI 6.28318530717958647692
+#define PI 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679
+#define MIPI (PI/2.)
+#define BIPI (2.*PI)
+
+/*!
+@page Compilation_Options
+@section universal_constants Universal Constants
+@param RADIAN2ARCSEC Conversion between radians and arcsec
+*/
+
+#define RADIAN2ARCSEC (PI/648000.)
+
+/*!
+@page Compilation_Options
+@section universal_constants Universal Constants
+@param ARCSEC2RADIAN Conversion between arcsec and radians
+*/
+
+#define ARCSEC2RADIAN (648000./PI)
+
+/*!
+@page Compilation_Options
+
+@param RADIAN2DEGREE Conversion between radians and degrees
+*/
+#define RADIAN2DEGREE (180./PI)
+
+/*!
+@page Compilation_Options
+
+@param DEGREE2RADIAN Conversion between degrees and radians 
+*/
+#define DEGREE2RADIAN (PI/180.)
+
+
 
 /*---------------- Do NOT modify below please ------------------*/
 

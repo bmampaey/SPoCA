@@ -92,7 +92,7 @@ void EITImage::parseHeader()
 		wcs.setCarringtonL0(header.get<Real>("CRLN_OBS"));
 	
 	if (header.has("DSUN_OBS"))
-		wcs.setDistanceSunObs(header.get<Real>("DSUN_OBS")/1000000.);
+		wcs.setDistanceSunObs(header.get<double>("DSUN_OBS")/1000000.);
 	else if (wcs.time_obs != 0)
 		wcs.setDistanceSunObs(distance_sun_earth(wcs.time_obs) * 0.99);
 	
@@ -131,9 +131,9 @@ void EITImage::fillHeader()
 	header.set<Real>("CRPIX2", wcs.sun_center.y + 1);
 	header.set<Real>("CDELT1", wcs.cdelt1);
 	header.set<Real>("CDELT2", wcs.cdelt2);
-	header.set<Real>("HGLT_OBS", wcs.b0 * RADEG);
-	header.set<Real>("HGLN_OBS", wcs.l0 * RADEG);
-	header.set<Real>("CRLN_OBS", wcs.carrington_l0 * RADEG);
+	header.set<Real>("HGLT_OBS", wcs.b0 * RADIAN2DEGREE);
+	header.set<Real>("HGLN_OBS", wcs.l0 * RADIAN2DEGREE);
+	header.set<Real>("CRLN_OBS", wcs.carrington_l0 * RADIAN2DEGREE);
 	header.set<Real>("DSUN_OBS", wcs.dsun_obs*1000000.);
 	header.set<Real>("CD1_1", wcs.cd[0][0]);
 	header.set<Real>("CD1_2", wcs.cd[0][1]);

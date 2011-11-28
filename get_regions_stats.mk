@@ -8,11 +8,11 @@ LFLAGS=-lcfitsio
 DFLAGS=
 
 all:bin/get_regions_stats.x
-clean: rm bin/get_regions_stats.x objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/Region.o objects/FitsFile.o objects/Header.o objects/EUVImage.o objects/SunImage.o objects/WCS.o objects/Image.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+clean: rm bin/get_regions_stats.x objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/SegmentationStats.o objects/Region.o objects/FitsFile.o objects/Header.o objects/EUVImage.o objects/SunImage.o objects/WCS.o objects/Image.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
 
 
-bin/get_regions_stats.x : get_regions_stats.mk objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/Region.o objects/FitsFile.o objects/Header.o objects/EUVImage.o objects/SunImage.o objects/WCS.o objects/Image.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
-	$(CC) $(CFLAGS) $(DFLAGS) objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/Region.o objects/FitsFile.o objects/Header.o objects/EUVImage.o objects/SunImage.o objects/WCS.o objects/Image.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/get_regions_stats.x
+bin/get_regions_stats.x : get_regions_stats.mk objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/SegmentationStats.o objects/Region.o objects/FitsFile.o objects/Header.o objects/EUVImage.o objects/SunImage.o objects/WCS.o objects/Image.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o
+	$(CC) $(CFLAGS) $(DFLAGS) objects/get_regions_stats.o objects/FeatureVector.o objects/Coordinate.o objects/RegionStats.o objects/SegmentationStats.o objects/Region.o objects/FitsFile.o objects/Header.o objects/EUVImage.o objects/SunImage.o objects/WCS.o objects/Image.o objects/ColorMap.o objects/ArgumentHelper.o objects/mainutilities.o objects/HMIImage.o objects/SWAPImage.o objects/AIAImage.o objects/EUVIImage.o objects/EITImage.o objects/tools.o $(LFLAGS) -o bin/get_regions_stats.x
 
 objects/get_regions_stats.o : get_regions_stats.mk programs/get_regions_stats.cpp classes/tools.h classes/constants.h classes/mainutilities.h classes/ArgumentHelper.h classes/ColorMap.h classes/EUVImage.h classes/RegionStats.h classes/Coordinate.h classes/FeatureVector.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) programs/get_regions_stats.cpp -o objects/get_regions_stats.o
@@ -23,8 +23,11 @@ objects/FeatureVector.o : get_regions_stats.mk classes/FeatureVector.cpp classes
 objects/Coordinate.o : get_regions_stats.mk classes/Coordinate.cpp classes/constants.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Coordinate.cpp -o objects/Coordinate.o
 
-objects/RegionStats.o : get_regions_stats.mk classes/RegionStats.cpp classes/constants.h classes/tools.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h classes/Region.h
+objects/RegionStats.o : get_regions_stats.mk classes/RegionStats.cpp classes/constants.h classes/tools.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h classes/Region.h classes/SegmentationStats.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/RegionStats.cpp -o objects/RegionStats.o
+
+objects/SegmentationStats.o : get_regions_stats.mk classes/SegmentationStats.cpp classes/constants.h classes/tools.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h
+	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SegmentationStats.cpp -o objects/SegmentationStats.o
 
 objects/Region.o : get_regions_stats.mk classes/Region.cpp classes/constants.h classes/tools.h classes/Coordinate.h classes/ColorMap.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/Region.cpp -o objects/Region.o

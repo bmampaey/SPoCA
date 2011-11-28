@@ -365,6 +365,35 @@ vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* 
 	return values(regions_stats);
 }
 
+vector<SegmentationStats*> getTotalRegionStats(const ColorMap* coloredMap, const EUVImage* image)
+{
+	vector<SegmentationStats*> regions_stats;
+	regions_stats.push_back(new SegmentationStats(image->ObservationTime(), 0));
+	regions_stats.push_back(new SegmentationStats(image->ObservationTime(), 1));
+	
+	RealPixLoc sunCenter = image->SunCenter();
+	Real sunRadius = image->SunRadius();
+	
+	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
+	{
+		for (unsigned x = 0; x < coloredMap->Xaxes(); ++x)
+		{
+			if(coloredMap->pixel(x,y) != coloredMap->null())
+			{
+				regions_stats[1]->add(PixLoc(x,y), image->pixel(x, y), sunCenter, sunRadius);
+			}
+			else
+			{
+				regions_stats[0]->add(PixLoc(x,y), image->pixel(x, y), sunCenter, sunRadius);
+			}
+		}
+	}
+	
+	return regions_stats;
+}
+
+
+
 FitsFile& writeRegions(FitsFile& file, const vector<RegionStats*>& regions_stats)
 {
 	{

@@ -13,6 +13,7 @@
 #include "ColorMap.h"
 #include "FitsFile.h"
 #include "Region.h"
+#include "SegmentationStats.h"
 
 //! Class to obtain information about the statistics of a region
 /*!
@@ -116,6 +117,14 @@ std::vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVIm
 @param regions The regions for wich to compute the stats
 */
 std::vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image, const std::vector<Region*>& regions);
+
+//! Compute the statistics of all the regions taken together using a ColorMap as a cache
+/* 
+@param map A map of the region, each one must have a color > 0
+@param image The image to compute the intensities statistics.
+@return A vector of 2 SegmentationStats, the one with id 1 is the stats of all regions, the one with id 0 is the stats of the complement
+*/
+std::vector<SegmentationStats*> getTotalRegionStats(const ColorMap* coloredMap, const EUVImage* image);
 
 //! Write the regions into a fits file as column into the current table 
 FitsFile& writeRegions(FitsFile& file, const std::vector<RegionStats*>& regions_stats);

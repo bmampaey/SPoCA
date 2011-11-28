@@ -402,7 +402,7 @@ See @ref ALC.
 @param RADIAN2ARCSEC Conversion between radians and arcsec
 */
 
-#define RADIAN2ARCSEC (PI/648000.)
+#define RADIAN2ARCSEC (648000./PI)
 
 /*!
 @page Compilation_Options
@@ -410,7 +410,7 @@ See @ref ALC.
 @param ARCSEC2RADIAN Conversion between arcsec and radians
 */
 
-#define ARCSEC2RADIAN (648000./PI)
+#define ARCSEC2RADIAN (PI/648000.)
 
 /*!
 @page Compilation_Options

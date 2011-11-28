@@ -387,19 +387,6 @@ inline HGS SunImage<T>::toHGS(const HCC& hcc) const
 			latitude = asin((hcc.y * wcs.cos_b0 + hcc.z * wcs.sin_b0)/wcs.sunradius_Mm);
 		Real longitude = atan2(hcc.x, hcc.z * wcs.cos_b0 - hcc.y * wcs.sin_b0) + wcs.l0;
 		
-		while (longitude < -PI)
-		{
-			cout<<"longitude correction from "<<longitude;
-			longitude += BIPI;
-			cout<<" to "<<longitude;
-		}
-		while (longitude > PI)
-		{
-			cout<<"longitude correction from "<<longitude;
-			longitude += BIPI;
-			cout<<" to "<<longitude;
-		}
-		
 		return HGS(longitude, latitude);
 	}
 }

@@ -266,7 +266,7 @@ vector<STAFFStats> getSTAFFStats(const ColorMap* CHMap, ColorType CHClass, const
 			// We add the pixel to the AR stats
 			stats[1].add(image->pixel(j), sunRadius);
 		}
-		else
+		else if(ARMap->pixel(j) != ARMap->null() || CHMap->pixel(j) != CHMap->null())
 		{
 			// We add remaining pixels to the QS stats
 			stats[2].add(image->pixel(j), sunRadius);

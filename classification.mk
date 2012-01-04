@@ -3,7 +3,7 @@ TRACKINGLFLAGS=-lpthread
 IDLLFLAGS=-L /usr/local/idl/idl706/bin/bin.linux.x86_64 -lpthread -lidl -lXp -lXpm -lXmu -lXext -lXt -lSM -lICE  -lXinerama -lX11 -ldl -ltermcap -lrt -lm /usr/lib/libXm.a
 MAGICKLFLAGS=`Magick++-config --ldflags --libs`
 MAGICKCFLAGS=`Magick++-config --cppflags`
-CFLAGS=-Wall -fkeep-inline-functions -g
+CFLAGS=-Wall -fkeep-inline-functions -g -O3
 LFLAGS=-lcfitsio
 DFLAGS=
 
@@ -38,7 +38,7 @@ objects/ActiveRegion.o : classification.mk classes/ActiveRegion.cpp classes/Feat
 objects/SegmentationStats.o : classification.mk classes/SegmentationStats.cpp classes/constants.h classes/tools.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/SegmentationStats.cpp -o objects/SegmentationStats.o
 
-objects/RegionStats.o : classification.mk classes/RegionStats.cpp classes/constants.h classes/tools.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h classes/Region.h
+objects/RegionStats.o : classification.mk classes/RegionStats.cpp classes/constants.h classes/tools.h classes/Coordinate.h classes/EUVImage.h classes/ColorMap.h classes/FitsFile.h classes/Region.h classes/SegmentationStats.h
 	$(CC) -c $(CFLAGS) $(DFLAGS) classes/RegionStats.cpp -o objects/RegionStats.o
 
 objects/FeatureVector.o : classification.mk classes/FeatureVector.cpp classes/constants.h

@@ -179,6 +179,8 @@ int main(int argc, const char **argv)
 		
 		// We extract the STAFF stats on the disc
 		image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
+		CHMap->preprocessing("NAR", 1);
+		ARMap->preprocessing("NAR", 1);
 		vector<STAFFStats> staff_stats = getSTAFFStats(CHMap, CHClass, ARMap, ARClass, image);
 		cout<<image->Channel()<<separator<<"CH_ondisc"<<separator<<staff_stats[0].toString(separator)<<endl;
 		cout<<image->Channel()<<separator<<"AR_ondisc"<<separator<<staff_stats[1].toString(separator)<<endl;

@@ -345,24 +345,27 @@ vector<PixLoc> Region::chainCode(const ColorMap* image, const unsigned min_point
 				0 + xAxes, 1 + xAxes, 1 + 0, 1 - xAxes, 0 - xAxes, -1 - xAxes, -1 + 0, -1 + xAxes
 			};
 	
-	// We search the first pixel on the external border
-	PixLoc firstPixel = boxmin;
+	// We search the left most pixel on the external border
+	PixLoc firstPixel = PixLoc(boxmin.x, boxmax.y);
 	while(image->pixel(firstPixel) != color)
 	{
-		if(firstPixel.x == boxmax.x)
+		if(firstPixel.y == boxmin.y)
 		{
-			if(firstPixel.y == boxmax.y)
+			if(firstPixel.x == boxmax.x)
 			{
 				cerr<<"Empty region, no chaincode"<<endl;
 				return vector<PixLoc>(); 
 			}
 			else
 			{
-				firstPixel.x = boxmin.x;
-				firstPixel.y += 1;
+				firstPixel.y = boxmax.y;
+				firstPixel.x += 1;
 			}
 		}
-		firstPixel.x += 1;
+		else
+		{
+			firstPixel.y -= 1;
+		}
 	}
 	
 	// We start at the first pixel, and we search for the first direction
@@ -453,7 +456,7 @@ vector<PixLoc> Region::chainCode(const ColorMap* image, const unsigned min_point
 	distances.reserve(max_points);
 	tmp_indices.push_back(furthest_pixel_indice);
 	distances.push_back(biggest_distance);
-	while(good_indices.size() < max_points)
+	while(good_indices.size() < max_points && tmp_indices.size() > 0)
 	{
 		// I search in the tmp_indices for the worst point, i.e. with the biggest distance
 		unsigned worst_indice = 0;

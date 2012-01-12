@@ -1,121 +1,106 @@
 PRO write_events, events
 	FILE_MKDIR, 'voevents'
-	print, "Found ", N_ELEMENTS(events) - 1, " events"
-	FOR e = 1, N_ELEMENTS(events) - 1 DO BEGIN
+	print, "Found ", N_ELEMENTS(events), " events"
+	FOR e = 0, N_ELEMENTS(events) - 1 DO BEGIN
 		; find the ivorn
 		startpos = STRPOS(events[e], 'CH_SPoCA')
-		length = STRPOS(events[e], '"', startpos) - startpos
-		ivorn = STRMID(events[e], startpos , length) 
-		print, "Event ", e, " ivorn: " , ivorn
-		openw, lun, 'voevents/'+ivorn +'.xml', /get_lun, width=100000000
-		printf, lun, events[e]
-		free_lun, lun
+		IF startpos GE 0 THEN BEGIN
+			length = STRPOS(events[e], '"', startpos) - startpos
+			ivorn = STRMID(events[e], startpos , length) 
+			print, "Writting event ", e, " with ivorn " , ivorn
+			openw, lun, 'voevents/'+ivorn +'.xml', /get_lun, width=100000000
+			printf, lun, events[e]
+			free_lun, lun
+		ENDIF
 	ENDFOR
-	events = ['']
 END
 
-PRO test_spoca, dir=dir, resume=resume, files195=files195, start_index=start_index
+PRO test_spoca_ch, dir=dir, resume=resume, files195=files195
 
-;files195 = FILE_SEARCH('/pool/bem/data/oneperhour', '*193.fits', /TEST_READ, /TEST_REGULAR)
+;files195 = FILE_SEARCH('/pool/bem/data/AIA_June2010_Sept2011/', '*193.fits', /TEST_READ, /TEST_REGULAR)
+
+verbose = 1
+saveFiles = 2
 
 outputDirectory = "results/"
-saveDirectory = "save/
-writeEventsFrequency = 14400 ; For my test I write every 4 hours
+saveDirectory = "save/"
 cCodeLocation = "bin/"
+
+writeEventsFrequency = 14400 ; For my test I write every 4 hours
+
 instrument = 'AIA'
 
-spocaArgsPreprocessing = 'DivExpTime,ALC,TakeSqrt'
-spocaArgsClassifierType = 'HFCM'
-spocaArgsNumberclasses ='4'
-spocaArgsPrecision = '0.0015'
-spocaArgsRadiusRatio = '1.2'
-spocaArgsBinsize = '0.01'
-spocaArgsSegmentation = 'max'
-spocaArgsNumberCenters = '10'
+spocaArgs = ['--preprocessingSteps', 'DivExpTime,ALC,ThrMax80,TakeSqrt', $
+			'--classifierType', 'HFCM', $
+			'--numberClasses', '4', $
+			'--precision', '0.0015', $
+			'--radiusratio', '1.2', $
+			'--binSize', '0.01', $
+			'--segmentation', 'max', $
+			'--numberPreviousCenters', '10', $
+			'--intensitiesStatsPreprocessing', 'NAR,DivExpTime', $
+			'--intensitiesStatsRadiusRatio', '0.95', $
+			'--maps', 'C']
 
-trackingArgsDeltat = '14400'; == 1h
-trackingOverlap = 3
-regionStatsPreprocessing = 'NAR,DivExpTime'
-regionStatsRadiusRatio = '0.95'
+
+chaincodeArgs = ['--chaincodeMaxPoints', '100', $
+			'--chaincodeMaxDeviation','10' ]
+
+trackingArgs = ['--max_delta_t', '14400', $ ; == 4h
+			'--derotate' ]
+
+trackingOverlap = 2
 
 w195='193'
 
 inputStatusFilename = "spoca.sav"
 outputStatusFilename = "spoca.sav"
-write_file = 1
+write_file = 0
 
-minLifeTime = 5 * 24 * 3600.0D
-minDeathTime = 21600.0D
+minLifeTime = 3 * 24 * 3600.0D
+minDeathTime = 28800.0D
+
 
 events = ['']
 
-IF KEYWORD_SET(dir) THEN BEGIN
+IF N_ELEMENTS(resume) > 0 THEN BEGIN
 	
-	BEGIN
-		files195=['']
-		files = FILE_SEARCH(dir, '*.fits', /TEST_READ, /TEST_REGULAR)
-		print, files
-		FOR i=0, N_ELEMENTS(files) - 1 DO BEGIN
-			IF instrument EQ 'AIA' THEN read_sdo, files[i], header, /nodata ELSE header = fitshead2struct(headfits(files[i]))
-			IF header.WAVELNTH EQ w195 THEN files195 = [files195, files[i]]
-		ENDFOR
-		files195 = files195[1:*]
+	IF SIZE(resume, /tn) NE "STRING" THEN resume = "test_spoca.sav"
+	IF ~ FILE_TEST(resume, /READ, /REGULAR) THEN BEGIN
+		print, 'Cannot resume, no sav file found. Please set valid sav file as resume parameter'
+		RETURN
 	ENDIF
+	RESTORE ,resume , /VERBOSE
 	
-	
-ENDIF
+ENDIF ELSE BEGIN
 
+	IF KEYWORD_SET(dir) THEN BEGIN
+		BEGIN
+			files195=['']
+			files = FILE_SEARCH(dir, '*.fits', /TEST_READ, /TEST_REGULAR)
+			print, files
+			FOR i=0, N_ELEMENTS(files) - 1 DO BEGIN
+				IF instrument EQ 'AIA' THEN read_sdo, files[i], header, /nodata ELSE header = fitshead2struct(headfits(files[i]))
+				IF header.WAVELNTH EQ w195 THEN files195 = [files195, files[i]]
+			ENDFOR
+			files195 = files195[1:*]
+		ENDIF
+	ENDIF
+ENDELSE
 
 IF N_ELEMENTS(files195) EQ 0 THEN BEGIN
-
+	
 	print, 'No files with wavelength ', w195, ' found!"
 	RETURN
 	
 ENDIF
 
 
+IF ~ KEYWORD_SET(resume) THEN BEGIN
+	
+	events = ['']
 
-IF KEYWORD_SET(resume) THEN BEGIN
-
-	RESTORE ,inputStatusFilename , VERBOSE = debug
-	
-	SPoCA_ch, image195 = files195[start_index], $
-	events = events, $
-	write_file = write_file, $
-	error = error, $
-	imageRejected = imageRejected, $
-	status = status, $
-	runMode = 'Recovery', $
-	inputStatusFilename = inputStatusFilename, $
-	outputStatusFilename = outputStatusFilename, $
-	numActiveEvents = numActiveEvents, $
-	outputDirectory = outputDirectory, $
-	saveDirectory = saveDirectory, $
-	writeEventsFrequency = writeEventsFrequency, $
-	cCodeLocation = cCodeLocation, $
-	instrument = instrument, $
-	spocaArgsPreprocessing = spocaArgsPreprocessing, $
-	spocaArgsClassifierType = spocaArgsClassifierType, $
-	spocaArgsNumberclasses = spocaArgsNumberclasses, $
-	spocaArgsPrecision = spocaArgsPrecision, $
-	spocaArgsRadiusRatio = spocaArgsRadiusRatio, $
-	spocaArgsBinsize = spocaArgsBinsize, $
-	spocaArgsSegmentation = spocaArgsSegmentation, $
-	spocaArgsNumberCenters = spocaArgsNumberCenters, $
-	trackingArgsDeltat = trackingArgsDeltat, $
-	trackingOverlap = trackingOverlap, $
-	regionStatsPreprocessing = regionStatsPreprocessing, $
-	regionStatsRadiusRatio = regionStatsRadiusRatio, $
-	minLifeTime = minLifeTime, $
-	minDeathTime = minDeathTime
-	
-	write_events, events
-	start_index = start_index + 1
-	
-ENDIF ELSE BEGIN
-
-	
-	SPoCA_ch, image195 = files195[0], $
+	SPoCA_CH, image195 = files195[0], $
 	events = events, $
 	write_file = write_file, $
 	error = error, $
@@ -126,37 +111,33 @@ ENDIF ELSE BEGIN
 	outputStatusFilename = outputStatusFilename, $
 	numActiveEvents = numActiveEvents, $
 	outputDirectory = outputDirectory, $
+	verbose = verbose, $
+	saveFiles = saveFiles, $
 	saveDirectory = saveDirectory, $
 	writeEventsFrequency = writeEventsFrequency, $
 	cCodeLocation = cCodeLocation, $
 	instrument = instrument, $
-	spocaArgsPreprocessing = spocaArgsPreprocessing, $
-	spocaArgsClassifierType = spocaArgsClassifierType, $
-	spocaArgsNumberclasses = spocaArgsNumberclasses, $
-	spocaArgsPrecision = spocaArgsPrecision, $
-	spocaArgsRadiusRatio = spocaArgsRadiusRatio, $
-	spocaArgsBinsize = spocaArgsBinsize, $
-	spocaArgsSegmentation = spocaArgsSegmentation, $
-	spocaArgsNumberCenters = spocaArgsNumberCenters, $
-	trackingArgsDeltat = trackingArgsDeltat, $
+	spocaArgs = spocaArgs, $
+	chaincodeArgs = chaincodeArgs, $
+	trackingArgs = trackingArgs, $
 	trackingOverlap = trackingOverlap, $
-	regionStatsPreprocessing = regionStatsPreprocessing, $
-	regionStatsRadiusRatio = regionStatsRadiusRatio, $
 	minLifeTime = minLifeTime, $
 	minDeathTime = minDeathTime
 	
+	IF N_ELEMENTS(error) GT 1 THEN PRINT, "Errors: ", error
 	write_events, events
-	start_index = 1
 	
-ENDELSE
+	index = 1
+	SAVE, status, index, files195, DESCRIPTION='test_spoca status after running spoca module on images ' + STRING(index - 1), FILENAME='test_spoca.sav', /VERBOSE
+	
+ENDIF
 
-PRINT, "error=", error
 
-FOR i=start_index, N_ELEMENTS(files195) - 1 DO BEGIN
+FOR i=index, N_ELEMENTS(files195) - 1 DO BEGIN
 
-PRINT, "start_index=", start_index
+	events = ['']
 
-SPoCA_ch, image195 = files195[i], $
+SPoCA_CH, image195 = files195[i], $
 	events = events, $
 	write_file = write_file, $
 	error = error, $
@@ -167,63 +148,27 @@ SPoCA_ch, image195 = files195[i], $
 	outputStatusFilename = inputStatusFilename, $
 	numActiveEvents = numActiveEvents, $
 	outputDirectory = outputDirectory, $
+	verbose = verbose, $
+	saveFiles = saveFiles, $
 	saveDirectory = saveDirectory, $
 	writeEventsFrequency = writeEventsFrequency, $
 	cCodeLocation = cCodeLocation, $
 	instrument = instrument, $
-	spocaArgsPreprocessing = spocaArgsPreprocessing, $
-	spocaArgsClassifierType = spocaArgsClassifierType, $
-	spocaArgsNumberclasses = spocaArgsNumberclasses, $
-	spocaArgsPrecision = spocaArgsPrecision, $
-	spocaArgsRadiusRatio = spocaArgsRadiusRatio, $
-	spocaArgsBinsize = spocaArgsBinsize, $
-	spocaArgsSegmentation = spocaArgsSegmentation, $
-	spocaArgsNumberCenters = spocaArgsNumberCenters, $
-	trackingArgsDeltat = trackingArgsDeltat, $
+	spocaArgs = spocaArgs, $
+	chaincodeArgs = chaincodeArgs, $
+	trackingArgs = trackingArgs, $
 	trackingOverlap = trackingOverlap, $
-	regionStatsPreprocessing = regionStatsPreprocessing, $
-	regionStatsRadiusRatio = regionStatsRadiusRatio, $
 	minLifeTime = minLifeTime, $
 	minDeathTime = minDeathTime
 	
+	IF N_ELEMENTS(error) GT 1 THEN PRINT, "Errors: ", error
 	write_events, events
-	PRINT, "error=", error
-	start_index = start_index + 1
+	
+	index = index + 1
+	SAVE, status, index, files195, DESCRIPTION='test_spoca status after running spoca module on images ' + STRING(index - 1), FILENAME='test_spoca.sav', /VERBOSE
 
 ENDFOR
 
-SPoCA_ch, image195 = '', $
-	events = events, $
-	write_file = write_file, $
-	error = error, $
-	imageRejected = imageRejected, $
-	status = status, $
-	runMode = 'Clear Events', $
-	inputStatusFilename = inputStatusFilename, $
-	outputStatusFilename = inputStatusFilename, $
-	numActiveEvents = numActiveEvents, $
-	outputDirectory = outputDirectory, $
-	saveDirectory = saveDirectory, $
-	writeEventsFrequency = writeEventsFrequency, $
-	cCodeLocation = cCodeLocation, $
-	instrument = instrument, $
-	spocaArgsPreprocessing = spocaArgsPreprocessing, $
-	spocaArgsClassifierType = spocaArgsClassifierType, $
-	spocaArgsNumberclasses = spocaArgsNumberclasses, $
-	spocaArgsPrecision = spocaArgsPrecision, $
-	spocaArgsRadiusRatio = spocaArgsRadiusRatio, $
-	spocaArgsBinsize = spocaArgsBinsize, $
-	spocaArgsSegmentation = spocaArgsSegmentation, $
-	spocaArgsNumberCenters = spocaArgsNumberCenters, $
-	trackingArgsDeltat = trackingArgsDeltat, $
-	trackingOverlap = trackingOverlap, $
-	regionStatsPreprocessing = regionStatsPreprocessing, $
-	regionStatsRadiusRatio = regionStatsRadiusRatio, $
-	minLifeTime = minLifeTime, $
-	minDeathTime = minDeathTime
-
-	write_events, events
-	PRINT, "error=", error
 END
 
 

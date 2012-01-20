@@ -32,6 +32,7 @@ fitsFileName3 corresponds to the blue channel
  - DivExpTime (Division by the Exposure Time)
  - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
  - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
+ - Smoothzz.z Binomial smoothing of zz.z arcsec 
  
 @param size The size of the image written. i.e. "1024x1024" See <a href="http://www.imagemagick.org/script/command-line-processing.php#geometry" target="_blank">ImageMagick Image Geometry</a>  for specification.
 

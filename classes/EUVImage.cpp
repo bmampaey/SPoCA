@@ -68,7 +68,15 @@ vector<Real> EUVImage::getALCParameters()
 	return temp;
 }
 
-
+void EUVImage::setALCParameters(vector<Real> ALCParameters)
+{
+	if (ALCParameters.size() < 4)
+	{
+		cerr<<"Error setting the ALC parameters, at least 4 must be provided."<<endl;
+		exit(EXIT_FAILURE);
+	}
+	this->ALCParameters = ALCParameters;
+}
 
 void EUVImage::parseHeader()
 {

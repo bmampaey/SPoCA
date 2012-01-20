@@ -98,7 +98,7 @@ int main(int argc, const char **argv)
 	string outputDirectory = ".";
 
 	
-	string programDescription = "This Program makes contours out off color regions.\n";
+	string programDescription = "This program plots region contours.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nColorType: " + string(typeid(ColorType).name());

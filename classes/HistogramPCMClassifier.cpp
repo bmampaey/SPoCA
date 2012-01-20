@@ -71,6 +71,20 @@ void HistogramPCMClassifier::computeU()
 
 void HistogramPCMClassifier::computeEta()
 {
+	// U must be initialized before computing eta 
+	if(HistoX.size() * numberClasses != U.size())
+	{
+		if(numberClasses > 0 && eta.size() == numberClasses)
+		{
+			// We have centers and eta we can initialized U
+			computeU();
+		}
+		else
+		{
+			cerr<<"Error: U must be initialized before computing eta."<<endl;
+			exit(EXIT_FAILURE);
+		}
+	}
 	eta.assign(numberClasses,0.);
 	vector<Real> sum(numberClasses,0.);
 	
@@ -202,7 +216,7 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 
 	const Real maxFactor = ETA_MAXFACTOR;
 
-	//Initialisation of precision & U
+	//Initialisation of precision
 	this->precision = precision;
 
 	Real precisionReached = numeric_limits<Real>::max();

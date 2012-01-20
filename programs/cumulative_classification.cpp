@@ -57,7 +57,8 @@
  - DivMode (Division by the mode)
  - DivExpTime (Division by the Exposure Time)
  - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
- - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
+ - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile)
+ - Smoothzz.z Binomial smoothing of zz.z arcsec 
  
 @param radiusratio	The ratio of the radius of the sun that will be processed.
 
@@ -179,7 +180,7 @@ int main(int argc, const char **argv)
 	
 	// General variables
 	vector<RealFeature> B;
-	RealFeature wavelengths = 0;
+	vector<string> channels;
 	Classifier* F;
 	RealFeature binSize(0);
 
@@ -203,8 +204,8 @@ int main(int argc, const char **argv)
 	}
 	filenamePrefix += ".";
 	
-	// We read the wavelengths and the initial centers from the centers file
-	if(readCentersFromFile(B, wavelengths, centersFileName))
+	// We read the channels and the initial centers from the centers file
+	if(readCentersFromFile(B, channels, centersFileName))
 	{
 		if(B.size() != numberClasses)
 		{
@@ -315,9 +316,11 @@ int main(int argc, const char **argv)
 			#if DEBUG >= 2
 			images[p]->writeFits(filenamePrefixBase + "preprocessed." + stripPath(imagesFilenames[p]) );
 			#endif
-			if(p > 0 && ! images[0]->checkSimilar(images[p]))
+			// We check if the images are similars
+			string dissimilarity = checkSimilar(images[0], images[p]);
+			if(! dissimilarity.empty())
 			{
-				cerr<<"Warning: image "<<imagesFilenames[p]<<" is not similar to image "<<imagesFilenames[0]<<endl;
+				cerr<<"Warning: image "<<imagesFilenames[p]<<" and "<<imagesFilenames[0]<<" are not similar: "<<dissimilarity<<endl;
 			}
 		}
 		
@@ -348,7 +351,7 @@ int main(int argc, const char **argv)
 				}	
 				else // We initialize the Classifier with the centers from the centers file
 				{
-					F->initB(B, wavelengths);
+					F->initB(B, channels);
 				}
 
 				if(classifierIsPossibilistic)
@@ -356,14 +359,13 @@ int main(int argc, const char **argv)
 					dynamic_cast<CumulativePCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
 				}	
 			}
-	
 			// Everything is ready, we do the classification
 			F->classification(precision, maxNumberIteration);
 			// We save the centers
 			outputFile<<"m: "<< m + 1<<"\tB: "<<F->getB();
 			if(classifierIsPossibilistic)
 				outputFile<<"\teta: "<<dynamic_cast<CumulativePCMClassifier*>(F)->getEta();
-			cout<<endl;
+			outputFile<<endl;
 			
 		}
 

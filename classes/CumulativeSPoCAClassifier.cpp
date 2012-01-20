@@ -23,8 +23,8 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 	}
 	
 	ordonateImages(images);
-	int xaxes = images[0]->Xaxes();
-	int yaxes = images[0]->Yaxes();
+	unsigned xaxes = images[0]->Xaxes();
+	unsigned yaxes = images[0]->Yaxes();
 	for (unsigned p = 1; p <  NUMBERCHANNELS; ++p)
 	{
 		xaxes = images[p]->Xaxes() < xaxes ? images[p]->Xaxes() : xaxes;
@@ -53,9 +53,9 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 	bool validPixel;
 	RealFeature f;
 	//We initialise the valid pixels vector X, and the neighbors N
-	for (int y = 0; y < yaxes; ++y)
+	for (int y = 0; unsigned(y) < yaxes; ++y)
 	{
-		for (int x = 0; x < xaxes; ++x)
+		for (int x = 0; unsigned(x) < xaxes; ++x)
 		{
 			validPixel = true;
 			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)

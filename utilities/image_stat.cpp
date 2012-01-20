@@ -41,6 +41,9 @@
  - TakeLog (Take the log)
  - DivMode (Division by the mode)
  - DivExpTime (Division by the Exposure Time)
+ - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
+ - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile)
+ - Smoothzz.z Binomial smoothing of zz.z arcsec 
  
 @param radiusratio	The ratio of the radius of the sun that will be processed.
 
@@ -122,8 +125,6 @@ int main(int argc, const char **argv)
 		cerr<<imagesFilenames.size()<<" fits image file given as parameter, at least 1 must be given!"<<endl;
 		return EXIT_FAILURE;
 	}
-	
-	EUVImage stat;
 
 	for (unsigned p = 0; p< imagesFilenames.size(); ++p)
 	{
@@ -131,7 +132,7 @@ int main(int argc, const char **argv)
 		EUVImage* image  = getImageFromFile(imageType, imagesFilenames[p]);
 		image->preprocessing(preprocessingSteps,radiusRatio);
 		
-		stat.copySunParameters(image);
+		EUVImage stat(image->getWCS());
 		
 		filenamePrefix = stripSuffix(imagesFilenames[p]) + ".";
 		

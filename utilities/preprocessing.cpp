@@ -36,6 +36,7 @@ The program will generate the following files:
  - DivExpTime (Division by the Exposure Time)
  - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
  - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
+ - Smoothzz.z Binomial smoothing of zz.z arcsec
  
 @param radiusratio	The ratio of the radius of the sun that will be processed.
 
@@ -63,20 +64,22 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 #include "../classes/ArgumentHelper.h"
 #include "../classes/mainutilities.h"
 
-using namespace std;
+using std::string; using std::cout; using std::cerr; using std::endl;
+using std::vector; 
+using std::ofstream;
 using namespace dsr;
 
 string filenamePrefix;
 
 // Routine that draws the limits of the ALC percentCorrection function on an image
-void ALCLimitsImage(EUVImage* image)
+void ALCLimitsImage(EUVImage* image, vector<Real> ALCParameters)
 {
-	image->zero(0);
-	vector<Real> ALCParameters = image->getALCParameters();
-	image->drawCircle(image->SunCenter(), image->SunRadius() * ALCParameters[0], 1);
-	image->drawCircle(image->SunCenter(), image->SunRadius() * ALCParameters[1], 1);
-	image->drawCircle(image->SunCenter(), image->SunRadius() * ALCParameters[2], 1);
-	image->drawCircle(image->SunCenter(), image->SunRadius() * ALCParameters[3], 1);
+	//image->zero(0);
+	if (ALCParameters.size() == 0)
+		ALCParameters = image->getALCParameters();
+	
+	for(unsigned p = 0; p < ALCParameters.size(); ++p)
+		image->drawCircle(PixLoc(image->SunCenter()), image->SunRadius() * ALCParameters[p], 1);
 }
 
 // Routine that draws the ALC percentCorrection function on an image
@@ -84,13 +87,13 @@ void percentCorrectionImage(EUVImage* image)
 {
 	image->zero(0);
 	double sunRadius = image->SunRadius();
-	PixLoc sunCenter = image->SunCenter();
+	RealPixLoc sunCenter = image->SunCenter();
 	
 	for (unsigned y=0; y < image->Yaxes(); ++y)
 	{
 		for (unsigned x=0; x < image->Xaxes(); ++x)
 		{
-			double pixelRadius = sunCenter.d(PixLoc(x,y)) / sunRadius;
+			double pixelRadius = distance(sunCenter, RealPixLoc(x,y)) / sunRadius;
 			image->pixel(x,y) = image->percentCorrection(pixelRadius);
 		}
 	}
@@ -101,7 +104,7 @@ void printLines(const string& filename, const EUVImage* image, const vector<Real
 {
 		if(lines.size() > 0)
 		{
-			ofstream lineFile(filename.c_str(), ios::app);
+			ofstream lineFile(filename.c_str(), std::ios::app);
 			if (lineFile.good())
 			{
 				// We write the column header
@@ -170,8 +173,7 @@ int main(int argc, const char **argv)
 	vector<string> steps;
 	if(!preprocessingSteps.empty())
 	{
-		istringstream ss(preprocessingSteps);
-		ss>>steps;
+		preprocessingSteps>>steps;
 		if(steps.size()>0)
 		{
 			filenamePrefix = steps[0];
@@ -186,16 +188,16 @@ int main(int argc, const char **argv)
 	vector<Real> lineValues;
 	if(!lines.empty())
 	{
-		istringstream ss(lines);
-		ss>>lineValues;
+		lines>>lineValues;
 	}
 	
 	// We parse the ALC parameters if any
 	vector<Real> ALCparams;
 	if(!ALCparameters.empty())
 	{
-		istringstream ss(ALCparameters);
-		ss>>ALCparams;
+		ALCparameters>>ALCparams;
+		for(unsigned p = 0; p < ALCparams.size(); ++p)
+			ALCparams[p] /= 100.;
 	}
 
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
@@ -224,15 +226,15 @@ int main(int argc, const char **argv)
 
 		// We write the preprocessed image
 		FitsFile file(filename + "preprocessed.fits", FitsFile::overwrite);
-		file.writeImage(&(image->pixel(0)), image->Xaxes(), image->Yaxes());
+		file.writeImage(&(image->pixel(0)), image->Xaxes(), image->Yaxes(), 0, "Processed image");
 	
 		// We create the image of the ALC limits (it will draw circles on it)
-		ALCLimitsImage(image);
-		file.writeImage(&(image->pixel(0)), image->Xaxes(), image->Yaxes());
+		ALCLimitsImage(image, ALCparams);
+		file.writeImage(&(image->pixel(0)), image->Xaxes(), image->Yaxes(), 0, "Processed image with limits");
 		
 		// We create the function image
 		percentCorrectionImage(image);
-		file.writeImage(&(image->pixel(0)), image->Xaxes(), image->Yaxes());
+		file.writeImage(&(image->pixel(0)), image->Xaxes(), image->Yaxes(), 0, "Percent correction function");
 		
 		delete image;
 	}

@@ -42,7 +42,7 @@ void CumulativeFCMClassifier::addImages(std::vector<EUVImage*> images)
 		{
 			histoChannels = channels;
 		}
-		else if(histoChannels.size() != channels.size()
+		else if(histoChannels.size() != channels.size())
 		{
 			cerr<<"Error : number of channels of the histogram differ from the number of channels of the classifier, check centers file or histogram file."<<endl;
 			exit(EXIT_FAILURE);

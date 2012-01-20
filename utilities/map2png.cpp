@@ -30,12 +30,15 @@ See @ref Compilation_Options for constants and parameters at compilation time.
 #include <string>
 #include <fenv.h>
 #include <iomanip>
+
 #include "../classes/tools.h"
 #include "../classes/constants.h"
-#include "../classes/ColorMap.h"
-#include "../classes/EUVImage.h"
-#include "../classes/MagickImage.h"
+#include "../classes/mainutilities.h"
 #include "../classes/ArgumentHelper.h"
+
+#include "../classes/ColorMap.h"
+#include "../classes/MagickImage.h"
+
 
 
 using namespace std;
@@ -60,16 +63,24 @@ int main(int argc, const char **argv)
 	// Options for the background of color maps
 	bool transparent = false;
 	
+	// Options for the labeling
+	string Label = "{CLASTYPE} {CPREPROC}";
+	
+	// Option for the output size
+	string size;
+	
 	// option for the output directory
 	string outputDirectory = ".";
 
-	string programDescription = "This Program makes the fits files usable with ImageMagick utilities.\n";
+	string programDescription = "This program transform a color map into a png.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nColorType: " + string(typeid(ColorType).name());
 
 	ArgumentHelper arguments;
 	arguments.new_flag('T', "transparent", "\n\tIf you want the null values to be transparent\n\t" , transparent);
+	arguments.new_named_string('L', "Label", "string", "\n\tThe label for the contours.\n\tYou can use keywords from the color map fits file by specifying them between {}\n\t", Label);
+	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
 	arguments.new_named_string('O', "outputDirectory","directory name", "\n\tThe name for the output directory.\n\t", outputDirectory);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images.\n\t", imagesFilenames);
 	arguments.set_description(programDescription.c_str());
@@ -88,26 +99,37 @@ int main(int argc, const char **argv)
 		background.alphaQuantum(0);
 	}
 	
-	MagickImage pngImage;
+	// We parse the size option
+	Magick::Geometry size_geometry(size);
+	if(! size.empty() && !size_geometry.isValid())
+	{
+		cerr << "Error parsing size argument: "<<size<<" is not a valid specification."<< endl;
+		return 2;
+	}
 	
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		FitsFile file(imagesFilenames[p]);
-		Header header;
-		file.readHeader(header);
-		if(isColorMap(header))
+		// We read the file
+		ColorMap* colorizedMap = getImageFromFile(imagesFilenames[p]);
+		// We make the png
+		MagickImage pngImage = colorizedMap->magick(background);
+		
+		if(!Label.empty())
 		{
-			ColorMap image;
-			image.readFits(file);
-			pngImage = image.magick(background);
+			string text = expand(Label, colorizedMap->getHeader());
+			size_t text_size = colorizedMap->Xaxes()/40;
+			pngImage.fillColor("white");
+			pngImage.fontPointsize(text_size);
+			pngImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
+			pngImage.label(text);
 		}
-		else
-		{
-			EUVImage image;
-			image.readFits(file);
-			pngImage = image.magick();
-		}
+		
+		if(size_geometry.isValid())
+			pngImage.scale(size_geometry);
+		
 		pngImage.write(outputDirectory + "/" + stripSuffix(stripPath(imagesFilenames[p])) + ".png");
+		
+		delete colorizedMap;
 	}
 	return EXIT_SUCCESS;
 }

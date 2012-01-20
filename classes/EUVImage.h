@@ -90,6 +90,9 @@ class EUVImage : public SunImage<EUVPixelType>
 		
 		//! Routine to get the ALC parameters
 		virtual std::vector<Real> getALCParameters();
+		
+		//! Routine to set the ALC parameters
+		virtual void setALCParameters(std::vector<Real> ALCParameters);
 
 		//! Routine to do image preprocessing
 		void preprocessing(std::string preprocessingList, const Real radiusRatio = 1.0);

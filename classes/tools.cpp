@@ -58,7 +58,7 @@ istream& operator>>(istream& in, vector<string>& v)
 				value += c;
 			}
 			in.get(c);
-			if(isspace(c))
+			if(! in.good() || isspace(c))
 			{
 				v.push_back(value);
 				break;

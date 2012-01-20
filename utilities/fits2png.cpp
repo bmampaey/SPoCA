@@ -92,7 +92,7 @@ int main(int argc, const char **argv)
 	// option for the output directory
 	string outputDirectory = ".";
 	
-	string programDescription = "This Program makes background out off color regions.\n";
+	string programDescription = "This program transform a fits image in a png image, applying some contrast enhancement.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nDEBUG: "+ itos(DEBUG);
 	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());

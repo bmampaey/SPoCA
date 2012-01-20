@@ -49,6 +49,21 @@ void PCMClassifier::computeU()
 
 void PCMClassifier::computeEta()
 {
+
+	// U must be initialized before computing eta 
+	if(X.size() * numberClasses != U.size())
+	{
+		if(numberClasses > 0 && eta.size() == numberClasses)
+		{
+			// We have centers and eta we can initialized U
+			computeU();
+		}
+		else
+		{
+			cerr<<"Error: U must be initialized before computing eta."<<endl;
+			exit(EXIT_FAILURE);
+		}
+	}
 	eta.assign(numberClasses,0.);
 	vector<Real> sum(numberClasses,0.);
 	MembershipSet::iterator uij = U.begin();

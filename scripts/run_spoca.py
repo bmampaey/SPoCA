@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/python2.6
 import os, os.path, sys
 import string
 import threading
@@ -6,649 +6,373 @@ from Queue import Queue
 import logging
 from collections import deque
 import argparse
-import subprocess, shlex
+import re
+import glob
+import spoca_job
 import time
-from datetime import datetime
-
-import pyfits
-import get_data
+from datetime import datetime, timedelta
 
 
-
-# Return a time in the form yyyymmdd_hhmmss 
-def pretty_date(date):
-	return date.strftime("%Y%m%d_%H%M%S")
-
-# Return the list of desired keywords from the headers of a fitsfile
-def get_keywords(fitsfile, keywords):
-	result = [None]*len(keywords)
-	try:
-		hdulist = pyfits.open(fitsfile)
-		for hdu in hdulist:
-			for k,keyword in enumerate(keywords):
-				if keyword in hdu.header:
-					result[k] = hdu.header[keyword]
-		
-		hdulist.close()
-	except IOError, why:
-		log.warning("Error reading file " + fitsfile + ": "+ str(why))
+def setup_logging(filename = None, quiet = False, verbose = False, debug = False):
+	global logging
+	if debug:
+		logging.basicConfig(level = logging.DEBUG, format='%(levelname)-8s: %(message)s')
+	elif verbose:
+		logging.basicConfig(level = logging.INFO, format='%(levelname)-8s: %(message)s')
+	else:
+		logging.basicConfig(level = logging.CRITICAL, format='%(levelname)-8s: %(message)s')
 	
-	return result
-
-
-def check_options():
+	if quiet:
+		logging.root.handlers[0].setLevel(logging.CRITICAL + 10)
+	elif verbose:
+		logging.root.handlers[0].setLevel(logging.INFO)
+	else:
+		logging.root.handlers[0].setLevel(logging.CRITICAL)
 	
-	def which(program):
-		def is_exe(fpath):
-			return os.path.exists(fpath) and os.access(fpath, os.X_OK)
-		
-		fpath, fname = os.path.split(program)
-		if fpath:
-			if is_exe(program):
-				return program
+	if filename:
+		import logging.handlers
+		fh = logging.FileHandler(filename, delay=True)
+		fh.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(funcName)-12s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+		if debug:
+			fh.setLevel(logging.DEBUG)
 		else:
-			for path in os.environ["PATH"].split(os.pathsep):
-				exe_file = os.path.join(path, program)
-				if is_exe(exe_file):
-					return exe_file
+			fh.setLevel(logging.INFO)
+		
+		logging.root.addHandler(fh)
 
+
+
+timedelta_regex = re.compile(r'((?P<days>\d+?)d)?((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?')
+
+def parse_duration(duration):
+	
+	parts = timedelta_regex.match(duration)
+	if not parts:
+		logging.critical("Cannot convert duration to timedelta : " + str(duration))
 		return None
 	
+	parts = parts.groupdict()
+	time_params = {}
+	for (name, param) in parts.iteritems():
+		if param:
+			time_params[name] = int(param)
+	return timedelta(**time_params)
+
+
+def glob_files(filenames):
 	
-	# Check options for the segmenation
-	if not segmentation:
-		log.critical("No segmentation option found in file :" + args.spoca)
-		return False
+	filelist = list()
 	
-	if not which(segmentation['bin']): 
-		log.critical("segmentation executable "+ segmentation['bin']+ " is missing" )
-		return False
+	for filename in filenames:
+		if os.path.exists(filename):
+			filelist.append(filename)
+		else:
+			files = sorted(glob.glob(filename))
+			if files:
+				filelist.extend(files)
+			else:
+				logging.warning("File %s not found, skipping!", filename)
+	return filelist
+
+
+date_regex = re.compile(r'\d[^.]*\d')
+def file_date(filename):
+	import dateutil.parser
+	filename = os.path.basename(filename)
+	m = date_regex.search(filename)
+	if m:
+		try:
+			filedate = dateutil.parser.parse(m.group(0).replace('_', ''))
+			return filedate
+		
+		except Exception:
+			return None
 	
-	test_args = [segmentation['bin']] + shlex.split(segmentation['args']) + ["file"]*9 + ['--help']
-	process = subprocess.Popen(test_args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	(output, error) = process.communicate()
-	if process.returncode != 0:
-		log.warning("segmentation arguments could be wrong :"+ segmentation['args'])
-		log.warning("tested with command: "+ ' '.join(test_args))
-		log.warning("output: "+ output+ "\nerror: "+ error)
 	else:
-		log.info("Parameters for the segmentation:\n"+ output)
+		return None
 
-	if not os.path.isdir(segmentation['repo']):
-		if os.path.exists(segmentation['repo']):
-			log.critical("segmentation repository "+ segmentation['repo']+ " exists but is not a directory")
-			return False
+def align_files(filelists, files_queue, max_delta = None):
+	
+	def delta_time(fileanddate_set):
+		dates = [fileanddate['date'] for fileanddate in fileanddate_set]
+		return max(dates) - min(dates)
+	
+	def file_set(fileanddate_set):
+		return [filelists[fileanddate['index'][0]][fileanddate['index'][1]] for fileanddate in fileanddate_set]
+	
+	filesanddates = list()
+	for channel in range(len(filelists)):
+		for j in range(len(filelists[channel])):
+			filedate = file_date(filelists[channel][j])
+			if not filedate:
+				log.critical("Cannot extract date of file %s, exiting", filelists[channel][j])
+				sys.exit(1)
+			filesanddates.append({'date': filedate, 'index': (channel,j)})
+	
+	filesanddates.sort(key=lambda k: k['date'], reverse = True)
+	
+	best_set = [None] * len(filelists)
+	while filesanddates:
+		fileanddate = filesanddates.pop()
+		channel = fileanddate['index'][0]
+		if any([b == None for b in best_set]):
+			best_set[channel] = fileanddate
 		else:
-			try:
-				os.mkdir(segmentation['repo'])
-			except OSError, why:
-				log.critical("segmentation repository "+ segmentation['repo']+ " does not exist and could not be created")
-				return False
+			current_set = best_set[:]
+			current_set[channel] = fileanddate
+			# If is is worse then we had our best_set
+			best_delta = delta_time(best_set)
+			current_delta = delta_time(current_set)
+			if (max_delta == None or best_delta < max_delta) and (best_delta < current_delta):
+				files_queue.put(file_set(best_set))
+				best_set = [None] * len(filelists)
+				best_set[channel] = fileanddate
 			else:
-				log.warning("segmentation repository "+ segmentation['repo']+ " did not exist and was created")
-	
-	# Check options for the tracking
-	global do_tracking
-	if not tracking:
-		if do_tracking:
-			log.critical("do_tracking is set, but no tracking option found in file :" + args.spoca)
-			return False
-		do_tracking = False
-	
-	if do_tracking:
-		if not which(tracking['bin']): 
-			log.critical("tracking executable "+ tracking['bin']+ " is missing" )
-			return False
-		
-		test_args = [tracking['bin']] + shlex.split(tracking['args']) + ["file"]*9 + ['--help']
-		process = subprocess.Popen(test_args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		(output, error) = process.communicate()
-		if process.returncode != 0:
-			log.warning("tracking arguments could be wrong :"+ segmentation['args'])
-			log.warning("tested with command: "+ ' '.join(test_args))
-			log.warning("output: "+ output+ "\nerror: "+ error)
-		else:
-			log.info("Parameters for the tracking:\n"+ output)
+				logging.debug("Skipping file %s with best_delta %s too big or worse than %s", filelists[channel][best_set[channel]['index'][1]], best_delta, current_delta)
+				best_set = current_set
 
-		try: 
-	        	tracking['nbrimages'] = int(tracking['nbrimages'])
-		except ValueError:
-			log.critical("tracking nbrimages is not an integer: "+ str(tracking['nbrimages']))
-			return False
-		
-		try: 
-	        	tracking['overlap'] = int(tracking['overlap'])
-		except ValueError:
-			log.critical("tracking overlap is not an integer: "+ str(tracking['overlap']))
-			return False
-		
-		if tracking['nbrimages'] <= tracking['overlap']:
-			tracking['overlap'] = tracking['nbrimages'] - 1
-			log.warning("tracking overlap is bigger than tracking nbrimages. Setting it to : " + str(tracking['overlap']))
+def zip_files(filelists, files_queue):
 	
-	# Check options for the overlay
-	global do_overlay
-	if not overlay:
-		if do_overlay:
-			log.critical("do_overlay is set, but no overlay option found in file :" + args.spoca)
-			return False
-		do_overlay = False
-	
-	if do_overlay:
-		if not which(overlay['bin']): 
-			log.critical("overlay executable "+ overlay['bin']+ " is missing" )
-			return False
-		
-		test_args = [overlay['bin']] + shlex.split(overlay['args']) + ["file"]*9 + ['--help']
-		process = subprocess.Popen(test_args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		(output, error) = process.communicate()
-		if process.returncode != 0:
-			log.warning("overlay arguments could be wrong :"+ overlay['args'])
-			log.warning("tested with command: "+ ' '.join(test_args))
-			log.warning("output: "+ output+ "\nerror: "+ error)
-		else:
-			log.info("Parameters for the overlay:\n"+ output)
-
-		if not os.path.isdir(overlay['repo']):
-			if os.path.exists(overlay['repo']):
-				log.critical("overlay repository "+ overlay['repo']+ " exists but is not a directory")
-				return False
-			else:
-				try:
-					os.mkdir(overlay['repo'])
-				except OSError, why:
-					log.critical("overlay repository "+ overlay['repo']+ " does not exist and could not be created")
-					return False
-				else:
-					log.warning("overlay repository "+ overlay['repo']+ " did not exist and was created")
-	
-	# Check options for the frame
-	global do_frame
-	if not frame:
-		if do_frame:
-			log.critical("do_frame is set, but no frame option found in file :" + args.spoca)
-			return False
-		do_frame = False
-	
-	if do_frame:
-		if not which(frame['bin']): 
-			log.critical("frame executable "+ frame['bin']+ " is missing" )
-			return False
-		
-		if not os.path.isdir(frame['repo']):
-			if os.path.exists(frame['repo']):
-				log.critical("frame repository "+ frame['repo']+ " exists but is not a directory")
-				return False
-			else:
-				try:
-					os.mkdir(frame['repo'])
-				except OSError, why:
-					log.critical("frame repository "+ frame['repo']+ " does not exist and could not be created")
-					return False
-				else:
-					log.warning("frame repository "+ frame['repo']+ " did not exist and was created")
-	
-	# Check options for the movie
-	global do_movie
-	if not movie:
-		if do_movie:
-			log.critical("do_movie is set, but no movie option found in file :" + args.spoca)
-			return False
-		do_movie = False
-	
-	if do_movie:
-		if not which(movie['bin']): 
-			log.critical("movie executable "+ movie['bin']+ " is missing" )
-			return False
-		
-		try: 
-	        	movie['number_passes'] = int(movie['number_passes'])
-		except ValueError:
-			log.warning("movie number passes is not an integer: "+ movie['number_passes']+ ", setting it to 2")
-			movie['number_passes'] = 2
-			
-		if os.path.exists(movie['filename']) and not force:
-			log.critical("movie filename "+ movie['filename']+ " already exists and force is not set")
-			return False
-		
-		if not os.access(os.path.dirname(movie['filename']), os.W_OK):
-			log.critical("cannot write in directory for movie"+ os.path.dirname(movie['filename']))
-			return False
-	
-	return True
+	filesets = zip(*filelists)
+	for fileset in filesets:
+		files_queue.put(fileset)
 
 
-def make_segmentation_jobs(sets_queue, output_queue):
-	
-	def check_fitsfiles(job):
-		fitsfiles = ""
-		for fitsfile in job.arguments['fitsfiles']:
-			if os.path.exists(fitsfile):
-				fitsfiles += ' ' + fitsfile
-			else:
-				return False
-		
-		job.arguments = job.arguments['args'] + fitsfiles
-	
+def make_segmentation_jobs(files_queue, output_queue, sequential, force):
 	
 	counter = 0
-	
-	set = sets_queue.get()
+	job = None
+	fileset = files_queue.get()
 	# None is provided when the queue is empty
-	while set != None:
+	while fileset != None:
 		
-		log.debug("Received set " + str(set))
-		
-		reference_string = pretty_date(set['date'])
-		filename = os.path.join(segmentation['repo'], reference_string + segmentation['map_suffix'])
-		
-		job = None
-		
-		if force or not os.path.exists(filename):
-			
+		filedate = file_date(fileset[0])
+		if filedate:
+			job_name = filedate.strftime("%Y%m%d_%H%M%S")
+		else:
+			job_name = "segmentation_%s" % counter
 			counter += 1
-			job_name = "s"+str(counter)
-			
-			arguments = {'args':'-O ' + segmentation['repo'] + ' ' + segmentation['args'] + ' ', 'fitsfiles':set['filenames']}
-			job = async.Job(job_name, executable=segmentation['bin'], arguments=arguments, job_input=None, extra=segmentation['extra'], require=None, pre_submit=check_fitsfiles, call_back=None, auto_start=True)
-			
-			log.debug("Submitted job " + str(job_name))
-		else :
-			log.debug("Not doing segmentation for file " + filename)
 		
-		output_queue.put({'job': job, 'data': filename})
-		set = sets_queue.get()
+		if sequential:
+			job = spoca_job.segmentation(job_name, fileset, previous = job.job, force = force)
+		else:
+			job = spoca_job.segmentation(job_name, fileset, force = force)
+		
+		if job.job:
+			log.info("Running segmentation job for files %s", fileset)
+		else:
+			log.debug("Not running segmentation job for files %s", fileset)
+		
+		output_queue.put(job)
+		fileset = files_queue.get()
 	
-	log.debug("No more  files for segmentation, exiting thread")
+	log.debug("No more files for segmentation, exiting thread")
+	
 	output_queue.put(None)
 
-
-def make_tracking_jobs(input_queue, output_queue):
+def make_tracking_jobs(job_queue, output_queue, force):
 	
-	def check_fitsfiles(job):
-		fitsfiles = ""
-		for fitsfile in job.arguments['fitsfiles']:
-			if os.path.exists(fitsfile):
-				fitsfiles += ' ' + fitsfile
-		
-		if fitsfiles:
-			job.arguments = job.arguments['args'] + fitsfiles
-		else:
-			return False
-	
-	def call_back(job):
-		log.debug("Tracking job "+ str(job.name) + " terminated\noutput:\n" + str(job.output) + "\nerror:\n" + str(job.error))
-	
-	overlap_files = list()
-	tracking_files = list()
-	required_jobs = list()
-	run_tracking = force
 	counter = 0
 	
-	combo = input_queue.get()
+	job = job_queue.get()
 	# None is provided when the queue is empty
-	while combo != None:
-		tracking_files.append(combo['data'])
-		required_jobs.append(combo['job'])
+	while job != None:
 		
-		# If i have enough file to do the tracking, I add a job
-		if len(tracking_files) + len(overlap_files) >= tracking['nbrimages']:
-			
-			job = None
-						
-			# Do we need to actually run the tracking?
-			if not run_tracking:
-				for filename in tracking_files:
-					if os.path.exists(filename):
-						tracked = get_keywords(filename, ['TRACKED'])[0]
-						if tracked and tracked.lower().find("yes"):
-							log.debug(filename + " has been tracked already")
-							continue
-					run_tracking = True
-					break
-			
-			if run_tracking:
-				counter += 1
-				job_name = "t"+str(counter)
-				arguments = {'args': tracking['args'], 'fitsfiles': overlap_files + tracking_files}
-				job = async.Job(job_name, executable=tracking['bin'], arguments=arguments, job_input=None, extra=tracking['extra'], require=required_jobs, pre_submit=check_fitsfiles, call_back=call_back, auto_start=True)
-				log.debug("Submitted job " + str(job_name))
-			else :
-				log.debug("Not doing traking for files " + str(tracking_files))
-			
-			for filename in tracking_files:
-				output_queue.put({'job': job, 'data':filename})
-			
-			# We prepare for the next tracking job
-			required_jobs = [job]
-			overlap_files = tracking_files[-tracking['overlap']:]
-			tracking_files = list()
-		
-		combo = input_queue.get()
-	
-	# It is possible that some files are left to do tracking
-	if tracking_files:
-		
-		job = None
-						
-		# Do we need to actually run the tracking?
-		if not run_tracking:
-			for filename in tracking_files:
-				if os.path.exists(filename) and get_keywords(filename, ['TRACKED'])[0]:
-					log.debug(filename + " has been tracked already")
-				else:
-					run_tracking = True
-					break
-		if run_tracking:
-			counter += 1
-			job_name = "t"+str(counter)
-			arguments = {'args': tracking['args'], 'fitsfiles': overlap_files + tracking_files}
-			job = async.Job(job_name, executable=tracking['bin'], arguments=arguments, job_input=None, extra=tracking['extra'], require=required_jobs, pre_submit=check_fitsfiles, call_back=call_back, auto_start=True)
-			log.debug("Submitted job " + str(job_name))
-		else :
-			log.debug("Not doing traking for files " + str(tracking_files))
-		
-		for filename in tracking_files:
-			output_queue.put({'job': job, 'data':filename})
-		
-		# We prepare for the next tracking job
-		required_jobs = [job]
-		overlap_files = tracking_files[-tracking['overlap']:]
-		tracking_files = list()
-	
+		log.debug("Making tracking job for files %s", job.results)
+		job_name = "tracking_%s" % counter; counter += 1
+		output_queue.put(spoca_job.tracking(job_name, job.results, force = force))
+		job = job_queue.get()
 	
 	log.debug("No more files for tracking, exiting thread")
+	
 	output_queue.put(None)
 
-	
-def make_overlay_jobs(input_queue, output_queue):
-	
-	def check_fitsfile(job):
-		if os.path.exists(job.arguments['fitsfile']):
-			job.arguments = job.arguments['args'] + ' ' + job.arguments['fitsfile']
-		else:
-			return False
+
+def make_overlay_jobs(job_queue, output_queue, force):
 	
 	counter = 0
 	
-	combo = input_queue.get()
+	job = job_queue.get()
 	# None is provided when the queue is empty
-	while combo != None:
-		
-		reference_string = os.path.splitext(os.path.basename(combo['data']))[0]
-		filename = os.path.join(overlay['repo'], reference_string + '.png')
-		
-		job = None
-		
-		if force or not os.path.exists(filename):
-			counter += 1
-			job_name = "o"+str(counter)
-			
-			arguments = {'args': '-O ' + overlay['repo'] + ' ' + overlay['args'], 'fitsfile': combo['data']}
-			job = async.Job(job_name, executable=overlay['bin'], arguments=arguments, job_input=None, extra=overlay['extra'], require=combo['job'], pre_submit=check_fitsfile, call_back=None, auto_start=True)
-			log.debug("Submitted job " + str(job_name))
-		else :
-			log.debug("Not doing overlay for file " + filename)
-		
-		output_queue.put({'job': job, 'data':filename})
-		
-		combo = input_queue.get()
+	while job != None:
+		for mapname in job.results:
+			log.debug("Making overlay job for map %s", mapname)
+			job_name = "overlay_%s" % counter; counter += 1
+			output_queue.put(spoca_job.overlay(job_name, mapname, force = force))
+		job = job_queue.get()
 	
-	log.debug("No more  files for overlay, exiting thread")
+	log.debug("No more files for overlay, exiting thread")
+	
 	output_queue.put(None)
-
-
-def make_frame_jobs(input_queue, output_queue):
-	
-	def check_image(job):
-		if os.path.exists(job.arguments['image']):
-			job.arguments = job.arguments['image'] + ' ' + job.arguments['args']
-		else:
-			return False
-	
-	
-	counter = 0
-	
-	combo = input_queue.get()
-	# None is provided when the queue is empty
-	while combo != None:
-		
-		reference_string = os.path.basename(combo['data'])
-		filename = os.path.join(frame['repo'], reference_string)
-		
-		job = None
-		
-		if force or not os.path.exists(filename):
-			counter += 1
-			job_name = "f"+str(counter)
-			
-			arguments = {'args': frame['args'] + ' ' + filename, 'image': combo['data']}
-			job = async.Job(job_name, executable=frame['bin'], arguments=arguments, job_input=None, extra=frame['extra'], require=combo['job'], pre_submit=check_image, call_back=None, auto_start=True)
-			log.debug("Submitted job " + str(job_name))
-		else :
-			log.debug("Not doing frame for file " + filename)
-		
-		output_queue.put({'job': job, 'data':filename})
-		
-		combo = input_queue.get()
-	
-	log.debug("No more files for frame, exiting thread")
-	output_queue.put(None)
-
-
-def make_movie_jobs(input_queue):
-	
-	
-	def check_frames(job):
-			frames = ''
-			for f in job.arguments['frames']:
-				if os.path.exists(f):
-					frames += 'mf://' + f.strip() + ' '
-			if not frames:
-				return False
-			else:
-				job.arguments = frames + ' ' + job.arguments['args'] + ' -lavcopts vpass=' + str(job.arguments['pass']) + ' -passlogfile ' + job.arguments['scene_name'] + '.log' +' -o ' + job.arguments['scene_name'] + '.avi'
-	
-	def check_scenes(job):
-			scenes = ''
-			for s in job.arguments['scenes']:
-				if os.path.exists(s):
-					scenes += s.strip() + ' '
-			if not scenes:
-				return False
-			else:
-				job.arguments = scenes + ' ' + job.arguments['args'] + ' -o ' + job.arguments['movie_name']
-	
-	
-	if force or not os.path.exists(movie['filename']):
-		
-		scene = 0
-		scenes = list()
-		movie_jobs = list()
-		required_jobs = list()
-		frames = list()
-		job = None
-		
-		combo = input_queue.get()
-		# None is provided when the queue is empty
-		while combo != None:
-			
-			required_jobs.append(combo['job'])
-			frames.append(combo['data'])
-			
-			# If I have enough frames I can make a movie scene
-			if len(frames) >= movie['nbrframes']:
-				scene += 1
-				scene_name = "scene" + str(scene)
-				scenes.append(scene_name)
-				# We do several pass to improve the movie quality
-				for p in range(movie['number_passes']):
-					job_name = scene_name + "pass" + str(p+1)
-					arguments = {'frames': frames, 'args': movie['args'], 'pass' : p+1, 'scene_name' : scene_name}
-					job = async.Job(job_name, executable=movie['bin'], arguments=arguments, job_input=None, extra=movie['extra'], require=required_jobs, pre_submit=check_frames, call_back=None, auto_start=True)
-					required_jobs = [job]
-				
-				movie_jobs.append(job)
-				required_jobs = list()
-			
-			combo = input_queue.get()
-		
-		# If some frames are left, we make a last scene
-		if len(frames) > 0:
-			scene += 1
-			scene_name = "scene" + str(scene)
-			scenes.append(scene_name)
-			# We do several pass to improve the movie quality
-			for p in range(movie['number_passes']):
-				job_name = scene_name + "pass" + str(p+1)
-				arguments = {'frames': frames, 'args': movie['args'], 'pass' : p+1, 'scene_name' : scene_name}
-				job = async.Job(job_name = scene_name + "pass" + str(p+1), executable=movie['bin'], arguments=arguments, job_input=None, extra=movie['extra'], require=required_jobs, pre_submit=check_frames, call_back=None, auto_start=True)
-				required_jobs = [job]
-			
-			movie_jobs.append(job)
-			required_jobs = list()
-				
-		# We join all the scenes together	
-		arguments = {'scenes': [s+'.avi' for s in scenes], 'args': '-oac copy -ovc copy', 'movie_name' : movie['filename']}
-		async.Job(job_name="movie", executable=movie['bin'], arguments=arguments, job_input=None, extra=movie['extra'], require=movie_jobs, pre_submit=check_scenes, call_back=None, auto_start=True)
-
-
-
 
 # Start point of the script
 if __name__ == "__main__":
 	
+	script_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 	# Default name for the log file
-	log_filename = os.path.splitext(os.path.basename(sys.argv[0]))[0] + '.log'
+	log_filename = os.path.join('/tmp', script_name+'.log')
 	
 	# Get the arguments
-	parser = argparse.ArgumentParser(description='Test the get_data module.')
+	parser = argparse.ArgumentParser(description='Run spoca on many fits files.')
 	parser.add_argument('--debug', '-d', default=False, action='store_true', help='set the logging level to debug for the log file')
 	parser.add_argument('--verbose', '-v', default=False, action='store_true', help='set the logging level to verbose at the screen')
 	parser.add_argument('--log_filename', '-l', default=log_filename, help='set the file where to log')
 	parser.add_argument('--force', '-f', default=False, action='store_true', help='force the remaking of all files')
-	parser.add_argument('--stop_on_error', '-s', default=False, action='store_true', help='terminate the script if there is an error')
-	parser.add_argument('--retry_on_error', '-r', default=False, action='store_true', help='retry to submit a job if it fails. has precedence over stop_on_error')
-	parser.add_argument('--batch_mode', '-b', default=False, action='store_true', help='do not ask before resubmitting a job if it fails. if stop_on_error is set and you answer no, the program will terminate')
-	parser.add_argument('--data', '-D', default='get_data.config', help='Config file for the data')
-	parser.add_argument('--spoca', '-S', default='run_spoca.config', help='Config file for the SPoCA')
-	parser.add_argument('--condor', '-c', default=False, action='store_true', help='Run the jobs with condor')
+	parser.add_argument('--output_directory', '-o', default='results', help='Set the output directory for the maps')
+	parser.add_argument('--extra', '-e', default=None, help='Any extra parameter for condor')
+	parser.add_argument('--align_files', '-a', default=False, action='store_true', help='Try to align files on filename')
+	parser.add_argument('--max_delta', '-m', default=None, help='If align files is set, max delta time between the files of the set. Must be specified like 1h (one hour) or 3m (3 minutes)')
+	parser.add_argument('--sequential', '-s', default=False, action='store_true', help='Run segmentation sequentially instead of concurrently')
+	parser.add_argument('--segmentation_config', '-S', default='segmentation.config', help='Config file for the segmentation')
+	parser.add_argument('--tracking_config', '-T', default=None, help='Config file for the tracking')
+	parser.add_argument('--overlay_config', '-O', default=None, help='Config file for the overlay')	
+	parser.add_argument('--files', '-F', nargs='+', action='append', help='The paths of the fits files')
 	
 	args = parser.parse_args()
 	
-	# Set up of the logging
-	log_filename = args.log_filename
-	if args.debug :
-		logging.basicConfig(filename=log_filename, level = logging.DEBUG, format='%(asctime)s %(name)-12s %(levelname)-8s %(funcName)-12s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-	else:
-		logging.basicConfig(filename=log_filename, level = logging.INFO, format='%(asctime)s %(name)-12s %(levelname)-8s %(funcName)-12s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+	# Setup the logging
+	setup_logging(filename = args.log_filename, quiet = False, verbose = args.verbose, debug = args.debug)
 	
-	console = logging.StreamHandler()
-	console.setFormatter(logging.Formatter('%(levelname)-8s: %(name)-12s: %(message)s'))
-	if args.verbose:
-		console.setLevel(logging.INFO)
-	else:
-		console.setLevel(logging.CRITICAL)
+	# Create a logger
+	log = logging.getLogger(script_name)
 	
-	# Create logger
-	log = logging.getLogger('run_spoca')
-	log.addHandler(console)
 	
-	# set up of the global variables
-	force = args.force
-	stop_on_error = args.stop_on_error
-	retry_on_error = args.retry_on_error
-	batch_mode = args.batch_mode
+	# Parsing and checking of the parameters
+	# Output directory
+	output_directory = os.path.abspath(args.output_directory)
+	if not os.path.isdir(output_directory):
+		try:
+			os.mkdir(output_directory)
+		except OSError, why:
+			log.critical("Output directory %s is not a directory and could not be created: %s", output_directory, why)
+			sys.exit(2)
+		else:
+			log.info("Created output directory %s", output_directory)
 	
-	# Set up of the get_data options
-	data = dict()
-	try :
-		with open(args.data) as f:
-			exec(f)
-	except (IOError) , why:
-		log.critical("Could not open data config file: "+ args.data + ": "+ str(why))
+	# Segmentation config
+	if args.segmentation_config == None or not os.path.exists(args.segmentation_config):
+		log.critical("Config file %s does not exists", args.segmentation_config)
 		sys.exit(2)
-	
-	# Set up of the run_spoca options
-	segmentation = dict()
-	tracking = dict()
-	overlay = dict()
-	frame = dict()
-	movie = dict()
-	do_tracking = False
-	do_overlay = False
-	do_frame = False
-	do_movie = False
-	
-	try :
-		with open(args.spoca) as f:
-			exec(f)
-	except (IOError) , why:
-		log.critical("Could not open spoca config file: "+ args.spoca + ": "+ str(why))
-		sys.exit(2)
-	
-	if not check_options():
-		print "Missing or incorrect spoca options, exiting."
-		sys.exit(2)
-	
-	# We check if we run with condor or simple process
-	if args.condor:
-		import condor_job as async
 	else:
-		import process_job as async
+		spoca_job.segmentation.set_parameters(args.segmentation_config, output_directory, args.extra)
+	
+	ok, reason = spoca_job.segmentation.test_parameters()
+	if ok:
+		log.info("Segmentation parameters seem ok")
+		log.debug(reason)
+	else:
+		log.warn("Segmentation parameters could be wrong")
+		log.warn(reason)	
 
+	# Tracking config
+	if args.tracking_config != None:
+		if not os.path.exists(args.tracking_config):
+			log.critical("Config file %s does not exists", args.tracking_config)
+			sys.exit(2)
+		else:
+			spoca_job.tracking.set_parameters(args.tracking_config, output_directory, args.extra)
+		
+		ok, reason = spoca_job.tracking.test_parameters()
+		if ok:
+			log.info("Tracking parameters seem ok")
+			log.debug(reason)
+		else:
+			log.warn("Tracking parameters could be wrong")
+			log.warn(reason)
+	else:
+		log.info("Not doing tracking")
+	
+	# Overlay config
+	if args.overlay_config != None:
+		if not os.path.exists(args.overlay_config):
+			log.critical("Config file %s does not exists", args.overlay_config)
+			sys.exit(2)
+		else:
+			spoca_job.overlay.set_parameters(args.overlay_config, output_directory, args.extra)
+		
+		ok, reason = spoca_job.overlay.test_parameters()
+		if ok:
+			log.info("Overlay parameters seem ok")
+			log.debug(reason)
+		else:
+			log.warn("Overlay parameters could be wrong")
+			log.warn(reason)
+	else:
+		log.info("Not doing overlays")
+	
+	# Files
+	if not args.files:
+		log.critical("No fits files specified, exiting.")
+		sys.exit(2)
+	
+	# We glob the files
+	filelists = list()
+	for channel in range(len(args.files)):
+		filelists.append(glob_files(args.files[channel]))
+	
+	number_files = min([len(filelist) for filelist in filelists])
+	
+	if number_files == 0:
+		log.critical("No fits files found to process, exiting.")
+		sys.exit(2)
+	
+	for channel in range(len(filelists)):
+		if len(filelists[channel]) != number_files:
+			log.warning("Number of files for channel %d is more than %d, ignoring excess.", channel, number_files)
+	
 	threads = list()
 	
-	# We get the set
-	log.debug("Starting to get data")
-	sets_queue = Queue()
-	get_sets_thread = threading.Thread(group=None, name='get_reduced_sets', target=get_data.get_reduced_sets, args=(data, sets_queue), kwargs={})
-	get_sets_thread.start()
-	threads.append(get_sets_thread)
-	
 	# We make the segmentation jobs
-	input_queue = sets_queue
+	files_queue = Queue()
 	output_queue = Queue()
-	segmentation_thread = threading.Thread(group=None, name='make_segmentation_jobs', target=make_segmentation_jobs, args=(input_queue, output_queue), kwargs={})
+	segmentation_thread = threading.Thread(group=None, name='make_segmentation_jobs', target=make_segmentation_jobs, args=(files_queue, output_queue, args.sequential, args.force), kwargs={})
 	segmentation_thread.start()
 	threads.append(segmentation_thread)
 	
-	if do_tracking:
+	if args.tracking_config != None:
 		# We make the tracking jobs
 		input_queue = output_queue
 		output_queue = Queue()
-		tracking_thread = threading.Thread(group=None, name='make_tracking_jobs', target=make_tracking_jobs, args=(input_queue, output_queue), kwargs={})
+		tracking_thread = threading.Thread(group=None, name='make_tracking_jobs', target=make_tracking_jobs, args=(input_queue, output_queue, args.force), kwargs={})
 		tracking_thread.start()
 		threads.append(tracking_thread)
 	
-	if do_overlay: 
+	if args.overlay_config != None: 
 		# We make the overlay jobs
 		input_queue = output_queue
 		output_queue = Queue()
-		overlay_thread = threading.Thread(group=None, name='make_overlay_jobs', target=make_overlay_jobs, args=(input_queue, output_queue), kwargs={})
+		overlay_thread = threading.Thread(group=None, name='make_overlay_jobs', target=make_overlay_jobs, args=(input_queue, output_queue, args.force), kwargs={})
 		overlay_thread.start()
 		threads.append(overlay_thread)
-		
-	if do_frame:
-		# We make the frames
-		input_queue = output_queue
-		output_queue = Queue()
-		frame_thread = threading.Thread(group=None, name='make_frame_jobs', target=make_frame_jobs, args=(input_queue, output_queue), kwargs={})
-		frame_thread.start()
-		threads.append(frame_thread)
 	
-	if do_movie:
-		# We make the movie
-		input_queue = output_queue
-		movie_thread = threading.Thread(group=None, name='make_movie_jobs', target=make_movie_jobs, args=(input_queue,), kwargs={})
-		movie_thread.start()
-		threads.append(movie_thread)
-
-	# We wait that all jobs are done
-
+		
+	# We feed the files to the threads
+	log.debug("Starting to feed files")
+	if(args.align_files):
+		max_delta = None
+		if args.max_delta:
+			max_delta = parse_duration(args.max_delta)
+			if max_delta == None:
+				log.critical("Error parsing max_delta %s, exiting.", args.max_delta)
+				sys.exit(2)
+		align_files(filelists, files_queue, max_delta)
+	else:
+		zip_files(filelists, files_queue)
+	
+	files_queue.put(None)
+	
+	# We wait that all threads are done
 	for thread in threads:
+		log.debug("Waiting for thread %s to terminate", thread.name)
 		thread.join()
-		log.info(thread.name + " thread has terminated")
-
-	async.Job.wait()
+		log.info("Thread %s has terminated", thread.name)
+	
+	# We wait for all jobs to terminate
+	job = output_queue.get()
+	while job != None:
+		log.debug("Waiting for job %s to terminate", job.job.name)
+		while job.job and not job.job.isTerminated():
+			time.sleep(1)
+		log.info("Job %s has terminated.", job.job.name)
+		job = output_queue.get()
 

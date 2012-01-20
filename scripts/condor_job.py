@@ -121,7 +121,7 @@ def _timeout_call(prog, input=None, timeout=0):
 		
 	start_time = time.time()
 	while process.poll() == None and time.time() - start_time < timeout:
-		time.sleep(timeout/10.)
+		time.sleep(0.5)
 	
 	if process.poll() == None:
 		module_logger.debug("Program did not terminate within the timeout, killing it. "+ ' '.join(prog))

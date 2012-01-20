@@ -1,5 +1,5 @@
 ; Procedure that align hmi and aia images
-PRO align, hmidir = hmidir, aiadir = aiadir, outdir = outdir
+PRO align_HMI_with_AIA, hmidir = hmidir, aiadir = aiadir, outdir = outdir
 	hmifiles = file_search(hmidir, '*fits')
 	aiafiles = file_search(aiadir, '*fits')
 	IF N_ELEMENTS(hmifiles) EQ 0 THEN BEGIN

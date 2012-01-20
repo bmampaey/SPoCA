@@ -9,21 +9,39 @@
 ; SSW=/path/to/your/solar/soft
 ; SSW_ONTOLOGY=$SSW/vobs/ontology
 ; AIA_CALIBRATION=$SSW/sdo/aia/calibration
+; N.B. Don't forget to export the variables
+
 
 ; Then to run the procedure, type the following command in a regular shell
-; idl -rt=runtime_aia_prep.sav -args fitsfile1 fitsfile2 fitsfile3 ...
+; idl -queue -rt=runtime_aia_prep.sav -args outdir fitsfile1 fitsfile2 fitsfile3 ...
+; N.B. The -queue says to wait for a license to be available
 
 
 PRO runtime_aia_prep
 
-files = COMMAND_LINE_ARGS(count=nfiles)
-IF nfiles EQ 0 THEN BEGIN
-	print, "Error you must provide at least one fits file to prep"
+; This is supposed to avoid any error message on the screen 
+Set_Plot, 'NULL'
+
+args = COMMAND_LINE_ARGS(count=nargs)
+IF nargs EQ 0 THEN BEGIN
+	PRINT, "Error you must provide at least one fits file, exiting"
 	RETURN
 ENDIF
 
-print, "About to aia_prep the following ", nfiles, " files: ", files
+outdir = '.'
+; If the first parameter is a writable directory, we set it as the outdir
 
-aia_prep, files, indgen(nfiles), /verbose, outdir='.', /do_write_fits
+IF FILE_TEST(args[0], /DIRECTORY, /WRITE) THEN BEGIN
+	outdir = args[0]
+	IF nargs EQ 1 THEN BEGIN
+		PRINT, "Error you must provide at least one fits file, exiting"
+		RETURN
+	ENDIF ELSE files = args[1:*]
+ENDIF ELSE files = args
+
+PRINT, "About to aia_prep the following files: ", files
+
+aia_prep, files, indgen(N_ELEMENTS(files)), /verbose, outdir=outdir, /do_write_fits
 
 END
+

@@ -226,7 +226,7 @@ if __name__ == "__main__":
 	parser.add_argument('--segmentation_config', '-S', default='segmentation.config', help='Config file for the segmentation')
 	parser.add_argument('--tracking_config', '-T', default=None, help='Config file for the tracking')
 	parser.add_argument('--overlay_config', '-O', default=None, help='Config file for the overlay')	
-	parser.add_argument('--files', '-F', nargs='+', action='append', help='The paths of the fits files')
+	parser.add_argument('--files', '-F', nargs='+', action='append', help='The paths of the fits files. Must be specified once per channel.')
 	
 	args = parser.parse_args()
 	

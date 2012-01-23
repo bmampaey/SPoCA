@@ -4,7 +4,6 @@ import logging
 import argparse
 import threading
 from Queue import Queue
-from condor_job import Job
 import spoca_job
 import time
 import re
@@ -173,7 +172,7 @@ if __name__ == "__main__":
 	parser.add_argument('--max_delta', '-m', default=None, help='If align files is set, max delta time between the files of the set. Must be specified like 1h (one hour) or 3m (3 minutes)')
 	parser.add_argument('--overlay_config', '-O', default=None, help='Config file for the overlay')
 	parser.add_argument('--maps', '-M', nargs='+', help='The paths of the maps')
-	parser.add_argument('--files', '-F', nargs='*', action='append', help='The paths of the fits files')
+	parser.add_argument('--files', '-F', nargs='*', action='append', help='The paths of the fits files. Must be specified once per channel.')
 
 	
 	args = parser.parse_args()

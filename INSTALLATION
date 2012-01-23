@@ -26,6 +26,7 @@ The directories are organized as follow :
 - spoca/cgt		: a library of graph class
 - spoca/script		: repository of scripts (mainly in perl) to help in running spoca and manipulating output (creation of movies, ...)
 - spoca/utilities	: repository for some utilities program
+- spoca/documentation	: repository for the documentation
 
 There is also 1 directory for your convenience :
 
@@ -42,13 +43,19 @@ There is also 1 directory for your convenience :
 - ImageMagick Magick++ version 6.6 (only for certain progams)
 - perl (only for the scripts)
 - perl modules such as fits, etc 
+- python 2.6 for some scripts
+- condor for some scripts
 
 @section compilation_sec Compilation options
 
 See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
 
-*/
+@section documentation_seq Generating the documentation
 
+The documentation of SPoCA is automatically genereted by Doxygen. The Doxygen configuration file is located in spoca/documentation/Doxyfile.cfg.
+You can regenerate it by changing to the spoca directory and running doxygen like so "doxygen documentation/Doxyfile.cfg"
+
+*/
 
 
 

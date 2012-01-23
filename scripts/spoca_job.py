@@ -11,7 +11,7 @@ class segmentation:
 	args = dict()
 	extra = None
 	output_dir = "results"
-	map_types = {'A': 'ARMaps', 'C': 'CHMaps', 'S': 'SegmentedMap', 'M': 'MixedMap'}
+	map_types = {'A': 'ARMap', 'C': 'CHMap', 'S': 'SegmentedMap', 'M': 'MixedMap'}
 	
 	@classmethod
 	def set_parameters(cls, configfile, output_dir = "results", extra = None):
@@ -201,6 +201,24 @@ class tracking:
 			cls.bin = cls.args["bin"]
 			del cls.args["bin"]
 		
+		cls.overlap = None
+		if "overlap" in cls.args:
+			try:
+				cls.overlap = int(cls.args["overlap"])
+			except Exception:
+				pass
+		
+		cls.max_files = None
+		if "max_files" in cls.args:
+			try:
+				cls.max_files = int(cls.args["max_files"])
+				del cls.args["max_files"]
+			except Exception:
+				pass
+		# If max_files has not been set, we set it to 3 times the overlap
+		elif cls.overlap:
+			cls.max_files = 3 * cls.overlap
+		
 		cls.bin = os.path.abspath(cls.bin)
 		
 		if extra:
@@ -215,6 +233,12 @@ class tracking:
 		arguments = cls.build_arguments(["testfile1", "testfile2"])
 		if not arguments:
 			return False, "Could not create arguments"
+		
+		if not cls.overlap:
+			return False, "Overlap was not set correctly"
+		
+		if not cls.max_files:
+			return False, "Max_files was not set correctly"
 		
 		test_args = [cls.bin] + arguments + ['--help']
 		process = subprocess.Popen(test_args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -254,18 +278,21 @@ class tracking:
 			return False
 		return False
 		
-	def __init__(self, name, fitsfiles, auto_start=True, force=False):
+	def __init__(self, name, fitsfiles, previous=None, auto_start=True, force=False):
 		from condor_job import Job
 		self.results = fitsfiles
 		make_job = force
 		if not force:
 			for fitsfile in fitsfiles:
-				 if not _has_been_tracked(fitsfile):
+				 if not tracking._has_been_tracked(fitsfile):
 				 	make_job = True
 				 	break
 		if make_job:
-			arguments = ' '.join(self.build_arguments(fitsfiles, name))
-			self.job = Job(name, self.bin, arguments, extra=self.extra, auto_start=auto_start)
+			arguments = ' '.join(self.build_arguments(fitsfiles))
+			if previous:
+				self.job = Job(name, self.bin, arguments, require=previous, extra=self.extra, auto_start=auto_start)
+			else:
+				self.job = Job(name, self.bin, arguments, extra=self.extra, auto_start=auto_start)
 		else:
 			self.job = None
 
@@ -343,7 +370,7 @@ class overlay:
 		base = os.path.splitext(os.path.split(mapname)[1])[0]
 		return os.path.join(cls.output_dir, base+"*.png")
 	
-	def __init__(self, name, mapname, fitsfiles=[], auto_start=True, force=False):
+	def __init__(self, name, mapname, fitsfiles=[], previous=None, auto_start=True, force=False):
 		from condor_job import Job
 		if not fitsfiles:
 			fitsfiles = ['{IMAGE001}']
@@ -355,7 +382,10 @@ class overlay:
 		
 		if make_job:
 			arguments = ' '.join(self.build_arguments(mapname, fitsfiles))
-			self.job = Job(name, self.bin, arguments, extra=self.extra, auto_start=auto_start)
+			if previous:
+				self.job = Job(name, self.bin, arguments, require=previous, extra=self.extra, auto_start=auto_start)
+			else:
+				self.job = Job(name, self.bin, arguments, extra=self.extra, auto_start=auto_start)
 		else:
 			self.job = None
 

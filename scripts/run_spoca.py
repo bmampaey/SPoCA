@@ -153,7 +153,7 @@ def make_segmentation_jobs(files_queue, output_queue, sequential, force):
 			job_name = "segmentation_%s" % counter
 			counter += 1
 		
-		if sequential:
+		if sequential and job:
 			job = spoca_job.segmentation(job_name, fileset, previous = job.job, force = force)
 		else:
 			job = spoca_job.segmentation(job_name, fileset, force = force)
@@ -174,14 +174,47 @@ def make_tracking_jobs(job_queue, output_queue, force):
 	
 	counter = 0
 	
-	job = job_queue.get()
+	max_files = spoca_job.tracking.max_files
+	overlap = spoca_job.tracking.overlap
+	
+	log.debug("Tracking max_files %s, overlap %s", max_files, overlap)
+	
+	files_to_track = list()
+	overlap_files = list()
+	
+	previous_jobs = list()
+	
 	# None is provided when the queue is empty
+	job = job_queue.get()
 	while job != None:
 		
-		log.debug("Making tracking job for files %s", job.results)
-		job_name = "tracking_%s" % counter; counter += 1
-		output_queue.put(spoca_job.tracking(job_name, job.results, force = force))
+		files_to_track.append(job.results[0])
+		previous_jobs.append(job.job)
+		
+		if len(files_to_track) + len(overlap_files) >= max_files:
+			job_name = "tracking_%s" % counter; counter += 1
+			tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_jobs, force = force)
+			if tracking_job.job:
+				log.info("Running tracking job for files %s", tracking_job.results)
+			else:
+				log.debug("Not running tracking job for files %s", tracking_job.results)
+			
+			output_queue.put(tracking_job)
+			overlap_files = files_to_track[-overlap:]
+			files_to_track = list()
+			previous_jobs = list()
+		
 		job = job_queue.get()
+	
+	if files_to_track:
+		log.debug("Making LAST tracking job.")
+		job_name = "tracking_%s" % counter; counter += 1
+		tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_jobs, force = force)
+		if tracking_job.job:
+			log.info("Running tracking job for files %s", tracking_job.results)
+		else:
+			log.debug("Not running tracking job for files %s", tracking_job.results)
+		output_queue.put(tracking_job)
 	
 	log.debug("No more files for tracking, exiting thread")
 	
@@ -196,9 +229,13 @@ def make_overlay_jobs(job_queue, output_queue, force):
 	# None is provided when the queue is empty
 	while job != None:
 		for mapname in job.results:
-			log.debug("Making overlay job for map %s", mapname)
 			job_name = "overlay_%s" % counter; counter += 1
-			output_queue.put(spoca_job.overlay(job_name, mapname, force = force))
+			overlay_job = spoca_job.overlay(job_name, mapname, previous=[job.job], force = force)
+			if overlay_job.job:
+				log.info("Running overlay job for map %s", mapname)
+			else:
+				log.debug("Not running overlay job for map %s", mapname)
+			output_queue.put(overlay_job)
 		job = job_queue.get()
 	
 	log.debug("No more files for overlay, exiting thread")
@@ -210,7 +247,7 @@ if __name__ == "__main__":
 	
 	script_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 	# Default name for the log file
-	log_filename = os.path.join('/tmp', script_name+'.log')
+	log_filename = os.path.join('./', script_name+'.log')
 	
 	# Get the arguments
 	parser = argparse.ArgumentParser(description='Run spoca on many fits files.')
@@ -270,7 +307,7 @@ if __name__ == "__main__":
 			log.critical("Config file %s does not exists", args.tracking_config)
 			sys.exit(2)
 		else:
-			spoca_job.tracking.set_parameters(args.tracking_config, output_directory, args.extra)
+			spoca_job.tracking.set_parameters(args.tracking_config, args.extra)
 		
 		ok, reason = spoca_job.tracking.test_parameters()
 		if ok:

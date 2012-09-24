@@ -34,13 +34,13 @@ template<class T>
 class SunImage : public Image<T>
 {
 	protected :
-		//! A header containing all keywords when the image is read from a fits file
-		Header header;
-	
 		//! Parameters about the coordinates of the sun's image.
 		WCS wcs;
 	
 	public :
+		//! A header containing all keywords when the image is read from a fits file
+		Header header;
+		
 		//! Constructor for an SunImage of size xAxes x yAxes
 		SunImage(const unsigned& xAxes = 0, const unsigned& yAxes = 0);
 		

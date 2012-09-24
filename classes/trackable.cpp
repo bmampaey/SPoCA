@@ -2,7 +2,6 @@
 #include <map>
 
 using namespace std;
-using namespace cgt;
 
 
 ColorType newColor;
@@ -90,91 +89,55 @@ unsigned overlay(ColorMap* image1, const Region* region1, ColorMap* image2, cons
 
 }
 
-
-// Find the biggest direct ascendant of a node (the one I have the biggest intersection with)
-RegionGraph::node* biggestParent(const RegionGraph::node* n)
-{
-	const RegionGraph::adjlist &parentsList = n->iadjlist();
-	const RegionGraph::adjlist::const_iterator itadjEnd = parentsList.end();
-	RegionGraph::adjlist::const_iterator biggest = parentsList.begin();
-	if(biggest == parentsList.end())
-		return NULL;
-	for (RegionGraph::adjlist::const_iterator itadj = parentsList.begin(); itadj != itadjEnd; ++itadj)
-	{
-		if(itadj->edge().value() > biggest->edge().value())
-			biggest = itadj;
-
-	}
-	return &(biggest->node());
-}
-
-
-// Find the biggest direct descendant of a node (the one I have the biggest intersection with)
-RegionGraph::node* biggestSon(const RegionGraph::node* n)
-{
-	const RegionGraph::adjlist &sonsList = n->adjlist();
-	const RegionGraph::adjlist::const_iterator itadjEnd = sonsList.end();
-	RegionGraph::adjlist::const_iterator biggest = sonsList.begin();
-	if(biggest == sonsList.end())
-		return NULL;
-	for (RegionGraph::adjlist::const_iterator itadj = sonsList.begin(); itadj != itadjEnd; ++itadj)
-	{
-		if(itadj->edge().value() > biggest->edge().value())
-			biggest = itadj;
-
-	}
-	return &(biggest->node());
-}
-
-
-
 // Color a node
-void colorize(RegionGraph::node& me)
+void RegionGraph::node::colorize()
 {
 	//If I'm already colored than I am fine
-	if(me.value()->Color() != 0)
+	if(region->Color() != 0)
 		return;
 
 	// I need all my parents to have their color
-	const RegionGraph::adjlist &parentsList = me.iadjlist();
-	const RegionGraph::adjlist::const_iterator itadjEnd = parentsList.end();
-	RegionGraph::adjlist::const_iterator biggestParent = parentsList.begin();
-	for (RegionGraph::adjlist::const_iterator itadj = parentsList.begin(); itadj != itadjEnd; ++itadj)
+	RegionGraph::node::const_iterator biggestInEdge = in_begin();
+	for (RegionGraph::node::const_iterator it = in_begin(); it != in_end(); ++it)
 	{
 		//Carefull there is recursion here
-		colorize(itadj->node()); 
+		it->from->colorize(); 
 		// We search for the biggest parent
-		if(itadj->edge().value() > biggestParent->edge().value())
-			biggestParent = itadj;
+		if(it->weight > biggestInEdge->weight)
+			biggestInEdge = it;
 		// We inherit the firstObservationTime of my parents
-		if(itadj->node().value()->FirstObservationTime() < me.value()->FirstObservationTime())
-			me.value()->setFirstObservationTime(itadj->node().value()->FirstObservationTime());
+		if(it->from->get_region()->FirstObservationTime() < region->FirstObservationTime())
+			region->setFirstObservationTime(it->from->get_region()->FirstObservationTime());
 
 	}
 	//Either I am the only child of my biggest parent, or I am his biggest Son
-	if(biggestParent != itadjEnd && me.value() == biggestSon(&(biggestParent->node()))->value() )
+	if(biggestInEdge != in_end() && region == biggestInEdge->from->biggestSon()->get_region())
 	{
-		me.value()->setColor(biggestParent->node().value()->Color());
-		me.value()->setFirstObservationTime(biggestParent->node().value()->FirstObservationTime());
+		region->setColor(biggestInEdge->from->get_region()->Color());
+		region->setFirstObservationTime(biggestInEdge->from->get_region()->FirstObservationTime());
 	}
 	//There was a split or a merge, or I have no parents
 	else
-		me.value()->setColor(++newColor);
-
+		region->setColor(++newColor);
 }
 
 
 // Tell if there is a path between a node and a region
-bool path(const RegionGraph::node* n, const Region* r)
+bool RegionGraph::node::path(const RegionGraph::node* to, std::set<node*>* visited)
 {
-	if (n->value() == r)
-		return true;
+	if(visited->find(this) != visited->end()) {
+		return false;
+	}
+	
+	visited->insert(this);
 
-	const RegionGraph::adjlist &adjList = n->adjlist();
-	const RegionGraph::adjlist::const_iterator itadjEnd = adjList.end();
-	for (RegionGraph::adjlist::const_iterator itadj = adjList.begin(); itadj != itadjEnd; ++itadj)
+	if (to->get_region() == region) {
+		return true;
+	}
+
+	for (std::vector<edge>::const_iterator it = out_edges.begin(); it != out_edges.end(); ++it)
 	{
-		if(path(&(itadj->node()), r))
+		if(it->from->path(it->to, visited))
 			return true;
 
 	}
@@ -209,14 +172,11 @@ void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, c
 
 		}
 		// Then we output all edges info
-		const RegionGraph::const_iterator itnEnd = g.end();
-		for (RegionGraph::const_iterator itn = g.begin(); itn != itnEnd; ++itn)
+		for (RegionGraph::const_iterator it_node = g.begin(); it_node != g.end(); ++it_node)
 		{
-			const RegionGraph::adjlist &adjList = itn->adjlist();
-			const RegionGraph::adjlist::const_iterator itadjEnd = adjList.end();
-			for (RegionGraph::adjlist::const_iterator itadj = adjList.begin(); itadj != itadjEnd; ++itadj)
+			for (RegionGraph::node::const_iterator it_edge = it_node->out_begin(); it_edge != it_node->out_end(); ++it_edge)
 			{
-				graphFile <<"\""<< itn->value()->HekLabel()<<"\" -> \"" << itadj->node().value()->HekLabel()<< "\" [label="<<itadj->edge().value()<<"];" << endl;
+				graphFile <<"\""<< it_node->get_region()->HekLabel()<<"\" -> \"" << it_edge->to->get_region()->HekLabel()<< "\" [label="<<it_edge->weight<<"];" << endl;
 			}
 
 		}

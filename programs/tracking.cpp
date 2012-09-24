@@ -53,14 +53,12 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 #include "../classes/Region.h"
 #include "../classes/trackable.h"
 #include "../classes/TrackingRelation.h"
-#include "../cgt/graph.h"
 #include "../classes/FitsFile.h"
 #include "../classes/Header.h"
 
 
 using namespace std;
 using namespace dsr;
-using namespace cgt;
 
 string filenamePrefix;
 
@@ -178,7 +176,7 @@ int main(int argc, const char **argv)
 	{
 		for (unsigned r = 0; r < regions[s].size(); ++r)
 		{
-			tracking_graph.insert_vertex(regions[s][r]);
+			tracking_graph.add_node(regions[s][r]);
 		}
 	}
 
@@ -216,7 +214,7 @@ int main(int argc, const char **argv)
 			{
 				for (unsigned r2 = 0; r2 < regions[s2].size(); ++r2)
 				{			
-					if(!path(tracking_graph.get_node(regions[s1][r1]), regions[s2][r2]))
+					if(!tracking_graph.get_node(regions[s1][r1])->path(tracking_graph.get_node(regions[s2][r2])))
 					{		
 						unsigned intersectPixels = 0;
 						if(derotate)
@@ -229,7 +227,7 @@ int main(int argc, const char **argv)
 						}
 						if(intersectPixels > 0)
 						{
-							tracking_graph.insert_edge(intersectPixels, regions[s1][r1], regions[s2][r2]);
+							tracking_graph.add_edge(tracking_graph.get_node(regions[s1][r1]), tracking_graph.get_node(regions[s2][r2]), intersectPixels);
 						}
 					}
 				}
@@ -256,7 +254,7 @@ int main(int argc, const char **argv)
 	const RegionGraph::iterator itnEnd = tracking_graph.end();
 	for (RegionGraph::iterator itn = tracking_graph.begin(); itn != itnEnd; ++itn)
 	{
-		colorize(*itn);
+		itn->colorize();
 	}
 
 	#if DEBUG >= 2
@@ -347,7 +345,7 @@ int main(int argc, const char **argv)
 		{
 			const RegionGraph::node* myBiggestParent = biggestParent( tracking_graph.get_node(regions[s][r]) );
 			if(myBiggestParent)
-			 	regions[s][r]->setColor( myBiggestParent->value()->Color() );
+			 	regions[s][r]->setColor( myBiggestParent->get_region()->Color() );
 		}
 	}
 	
@@ -371,14 +369,12 @@ int main(int argc, const char **argv)
 	{
 		// We create for each region of map[last] the list of parents that have a color existing in map[previous_last_hek_map]
 		const RegionGraph::node* n = tracking_graph.get_node(regions[last][r]);
-		const RegionGraph::adjlist &parentsList = n->iadjlist();
-		const RegionGraph::adjlist::const_iterator itadjEnd = parentsList.end();
 		vector<ColorType> ancestors_color;
-		for (RegionGraph::adjlist::const_iterator itadj = parentsList.begin(); itadj != itadjEnd; ++itadj)
+		for (RegionGraph::node::const_iterator it = n->in_begin(); it != n->in_end(); ++it)
 		{
 			for (unsigned r1 = 0; r1 < regions[previous_last_hek_map].size(); ++r1)
 			{
-				if(itadj->node().value()->Color() == regions[previous_last_hek_map][r1]->Color())
+				if(it->from->get_region()->Color() == regions[previous_last_hek_map][r1]->Color())
 				{
 					ancestors_color.push_back(regions[previous_last_hek_map][r1]->Color());
 					break;

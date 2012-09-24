@@ -5,12 +5,11 @@
 
 @section building_seq Building the software
 
-The programs have been develloped to run on linux and have not been tested on any other plateform.
+The programs have been developed to run on linux and have not been tested on any other platform.
 
-To compile a program named program_name.x type "make -f program_name.mk -B", this will generate the corresponding executable in the bin directory.
-
-If there is no make file for a program you can always try to generate one with the command ./script/makemake.pl ./programs/program_name.cpp.
-It should generate a file ./program_name.mk
+To compile all programs for both single channel and dual channel, first generate the Makefile using "bash makemake.sh > Makefile".
+Do not edit the Makefile by hand, edit makemake.sh if you want to change the compiler flags, and regenerate the Makefile after you made changes.
+Also regenerate the Makefile if you change which source files include which headers, or add/remove source files.
 
 You can always get help for a program or a script by calling it with the -h option 
  
@@ -18,12 +17,24 @@ You can always get help for a program or a script by calling it with the -h opti
 
 The directories are organized as follow :
 
-- spoca			: repository for the makefiles
+- spoca			: repository for spoca
 - spoca/programs	: repository for the main c++ files of programs
-- spoca/classes		: repository for the classes .h and .cpp files (classifiers, images, ...) written specifically for SPoCA
-- spoca/bin		: repository for executables
-- spoca/objects		: repository for temporary object files during compilation
-- spoca/cgt		: a library of graph class
+- spoca/classes		: repository for the classes .h and .cpp files (classifiers, images, ...) written specifically for SPoCA, these are made into shared libraries libSPoCA1.so and libSPoCA2.so
+- spoca/bin1		: repository for executables that operate on 1 channel (compiled with -DNUMBERCHANNELS=1 and linked with libSPoCA1.so)
+- spoca/bin2		: repository for executables that operate on 2 channels (compiled with -DNUMBERCHANNELS=2 and linked with libSPoCA2.so)
+- spoca/lib		: repository for shared library files libSPoCA1.so (one channel, compiled with -DNUMBERCHANNELS=1) and libSPoCA2.so (two channels, compiled with -DNUMBERCHANNELS=2), 
+you need to include the full path to this directory in the environment variable LD_LIBRARY_PATH so the executables can find these libraries.
+Either on the command line when you call a program, for example:
+
+$ LD_LIBRARY_PATH="/path/to/spoca/lib:$LD_LIBRARY_PATH" /path/to/spoca/bin1/classification.x <...>
+
+Or by setting the variable and exporting it, after which it is available to all commands you run in this shell:
+
+$ export LD_LIBRARY_PATH="/path/to/spoca/lib:$LD_LIBRARY_PATH"
+$ /path/to/spoca/bin1/classification.x <...>
+
+If you place the export line in your .bash_profile the variable will automatically be set everytime you open a new shell.
+
 - spoca/script		: repository of scripts (mainly in perl) to help in running spoca and manipulating output (creation of movies, ...)
 - spoca/utilities	: repository for some utilities program
 - spoca/documentation	: repository for the documentation

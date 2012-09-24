@@ -754,7 +754,7 @@ MagickImage ColorMap::magick(const Magick::Color background)
 
 MagickImage ColorMap::magick()
 {
-	return magick(Magick::Color(0, 0 ,0, MaxRGB));
+	return magick(Magick::Color(0,0,0));
 }
 #endif
 

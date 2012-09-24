@@ -13,7 +13,7 @@ Veronique Delouille veronique.delouille@oma.be
 
 SPoCA stands for Spatial Possibilistic Classification Algorithm.
 
-It is a multi-channel unsupervised spatially-constrained fuzzy clustering algorithm.
+It's a multi-channel unsupervised spatially-constrained fuzzy clustering algorithm.
 
 It's purpose is to segment Extreme Ultra Violet (EUV) images of the sun into 3 categories: Quiet Sun (QS), Active %Region (AR) and Coronal Hole (CH)
 

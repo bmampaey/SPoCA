@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
-CPPFLAGS="`Magick++-config --cppflags | tr -d '\n'` -DMAGICK"
+if [ -z "$CFITSIO_HOME" ]; then
+	CFITSIO_HOME=/usr/local
+fi
+
+CPPFLAGS="-I$CFITSIO_HOME/include `Magick++-config --cppflags | tr -d '\n'` -DMAGICK"
 CXXFLAGS="-pipe -fPIC -fkeep-inline-functions -g -O3 ${CPPFLAGS}"
-LDFLAGS="`Magick++-config --ldflags --libs | tr -d '\n'` -lcfitsio -lpthread -Llib"
+LDFLAGS="-L$CFITSIO_HOME/lib `Magick++-config --ldflags --libs | tr -d '\n'` -lcfitsio -lpthread -Llib"
 
 BINARIES1=`echo programs/*.cpp | sed "s/programs\/\([^ ]*\)\.cpp/bin1\/\1.x/g"`
 BINARIES2=`echo programs/*.cpp | sed "s/programs\/\([^ ]*\)\.cpp/bin2\/\1.x/g"`
@@ -11,8 +15,8 @@ OBJECTS1=`echo classes/*.cpp | sed "s/classes\/\([^ ]*\)\.cpp/classes\/objects1\
 OBJECTS2=`echo classes/*.cpp | sed "s/classes\/\([^ ]*\)\.cpp/classes\/objects2\/\1.o/g"`
 
 echo "all: onechannel twochannels"
-echo "onechannel: ${BINARIES1}"
-echo "twochannels: ${BINARIES2}"
+echo "onechannel: lib/libSPoCA1.so ${BINARIES1}"
+echo "twochannels: lib/libSPoCA2.so ${BINARIES2}"
 
 echo "# This blank rule prevents make from deleting intermediary object files"
 echo ".SECONDARY:"

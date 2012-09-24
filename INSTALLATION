@@ -7,6 +7,8 @@
 
 The programs have been developed to run on linux and have not been tested on any other platform.
 
+If cfitsio is installed in a non-standard location, make sure the environment variable CFITSIO_HOME is set to the directory where it was installed,
+meaning the directory that contains the lib and include directories for cfitsio.
 To compile all programs for both single channel and dual channel, first generate the Makefile using "bash makemake.sh > Makefile".
 Do not edit the Makefile by hand, edit makemake.sh if you want to change the compiler flags, and regenerate the Makefile after you made changes.
 Also regenerate the Makefile if you change which source files include which headers, or add/remove source files.

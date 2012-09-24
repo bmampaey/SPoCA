@@ -113,7 +113,7 @@ public:
 		const_iterator out_begin() const { return out_edges.begin(); }
 		const_iterator out_end() const { return out_edges.end(); }
 
-		friend RegionGraph;
+		friend class RegionGraph;
 	};
 
 private:

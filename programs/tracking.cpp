@@ -318,6 +318,7 @@ int main(int argc, const char **argv)
 	#ifndef HEK
 	cout<<"Last color assigned: "<<newColor<<endl;	
 	#else
+	#error "This code has not been tested yet"
 	
 	/*	For The HEK we need to gives the relations between the hek events (<=> region in our program)
 		The relations are of type follow, split and merge

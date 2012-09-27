@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 
-if [ -z "$CFITSIO_HOME" ]; then
-	CFITSIO_HOME=/usr/local
-fi
-
-CPPFLAGS="-I$CFITSIO_HOME/include `Magick++-config --cppflags | tr -d '\n'` -DMAGICK"
+CPPFLAGS="`Magick++-config --cppflags | tr -d '\n'` -DMAGICK"
 CXXFLAGS="-pipe -fPIC -fkeep-inline-functions -g -O3 ${CPPFLAGS}"
-LDFLAGS="-L$CFITSIO_HOME/lib `Magick++-config --ldflags --libs | tr -d '\n'` -lcfitsio -lpthread -Llib"
+LDFLAGS="`Magick++-config --ldflags --libs | tr -d '\n'` -lcfitsio -lpthread -Llib"
 
 BINARIES1=`echo programs/*.cpp | sed "s/programs\/\([^ ]*\)\.cpp/bin1\/\1.x/g"`
 BINARIES2=`echo programs/*.cpp | sed "s/programs\/\([^ ]*\)\.cpp/bin2\/\1.x/g"`
@@ -33,9 +29,9 @@ echo "bin1/%.x: programs/objects1/%.o lib/libSPoCA1.so"
 echo "	g++ -o \$@ ${LDFLAGS} -lSPoCA1 programs/objects1/\$*.o"
 
 echo "lib/libSPoCA2.so: ${OBJECTS2}"
-echo "	g++ -o \$@ -shared ${LDFLAGS} \$?"
+echo "	g++ -o \$@ -shared ${LDFLAGS} ${OBJECTS2}"
 echo "lib/libSPoCA1.so: ${OBJECTS1}"
-echo "	g++ -o \$@ -shared ${LDFLAGS} \$?"
+echo "	g++ -o \$@ -shared ${LDFLAGS} ${OBJECTS1}"
 
 for numberchannels in 1 2; do
 	for directory in classes programs; do

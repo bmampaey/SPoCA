@@ -137,7 +137,7 @@ bool RegionGraph::node::path(const RegionGraph::node* to, std::set<node*>* visit
 
 	for (std::vector<edge>::const_iterator it = out_edges.begin(); it != out_edges.end(); ++it)
 	{
-		if(it->from->path(it->to, visited))
+		if(it->to->path(to, visited))
 			return true;
 
 	}
@@ -189,7 +189,7 @@ void ouputGraph(const RegionGraph& g, const vector<vector<Region*> >& regions, c
 // Output regions in the region format
 void ouputRegions(const vector<vector<Region*> >& regions, string filename)
 {
-	ofstream regionFile(filename.c_str());
+	ofstream regionFile((filename).c_str());
 	if (regionFile.good())
 	{
 		if(regions.size() > 0 && regions[0].size() > 0)

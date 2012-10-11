@@ -67,7 +67,7 @@ if __name__ == "__main__":
 	
 	for filename in filenames:
 		values = get_keywords(filename, keywords)
-		log.debug("Found values for file "+ str(filename) + ": " + ' '.join(values))
+		#log.debug("Found values for file "+ str(filename) + ": " + ' '.join(values))
 		t_obs, date_obs1, date_obs2 = values[:3]
 		channels = values[3:]
 		try:

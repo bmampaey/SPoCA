@@ -83,8 +83,8 @@ class segmentation:
 				results.append(os.path.join(cls.output_dir, '.'.join([name, suffix, 'fits'])))
 		return results
 	
-	def __init__(self, name, fitsfiles, previous=None, auto_start=True, force=False):
-		from condor_job import Job
+	def __init__(self, name, fitsfiles, previous=None, force=False):
+		from dagman_job import Job
 		self.results = segmentation.result_files(name)
 		make_job = force
 		if not force:
@@ -94,7 +94,7 @@ class segmentation:
 				 	break
 		if make_job:
 			arguments = ' '.join(self.build_arguments(fitsfiles, name))
-			self.job = Job(name, self.bin, arguments, require=previous, extra=self.extra, auto_start=auto_start)
+			self.job = Job(name, self.bin, arguments, require=previous)
 		else:
 			self.job = None
 
@@ -172,7 +172,7 @@ class resegmentation(segmentation):
 		return arguments
 	
 	def __init__(self, name, mapname, auto_start=True, force=False):
-		from condor_job import Job
+		from dagman_job import Job
 		params = get_info(mapname)
 		self.results = resegmentation.result_files(name)
 		make_job = force
@@ -183,7 +183,7 @@ class resegmentation(segmentation):
 				 	break
 		if make_job:
 			arguments = ' '.join(self.build_arguments(fitsfiles, name, params))
-			self.job = Job(name, self.bin, arguments, extra=self.extra, auto_start=auto_start)
+			self.job = Job(name, self.bin, arguments)
 		else:
 			self.job = None
 	
@@ -279,7 +279,7 @@ class tracking:
 		return False
 		
 	def __init__(self, name, fitsfiles, previous=None, auto_start=True, force=False):
-		from condor_job import Job
+		from dagman_job import Job
 		self.results = fitsfiles
 		make_job = force
 		if not force:
@@ -290,9 +290,9 @@ class tracking:
 		if make_job:
 			arguments = ' '.join(self.build_arguments(fitsfiles))
 			if previous:
-				self.job = Job(name, self.bin, arguments, require=previous, extra=self.extra, auto_start=auto_start)
+				self.job = Job(name, self.bin, arguments, require=previous)
 			else:
-				self.job = Job(name, self.bin, arguments, extra=self.extra, auto_start=auto_start)
+				self.job = Job(name, self.bin, arguments)
 		else:
 			self.job = None
 
@@ -371,7 +371,7 @@ class overlay:
 		return os.path.join(cls.output_dir, base+"*.png")
 	
 	def __init__(self, name, mapname, fitsfiles=[], previous=None, auto_start=True, force=False):
-		from condor_job import Job
+		from dagman_job import Job
 		if not fitsfiles:
 			fitsfiles = ['{IMAGE001}']
 		make_job = force
@@ -383,9 +383,9 @@ class overlay:
 		if make_job:
 			arguments = ' '.join(self.build_arguments(mapname, fitsfiles))
 			if previous:
-				self.job = Job(name, self.bin, arguments, require=previous, extra=self.extra, auto_start=auto_start)
+				self.job = Job(name, self.bin, arguments, require=previous)
 			else:
-				self.job = Job(name, self.bin, arguments, extra=self.extra, auto_start=auto_start)
+				self.job = Job(name, self.bin, arguments)
 		else:
 			self.job = None
 
@@ -465,7 +465,7 @@ class get_stats:
 	
 	
 	def __init__(self, name, mapname, fitsfiles=[], auto_start=True, force=False):
-		from condor_job import Job
+		from dagman_job import Job
 		if not fitsfiles:
 			fitsfiles = ['{IMAGE001}']
 		self.results = get_stats.result_files(mapname)
@@ -478,7 +478,7 @@ class get_stats:
 					f.write(job.output)
 			
 			arguments = ' '.join(self.build_arguments(mapname, fitsfiles))
-			self.job = Job(name, self.bin, arguments, extra=self.extra, call_back=write_stats, auto_start=auto_start)
+			self.job = Job(name, self.bin, arguments)
 		else:
 			self.job = None
 
@@ -528,7 +528,7 @@ class get_STAFF_stats(get_stats):
 		return arguments
 	
 	def __init__(self, name, CHmapfile, ARmapfile, fitsfiles=[], auto_start=True, force=False):
-		from condor_job import Job
+		from dagman_job import Job
 		if not fitsfiles:
 			fitsfiles = ['{IMAGE001}']
 		self.results = get_stats.result_files(CHmapfile)
@@ -541,7 +541,7 @@ class get_STAFF_stats(get_stats):
 					f.write(job.output)
 			
 			arguments = ' '.join(self.build_arguments(CHmapfile, ARmapfile, fitsfiles))
-			self.job = Job(name, self.bin, arguments, extra=self.extra, call_back=write_stats, auto_start=auto_start)
+			self.job = Job(name, self.bin, arguments)
 		else:
 			self.job = None
 

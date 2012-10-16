@@ -148,7 +148,7 @@ def make_segmentation_jobs(files_queue, output_queue, jobs, sequential, force):
 		
 		filedate = file_date(fileset[0])
 		if filedate:
-			job_name = filedate.strftime("%Y%m%d_%H%M%S")
+			job_name = "segmentation_" + filedate.strftime("%Y%m%d_%H%M%S")
 		else:
 			job_name = "segmentation_%s" % counter
 			counter += 1
@@ -184,6 +184,7 @@ def make_tracking_jobs(job_queue, output_queue, jobs, force):
 	files_to_track = []
 	overlap_files = []
 	previous_overlap_jobs = []
+	previous_jobs = []
 	
 	# None is provided when the queue is empty
 	job = job_queue.get()
@@ -194,7 +195,10 @@ def make_tracking_jobs(job_queue, output_queue, jobs, force):
 		
 		if len(files_to_track) + len(overlap_files) >= max_files:
 			job_name = "tracking_%s" % counter; counter += 1
-			tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_overlap_jobs+previous_jobs, force = force)
+			if len(jobs) > 0:
+				tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_overlap_jobs+previous_jobs+[jobs[-1]], force = force)
+			else:
+				tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_overlap_jobs+previous_jobs, force = force)
 
 			if tracking_job.job:
 				jobs.append(tracking_job.job)
@@ -213,8 +217,13 @@ def make_tracking_jobs(job_queue, output_queue, jobs, force):
 	if files_to_track:
 		log.debug("Making LAST tracking job.")
 		job_name = "tracking_%s" % counter; counter += 1
-		tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_overlap_jobs+previous_jobs, force = force)
+		
+		if len(jobs) > 0:
+			tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_overlap_jobs+previous_jobs+[jobs[-1]], force = force)
+		else:
+			tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_overlap_jobs+previous_jobs, force = force)
 		if tracking_job.job:
+			jobs.append(tracking_job.job)
 			log.info("Running tracking job for files %s", tracking_job.results)
 		else:
 			log.debug("Not running tracking job for files %s", tracking_job.results)

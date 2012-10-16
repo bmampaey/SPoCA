@@ -24,7 +24,7 @@ Output          = {output_file}
 Error           = {error_file}
 Log             = {log_file}
 
-# The filsesytem is shared
+# The filesytem is shared
 requirements		= (HasPOOL =?= True)
 
 # Parameters for condor
@@ -35,15 +35,15 @@ when_to_transfer_output = ON_EXIT
 transfer_executable	= NO
 
 # Tell condor to run the job
-Queue 1
+queue
 
 """
 
 class Job:
 	def __init__(self, name, executable, arguments, require=[]):
 		(jobfile, self.jobfilepath) = tempfile.mkstemp()
-		jobfile.write(CONDOR_JOB_DESCRIPTION_TEMPLATE.format(executable=executable, arguments=arguments, initialdir=initialdir, input_file="/dev/null", output_file="/dev/null", error_file="/dev/null", log_file="/dev/null"))
-		jobfile.close()
+		os.write(jobfile, CONDOR_JOB_DESCRIPTION_TEMPLATE.format(executable=executable, arguments=arguments, input_file="/dev/null", output_file="/dev/null", error_file="/dev/null", log_file=self.jobfilepath+".log"))
+		os.close(jobfile)
 
 		self.require = require
 		self.name = name
@@ -54,11 +54,11 @@ class DAG:
 	def submit(self):
 		(dagfile, dagfilepath) = tempfile.mkstemp()
 		
-		for job in jobs:
-			dagfile.write("JOB " + job.name + " " + job.jobfilepath + "\n")
-		for job in jobs:
+		for job in self.jobs:
+			os.write(dagfile, "JOB " + job.name + " " + job.jobfilepath + "\n")
+		for job in self.jobs:
 			if job.require != [] and job.require is not None:
-				dagfile.write("PARENT " + " ".join(job.require) + " CHILD " + job.name + "\n")
-		dagfile.close()
+				os.write(dagfile, "PARENT " + " ".join(map(lambda x: x.name, job.require)) + " CHILD " + job.name + "\n")
+		os.close(dagfile)
 
 		print dagfilepath

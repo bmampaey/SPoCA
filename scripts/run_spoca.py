@@ -11,7 +11,7 @@ import glob
 import spoca_job
 import time
 from datetime import datetime, timedelta
-from dagman import DAG
+from dagman_job import DAG
 
 
 def setup_logging(filename = None, quiet = False, verbose = False, debug = False):

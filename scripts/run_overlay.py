@@ -8,6 +8,7 @@ import spoca_job
 import time
 import re
 from datetime import datetime, timedelta
+from dagman_job import DAG
 
 def setup_logging(filename = None, quiet = False, verbose = False, debug = False):
 	global logging
@@ -132,7 +133,7 @@ def zip_files(filelists, files_queue):
 
 
 
-def make_overlay_jobs(files_queue, output_queue, force=False):
+def make_overlay_jobs(files_queue, output_queue, jobs, force=False):
 	
 	counter = 0
 	
@@ -143,6 +144,7 @@ def make_overlay_jobs(files_queue, output_queue, force=False):
 		job_name = "overlay_%s" % counter; counter += 1
 		job = spoca_job.overlay(job_name, files[0], fitsfiles=files[1:], force = force)
 		if job.job:
+			jobs.append(job.job)
 			logging.info("Running overlay job %s for map %s on files %s", job_name, files[0], str(files[1:]))
 			output_queue.put(job.job)
 		else:
@@ -269,4 +271,4 @@ if __name__ == "__main__":
 		thread.join()
 		log.info("Thread %s has terminated", thread.name)
 	
-	DAG(segmentation_jobs+tracking_jobs+overlay_jobs).submit()
+	DAG(overlay_jobs).submit()

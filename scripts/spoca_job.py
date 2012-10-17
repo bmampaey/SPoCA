@@ -466,7 +466,7 @@ class get_stats:
 	
 	
 	def __init__(self, name, mapname, fitsfiles=[], auto_start=True, force=False):
-		from dagman_job import Job
+		from condor_job import Job
 		if not fitsfiles:
 			fitsfiles = ['{IMAGE001}']
 		self.results = get_stats.result_files(mapname)
@@ -529,7 +529,7 @@ class get_STAFF_stats(get_stats):
 		return arguments
 	
 	def __init__(self, name, CHmapfile, ARmapfile, fitsfiles=[], auto_start=True, force=False):
-		from dagman_job import Job
+		from condor_job import Job
 		if not fitsfiles:
 			fitsfiles = ['{IMAGE001}']
 		self.results = get_stats.result_files(CHmapfile)

@@ -374,6 +374,7 @@ class overlay:
 		from dagman_job import Job
 		if not fitsfiles:
 			fitsfiles = ['{IMAGE001}']
+			raise Exception("No FITS files given")
 		make_job = force
 		if not force:
 			overlays = glob.glob(overlay.result_files(mapname))

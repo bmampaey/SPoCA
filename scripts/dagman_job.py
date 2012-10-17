@@ -39,26 +39,45 @@ queue
 
 """
 
+CONDOR_DAGMAN_CONFIGURATION_TEMPLATE="""
+DAGMAN_MAX_SUBMITS_PER_INTERVAL = {jobsperinterval}
+
+"""
+
 class Job:
 	def __init__(self, name, executable, arguments, require=[]):
-		(jobfile, self.jobfilepath) = tempfile.mkstemp()
-		os.write(jobfile, CONDOR_JOB_DESCRIPTION_TEMPLATE.format(executable=executable, arguments=arguments, input_file="/dev/null", output_file="/dev/null", error_file="/dev/null", log_file=self.jobfilepath+".log"))
-		os.close(jobfile)
-
 		self.require = require
 		self.name = name
+		self.executable = executable
+		self.arguments = arguments
+	def write_description(self, path):
+		with open(path, "w") as f:
+			f.write(CONDOR_JOB_DESCRIPTION_TEMPLATE.format( \
+				executable=self.executable, \
+				arguments=self.arguments, \
+				input_file="/dev/null", \
+				output_file=path+".out", \
+				error_file=path+".err", \
+				log_file=path+".log"))
+			
 
 class DAG:
 	def __init__(self, jobs):
 		self.jobs = jobs
 	def submit(self):
-		(dagfile, dagfilepath) = tempfile.mkstemp()
+		condor_directory = tempfile.mkdtemp()
 		
-		for job in self.jobs:
-			os.write(dagfile, "JOB " + job.name + " " + job.jobfilepath + "\n")
-		for job in self.jobs:
-			if job.require != [] and job.require is not None:
-				os.write(dagfile, "PARENT " + " ".join(map(lambda x: x.name, job.require)) + " CHILD " + job.name + "\n")
-		os.close(dagfile)
+		with open(os.path.join(condor_directory, "dagman.conf"), "w") as f:
+			f.write(CONDOR_DAGMAN_CONFIGURATION_TEMPLATE.format(jobsperinterval=1000))
 
-		print dagfilepath
+		with open(os.path.join(condor_directory, "dagman.condor"), "w") as f:
+			for job in self.jobs:
+				path = os.path.join(condor_directory, job.name+".condor")
+				job.write_description(path)
+				f.write("JOB " + job.name + " " + path + "\n")
+			for job in self.jobs:
+				if job.require != [] and job.require is not None:
+					f.write("PARENT " + " ".join(map(lambda x: x.name, job.require)) + " CHILD " + job.name + "\n")
+			f.write("CONFIG " + os.path.join(condor_directory, "dagman.conf") + "\n")
+
+		print condor_directory

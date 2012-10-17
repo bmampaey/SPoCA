@@ -148,7 +148,7 @@ def make_segmentation_jobs(files_queue, output_queue, jobs, sequential, force):
 		
 		filedate = file_date(fileset[0])
 		if filedate:
-			job_name = "segmentation_" + filedate.strftime("%Y%m%d_%H%M%S")
+			job_name = filedate.strftime("%Y%m%d_%H%M%S")
 		else:
 			job_name = "segmentation_%s" % counter
 			counter += 1

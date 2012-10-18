@@ -10,7 +10,7 @@ import sys
 OBSERVATIONDATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 def load_csv(directory):
-	files = sorted(glob.glob(os.path.join(directory, "*CHMap*.csv")))
+	files = glob.glob(os.path.join(directory, "*CHMap*.csv"))
 
 	frame = pandas.read_csv(files[0])
 	for i in xrange(1, len(files)):
@@ -28,8 +28,17 @@ def load_csv(directory):
 def plot_column(column, *args, **kwargs):
 	plt.plot_date(column.dropna().index.map(lambda x: matplotlib.dates.date2num(x.to_pydatetime())), column.dropna(), *args, **kwargs)
 
-def plot_EUVI_filling_factor(directory_a, directory_b):
-	plot_column(load_csv(directory_a).FillingFactor, fmt='r-', label="STEREO-A")
-	plot_column(load_csv(directory_b).FillingFactor, fmt='b-', label="STEREO-B")
+def plot_EUVI_statistic(frame_a, frame_b, statistic):
+	if type(frame_a) == str:
+		frame_a = load_csv(frame_a)
+	if type(frame_b) == str:
+		frame_b = load_csv(frame_b)
+	
+	plot_column(frame_a[statistic], fmt='r-', label="STEREO-A")
+	plot_column(frame_b[statistic], fmt='b-', label="STEREO-B")
+	plt.xlabel("Observation date")
+	plt.ylabel(statistic)
 	plt.legend(loc='best')
 	plt.show()
+
+	return (frame_a, frame_b)

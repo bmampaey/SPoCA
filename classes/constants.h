@@ -291,7 +291,7 @@ See @ref ALC.
 
 */
 
-#define EIT_ALC_PARAMETERS {75, 85, 110, 112}
+#define EIT_ALC_PARAMETERS {80, 95, 107, 112}
 
 /*!
 @page Compilation_Options

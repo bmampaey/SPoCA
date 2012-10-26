@@ -34,7 +34,7 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 	#if DEBUG >= 2
 	aggregated->writeFits(filename + "pure.fits");
 	#endif
-	
+
 	/*! Apply the projection */
 	switch(projection)
 	{

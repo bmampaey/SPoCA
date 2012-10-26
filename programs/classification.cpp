@@ -525,16 +525,22 @@ int main(int argc, const char **argv)
 	// it is needed when the Quotient Factor was bad
 	// or if the classifier is histogram
 	F->attribution();
+
 	
 	// We save the centers for the next run 
-	if (!centersFileName.empty())
-	{
-		writeCentersToFile(Bs, channels, centersFileName);
-	}
-	else
-	{
+	
+
+// HACK RUBEN: always write centers to a new file, do not overwrite original file
+//	if (!centersFileName.empty())
+//	{
+//		writeCentersToFile(Bs, channels, centersFileName);
+//	}
+//	else
+//	{
 		writeCentersToFile(Bs, channels, filenamePrefix + "centers.txt");
-	}
+//	}
+
+
 
 	// We save the histogram
 	if(classifierIsHistogram && !histogramFile.empty())

@@ -29,9 +29,11 @@ class STAFFStats
 		unsigned id;
 		//! Observation Time for the stats
 		time_t observationTime;
+		//! Total number of pixels in the class
+		unsigned numberPixels;
 		// Moments
 		mutable Real m2, m3, m4;
-		Real minIntensity, maxIntensity, totalIntensity, area_Raw;
+		Real minIntensity, maxIntensity, totalIntensity, area_Raw, area_AtDiskCenter, fillingFactor;
 		mutable std::deque<EUVPixelType> intensities;
 	private :
 		//! Routine to compute the moments from the pixel intensities vector
@@ -71,15 +73,21 @@ class STAFFStats
 		Real MaxIntensity() const;
 		//! Total intensity of the region
 		Real TotalIntensity() const;
-		//! Area of the region as seen on the image (Mm²)
+		//! Area of the class as seen on the image (Mm²)
 		Real Area_Raw() const;
-		//! Uncertainty of the Raw Area
+
+		// TWO NEXT METHODS ADDED BY CIS (October 9, 2012)
+		//! Area of the class as it would be if the class was centered on the disk (Mm²)
+		Real Area_AtDiskCenter() const;
+		//! Filling factor of the class
+		Real FillingFactor() const;
 		
 		//! Output a region as a string
 		std::string toString(const std::string& separator, bool header = false) const;
 
-		//! Routine to update a region with a new pixel
-		void add(const EUVPixelType& pixelIntensity, const Real& sunRadius);
+		//! Routine to update a class with a new pixel
+		// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (October 9, 2012)
+		void add(const PixLoc& coordinate, const EUVPixelType& pixelIntensity, const RealPixLoc& sunCenter, const Real& sun_radius);
 };
 
 //! Compute STAFF statistics of an image using a ColorMap as a cache

@@ -445,9 +445,10 @@ ColorMap* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>&
 
 	segmentedMap_maxUij(segmentedMap);
 
-	#if DEBUG >= 2
+// HACK CIS: always write the max.segmented.fits
+//	#if DEBUG >= 2
 	segmentedMap->writeFits(filenamePrefix + "max.segmented.fits");
-	#endif
+//	#endif
 
 	//We create a vector of transformation telling wich class must be merged to what class
 	vector<ColorType> transfo(numberClasses + 1, 0);
@@ -465,6 +466,11 @@ ColorMap* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>&
 	{
 		segmentedMap->pixel(j) = transfo[segmentedMap->pixel(j)];
 	}
+
+// HACK CIS: write the PURE segmented.fits
+//	#if DEBUG >= 2
+	segmentedMap->writeFits(filenamePrefix + "segmentedmap.pure.fits");
+//	#endif
 	return segmentedMap;
 
 }

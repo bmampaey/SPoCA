@@ -466,7 +466,7 @@ class get_stats:
 	
 	
 	def __init__(self, name, mapname, fitsfiles=[], auto_start=True, force=False):
-		from condor_job import Job
+		from dagman_job import Job
 		if not fitsfiles:
 			fitsfiles = ['{IMAGE001}']
 		self.results = get_stats.result_files(mapname)
@@ -474,12 +474,8 @@ class get_stats:
 		make_job = force or not os.path.exists(self.results)
 		
 		if make_job:
-			def write_stats(job):
-				with open(self.results, "w") as f:
-					f.write(job.output)
-			
 			arguments = ' '.join(self.build_arguments(mapname, fitsfiles))
-			self.job = Job(name, self.bin, arguments)
+			self.job = Job(name, "/pool/rdv/git/spoca/scripts/get_segmentation_stats.sh", '"\''+self.bin+' '+arguments+'\' \''+self.results+'\'"')
 		else:
 			self.job = None
 

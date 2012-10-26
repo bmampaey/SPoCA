@@ -67,6 +67,7 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 using std::string; using std::cout; using std::cerr; using std::endl;
 using std::vector; 
 using std::ofstream;
+using std::ios;
 using namespace dsr;
 
 string filenamePrefix;

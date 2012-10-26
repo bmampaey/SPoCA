@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CPPFLAGS="`Magick++-config --cppflags | tr -d '\n'` -DMAGICK"
+CPPFLAGS="`Magick++-config --cppflags | tr -d '\n'` -DMAGICK -DSAME_COLORS"
 CXXFLAGS="-pipe -fPIC -fkeep-inline-functions -g -O3 ${CPPFLAGS}"
 LDFLAGS="`Magick++-config --ldflags --libs | tr -d '\n'` -lcfitsio -lpthread -Llib"
 

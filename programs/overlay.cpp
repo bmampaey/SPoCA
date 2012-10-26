@@ -213,9 +213,15 @@ int main(int argc, const char **argv)
 	// We erase any colors that is not to be kept
 	if(colors.size() > 0)
 	{
-		for(unsigned j = 0; j < colorizedMap->NumberPixels(); ++j)
+		for(unsigned j = 0; j < colorizedMap->NumberPixels(); ++j) {
+			#ifndef SAME_COLORS
 			if (colors.count(colorizedMap->pixel(j)) == 0)
 				colorizedMap->pixel(j) = colorizedMap->null();
+			#else
+			if(colorizedMap->pixel(j) != colorizedMap->null())
+				colorizedMap->pixel(j) = *colors.begin();
+			#endif
+		}
 	}
 	
 	//We fill holes if requested

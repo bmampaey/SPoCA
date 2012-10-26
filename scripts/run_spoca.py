@@ -154,7 +154,7 @@ def make_segmentation_jobs(files_queue, output_queue, jobs, sequential, force):
 			counter += 1
 		
 		if sequential and job:
-			job = spoca_job.segmentation(job_name, fileset, previous = job.job, force = force)
+			job = spoca_job.segmentation(job_name, fileset, previous = [job.job], force = force)
 		else:
 			job = spoca_job.segmentation(job_name, fileset, force = force)
 		

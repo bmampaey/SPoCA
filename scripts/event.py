@@ -251,7 +251,7 @@ def parse_events(filenames, events = list()):
 					events.put(event)
 		
 		else:
-			log.critical("Unknown file type %s", filename)
+			logging.critical("Unknown file type %s", filename)
 	
 	if isinstance(events, list):
 		return events

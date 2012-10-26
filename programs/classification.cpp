@@ -528,19 +528,12 @@ int main(int argc, const char **argv)
 
 	
 	// We save the centers for the next run 
+	if (!centersFileName.empty())
+	{
+		writeCentersToFile(Bs, channels, centersFileName);
+	}
 	
-
-// HACK RUBEN: always write centers to a new file, do not overwrite original file
-//	if (!centersFileName.empty())
-//	{
-//		writeCentersToFile(Bs, channels, centersFileName);
-//	}
-//	else
-//	{
-		writeCentersToFile(Bs, channels, filenamePrefix + "centers.txt");
-//	}
-
-
+	writeCentersToFile(B, channels, filenamePrefix + "centers.txt");
 
 	// We save the histogram
 	if(classifierIsHistogram && !histogramFile.empty())

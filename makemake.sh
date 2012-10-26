@@ -10,6 +10,8 @@ BINARIES2=`echo programs/*.cpp | sed "s/programs\/\([^ ]*\)\.cpp/bin2\/\1.x/g"`
 OBJECTS1=`echo classes/*.cpp | sed "s/classes\/\([^ ]*\)\.cpp/classes\/objects1\/\1.o/g"`
 OBJECTS2=`echo classes/*.cpp | sed "s/classes\/\([^ ]*\)\.cpp/classes\/objects2\/\1.o/g"`
 
+mkdir -p {classes,programs}/objects{1,2} bin{1,2} lib
+
 echo "all: onechannel twochannels"
 echo "onechannel: lib/libSPoCA1.so ${BINARIES1}"
 echo "twochannels: lib/libSPoCA2.so ${BINARIES2}"

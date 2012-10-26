@@ -531,10 +531,8 @@ int main(int argc, const char **argv)
 	{
 		writeCentersToFile(Bs, channels, centersFileName);
 	}
-	else
-	{
-		writeCentersToFile(Bs, channels, filenamePrefix + "centers.txt");
-	}
+	
+	writeCentersToFile(B, channels, filenamePrefix + "centers.txt");
 
 	// We save the histogram
 	if(classifierIsHistogram && !histogramFile.empty())

@@ -1,4 +1,5 @@
 import os, sys, tempfile
+import subprocess
 
 CONDOR_JOB_DESCRIPTION_TEMPLATE="""
 ####################
@@ -80,4 +81,9 @@ class DAG:
 					f.write("PARENT " + " ".join(map(lambda x: x.name, job.require)) + " CHILD " + job.name + "\n")
 			f.write("CONFIG " + os.path.join(condor_directory, "dagman.conf") + "\n")
 
-		print condor_directory
+		try:
+			subprocess.check_call("condor_submit_dag -maxjobs 1000 '%s'" % os.path.join(condor_directory, "dagman.condor"), shell=True)
+		except subprocess.CalledProcessError as e:
+			print "Condor job submission failed: %s" % e.output
+		else:
+			print "The condor jobs in %s have been successfully started." % condor_directory

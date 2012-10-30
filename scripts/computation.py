@@ -9,7 +9,7 @@ import datetime
 import time
 Base = declarative_base()
 
-class Computation(Base, threading.Thread):
+class Computation(Base):
 	__tablename__ = 'computations'
 	id = Column(Integer, primary_key=True)
 	
@@ -21,25 +21,24 @@ class Computation(Base, threading.Thread):
 	
 	error = Column(String, nullable=True)
 	
-	def __init__(self, session, function, *args, **kwargs):
-		Base.__init__(self)
-		threading.Thread.__init__(self)
-		self.session = session
-		self.function = function
-		self.args = args
-		self.kwargs = kwargs
-	
-	def run(self):
+	def update(self, session):
+		session.add(self)
+		session.commit()
+
+	def run(self, session):
 		self.date_start = datetime.datetime.utcnow()
-		self.session.add(self)
-		self.session.commit()
+		self.update(session)
+
 		try:
-			self.function(*self.args, **self.kwargs)
+			self.compute(session)
 		except Exception as e:
 			self.error = str(e)
+
 		self.date_end = datetime.datetime.utcnow()
-		self.session.add(self)
-		self.session.commit()
+		self.update(session)
+	
+	def compute(self, session):
+		pass
 
 class AdditionComputation(Computation):
 	__tablename__ = 'testcomputations'
@@ -49,18 +48,18 @@ class AdditionComputation(Computation):
 	operand1 = Column(Integer, nullable=False)
 	operand2 = Column(Integer, nullable=False)
 	sum = Column(Integer, nullable=True)
+	
+	def __init__(self, operand1, operand2):
+		Computation.__init__(self)
 
-	def __init__(self, session, operand1, operand2):
 		self.operand1 = operand1
 		self.operand2 = operand2
-		
-		def addition(operand1, operand2):
-			time.sleep(20)
-			self.sum = self.operand1 + self.operand2
-			session.add(self)
-			session.commit()
 
-		Computation.__init__(self, session, addition, operand1, operand2)
+	def compute(self, session):
+		time.sleep(20)
+		self.sum = self.operand1 + self.operand2
+
+		self.update(session)
 
 if __name__ == '__main__':
 	engine = create_engine(sys.argv[1], echo=False)

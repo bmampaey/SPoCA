@@ -13,7 +13,7 @@ class Computation(Base, threading.Thread):
 	__tablename__ = 'computations'
 	id = Column(Integer, primary_key=True)
 	
-	type = Column('type', String(50), nullable=False)
+	type = Column(String(50), nullable=False)
 	__mapper_args__ = {'polymorphic_on': type}
 	
 	date_start = Column(DateTime, nullable=False)
@@ -48,6 +48,7 @@ class AdditionComputation(Computation):
 	id = Column(Integer, ForeignKey('computations.id'), primary_key=True)
 	operand1 = Column(Integer, nullable=False)
 	operand2 = Column(Integer, nullable=False)
+	sum = Column(Integer, nullable=True)
 
 	def __init__(self, session, operand1, operand2):
 		self.operand1 = operand1
@@ -55,17 +56,17 @@ class AdditionComputation(Computation):
 		
 		def addition(operand1, operand2):
 			time.sleep(20)
-			return self.operand1 + self.operand2	
+			self.sum = self.operand1 + self.operand2
+			session.add(self)
+			session.commit()
 
 		Computation.__init__(self, session, addition, operand1, operand2)
-
-		
 
 if __name__ == '__main__':
 	engine = create_engine(sys.argv[1], echo=False)
 	Base.metadata.create_all(engine)
 	Session = sessionmaker(bind=engine)
-	
+
 	c1 = AdditionComputation(Session(), 1, 1)
 	c2 = AdditionComputation(Session(), 2, 2)
 	c3 = AdditionComputation(Session(), 3, 3)

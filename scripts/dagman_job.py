@@ -46,20 +46,21 @@ DAGMAN_MAX_SUBMITS_PER_INTERVAL = {jobsperinterval}
 """
 
 class Job:
-	def __init__(self, name, executable, arguments, require=[]):
+	def __init__(self, name, executable, arguments, require=[], input_file="/dev/null"):
 		self.require = require
 		self.name = name
 		self.executable = executable
 		self.arguments = arguments
+		self.input_file = input_file
 	def write_description(self, path):
 		with open(path, "w") as f:
 			f.write(CONDOR_JOB_DESCRIPTION_TEMPLATE.format( \
 				executable=self.executable, \
 				arguments=self.arguments, \
-				input_file="/dev/null", \
-				output_file=path+".out", \
-				error_file=path+".err", \
-				log_file=path+".log"))
+				input_file=self.input_file, \
+				output_file="/dev/null", \
+				error_file="/dev/null", \
+				log_file="/dev/null"))
 			
 
 class DAG:

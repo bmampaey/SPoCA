@@ -736,6 +736,7 @@ void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projecti
 }
 
 #ifdef MAGICK
+using namespace MagickCore;
 MagickImage ColorMap::magick(const Magick::Color background)
 {
 	MagickImage image(background, xAxes, yAxes);

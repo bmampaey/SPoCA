@@ -310,6 +310,9 @@ int main(int argc, const char **argv)
 		}
 	}
 	
+	// We save the centers
+	writeCentersToFile(B, channels, filenamePrefix + "centers.txt");
+	
 	
 	// We declare the type of Classifier we want
 	if (classifierType == "FCM")
@@ -360,6 +363,8 @@ int main(int argc, const char **argv)
 		}
 	}
 
+	// We set the name of the output files prefix
+	// to the outputDirectory + the date_obs of the first image in the form YYYYMMDD_HHMMSS
 	if(filenamePrefix.empty())
 		filenamePrefix = outputDirectory + "/" + time2string(images[0]->ObservationTime()) + ".";
 
@@ -399,6 +404,9 @@ int main(int argc, const char **argv)
 			dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
 			F->initB(B, channels);
 		}
+		
+		// We save the eta
+		dynamic_cast<PCMClassifier*>(F)->saveEta(filenamePrefix + "eta.txt");		
 	}	
 	
 	#if DEBUG >= 3
@@ -413,7 +421,6 @@ int main(int argc, const char **argv)
 	F->attribution();
 	
 	// We wheck what are the requested maps
-	
 	bool getARMap = (desiredMaps.find_first_of("Aa")!=string::npos);
 	bool getCHMap = (desiredMaps.find_first_of("Cc")!=string::npos);
 	bool getSegmentedMap = (desiredMaps.find_first_of("Ss")!=string::npos);
@@ -430,7 +437,7 @@ int main(int argc, const char **argv)
 	EUVImage* image = getImageFromFile(imageType, imagesFilenames[0]);
 	image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
 	
-	// We declare the segmented map with the keywords of the first image
+	// We declare the segmented map with the WCS of the first image
 	ColorMap* segmentedMap = new ColorMap(image->getWCS());
 	
 	//We add information about the attribution to the header of the segmented map
@@ -559,7 +566,7 @@ int main(int argc, const char **argv)
 		ColorMap* CHMap = new ColorMap(segmentedMap);
 		if (segmentation == "max" || segmentation == "closest" || segmentation == "limits")
 		{
-			CHMap->bitmap(ARclass(B));
+			CHMap->bitmap(CHclass(B));
 		}
 		else
 		{

@@ -11,12 +11,12 @@ using namespace std;
 #endif
 
 
-
+// CONSTRUCTOR INITIALIZATION EXTENDED BY CIS, Nov 28, 2012
 STAFFStats::STAFFStats(const time_t& observationTime, const unsigned id)
-:id(id),observationTime(observationTime), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0)
+:id(id),observationTime(observationTime), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0), area_AtDiskCenter(0), fillingFactor(0), numberPixels(0)
 {}
 
-// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (October 9, 2012)
+// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (Nov 28, 2012)
 void STAFFStats::add(const PixLoc& coordinate, const EUVPixelType& pixelIntensity, const RealPixLoc& sunCenter, const Real& sun_radius)
 {
 	// If the intensity is not a number we omit it
@@ -47,18 +47,16 @@ void STAFFStats::add(const PixLoc& coordinate, const EUVPixelType& pixelIntensit
 	
 	++numberPixels;
 	
-	// We compute the contribution of the pixel to the raw area in Mm², and it's uncertainity
+	// We compute the contribution of the pixel to the raw area in Mm²
 	const Real raw_pixel_area = (SUN_RADIUS) * (SUN_RADIUS) / radius_squared;
 	
 	area_Raw += raw_pixel_area;
 	
-	// We compute the contribution of the pixel to the area at disk center in Mm², and it's uncertainity
+	// We compute the contribution of the pixel to the area at disk center in Mm²
 	Real area_correction_factor = HIGGINS_FACTOR + 1;
 	if(sigma > 0)
 	{
 		area_correction_factor = sun_radius/sqrt(sigma);
-		// We compute the filling factor
-		fillingFactor += 1./(PI*radius_squared);
 	}
 
 	// If the area correction factor is more than some value (i.e. the pixel is near the limb)
@@ -107,6 +105,14 @@ Real STAFFStats::MaxIntensity() const
 	else
 		return maxIntensity;
 }
+
+
+// ADDED BY CIS, Nov 28, 2012.
+unsigned STAFFStats::NumberPixels() const
+{
+	return numberPixels;
+}
+
 
 Real STAFFStats::Mean() const
 {
@@ -230,7 +236,7 @@ string STAFFStats::toString(const string& separator, bool header) const
 }
 
 
-// METHOD NOT DEFINED IN HEADER FILE!?
+// METHOD NOT DEFINED IN HEADER FILE!
 vector<STAFFStats*> getSTAFFStats(const ColorMap* coloredMap, const EUVImage* image, const vector<Region*>& regions)
 {
 	map<ColorType,STAFFStats*> regions_stats;
@@ -264,7 +270,7 @@ vector<STAFFStats*> getSTAFFStats(const ColorMap* coloredMap, const EUVImage* im
 	return values(regions_stats);
 }
 
-// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (October 9, 2012)
+// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (Nov 28, 2012)
 STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVImage* image)
 {
 	STAFFStats stats(image->ObservationTime());
@@ -287,7 +293,7 @@ STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVI
 	return stats;
 }
 
-// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (October 9, 2012)
+// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (Nov 28, 2012)
 vector<STAFFStats> getSTAFFStats(const ColorMap* CHMap, ColorType CHClass, const ColorMap* ARMap, ColorType ARClass, const EUVImage* image)
 {
 	vector<STAFFStats> stats(3, image->ObservationTime());
@@ -316,6 +322,18 @@ vector<STAFFStats> getSTAFFStats(const ColorMap* CHMap, ColorType CHClass, const
 			}
 		}
 	}
+	
+	// Changed by Cis Verbeeck, Nov 28, 2012.
+	// Filling factor can only be calculated reliably after the CH+QS+AR area is known.
+	// The previous calculation using 1/(pi r^2) produced up to 4% error in filling factor.
+	Real areaRaw_CH = stats[0].Area_Raw();
+	Real areaRaw_AR = stats[1].Area_Raw();
+	Real areaRaw_QS = stats[2].Area_Raw();
+	Real totalArea  = areaRaw_CH + areaRaw_AR + areaRaw_QS;
+	
+	stats[0].fillingFactor = areaRaw_CH / totalArea;
+	stats[1].fillingFactor = areaRaw_AR / totalArea;
+	stats[2].fillingFactor = areaRaw_QS / totalArea;
 	
 	return stats;
 }
@@ -413,7 +431,5 @@ FitsFile& writeRegions(FitsFile& file, const vector<STAFFStats>& regions_stats)
 		file.writeColumn("FILLING_FACTOR", data);
 	}
 
-
 	return file;
-
 }

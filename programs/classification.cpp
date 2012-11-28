@@ -527,8 +527,16 @@ int main(int argc, const char **argv)
 	F->attribution();
 
 	
-	// We save the centers for the next run 
+	// We save the centers for the next run.
 	if (!centersFileName.empty())
+	{
+		writeCentersToFile(Bs, channels, centersFileName);
+	}
+	
+	
+	// We save the centers for the next run, but only in case numberPreviousCenters > 0.
+	// In case numberPreviousCenters = 0, we don't want to overwrite centersFileName.
+	if ((!centersFileName.empty()) && (numberPreviousCenters > 0))
 	{
 		writeCentersToFile(Bs, channels, centersFileName);
 	}

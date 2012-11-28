@@ -27,14 +27,16 @@ class STAFFStats
 	private :
 		//! Unique and invariable identifier for a region at time observationTime
 		unsigned id;
+		
 		//! Observation Time for the stats
 		time_t observationTime;
 		//! Total number of pixels in the class
 		unsigned numberPixels;
 		// Moments
 		mutable Real m2, m3, m4;
-		Real minIntensity, maxIntensity, totalIntensity, area_Raw, area_AtDiskCenter, fillingFactor;
+		Real minIntensity, maxIntensity, totalIntensity, area_Raw, area_AtDiskCenter;
 		mutable std::deque<EUVPixelType> intensities;
+
 	private :
 		//! Routine to compute the moments from the pixel intensities vector
 		void computeMoments();
@@ -82,6 +84,12 @@ class STAFFStats
 		//! Filling factor of the class
 		Real FillingFactor() const;
 		
+		// Changed by Cis Verbeeck, Nov 27, 2012.
+		// Filling factor can only be calculated reliably after the CH+QS+AR area is known, so getSTAFFStats needs to access it *directly*.
+		// The previous calculation using 1/(pi r^2) produced up to 4% error in filling factor.
+		Real fillingFactor;
+		
+		
 		//! Output a region as a string
 		std::string toString(const std::string& separator, bool header = false) const;
 
@@ -89,6 +97,7 @@ class STAFFStats
 		// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (October 9, 2012)
 		void add(const PixLoc& coordinate, const EUVPixelType& pixelIntensity, const RealPixLoc& sunCenter, const Real& sun_radius);
 };
+
 
 //! Compute STAFF statistics of an image using a ColorMap as a cache
 /* 

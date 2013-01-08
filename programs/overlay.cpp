@@ -131,6 +131,7 @@ int main(int argc, const char **argv)
 	// Options for the colors to overlay
 	string colorsString;
 	string colorsFilename;
+	bool sameColors = false;
 	
 	// option for the output directory
 	string outputDirectory = ".";
@@ -156,6 +157,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
 	
 	arguments.new_named_string('c', "colors", "string", "\n\tThe list of colors to select separated by commas (no spaces)\n\tAll colors will be selected if ommited.\n\t", colorsString);
+	arguments.new_flag('s', "sameColors", "\n\tSet this flag if want all colors to be the same.\n\t", sameColors);
 	arguments.new_named_string('C', "colorsFilename", "string", "\n\tA file containing a list of colors to select separated by commas\n\tAll colors will be selected if ommited.\n\t", colorsFilename);
 
 	arguments.new_named_string('O', "outputDirectory","directory name", "\n\tThe name for the output directory.\n\t", outputDirectory);
@@ -214,13 +216,13 @@ int main(int argc, const char **argv)
 	if(colors.size() > 0)
 	{
 		for(unsigned j = 0; j < colorizedMap->NumberPixels(); ++j) {
-			#ifndef SAME_COLORS
-			if (colors.count(colorizedMap->pixel(j)) == 0)
-				colorizedMap->pixel(j) = colorizedMap->null();
-			#else
-			if(colorizedMap->pixel(j) != colorizedMap->null())
-				colorizedMap->pixel(j) = *colors.begin();
-			#endif
+			if(!sameColors) {
+				if (colors.count(colorizedMap->pixel(j)) == 0)
+					colorizedMap->pixel(j) = colorizedMap->null();
+			} else {
+				if(colorizedMap->pixel(j) != colorizedMap->null())
+					colorizedMap->pixel(j) = *colors.begin();
+			}
 		}
 	}
 	

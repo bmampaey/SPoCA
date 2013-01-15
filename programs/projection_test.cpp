@@ -42,7 +42,7 @@ int main(int argc, const char **argv)
 	bool grid = false;
 	bool equirectangular = false;
 	bool lambert = false;
-	bool sinuosidal = false;
+	bool sinusoidal = false;
 
 	// The list of names of the sun images to process
 	vector<string> imagesFilenames;
@@ -59,7 +59,7 @@ int main(int argc, const char **argv)
 	arguments.new_flag('g', "grid", "\n\tSet this flag if you want to see the projection of a grid instead of the image.\n\t", grid);
 	arguments.new_flag('E', "equirectangular", "\n\tSet this flag if you want equirectangular projection.\n\t", equirectangular);
 	arguments.new_flag('L', "lambert", "\n\tSet this flag if you want Lambert cylindrical projection.\n\t", lambert);
-	arguments.new_flag('S', "sinuosidal", "\n\tSet this flag if you want sinuosidal projection.\n\t", sinuosidal);
+	arguments.new_flag('S', "sinusoidal", "\n\tSet this flag if you want sinusoidal projection.\n\t", sinusoidal);
 	
 
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
@@ -75,8 +75,8 @@ int main(int argc, const char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	if(!equirectangular && !lambert &&!sinuosidal)
-		equirectangular = lambert = sinuosidal = true;
+	if(!equirectangular && !lambert &&!sinusoidal)
+		equirectangular = lambert = sinusoidal = true;
 	
 	unsigned xaxes = 1024;
 	unsigned yaxes = 1024;
@@ -110,13 +110,13 @@ int main(int argc, const char **argv)
 				deprojection->writeFits(filename + ".Lambert_cylindrical_deprojection.fits");
 			}
 		
-			if(sinuosidal)
+			if(sinusoidal)
 			{
-				projection->sinuosidal_projection(image, exact);
-				projection->writeFits(filename + ".sinuosidal_projection.fits");
+				projection->sinusoidal_projection(image, exact);
+				projection->writeFits(filename + ".sinusoidal_projection.fits");
 		
-				deprojection->sinuosidal_deprojection(projection, exact);
-				deprojection->writeFits(filename + ".sinuosidal_deprojection.fits");
+				deprojection->sinusoidal_deprojection(projection, exact);
+				deprojection->writeFits(filename + ".sinusoidal_deprojection.fits");
 			}
 		}
 		else
@@ -154,13 +154,13 @@ int main(int argc, const char **argv)
 				deprojection->writeFits(filename + ".grid.Lambert_cylindrical_deprojection.fits");
 			}
 			
-			if(sinuosidal)
+			if(sinusoidal)
 			{
-				projection->sinuosidal_projection(image, exact);
-				projection->writeFits(filename + ".grid.sinuosidal_projection.fits");
+				projection->sinusoidal_projection(image, exact);
+				projection->writeFits(filename + ".grid.sinusoidal_projection.fits");
 		
-				deprojection->sinuosidal_deprojection(projection, exact);
-				deprojection->writeFits(filename + ".grid.sinuosidal_deprojection.fits");
+				deprojection->sinusoidal_deprojection(projection, exact);
+				deprojection->writeFits(filename + ".grid.sinusoidal_deprojection.fits");
 			}
 		}
 		delete image;

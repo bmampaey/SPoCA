@@ -57,10 +57,10 @@ ColorMap* getAggregatedARMap(const ColorMap* ARMap, const int projection)
 			aggregationFactor *= (2./3.);
 		break;
 		
-		case(SunImage<ColorType>::sinuosidal):
-			aggregated->sinuosidal_projection(ARMap, false);
+		case(SunImage<ColorType>::sinusoidal):
+			aggregated->sinusoidal_projection(ARMap, false);
 			#if DEBUG >= 2
-			aggregated->writeFits(filename + "sinuosidal_projection.fits");
+			aggregated->writeFits(filename + "sinusoidal_projection.fits");
 			#endif
 			cleaningFactor *= (2./3.);
 			aggregationFactor *= (2./3.);
@@ -112,11 +112,11 @@ ColorMap* getAggregatedARMap(const ColorMap* ARMap, const int projection)
 			#endif
 		break;
 		
-		case(SunImage<ColorType>::sinuosidal):
+		case(SunImage<ColorType>::sinusoidal):
 			projeted = new ColorMap(aggregated);
-			aggregated->sinuosidal_deprojection(projeted, false);
+			aggregated->sinusoidal_deprojection(projeted, false);
 			#if DEBUG >= 2
-			aggregated->writeFits(filename + "sinuosidal_deprojection.fits");
+			aggregated->writeFits(filename + "sinusoidal_deprojection.fits");
 			#endif
 		break;
 		
@@ -151,8 +151,8 @@ Header getARMapHeader()
 			projection = "Lambert cylindrical";
 		break;
 		
-		case(SunImage<ColorType>::sinuosidal):
-			projection = "sinuosidal";
+		case(SunImage<ColorType>::sinusoidal):
+			projection = "sinusoidal";
 		break;
 		
 		case(SunImage<ColorType>::distance_transform):

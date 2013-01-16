@@ -112,7 +112,7 @@ int main(int argc, const char **argv)
 	bool mastic = false;
 	
 	// Options for the labeling
-	string Label = "{CLASTYPE} {CPREPROC}\ncleaning: {CLEANING}(arcsec)\naggregation: {AGGREGAT}(arcsec)\nprojection: {PROJECTN}\nmin size: {MINSIZE}(arcsec)²";
+	string Label = "{CLASTYPE} {CPREPROC}\ncleaning: {CLEANING} arcsec\naggregation: {AGGREGAT} arcsec\nprojection: sinusoidal\nmin size: {MINSIZE} arcsec²";
 	
 	// Options for the background
 	// The list of names of the sun images to process

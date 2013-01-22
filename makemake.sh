@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CPPFLAGS="`Magick++-config --cppflags | tr -d '\n'` -DMAGICK -DDEBUG=3 -DNONAN_HIGGINS_FACTOR"
+CPPFLAGS="`Magick++-config --cppflags | tr -d '\n'` -DMAGICK -DDEBUG=0	 -DNONAN_HIGGINS_FACTOR"
 CXXFLAGS="-pipe -fPIC -fkeep-inline-functions -g -O3 ${CPPFLAGS}"
 LDFLAGS="`Magick++-config --ldflags --libs | tr -d '\n'` -lcfitsio -lpthread -Llib"
 

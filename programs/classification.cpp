@@ -526,13 +526,16 @@ int main(int argc, const char **argv)
 	// or if the classifier is histogram
 	F->attribution();
 	
-	// We save the centers for the next run 
-	if (!centersFileName.empty())
+	
+	// We save the centers for the next run, but only in case numberPreviousCenters > 0.
+	// In case numberPreviousCenters = 0, we don't want to overwrite centersFileName.
+	if ((!centersFileName.empty()) && (numberPreviousCenters > 0))
 	{
 		writeCentersToFile(Bs, channels, centersFileName);
 	}
 	
 	writeCentersToFile(B, channels, filenamePrefix + "centers.txt");
+
 
 	// We save the histogram
 	if(classifierIsHistogram && !histogramFile.empty())

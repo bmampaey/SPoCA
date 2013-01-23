@@ -525,13 +525,6 @@ int main(int argc, const char **argv)
 	// it is needed when the Quotient Factor was bad
 	// or if the classifier is histogram
 	F->attribution();
-
-	
-	// We save the centers for the next run.
-	if (!centersFileName.empty())
-	{
-		writeCentersToFile(Bs, channels, centersFileName);
-	}
 	
 	
 	// We save the centers for the next run, but only in case numberPreviousCenters > 0.

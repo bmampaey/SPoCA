@@ -559,7 +559,7 @@ int main(int argc, const char **argv)
 		ColorMap* CHMap = new ColorMap(segmentedMap);
 		if (segmentation == "max" || segmentation == "closest" || segmentation == "limits")
 		{
-			CHMap->bitmap(ARclass(B));
+			CHMap->bitmap(CHclass(B));
 		}
 		else
 		{

@@ -8,6 +8,7 @@ import spoca_job
 import time
 import re
 from datetime import datetime, timedelta
+from dagman_job import DAG
 
 def setup_logging(filename = None, quiet = False, verbose = False, debug = False):
 	global logging
@@ -131,7 +132,7 @@ def zip_files(filelists, files_queue):
 		files_queue.put(fileset)
 
 
-def make_get_stats_jobs(files_queue, output_queue, force=False):
+def make_get_stats_jobs(files_queue, output_queue, jobs, force=False):
 	
 	counter = 0
 	
@@ -142,6 +143,7 @@ def make_get_stats_jobs(files_queue, output_queue, force=False):
 		job_name = "get_stats_%s" % counter; counter += 1
 		job = spoca_job.get_stats(job_name, files[0], fitsfiles=files[1:], force = force)
 		if job.job:
+			jobs.append(job.job)
 			logging.info("Running get_stats job %s for map %s on files %s", job_name, files[0], str(files[1:]))
 			output_queue.put(job.job)
 		else:
@@ -241,7 +243,8 @@ if __name__ == "__main__":
 	# We make the get_stats jobs
 	files_queue = Queue()
 	output_queue = Queue()
-	get_stats_thread = threading.Thread(group=None, name='make_get_stats_jobs', target=make_get_stats_jobs, args=(files_queue, output_queue, args.force), kwargs={})
+	stats_jobs = []
+	get_stats_thread = threading.Thread(group=None, name='make_get_stats_jobs', target=make_get_stats_jobs, args=(files_queue, output_queue, stats_jobs, args.force), kwargs={})
 	get_stats_thread.start()
 	threads.append(get_stats_thread)
 	
@@ -267,11 +270,4 @@ if __name__ == "__main__":
 		thread.join()
 		log.info("Thread %s has terminated", thread.name)
 	
-	# We wait for all jobs to terminate
-	job = output_queue.get()
-	while job != None:
-		log.debug("Waiting for job %s to terminate", job.name)
-		while not job.isTerminated():
-			time.sleep(1)
-		log.info("Job %s has terminated.", job.name)
-		job = output_queue.get()
+	DAG(stats_jobs).submit()

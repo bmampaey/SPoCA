@@ -215,11 +215,11 @@ class SunImage : public Image<T>
 		//! Routine that does the inverse of the Lambert cylindrical equalarea of the sunimage
 		void Lambert_cylindrical_deprojection(const SunImage<T>* image, bool exact = false);
 		
-		//! Routine that does the sinuosidal projection of the sunimage
-		void sinuosidal_projection(const SunImage<T>* image, bool exact = false);
+		//! Routine that does the sinusoidal projection of the sunimage
+		void sinusoidal_projection(const SunImage<T>* image, bool exact = false);
 		
-		//! Routine that does the inverse of the sinuosidal projection of the sunimage
-		void sinuosidal_deprojection(const SunImage<T>* image, bool exact = false);
+		//! Routine that does the inverse of the sinusoidal projection of the sunimage
+		void sinusoidal_deprojection(const SunImage<T>* image, bool exact = false);
 		
 		
 	public:
@@ -229,8 +229,8 @@ class SunImage : public Image<T>
 		static const int equirectangular = EQUIRECTANGULAR_PROJECTION;
 		//! Constant for projection Lambert_cylindrical
 		static const int Lambert_cylindrical = LAMBERT_CYLINDRICAL_PROJECTION;
-		//! Constant for projection sinuosidal
-		static const int sinuosidal = SINUOSIDAL_PROJECTION;
+		//! Constant for projection sinusoidal
+		static const int sinusoidal = SINUOSIDAL_PROJECTION;
 		//! Constant for distance transform
 		static const int distance_transform = DISTANCE_TRANSFORM;
 };

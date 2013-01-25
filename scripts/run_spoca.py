@@ -76,7 +76,7 @@ def glob_files(filenames):
 	return filelist
 
 
-date_regex = re.compile(r'\d[^.]*\d')
+date_regex = re.compile(r'\d\d\d\d\d\d\d\d[^0-9]*\d+')
 def file_date(filename):
 	import dateutil.parser
 	filename = os.path.basename(filename)

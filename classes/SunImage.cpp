@@ -814,7 +814,7 @@ void SunImage<T>::Lambert_cylindrical_deprojection(const SunImage<T>* image, boo
 
 
 template<class T>
-void SunImage<T>::sinuosidal_projection(const SunImage<T>* image, bool exact)
+void SunImage<T>::sinusoidal_projection(const SunImage<T>* image, bool exact)
 {
 	this->zero(this->null());
 	T* j = this->pixels;
@@ -861,7 +861,7 @@ void SunImage<T>::sinuosidal_projection(const SunImage<T>* image, bool exact)
 
 
 template<class T>
-void SunImage<T>::sinuosidal_deprojection(const SunImage<T>* image, bool exact)
+void SunImage<T>::sinusoidal_deprojection(const SunImage<T>* image, bool exact)
 {
 	this->zero(this->null());
 	

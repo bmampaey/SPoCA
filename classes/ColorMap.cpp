@@ -672,11 +672,11 @@ void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projecti
 			#endif
 		break;
 		
-		case(SunImage<ColorType>::sinuosidal):
+		case(SunImage<ColorType>::sinusoidal):
 			projeted = new ColorMap(getWCS(), Xaxes(), Yaxes());
-			projeted->sinuosidal_projection(this, false);
+			projeted->sinusoidal_projection(this, false);
 			#if DEBUG >= 2
-			projeted->writeFits(filenamePrefix + "sinuosidal_projection.fits");
+			projeted->writeFits(filenamePrefix + "sinusoidal_projection.fits");
 			#endif
 			projeted->dilateCircular((2./3.)*aggregationFactor, null());
 			#if DEBUG >= 2
@@ -715,9 +715,9 @@ void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projecti
 			this->Lambert_cylindrical_deprojection(projeted, false);
 		break;
 		
-		case(SunImage<ColorType>::sinuosidal):
+		case(SunImage<ColorType>::sinusoidal):
 			projeted->erodeCircular((2./3.)*aggregationFactor, null());
-			this->sinuosidal_deprojection(projeted, false);
+			this->sinusoidal_deprojection(projeted, false);
 		break;
 		
 		case(SunImage<ColorType>::distance_transform):
@@ -736,6 +736,7 @@ void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projecti
 }
 
 #ifdef MAGICK
+using namespace MagickCore;
 MagickImage ColorMap::magick(const Magick::Color background)
 {
 	MagickImage image(background, xAxes, yAxes);

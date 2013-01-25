@@ -7,7 +7,8 @@ from Queue import Queue
 import spoca_job
 import time
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta
+from dagman_job import DAG
 
 def setup_logging(filename = None, quiet = False, verbose = False, debug = False):
 	global logging
@@ -132,7 +133,7 @@ def zip_files(filelists, files_queue):
 
 
 
-def make_overlay_jobs(files_queue, output_queue, force=False):
+def make_overlay_jobs(files_queue, output_queue, jobs, force=False):
 	
 	counter = 0
 	
@@ -143,6 +144,7 @@ def make_overlay_jobs(files_queue, output_queue, force=False):
 		job_name = "overlay_%s" % counter; counter += 1
 		job = spoca_job.overlay(job_name, files[0], fitsfiles=files[1:], force = force)
 		if job.job:
+			jobs.append(job.job)
 			logging.info("Running overlay job %s for map %s on files %s", job_name, files[0], str(files[1:]))
 			output_queue.put(job.job)
 		else:
@@ -242,7 +244,8 @@ if __name__ == "__main__":
 	# We make the overlay jobs
 	files_queue = Queue()
 	output_queue = Queue()
-	overlay_thread = threading.Thread(group=None, name='make_overlay_jobs', target=make_overlay_jobs, args=(files_queue, output_queue, args.force), kwargs={})
+	overlay_jobs = []
+	overlay_thread = threading.Thread(group=None, name='make_overlay_jobs', target=make_overlay_jobs, args=(files_queue, output_queue, overlay_jobs, args.force), kwargs={})
 	overlay_thread.start()
 	threads.append(overlay_thread)
 	
@@ -268,11 +271,4 @@ if __name__ == "__main__":
 		thread.join()
 		log.info("Thread %s has terminated", thread.name)
 	
-	# We wait for all jobs to terminate
-	job = output_queue.get()
-	while job != None:
-		log.debug("Waiting for job %s to terminate", job.name)
-		while not job.isTerminated():
-			time.sleep(1)
-		log.info("Job %s has terminated.", job.name)
-		job = output_queue.get()
+	DAG(overlay_jobs).submit()

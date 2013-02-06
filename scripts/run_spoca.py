@@ -11,7 +11,6 @@ import glob
 import spoca_job
 import time
 from datetime import datetime, timedelta
-from dagman_job import DAG
 
 
 def setup_logging(filename = None, quiet = False, verbose = False, debug = False):
@@ -139,7 +138,8 @@ def zip_files(filelists, files_queue):
 		files_queue.put(fileset)
 
 
-def make_segmentation_jobs(files_queue, output_queue, jobs, sequential, force):	
+def make_segmentation_jobs(files_queue, output_queue, sequential, force):
+	
 	counter = 0
 	job = None
 	fileset = files_queue.get()
@@ -154,12 +154,11 @@ def make_segmentation_jobs(files_queue, output_queue, jobs, sequential, force):
 			counter += 1
 		
 		if sequential and job:
-			job = spoca_job.segmentation(job_name, fileset, previous = [job.job], force = force)
+			job = spoca_job.segmentation(job_name, fileset, previous = job.job, force = force)
 		else:
 			job = spoca_job.segmentation(job_name, fileset, force = force)
 		
 		if job.job:
-			jobs.append(job.job)
 			log.info("Running segmentation job for files %s", fileset)
 		else:
 			log.debug("Not running segmentation job for files %s", fileset)
@@ -171,8 +170,7 @@ def make_segmentation_jobs(files_queue, output_queue, jobs, sequential, force):
 	
 	output_queue.put(None)
 
-
-def make_tracking_jobs(job_queue, output_queue, jobs, force):
+def make_tracking_jobs(job_queue, output_queue, force):
 	
 	counter = 0
 	
@@ -181,10 +179,10 @@ def make_tracking_jobs(job_queue, output_queue, jobs, force):
 	
 	log.debug("Tracking max_files %s, overlap %s", max_files, overlap)
 	
-	files_to_track = []
-	overlap_files = []
-	previous_overlap_jobs = []
-	previous_jobs = []
+	files_to_track = list()
+	overlap_files = list()
+	
+	previous_jobs = list()
 	
 	# None is provided when the queue is empty
 	job = job_queue.get()
@@ -195,35 +193,24 @@ def make_tracking_jobs(job_queue, output_queue, jobs, force):
 		
 		if len(files_to_track) + len(overlap_files) >= max_files:
 			job_name = "tracking_%s" % counter; counter += 1
-			if len(jobs) > 0:
-				tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_overlap_jobs+previous_jobs+[jobs[-1]], force = force)
-			else:
-				tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_overlap_jobs+previous_jobs, force = force)
-
+			tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_jobs, force = force)
 			if tracking_job.job:
-				jobs.append(tracking_job.job)
 				log.info("Running tracking job for files %s", tracking_job.results)
 			else:
 				log.debug("Not running tracking job for files %s", tracking_job.results)
 			
 			output_queue.put(tracking_job)
 			overlap_files = files_to_track[-overlap:]
-			previous_overlap_jobs = previous_jobs[-overlap:]
-			files_to_track = []
-			previous_jobs = []
+			files_to_track = list()
+			previous_jobs = list()
 		
 		job = job_queue.get()
 	
 	if files_to_track:
 		log.debug("Making LAST tracking job.")
 		job_name = "tracking_%s" % counter; counter += 1
-		
-		if len(jobs) > 0:
-			tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_overlap_jobs+previous_jobs+[jobs[-1]], force = force)
-		else:
-			tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_overlap_jobs+previous_jobs, force = force)
+		tracking_job = spoca_job.tracking(job_name, overlap_files+files_to_track, previous=previous_jobs, force = force)
 		if tracking_job.job:
-			jobs.append(tracking_job.job)
 			log.info("Running tracking job for files %s", tracking_job.results)
 		else:
 			log.debug("Not running tracking job for files %s", tracking_job.results)
@@ -234,9 +221,10 @@ def make_tracking_jobs(job_queue, output_queue, jobs, force):
 	output_queue.put(None)
 
 
-def make_overlay_jobs(job_queue, output_queue, jobs, force):
+def make_overlay_jobs(job_queue, output_queue, force):
 	
 	counter = 0
+	
 	job = job_queue.get()
 	# None is provided when the queue is empty
 	while job != None:
@@ -244,7 +232,6 @@ def make_overlay_jobs(job_queue, output_queue, jobs, force):
 			job_name = "overlay_%s" % counter; counter += 1
 			overlay_job = spoca_job.overlay(job_name, mapname, previous=[job.job], force = force)
 			if overlay_job.job:
-				jobs.append(overlay_job.job)
 				log.info("Running overlay job for map %s", mapname)
 			else:
 				log.debug("Not running overlay job for map %s", mapname)
@@ -254,7 +241,6 @@ def make_overlay_jobs(job_queue, output_queue, jobs, force):
 	log.debug("No more files for overlay, exiting thread")
 	
 	output_queue.put(None)
-
 
 # Start point of the script
 if __name__ == "__main__":
@@ -373,14 +359,10 @@ if __name__ == "__main__":
 	
 	threads = list()
 	
-	segmentation_jobs = []
-	tracking_jobs = []
-	overlay_jobs = []
-
 	# We make the segmentation jobs
 	files_queue = Queue()
 	output_queue = Queue()
-	segmentation_thread = threading.Thread(group=None, name='make_segmentation_jobs', target=make_segmentation_jobs, args=(files_queue, output_queue, segmentation_jobs, args.sequential, args.force), kwargs={})
+	segmentation_thread = threading.Thread(group=None, name='make_segmentation_jobs', target=make_segmentation_jobs, args=(files_queue, output_queue, args.sequential, args.force), kwargs={})
 	segmentation_thread.start()
 	threads.append(segmentation_thread)
 	
@@ -388,7 +370,7 @@ if __name__ == "__main__":
 		# We make the tracking jobs
 		input_queue = output_queue
 		output_queue = Queue()
-		tracking_thread = threading.Thread(group=None, name='make_tracking_jobs', target=make_tracking_jobs, args=(input_queue, output_queue, tracking_jobs, args.force), kwargs={})
+		tracking_thread = threading.Thread(group=None, name='make_tracking_jobs', target=make_tracking_jobs, args=(input_queue, output_queue, args.force), kwargs={})
 		tracking_thread.start()
 		threads.append(tracking_thread)
 	
@@ -396,7 +378,7 @@ if __name__ == "__main__":
 		# We make the overlay jobs
 		input_queue = output_queue
 		output_queue = Queue()
-		overlay_thread = threading.Thread(group=None, name='make_overlay_jobs', target=make_overlay_jobs, args=(input_queue, output_queue, overlay_jobs, args.force), kwargs={})
+		overlay_thread = threading.Thread(group=None, name='make_overlay_jobs', target=make_overlay_jobs, args=(input_queue, output_queue, args.force), kwargs={})
 		overlay_thread.start()
 		threads.append(overlay_thread)
 	
@@ -422,4 +404,12 @@ if __name__ == "__main__":
 		thread.join()
 		log.info("Thread %s has terminated", thread.name)
 	
-	DAG(segmentation_jobs+tracking_jobs+overlay_jobs).submit()	
+	# We wait for all jobs to terminate
+	job = output_queue.get()
+	while job != None:
+		log.debug("Waiting for job %s to terminate", job.job.name)
+		while job.job and not job.job.isTerminated():
+			time.sleep(1)
+		log.info("Job %s has terminated.", job.job.name)
+		job = output_queue.get()
+

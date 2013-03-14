@@ -1050,9 +1050,9 @@ inline T Image<T>::interpolate(float x, float y) const
 	if(y < 0)
 		y = 0;
 	if(x > xAxes-1.)
-		x = xAxes-1.;
+		x = xAxes-1.0001;
 	if(y > yAxes-1.)
-		y = yAxes-1.;
+		y = yAxes-1.0001;
 	
 	unsigned ix = (unsigned) x;
 	unsigned iy = (unsigned) y;

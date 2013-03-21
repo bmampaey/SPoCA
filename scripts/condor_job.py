@@ -26,6 +26,7 @@ CONDOR_SUBMIT_TIMEOUT = 20
 CONDOR_RM = 'condor_rm'
 CONDOR_Q = 'condor_q'
 CONDOR_Q_TIMEOUT = 60
+CONDOR_MAX_RUNNING_JOBS = 4
 SUBMIT_EXPRESSION = r"Proc\s*(?P<cluster_number>\d+)"
 RUNNING_STATUS = [0, 1, 2]
 
@@ -133,8 +134,7 @@ def _timeout_call(prog, input=None, timeout=0):
 class Job:
 	# Static constants
 	CHECK_INTERVAL = 5
-	TEMP_DIR = tempfile.gettempdir()
-	TEMP_PREFIX = 'condor_temp_file.'+str(os.getpid())
+	TEMP_DIR = tempfile.mkdtemp(prefix = 'condor_temp_file_' + str(os.getpid()) + '_')
 	MAX_SUBMISSION_RETRIES = 5
 	
 	# Static variables
@@ -144,6 +144,7 @@ class Job:
 	_running = dict()
 	_running_lock = threading.Lock()
 	_monitor_thread = None
+	_running_slot = threading.BoundedSemaphore(CONDOR_MAX_RUNNING_JOBS)
 	
 	# Constructor
 	def __init__(self, name, executable, arguments="", job_input=None, extra=None, require=None, pre_submit=None, call_back=None, auto_start=True):
@@ -191,10 +192,10 @@ class Job:
 					module_logger.warning("Job "+ self.name + ": Require itself to start, omitting self")
 		
 		# We create the temporary filenames for input/output/error/logging
-		self._input_file = os.path.join(Job.TEMP_DIR, Job.TEMP_PREFIX+'.'+self.name+'.'+str(self._id)+'.in')
-		self._output_file = os.path.join(Job.TEMP_DIR, Job.TEMP_PREFIX+'.'+self.name+'.'+str(self._id)+'.out')
-		self._error_file = os.path.join(Job.TEMP_DIR, Job.TEMP_PREFIX+'.'+self.name+'.'+str(self._id)+'.err')
-		self._log_file = os.path.join(Job.TEMP_DIR, Job.TEMP_PREFIX+'.'+self.name+'.'+str(self._id)+'.log')
+		self._input_file = os.path.join(Job.TEMP_DIR, self.name+'.'+str(self._id)+'.in')
+		self._output_file = os.path.join(Job.TEMP_DIR, self.name+'.'+str(self._id)+'.out')
+		self._error_file = os.path.join(Job.TEMP_DIR, self.name+'.'+str(self._id)+'.err')
+		self._log_file = os.path.join(Job.TEMP_DIR, self.name+'.'+str(self._id)+'.log')
 		
 		module_logger.debug("Created job " + str(self))
 		
@@ -290,6 +291,9 @@ class Job:
 			if k in CONDOR_SUBMIT_EXTRA:
 				condor_submit.extend(['-a', k+'='+v])
 		
+		# We submit the job
+		module_logger.debug("Job "+ self.name + ": Submitting")
+		Job._running_slot.acquire()
 		returncode, output, error = _timeout_call(condor_submit, input=self._condor_job_description, timeout=CONDOR_SUBMIT_TIMEOUT)
 		
 		# We allow to retry the submission if it has failed
@@ -419,6 +423,7 @@ class Job:
 			self.return_code = return_code
 		
 		# Ok we have really terminated
+		Job._running_slot.release()
 		try :
 			with Job._running_lock:
 				del Job._running[self._cluster_number]

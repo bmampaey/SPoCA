@@ -95,7 +95,7 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 	RealFeature sum;
 	for (unsigned j = numberFeatureVectors; j < X.size(); ++j)
 	{
-		unsigned coord = coordinates[j].x + coordinates[j].y * Xaxes;
+		unsigned coord = coordinates[j].x + (coordinates[j].y - Yaxes) * Xaxes;
 		beta.push_back(caardNeighbors[coord] != 0 ? (1. / caardNeighbors[coord]) : 0);
 		N.push_back(neighbors[coord]);
 		

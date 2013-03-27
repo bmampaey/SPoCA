@@ -83,8 +83,8 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 					++neighbor;
 				}
 			}
-			X.push_back(x);
-			smoothedX.push_back(x);
+			X.push_back(f);
+			smoothedX.push_back(f);
 			coordinates.push_back(PixLoc(x,y + Yaxes));
 			
 		}

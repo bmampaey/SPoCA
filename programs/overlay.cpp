@@ -30,7 +30,7 @@
 
 @param mastic	Set this flag if you want to fill holes in the connected components before tracing the contours.
 
-@param Label	The label to write in the upper left corner.
+@param Label	The label to write in the lower left corner.
 <BR>You can use keywords from the fits file of the color map by specifying them between {}. e.g. Wavelength: {WAVELNTH}
 
 @param label	Set this flag if you want a label on the image.

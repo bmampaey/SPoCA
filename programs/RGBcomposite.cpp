@@ -3,8 +3,8 @@
 @page RGBcomposite RGBcomposite.x
 
  This program takes 3 EUV images in fits format, and compose them as a RGB color image, each fits file corresponding to a color channel.
- The name of the png image will be the composition of the names of the 3 fits files (with the png suffix).
-  
+ By default, the name of the png image will be the composition of the names of the 3 fits files (with the png suffix).
+ 
  @section usage Usage
  
  <tt> RGBcomposite.x -h </tt>
@@ -36,7 +36,7 @@ fitsFileName3 corresponds to the blue channel
  
 @param size The size of the image written. i.e. "1024x1024" See <a href="http://www.imagemagick.org/script/command-line-processing.php#geometry" target="_blank">ImageMagick Image Geometry</a>  for specification.
 
-@param outputDirectory	The name for the output directory.
+@param output	The name for the output file/directory.
 
 See @ref Compilation_Options for constants and parameters at compilation time.
 
@@ -78,7 +78,7 @@ int main(int argc, const char **argv)
 {
 
 	// The list of names of the images to process
-	vector<string> imagesFilenames;
+	vector<string> fitsFileNames;
 	
 	// Options for the preprocessing of images
 	string preprocessingSteps = "";
@@ -89,8 +89,8 @@ int main(int argc, const char **argv)
 	// Option for the output size
 	string size;
 	
-	// option for the output directory
-	string outputDirectory = ".";
+	// option for the output file/directory
+	string output = ".";
 	
 	string programDescription = "This Program generates a RGB image out of 3 fits files.\n";
 	programDescription+="Compiled with options :";
@@ -101,8 +101,8 @@ int main(int argc, const char **argv)
 	arguments.new_flag('l', "label", "\n\tSet this flag if you want a label on the background.\n\t", label);
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
 	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
-	arguments.new_named_string('O', "outputDirectory","directory name", "\n\tThe name for the output directory.\n\t", outputDirectory);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 fitsFileName3", "\n\tThe name of the fits files to use to make the composite, in Red Green Blue order.\n\t", imagesFilenames);
+	arguments.new_named_string('O', "output","file/directory name", "\n\tThe name for the output file/directory.\n\t", output);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 fitsFileName3", "\n\tThe name of the fits files to use to make the composite, in Red Green Blue order.\n\t", fitsFileNames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
@@ -110,11 +110,33 @@ int main(int argc, const char **argv)
 	arguments.process(argc, argv);
 
 	// We check that we received 3 files
-	if(imagesFilenames.size() != 3)
+	if(fitsFileNames.size() != 3)
 	{
 		cerr << "Error : You must provide exactly 3 files."<< endl;
 		return 2;
 	}
+	
+	// We check if the output is a directory or a file
+	string outputDirectory, outputFileName;
+	if (isDir(output))
+	{
+		outputDirectory = output;
+		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[0])) + "_" + stripSuffix(stripPath(fitsFileNames[1])) + "_"+ stripSuffix(stripPath(fitsFileNames[2])) + ".";
+		outputFileName = filenamePrefix + "composite.png";
+	}
+	else
+	{
+		outputDirectory = getPath(output);
+		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[0])) + "_" + stripSuffix(stripPath(fitsFileNames[1])) + "_"+ stripSuffix(stripPath(fitsFileNames[2])) + ".";
+		outputFileName = output;
+		// We check if the outputDirectory exists
+		if (! isDir(outputDirectory))
+		{
+			cerr<<"Error : directory "<<outputDirectory<<" does not exists!"<<endl;
+			return EXIT_FAILURE;
+		}
+	}
+
 	
 	// We parse the size option
 	Magick::Geometry size_geometry(size);
@@ -133,57 +155,57 @@ int main(int argc, const char **argv)
 	blue_gradient.pixelColor( 0, 1, "blue" ); 
 	
 	// We make the red channel with the first image
-	EUVImage* image = getImageFromFile("UNKNOWN", imagesFilenames[0]);
+	EUVImage* inputImage = getImageFromFile("UNKNOWN", fitsFileNames[0]);
 	// We improve the contrast
 	if(! preprocessingSteps.empty())
 	{
-		image->preprocessing(preprocessingSteps);
+		inputImage->preprocessing(preprocessingSteps);
 	}
 	else 
 	{
-		image->enhance_contrast();
+		inputImage->enhance_contrast();
 	}
-	MagickImage red_channel = image->magick();
-	delete image;
+	MagickImage red_channel = inputImage->magick();
+	delete inputImage;
 	MagickCore::ClutImage(red_channel.image(), red_gradient.image());
 	#if DEBUG >= 2
-		red_channel.write(outputDirectory + "/" + stripSuffix(stripPath(imagesFilenames[0])) + "_red.png");
+		red_channel.write(outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[0])) + ".red.png");
 	#endif
 	
 	
 	// We make the green channel with the second image
-	image = getImageFromFile("UNKNOWN", imagesFilenames[1]);
+	inputImage = getImageFromFile("UNKNOWN", fitsFileNames[1]);
 	// We improve the contrast
 	if(! preprocessingSteps.empty())
 	{
-		image->preprocessing(preprocessingSteps);
+		inputImage->preprocessing(preprocessingSteps);
 	}
 	else 
 	{
-		image->enhance_contrast();
+		inputImage->enhance_contrast();
 	}
-	MagickImage green_channel = image->magick();
-	delete image;
+	MagickImage green_channel = inputImage->magick();
+	delete inputImage;
 	MagickCore::ClutImage(green_channel.image(), green_gradient.image());
 	#if DEBUG >= 2
-		green_channel.write(outputDirectory + "/" + stripSuffix(stripPath(imagesFilenames[1])) + "_green.png");
+		green_channel.write(outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[1])) + ".green.png");
 	#endif
 	
 	// We make the blue channel with the third image
-	image = getImageFromFile("UNKNOWN", imagesFilenames[2]);
+	inputImage = getImageFromFile("UNKNOWN", fitsFileNames[2]);
 	// We improve the contrast
 	if(! preprocessingSteps.empty())
 	{
-		image->preprocessing(preprocessingSteps);
+		inputImage->preprocessing(preprocessingSteps);
 	}
 	else 
 	{
-		image->enhance_contrast();
+		inputImage->enhance_contrast();
 	}
-	MagickImage blue_channel = image->magick();
+	MagickImage blue_channel = inputImage->magick();
 	MagickCore::ClutImage(blue_channel.image(), blue_gradient.image());
 	#if DEBUG >= 2
-		blue_channel.write(outputDirectory + "/" + stripSuffix(stripPath(imagesFilenames[2])) + "_blue.png");
+		blue_channel.write(outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[2])) + ".blue.png");
 	#endif
 	
 	// We compose the channels together
@@ -192,24 +214,19 @@ int main(int argc, const char **argv)
 	
 	if(label)
 	{
-		string text = image->Label();
-		size_t text_size = image->Xaxes()/40;
+		string text = inputImage->Label();
+		size_t text_size = inputImage->Xaxes()/40;
 		blue_channel.fillColor("white");
 		blue_channel.fontPointsize(text_size);
-		blue_channel.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
+		blue_channel.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
 		blue_channel.label(text);
 	}
-	delete image;
+	delete inputImage;
 	
 	if(size_geometry.isValid())
 		blue_channel.scale(size_geometry);
 	
-	string outputFilename = outputDirectory + "/";
-	for(unsigned p = 0; p < 3; ++p)
-		outputFilename += stripSuffix(stripPath(imagesFilenames[p])) + "_";
-	outputFilename += "composite.png";
-	
-	blue_channel.write(outputFilename);
+	blue_channel.write(outputFileName);
 
 	return EXIT_SUCCESS;
 }

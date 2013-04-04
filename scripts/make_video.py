@@ -34,7 +34,7 @@ def run_ffmpeg(ffmpeg_cmd, input_filenames = []):
 		if return_code != 0:
 			raise Exception("Return code : {}\t StdOut: {}\t StdErr: {}".format(return_code, stderr, stdout))
 	except Exception, why:
-		logging.critical('Failed running command %s : %s', ' '.join(convert), str(why))
+		logging.critical('Failed running command %s : %s', ' '.join(ffmpeg_cmd), str(why))
 		return False
 	else:
 		return True
@@ -316,19 +316,19 @@ if __name__ == "__main__":
 	if source_extension == '.png':
 		logging.info("Source type detected is png images")
 		# We make a video from png images
-		if videos_filenames['.ts']:
+		if '.ts' in videos_filenames:
 			png_to_ts_video(args.sources, videos_filenames['.ts'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
 			video_sources.append(videos_filenames['.ts'])
 		
-		elif videos_filenames['.mp4']:
+		elif '.mp4' in videos_filenames:
 			png_to_mp4_video(args.sources, videos_filenames['.mp4'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
 			video_sources.append(videos_filenames['.mp4'])
 		
-		elif videos_filenames['.webm']:
+		elif '.webm' in videos_filenames:
 			png_to_webm_video(args.sources, videos_filenames['.webm'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
 			video_sources.append(videos_filenames['.webm'])
 		
-		elif videos_filenames['.ogv']:
+		elif '.ogv' in videos_filenames:
 			png_to_ogv_video(args.sources, videos_filenames['.ogv'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
 			video_sources.append(videos_filenames['.ogv'])
 	else:
@@ -336,12 +336,12 @@ if __name__ == "__main__":
 		video_sources = args.sources
 	
 	# We make the remaining videos from video sources
-	if videos_filenames['.mp4']:
+	if '.mp4' in videos_filenames:
 		video_to_mp4_video(video_sources, videos_filenames['.mp4'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
 
-	elif videos_filenames['.webm']:
+	elif '.webm' in videos_filenames:
 		video_to_webm_video(video_sources, videos_filenames['.webm'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
 
-	elif videos_filenames['.ogv']:
+	elif '.ogv' in videos_filenames:
 		video_to_ogv_video(video_sources, videos_filenames['.ogv'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
 

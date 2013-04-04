@@ -57,7 +57,13 @@
 @param colorsFilename A file containing a list of colors to select separated by commas
 <BR>All colors will be selected if ommited.
 
-@param outputDirectory	The name for the output directory.
+@param straightenUp	Set this flag if you want to have the solar north up.
+
+@param recenter	Recenter the sun on the specified position
+
+@param scaling	Scaling factor to resize the image
+
+@param output	The name for the output file/directory.
 
 See @ref Compilation_Options for constants and parameters at compilation time.
 
@@ -117,7 +123,7 @@ int main(int argc, const char **argv)
 	// Options for the background
 	// The list of names of the sun images to process
 	string imageType = "UNKNOWN";
-	vector<string> imagesFilenames;
+	vector<string> fitsFileNames;
 	
 	// Options for the preprocessing of images
 	string preprocessingSteps = "";
@@ -133,8 +139,14 @@ int main(int argc, const char **argv)
 	string colorsFilename;
 	bool sameColors = false;
 	
-	// option for the output directory
-	string outputDirectory = ".";
+	// Options for the transformation
+	bool straightenUp = false;
+	string recenter;
+	double scaling = 1;
+	
+	
+	// Option for the output file/directory
+	string output = ".";
 
 	
 	string programDescription = "This program plots region contours overlayed on a background image.\n";
@@ -160,19 +172,38 @@ int main(int argc, const char **argv)
 	arguments.new_flag('s', "sameColors", "\n\tSet this flag if want all colors to be the same.\n\t", sameColors);
 	arguments.new_named_string('C', "colorsFilename", "string", "\n\tA file containing a list of colors to select separated by commas\n\tAll colors will be selected if ommited.\n\t", colorsFilename);
 
-	arguments.new_named_string('O', "outputDirectory","directory name", "\n\tThe name for the output directory.\n\t", outputDirectory);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "The name of the fits files containing the images of the sun.", imagesFilenames);
+	arguments.new_flag('u', "straightenUp", "\n\tSet this flag if you want to have the solar north up.\n\t", straightenUp);
+	arguments.new_named_string('r', "recenter", "2 positive real separated by a comma (no spaces)", "\n\tThe position of the new center\n\t", recenter);
+	arguments.new_named_double('s', "scaling", "positive real", "\n\tThe scaling factor.\n\t", scaling);
+
+	arguments.new_named_string('O', "output","file/directory name", "\n\tThe name for the output file/directory.\n\t", output);
+	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "The name of the fits files containing the images of the sun.", fitsFileNames);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
 	arguments.set_build_date(__DATE__);
 	arguments.set_version("1.0");
 	arguments.process(argc, argv);
 
-	// We check if the outputDirectory is a directory 
-	if (! isDir(outputDirectory))
+	// We check if the output is a directory
+	string outputDirectory, outputFileName;
+	if (isDir(output))
 	{
-		cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
-		return EXIT_FAILURE;
+		outputDirectory = output;
+		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + ".";
+		outputFileName = outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + "_on_";
+	}
+	else
+	{
+		outputDirectory = getPath(output);
+		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + ".";
+		outputFileName = output + "_on_";
+		
+		// We check if the outputDirectory exists
+		if (! isDir(outputDirectory))
+		{
+			cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
+			return EXIT_FAILURE;
+		}
 	}
 	
 	
@@ -226,7 +257,7 @@ int main(int argc, const char **argv)
 		}
 	}
 	
-	//We fill holes if requested
+	// We fill holes if requested
 	if(mastic)
 		colorizedMap->removeHoles();
 	
@@ -243,8 +274,32 @@ int main(int argc, const char **argv)
 		colorizedMap->drawContours(width, 0);
 	
 	#if DEBUG >= 2
-	colorizedMap->writeFits(outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + ".contours.fits");
+	colorizedMap->writeFits(filenamePrefix + "contours.fits");
 	#endif
+	
+	// We transform the image
+	if(straightenUp or !recenter.empty() or scaling != 1.)
+	{
+		// We correct for the roll
+		Real rotationAngle = 0;
+		if (straightenUp)
+		{
+			rotationAngle = - colorizedMap->Crota2();
+		}
+		
+		// We recenter the image
+		RealPixLoc newCenter = colorizedMap->SunCenter();
+		if(!recenter.empty() and !readCoordinate(newCenter, recenter))
+		{
+			return EXIT_FAILURE;
+		}
+		colorizedMap->transform(rotationAngle, RealPixLoc(newCenter.x - colorizedMap->SunCenter().x, newCenter.y - colorizedMap->SunCenter().y), scaling);
+		#if DEBUG >= 2
+		colorizedMap->writeFits(filenamePrefix + "transformed.fits");
+		#endif
+		
+	}
+	
 	
 	// We make the png contours and label it if necessary
 	MagickImage contours = colorizedMap->magick();
@@ -254,26 +309,31 @@ int main(int argc, const char **argv)
 		size_t text_size = colorizedMap->Xaxes()/40;
 		contours.fillColor("white");
 		contours.fontPointsize(text_size);
-		contours.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
+		contours.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
 		contours.label(text);
 	}
 	#if DEBUG >= 2
 	contours.write(outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + ".contours.png");
 	#endif
-		
-	RealPixLoc sunCenter = colorizedMap->SunCenter();
-	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
-	{
 	
-		// We read the sun image for the background
-		string imageFilename = expand(imagesFilenames[p], colorizedMap->getHeader());
-		if(! isFile(imageFilename))
+	RealPixLoc referenceSunCenter = colorizedMap->SunCenter();
+	Real referenceCrota2 = colorizedMap->Crota2();
+	Real referenceSunRadius = colorizedMap->SunRadius();
+	for (unsigned p = 0; p < fitsFileNames.size(); ++p)
+	{
+		// We expand the name of the background fits image with the header of the colorizedMap
+		string fitsFileName = expand(fitsFileNames[p], colorizedMap->getHeader());
+		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(fitsFileName)) + ".";
+		
+		if(! isFile(fitsFileName))
 		{
-			cerr<<"Error : "<<imageFilename<<" is not a regular file!"<<endl;
+			cerr<<"Error : "<<fitsFileName<<" is not a regular file!"<<endl;
 			continue;
 		}
-		EUVImage* image = getImageFromFile(imageType, imageFilename);
-		image->recenter(sunCenter);
+		
+		// We read the sun image for the background
+		EUVImage* image = getImageFromFile(imageType, fitsFileName);
+		
 		// We improve the contrast
 		if(! preprocessingSteps.empty())
 		{
@@ -285,7 +345,13 @@ int main(int argc, const char **argv)
 		}
 		
 		#if DEBUG >= 2
-		image->writeFits(outputDirectory + "/" + stripSuffix(stripPath(imageFilename)) + ".background.fits");
+		image->writeFits(filenamePrefix + "preprocessed.fits");
+		#endif
+		
+		// We transform the image to align it with the colorizedMap
+		image->transform(referenceCrota2 - image->Crota2(), RealPixLoc(referenceSunCenter.x - image->SunCenter().x, referenceSunCenter.y - image->SunCenter().y), referenceSunRadius/image->SunRadius());
+		#if DEBUG >= 2
+		image->writeFits(filenamePrefix + "transformed.fits");
 		#endif
 		
 		// We make the png background and label it if necessary
@@ -296,19 +362,20 @@ int main(int argc, const char **argv)
 			size_t text_size = image->Xaxes()/40;
 			background.fillColor("white");
 			background.fontPointsize(text_size);
-			background.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
+			background.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
 			background.label(text);
 		}
 		#if DEBUG >= 2
-		background.write(outputDirectory + "/" + stripSuffix(stripPath(imageFilename)) + ".background.png");
+		background.write(filenamePrefix + "background.png");
 		#endif
-		// We overlay the 2 images and write it down
+		
+		// We overlay the 2 images , rescale, and write it to file
 		background.composite(contours, Magick::CenterGravity, Magick::OverCompositeOp);
 		
 		if(size_geometry.isValid())
 			background.scale(size_geometry);
 		
-		background.write(outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + "_on_" + stripSuffix(stripPath(imageFilename)) + ".png");
+		background.write(outputFileName + stripSuffix(stripPath(fitsFileName)) + ".png");
 	}
 	return EXIT_SUCCESS;
 }

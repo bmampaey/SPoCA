@@ -219,6 +219,16 @@ class Image
 		//! Routine to read an Image from a fits files
 		bool readFits(const std::string& filename);
 		
+				
+		//! Routine that applies transformation to an Image: rotation, translation and scaling.
+		/*	@param transformationCenter The coordinate of the transformation center for rotation and scaling.
+			@param rotationAngle The angle of rotation in degrees. Rotation is done in the trigonometric direction i.e. counter clockwise.
+			@param translation The translation to apply to the image in the x and y direction.
+			@param scaling The scaling factor.
+			@param image The image to use for the origin
+		*/
+		void transform(const RealPixLoc transformationCenter, const Real rotationAngle = 0., const RealPixLoc translation = RealPixLoc(0, 0), const Real scaling = 1, const Image<T> * image = NULL);
+		
 
 };
 

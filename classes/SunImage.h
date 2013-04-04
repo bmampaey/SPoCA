@@ -74,6 +74,9 @@ class SunImage : public Image<T>
 		//! Accessor to retrieve the ObservationDate
 		std::string ObservationDate() const;
 		
+		//! Accessor to retrieve the CROTA2/Roll of the image
+		Real Crota2() const;
+		
 		//! Accessor to retrieve the Instrument
 		virtual std::string Instrument() const;
 		
@@ -88,7 +91,6 @@ class SunImage : public Image<T>
 		
 		//! Accessor to retrieve the header
 		Header& getHeader();
-		
 		
 		//! Accessor to retrieve the wcs
 		WCS& getWCS();
@@ -221,6 +223,16 @@ class SunImage : public Image<T>
 		//! Routine that does the inverse of the sinusoidal projection of the sunimage
 		void sinusoidal_deprojection(const SunImage<T>* image, bool exact = false);
 		
+		//! Routine that applies transformation to a SunImage: rotation, translation and scaling.
+		/*	@param rotationAngle The angle of rotation in degrees. Rotation is done in the trigonometric direction i.e. counter clockwise.
+			@param translation The translation to apply to the image in the x and y direction.
+			@param scaling The scaling factor.
+			@param missingValue The value for the pixel for which the value is unknown.
+			@param image The image to use for the origin
+		*/
+		void transform(const Real rotationAngle = 0., const RealPixLoc translation = RealPixLoc(0, 0), const Real scaling = 1, const Image<T> * image = NULL);
+		
+
 		
 	public:
 		//! Constant for no projection

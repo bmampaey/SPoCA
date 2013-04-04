@@ -141,7 +141,15 @@ void AIAImage::fillHeader()
 	header.set<Real>("CD2_2", wcs.cd[1][1]);
 	header.set<string>("T_OBS",  wcs.date_obs);
 	header.set<Real>("R_SUN", wcs.sun_radius);
-
+	
+	if (header.has("CROTA2"))
+	{
+		header.set("CROTA2", wcs.getCrota2());
+	}
+	if (header.has("SC_ROLL"))
+	{
+		header.set("SC_ROLL", wcs.getCrota2());
+	}
 }
 
 string AIAImage::Instrument() const

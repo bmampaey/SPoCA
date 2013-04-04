@@ -80,6 +80,8 @@ class WCS
 		void setPC(const Real& pc1_1, const Real& pc1_2, const Real& pc2_1, const Real& pc2_2);
 		//! Set the CD matrix and the inverse CD matrix
 		void setCD(const Real& cd1_1, const Real& cd1_2, const Real& cd2_1, const Real& cd2_2);
+		//! Compute CROTA2 from the CD matrix
+		Real getCrota2() const;
 };
 
 #endif

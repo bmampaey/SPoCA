@@ -138,6 +138,14 @@ void EUVIImage::fillHeader()
 	header.set<string>("DATE_OBS", wcs.date_obs);
 	header.set<Real>("RSUN", wcs.sun_radius*wcs.cdelt1);
 	
+	if (header.has("CROTA2"))
+	{
+		header.set("CROTA2", wcs.getCrota2());
+	}
+	if (header.has("SC_ROLL"))
+	{
+		header.set("SC_ROLL", wcs.getCrota2());
+	}
 }
 
 string EUVIImage::Instrument() const

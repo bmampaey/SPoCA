@@ -20,6 +20,12 @@
 
 @param size The size of the image written. i.e. "1024x1024" See <a href="http://www.imagemagick.org/script/command-line-processing.php#geometry" target="_blank">ImageMagick Image Geometry</a>  for specification.
 
+@param straightenUp	Set this flag if you want to have the solar north up.
+
+@param recenter	Recenter the sun on the specified position
+
+@param scaling	Scaling factor to resize the image
+
 @param output	The name for the output file/directory.
 
 <BR>N.B.: In the color maps, because there is no colors in fits files, they are represented as a number.
@@ -76,7 +82,13 @@ int main(int argc, const char **argv)
 	// Option for the output size
 	string size;
 	
-	// option for the output file/directory
+	// Options for the transformation
+	bool straightenUp = false;
+	string recenter;
+	double scaling = 1;
+	
+	
+	// Option for the output file/directory
 	string output = ".";
 
 	string programDescription = "This program transform a color map into a png.\n";
@@ -88,6 +100,9 @@ int main(int argc, const char **argv)
 	arguments.new_flag('T', "transparent", "\n\tIf you want the null values to be transparent\n\t" , transparent);
 	arguments.new_named_string('L', "Label", "string", "\n\tThe label for the contours.\n\tYou can use keywords from the color map fits file by specifying them between {}\n\t", Label);
 	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
+	arguments.new_flag('u', "straightenUp", "\n\tSet this flag if you want to have the solar north up.\n\t", straightenUp);
+	arguments.new_named_string('r', "recenter", "2 positive real separated by a comma (no spaces)", "\n\tThe position of the new center\n\t", recenter);
+	arguments.new_named_double('s', "scaling", "positive real", "\n\tThe scaling factor.\n\t", scaling);
 	arguments.new_named_string('O', "output","file/directory name", "\n\tThe name for the output file/directory.\n\t", output);
 	arguments.new_string("fitsFileName", "\n\tThe name of the fits files to convert.\n\t", fitsFileName);
 	arguments.set_description(programDescription.c_str());
@@ -137,6 +152,30 @@ int main(int argc, const char **argv)
 	
 	// We read the file
 	ColorMap* inputImage = getImageFromFile(fitsFileName);
+	
+	// We transform the image
+	if(straightenUp or !recenter.empty() or scaling != 1.)
+	{
+		// We correct for the roll
+		Real rotationAngle = 0;
+		if (straightenUp)
+		{
+			rotationAngle = - inputImage->Crota2();
+		}
+		
+		// We recenter the image
+		RealPixLoc newCenter = inputImage->SunCenter();
+		if(!recenter.empty() and !readCoordinate(newCenter, recenter))
+		{
+			return EXIT_FAILURE;
+		}
+		inputImage->transform(rotationAngle, RealPixLoc(newCenter.x - inputImage->SunCenter().x, newCenter.y - inputImage->SunCenter().y), scaling);
+		#if DEBUG >= 2
+		inputImage->writeFits(filenamePrefix + "transformed.fits");
+		#endif
+		
+	}
+	
 	// We make the png
 	MagickImage outputImage = inputImage->magick();
 

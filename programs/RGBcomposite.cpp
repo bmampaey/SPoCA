@@ -36,6 +36,12 @@ fitsFileName3 corresponds to the blue channel
  
 @param size The size of the image written. i.e. "1024x1024" See <a href="http://www.imagemagick.org/script/command-line-processing.php#geometry" target="_blank">ImageMagick Image Geometry</a>  for specification.
 
+@param straightenUp	Set this flag if you want to have the solar north up.
+
+@param recenter	Recenter the sun on the specified position
+
+@param scaling	Scaling factor to resize the image
+
 @param output	The name for the output file/directory.
 
 See @ref Compilation_Options for constants and parameters at compilation time.
@@ -71,12 +77,8 @@ using Magick::Quantum;
 
 string filenamePrefix;
 
-
-
-
 int main(int argc, const char **argv)
 {
-
 	// The list of names of the images to process
 	vector<string> fitsFileNames;
 	
@@ -89,7 +91,12 @@ int main(int argc, const char **argv)
 	// Option for the output size
 	string size;
 	
-	// option for the output file/directory
+	// Options for the transformation
+	bool straightenUp = false;
+	string recenter;
+	double scaling = 1;
+	
+	// Option for the output file/directory
 	string output = ".";
 	
 	string programDescription = "This Program generates a RGB image out of 3 fits files.\n";
@@ -99,6 +106,9 @@ int main(int argc, const char **argv)
 
 	ArgumentHelper arguments;
 	arguments.new_flag('l', "label", "\n\tSet this flag if you want a label on the background.\n\t", label);
+	arguments.new_flag('u', "straightenUp", "\n\tSet this flag if you want to have the solar north up.\n\t", straightenUp);
+	arguments.new_named_string('r', "recenter", "2 positive real separated by a comma (no spaces)", "\n\tThe position of the new center\n\t", recenter);
+	arguments.new_named_double('s', "scaling", "positive real", "\n\tThe scaling factor.\n\t", scaling);
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
 	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
 	arguments.new_named_string('O', "output","file/directory name", "\n\tThe name for the output file/directory.\n\t", output);
@@ -121,13 +131,11 @@ int main(int argc, const char **argv)
 	if (isDir(output))
 	{
 		outputDirectory = output;
-		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[0])) + "_" + stripSuffix(stripPath(fitsFileNames[1])) + "_"+ stripSuffix(stripPath(fitsFileNames[2])) + ".";
-		outputFileName = filenamePrefix + "composite.png";
+		outputFileName = outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[0])) + "_" + stripSuffix(stripPath(fitsFileNames[1])) + "_"+ stripSuffix(stripPath(fitsFileNames[2])) + ".composite.png";
 	}
 	else
 	{
 		outputDirectory = getPath(output);
-		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[0])) + "_" + stripSuffix(stripPath(fitsFileNames[1])) + "_"+ stripSuffix(stripPath(fitsFileNames[2])) + ".";
 		outputFileName = output;
 		// We check if the outputDirectory exists
 		if (! isDir(outputDirectory))
@@ -155,7 +163,9 @@ int main(int argc, const char **argv)
 	blue_gradient.pixelColor( 0, 1, "blue" ); 
 	
 	// We make the red channel with the first image
+	filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[0])) + ".";
 	EUVImage* inputImage = getImageFromFile("UNKNOWN", fitsFileNames[0]);
+	
 	// We improve the contrast
 	if(! preprocessingSteps.empty())
 	{
@@ -165,16 +175,46 @@ int main(int argc, const char **argv)
 	{
 		inputImage->enhance_contrast();
 	}
+	
+	// We transform the image
+	if(straightenUp or !recenter.empty() or scaling != 1.)
+	{
+		// We correct for the roll
+		Real rotationAngle = 0;
+		if (straightenUp)
+		{
+			rotationAngle = - inputImage->Crota2();
+		}
+		
+		// We recenter the image
+		RealPixLoc newCenter = inputImage->SunCenter();
+		if(!recenter.empty() and !readCoordinate(newCenter, recenter))
+		{
+			return EXIT_FAILURE;
+		}
+		inputImage->transform(rotationAngle, RealPixLoc(newCenter.x - inputImage->SunCenter().x, newCenter.y - inputImage->SunCenter().y), scaling);
+		#if DEBUG >= 2
+		inputImage->writeFits(filenamePrefix + "transformed.fits");
+		#endif
+		
+	}
+	
+	RealPixLoc referenceSunCenter = inputImage->SunCenter();
+	Real referenceCrota2 = inputImage->Crota2();
+	Real referenceSunRadius = inputImage->SunRadius();
+	
+	// We make the png
 	MagickImage red_channel = inputImage->magick();
 	delete inputImage;
 	MagickCore::ClutImage(red_channel.image(), red_gradient.image());
 	#if DEBUG >= 2
-		red_channel.write(outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[0])) + ".red.png");
+		red_channel.write(filenamePrefix + "red.png");
 	#endif
 	
-	
 	// We make the green channel with the second image
+	filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[1])) + ".";
 	inputImage = getImageFromFile("UNKNOWN", fitsFileNames[1]);
+	
 	// We improve the contrast
 	if(! preprocessingSteps.empty())
 	{
@@ -184,14 +224,23 @@ int main(int argc, const char **argv)
 	{
 		inputImage->enhance_contrast();
 	}
+	
+	// We transform the image
+	inputImage->transform(referenceCrota2 - inputImage->Crota2(), RealPixLoc(referenceSunCenter.x - inputImage->SunCenter().x, referenceSunCenter.y - inputImage->SunCenter().y), referenceSunRadius/inputImage->SunRadius());
+	#if DEBUG >= 2
+	inputImage->writeFits(filenamePrefix + "transformed.fits");
+	#endif
+	
+	// We make the png
 	MagickImage green_channel = inputImage->magick();
 	delete inputImage;
 	MagickCore::ClutImage(green_channel.image(), green_gradient.image());
 	#if DEBUG >= 2
-		green_channel.write(outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[1])) + ".green.png");
+		green_channel.write(filenamePrefix + "green.png");
 	#endif
 	
 	// We make the blue channel with the third image
+	filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[2])) + ".";
 	inputImage = getImageFromFile("UNKNOWN", fitsFileNames[2]);
 	// We improve the contrast
 	if(! preprocessingSteps.empty())
@@ -202,10 +251,18 @@ int main(int argc, const char **argv)
 	{
 		inputImage->enhance_contrast();
 	}
+	
+	// We transform the image
+	inputImage->transform(referenceCrota2 - inputImage->Crota2(), RealPixLoc(referenceSunCenter.x - inputImage->SunCenter().x, referenceSunCenter.y - inputImage->SunCenter().y), referenceSunRadius/inputImage->SunRadius());
+	#if DEBUG >= 2
+	inputImage->writeFits(filenamePrefix + "transformed.fits");
+	#endif
+	
+	// We make the png
 	MagickImage blue_channel = inputImage->magick();
 	MagickCore::ClutImage(blue_channel.image(), blue_gradient.image());
 	#if DEBUG >= 2
-		blue_channel.write(outputDirectory + "/" + stripSuffix(stripPath(fitsFileNames[2])) + ".blue.png");
+		blue_channel.write(filenamePrefix + "blue.png");
 	#endif
 	
 	// We compose the channels together

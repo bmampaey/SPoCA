@@ -242,7 +242,7 @@ class SunImage : public Image<T>
 		//! Constant for projection Lambert_cylindrical
 		static const int Lambert_cylindrical = LAMBERT_CYLINDRICAL_PROJECTION;
 		//! Constant for projection sinusoidal
-		static const int sinusoidal = SINUOSIDAL_PROJECTION;
+		static const int sinusoidal = SINUSOIDAL_PROJECTION;
 		//! Constant for distance transform
 		static const int distance_transform = DISTANCE_TRANSFORM;
 };

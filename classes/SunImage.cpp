@@ -30,14 +30,14 @@ SunImage<T>::SunImage(const unsigned& xAxes, const unsigned& yAxes, const RealPi
 
 template<class T>
 SunImage<T>::SunImage(const SunImage& i)
-:Image<T>(i), header(i.header), wcs(i.wcs)
+:Image<T>(i), wcs(i.wcs), header(i.header)
 {
 }
 
 
 template<class T>
 SunImage<T>::SunImage(const SunImage* i)
-:Image<T>(i), header(i->header), wcs(i->wcs)
+:Image<T>(i), wcs(i->wcs), header(i->header)
 {
 }
 

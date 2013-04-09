@@ -31,7 +31,7 @@ class EUVImage : public SunImage<EUVPixelType>
 		//! percentile of the EUV image
 		Real datap01;
 		//! percentile of the EUV image
-		Real datap95;
+		Real datap99;
 		//! exposure time of the EUV image
 		Real exposureTime;
 		

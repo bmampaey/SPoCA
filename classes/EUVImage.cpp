@@ -15,22 +15,22 @@ EUVImage::~EUVImage()
 
 
 EUVImage::EUVImage(const unsigned& xAxes, const unsigned& yAxes)
-:SunImage<EUVPixelType>(xAxes,yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap95(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+:SunImage<EUVPixelType>(xAxes,yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap99(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
 {}
 
 
 EUVImage::EUVImage(const unsigned& xAxes, const unsigned& yAxes, const RealPixLoc& suncenter, const Real& radius)
-:SunImage<EUVPixelType>(xAxes,yAxes,suncenter,radius),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap95(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+:SunImage<EUVPixelType>(xAxes,yAxes,suncenter,radius),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap99(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
 {}
 
 
 EUVImage::EUVImage(const Header& header, const unsigned& xAxes, const unsigned& yAxes)
-:SunImage<EUVPixelType>(header, xAxes, yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap95(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+:SunImage<EUVPixelType>(header, xAxes, yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap99(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
 {}
 
 
 EUVImage::EUVImage(const WCS& wcs, const unsigned& xAxes, const unsigned& yAxes)
-:SunImage<EUVPixelType>(wcs, xAxes, yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap95(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+:SunImage<EUVPixelType>(wcs, xAxes, yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap99(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
 {}
 
 
@@ -41,7 +41,7 @@ EUVImage::EUVImage(const EUVImage& i)
 	median = i.median;
 	mode = i.mode;
 	datap01 = i.datap01;
-	datap95 = i.datap95;
+	datap99 = i.datap99;
 	exposureTime = i.exposureTime;
 	ALCParameters = i.ALCParameters;
 }
@@ -54,7 +54,7 @@ EUVImage::EUVImage(const EUVImage* i)
 	median = i->median;
 	mode = i->mode;
 	datap01 = i->datap01;
-	datap95 = i->datap95;
+	datap99 = i->datap99;
 	exposureTime = i->exposureTime;
 	ALCParameters = i->ALCParameters;
 }
@@ -99,8 +99,8 @@ void EUVImage::parseHeader()
 		median = header.get<Real>("DATAMEDN");
 	if (header.has("DATAP01"))
 		datap01 = header.get<EUVPixelType>("DATAP01");
-	if (header.has("DATAP95"))
-		datap95 = header.get<EUVPixelType>("DATAP95");
+	if (header.has("DATAP99"))
+		datap99 = header.get<EUVPixelType>("DATAP99");
 	
 	if (header.has("EXPTIME"))
 		exposureTime = header.get<Real>("EXPTIME");
@@ -115,7 +115,7 @@ void EUVImage::fillHeader()
 	header.set<Real>("EXPTIME", exposureTime);
 	header.set<Real>("DATAMEDN", median);
 	header.set<EUVPixelType>("DATAP01",datap01);
-	header.set<EUVPixelType>("DATAP95", datap95);
+	header.set<EUVPixelType>("DATAP99", datap99);
 }
 
 inline string EUVImage::Channel() const
@@ -191,7 +191,7 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 				ALCDivMedian(radiusRatio, MINRADIUS());
 				median /= median;
 				datap01 /= median;
-				datap95 /= median;
+				datap99 /= median;
 				mode /= median;
 			}
 			else
@@ -233,7 +233,7 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 				}
 				median /= denominator;
 				datap01 /= denominator;
-				datap95 /= denominator;
+				datap99 /= denominator;
 				mode /= denominator;
 			}
 		}	
@@ -247,7 +247,7 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 			median = sqrt(median);
 			mode = nullpixelvalue;
 			datap01 = sqrt(datap01);
-			datap95 = sqrt(datap95);
+			datap99 = sqrt(datap99);
 		}	
 		else if( preprocessingStep == "TakeLog")
 		{
@@ -259,7 +259,7 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 			median = log(median);
 			mode = nullpixelvalue;
 			datap01 = log(datap01);
-			datap95 = log(datap95);
+			datap99 = log(datap99);
 			
 		}
 		else if(preprocessingStep.find("Thr") == 0)
@@ -587,15 +587,15 @@ void EUVImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 
 void EUVImage::enhance_contrast()
 {
-	if (datap01 == nullpixelvalue || datap95 == nullpixelvalue)
+	if (datap01 == nullpixelvalue || datap99 == nullpixelvalue)
 	{
 		vector<Real> values(2, 0.01);
 		values[1] = 0.99;
 		vector<EUVPixelType> p = percentiles(values);
 		datap01 = p[0];
-		datap95 = p[1];
+		datap99 = p[1];
 	}
-	threshold(datap01, datap95);
+	threshold(datap01, datap99);
 }
 
 vector<char> EUVImage::color_table() const

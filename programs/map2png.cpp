@@ -132,14 +132,14 @@ int main(int argc, const char **argv)
 		}
 	}
 	
-	Color background(0, 0 ,0, 0);
+	Color backgroundColor(0, 0 ,0, 0);
 	if(transparent)
 	{
-		background.alphaQuantum(MaxRGB);
+		backgroundColor.alpha(1);
 	}
 	else
 	{
-		background.alphaQuantum(0);
+		backgroundColor.alpha(0);
 	}
 	
 	// We parse the size option
@@ -177,7 +177,7 @@ int main(int argc, const char **argv)
 	}
 	
 	// We make the png
-	MagickImage outputImage = inputImage->magick();
+	MagickImage outputImage = inputImage->magick(backgroundColor);
 
 	if(!Label.empty())
 	{

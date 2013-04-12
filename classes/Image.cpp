@@ -1104,15 +1104,17 @@ bool Image<T>::readFits(const std::string& filename)
 template<class T>
 void Image<T>:: transform(const RealPixLoc transformationCenter, const Real rotationAngle, const RealPixLoc translation, const Real scaling, const Image<T> * image)
 {
-	bool deleteImage = false;
+	// If we transform the image onto intself, we allocate new pixels to receive the transformation
+	T * newPixels = NULL;
 	if (image == NULL or image == this)
 	{
-		image = new Image(this);
-		deleteImage = true;
+		image = this;
+		newPixels = new T[numberPixels];
 	}
 	else
 	{
 		resize(image->xAxes, image->yAxes);
+		newPixels = this->pixels;
 	}
 	
 	if (scaling == 0.)
@@ -1121,6 +1123,8 @@ void Image<T>:: transform(const RealPixLoc transformationCenter, const Real rota
 	}
 	else
 	{
+		T * newPixel = newPixels;
+	
 		// We compute for each pixel the interpolated value in the original image
 		Real cosRotationAngle = cos(-rotationAngle*DEGREE2RADIAN)/scaling;
 		Real sinRotationAngle = sin(-rotationAngle*DEGREE2RADIAN)/scaling;
@@ -1135,20 +1139,24 @@ void Image<T>:: transform(const RealPixLoc transformationCenter, const Real rota
 				Real yOrigin = (relativeX * sinRotationAngle + relativeY * cosRotationAngle) + transformationCenter.y;
 				if (xOrigin >= 0 and xOrigin < image->xAxes and yOrigin >= 0 and yOrigin < image->yAxes)
 				{
-					pixel(x, y) = image->interpolate(xOrigin, yOrigin);
+					*newPixel = image->interpolate(xOrigin, yOrigin);
 				}
 				else
 				{
-					pixel(x, y) = nullpixelvalue;
+					*newPixel = nullpixelvalue;
 				}
 				relativeX += 1;
+				++newPixel;
 			}
 			relativeY += 1;
 		}
 	}
-	
-	if (deleteImage)
-		delete image;
+	// We delete the memory allocated for the new pixels
+	if(image == this)
+	{
+		delete[] pixels;
+		pixels = newPixels;
+	}
 }
 
 

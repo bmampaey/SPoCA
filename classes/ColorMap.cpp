@@ -48,14 +48,14 @@ inline ColorType ColorMap::interpolate(float x, float y) const
 		x = 0;
 	if(y < 0)
 		y = 0;
-	if(x > xAxes-1.)
-		x = xAxes-1.;
-	if(y > yAxes-1.)
-		y = yAxes-1.;
+	if(x >= xAxes-1.)
+		x = xAxes-1.0001;
+	if(y >= yAxes-1.)
+		y = yAxes-1.0001;
 	
 	unsigned ix = unsigned(x), iy = unsigned(y);
 	
-	float dx = x - ix, dy = y - iy;
+	Real dx = x - ix, dy = y - iy;
 	Real cdx = 1. - dx, cdy = 1. - dy;
 	ColorType colors[] = {pixel(ix, iy), pixel(ix+1, iy), pixel(ix, iy+1), pixel(ix+1, iy+1)};
 	float quantity[] = {cdx*cdy, dx*cdy, cdx*dy, dx*dy};

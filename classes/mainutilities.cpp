@@ -131,6 +131,24 @@ inline bool readbinSize(RealFeature& binSize, string sbinSize)
 	return true;
 }
 
+inline bool readCoordinate(RealPixLoc& coordinate, string sCoordinate)
+{
+	if(!sCoordinate.empty())
+	{
+		sCoordinate.erase(remove_if(sCoordinate.begin(), sCoordinate.end(), ::isspace), sCoordinate.end());
+		if (sCoordinate[0] != '(')
+			sCoordinate = "(" + sCoordinate + ")";
+		istringstream Z(sCoordinate);
+		Z>>coordinate;
+		if(Z.fail())
+		{
+			cerr<<"Error reading the coordinate."<<endl;
+			return false;
+		}
+	}
+	return true;
+}
+
 inline vector<EUVImage*> getImagesFromFiles(const string imageType, const vector<string>& imagesFilenames, bool align)
 {
 

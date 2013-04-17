@@ -353,10 +353,17 @@ int main(int argc, const char **argv)
 				{
 					F->initB(B, channels);
 				}
-
+				
 				if(classifierIsPossibilistic)
 				{
-					dynamic_cast<CumulativePCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
+					if (classifierType == "SPoCA" || classifierType == "SPoCA2")
+					{
+						dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
+					}
+					else
+					{
+						dynamic_cast<CumulativePCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
+					}
 				}	
 			}
 			// Everything is ready, we do the classification
@@ -364,7 +371,16 @@ int main(int argc, const char **argv)
 			// We save the centers
 			outputFile<<"m: "<< m + 1<<"\tB: "<<F->getB();
 			if(classifierIsPossibilistic)
-				outputFile<<"\teta: "<<dynamic_cast<CumulativePCMClassifier*>(F)->getEta();
+			{
+				if (classifierType == "SPoCA" || classifierType == "SPoCA2")
+				{
+					outputFile<<"\teta: "<<dynamic_cast<PCMClassifier*>(F)->getEta();
+				}
+				else
+				{
+					outputFile<<"\teta: "<<dynamic_cast<CumulativePCMClassifier*>(F)->getEta();
+				}
+			}
 			outputFile<<endl;
 			
 		}

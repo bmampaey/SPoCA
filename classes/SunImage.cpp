@@ -30,14 +30,14 @@ SunImage<T>::SunImage(const unsigned& xAxes, const unsigned& yAxes, const RealPi
 
 template<class T>
 SunImage<T>::SunImage(const SunImage& i)
-:Image<T>(i), header(i.header), wcs(i.wcs)
+:Image<T>(i), wcs(i.wcs), header(i.header)
 {
 }
 
 
 template<class T>
 SunImage<T>::SunImage(const SunImage* i)
-:Image<T>(i), header(i->header), wcs(i->wcs)
+:Image<T>(i), wcs(i->wcs), header(i->header)
 {
 }
 
@@ -106,6 +106,12 @@ inline string SunImage<T>::ObservationDate() const
 }
 
 template<class T>
+inline Real SunImage<T>::Crota2() const
+{
+	return wcs.getCrota2();
+}
+
+template<class T>
 inline string SunImage<T>::Instrument() const
 {
 	if(header.has("INSTRUME"))
@@ -145,8 +151,7 @@ inline void SunImage<T>::nullifyAboveLongLat(Real longitude, Real latitude)
 {
 	longitude = longitude < 0 ? - longitude * DEGREE2RADIAN : longitude * DEGREE2RADIAN;
 	latitude = latitude < 0 ? - latitude * DEGREE2RADIAN : latitude * DEGREE2RADIAN;
-
-
+	
 	for (unsigned y = 0; y < this->yAxes; ++y)
 	{
 		for (unsigned x = 0; x < this->xAxes; ++x)
@@ -907,6 +912,19 @@ void SunImage<T>::sinusoidal_deprojection(const SunImage<T>* image, bool exact)
 			}
 		}
 	}
+}
+
+template<class T>
+void SunImage<T>::transform(const Real rotationAngle, const RealPixLoc translation, const Real scaling, const Image<T> * image)
+{
+	// We apply the transformation
+	Image<T>::transform(SunCenter(), rotationAngle, translation, scaling, image);
+	
+	// We update the WCS to reflect the transformation
+	wcs.setSunCenter(SunCenter().x + translation.x, SunCenter().y + translation.y);
+	wcs.setSunradius(SunRadius() * fabs(scaling));
+	wcs.setCDelt(PixelLength() * scaling, PixelWidth() * scaling);
+	wcs.setCrota2(wcs.getCrota2() + rotationAngle);
 }
 
 template class SunImage<EUVPixelType>;

@@ -42,20 +42,32 @@ StorageType MagickImage::magickDataType(const type_info& t)
 
 MagickImage::MagickImage()
 :Magick::Image()
-{depth(8);}
+{
+	MagickCore::SetImageColorspace( this->image(), MagickCore::RGBColorspace );
+	depth(8);
+}
 
 MagickImage::MagickImage(const string& filename)
 :Magick::Image(filename)
-{depth(8);}
+{
+	MagickCore::SetImageColorspace( this->image(), MagickCore::RGBColorspace );
+	depth(8);
+}
 
 template<class T>
 MagickImage::MagickImage(T* image, const unsigned X, const unsigned Y, const string channel)
 :Magick::Image(X, Y, channel, magickDataType(typeid(T)), image) 
-{depth(8);}
+{
+	MagickCore::SetImageColorspace( this->image(), MagickCore::RGBColorspace );
+	depth(8);
+}
 
 MagickImage::MagickImage(const Color& background, const unsigned X, const unsigned Y)
 :Magick::Image(Geometry(X, Y), background)
-{depth(8);}
+{
+	MagickCore::SetImageColorspace( this->image(), MagickCore::RGBColorspace );
+	depth(8);
+}
 
 template MagickImage::MagickImage(ColorType* image, const unsigned X, const unsigned Y, const string channel);
 template MagickImage::MagickImage(EUVPixelType* image, const unsigned X, const unsigned Y, const string channel);

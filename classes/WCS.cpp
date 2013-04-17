@@ -49,36 +49,36 @@ void WCS::setDateObs(string date_obs)
 		time_obs = 0;
 }
 
-void WCS:: setCDelt(const Real& cdelt1, const Real& cdelt2)
+void WCS::setCDelt(const Real& cdelt1, const Real& cdelt2)
 {
 	this->cdelt1 = cdelt1;
 	this->cdelt2 = cdelt2;
 }
 
-void WCS:: setB0(const Real& b0)
+void WCS::setB0(const Real& b0)
 {
 	this->b0 = b0*DEGREE2RADIAN;
 	sin_b0 = sin(this->b0);
 	cos_b0 = cos(this->b0);
 }
 
-void WCS:: setL0(const Real& l0)
+void WCS::setL0(const Real& l0)
 {
 	this->l0 = l0 * DEGREE2RADIAN;
 }
 
-void WCS:: setCarringtonL0(const Real& l0)
+void WCS::setCarringtonL0(const Real& l0)
 {
 	this->carrington_l0 = l0 * DEGREE2RADIAN;
 }
 
-void WCS:: setDistanceSunObs(const double& dsun_obs)
+void WCS::setDistanceSunObs(const double& dsun_obs)
 {
 	this->dsun_obs = dsun_obs;
 }
 
 //! Set the CD matrix from a CROTA2
-void WCS:: setCrota2(const Real& crota2)
+void WCS::setCrota2(const Real& crota2)
 {
 	assert(cdelt1 != 0 && cdelt2 != 0);
 	Real sin_crota2 = sin(crota2*DEGREE2RADIAN);
@@ -87,14 +87,14 @@ void WCS:: setCrota2(const Real& crota2)
 }
 
 //! Set the CD matrix from a PC matrix
-void WCS:: setPC(const Real& pc1_1, const Real& pc1_2, const Real& pc2_1, const Real& pc2_2)
+void WCS::setPC(const Real& pc1_1, const Real& pc1_2, const Real& pc2_1, const Real& pc2_2)
 {
 	assert(cdelt1 != 0 && cdelt2 != 0);
 	setCD(cdelt1 * pc1_1, cdelt2 * pc1_2, cdelt1 * pc2_1, cdelt2 * pc2_2);
 }
 
 //! Set the CD matrix and the inverse CD matrix
-void WCS:: setCD(const Real& cd1_1, const Real& cd1_2, const Real& cd2_1, const Real& cd2_2)
+void WCS::setCD(const Real& cd1_1, const Real& cd1_2, const Real& cd2_1, const Real& cd2_2)
 {
 	cd[0][0] = cd1_1;
 	cd[0][1] = cd1_2;
@@ -110,4 +110,12 @@ void WCS:: setCD(const Real& cd1_1, const Real& cd1_2, const Real& cd2_1, const 
 	icd[1][1] = det_cd * cd[0][0];
 }
 
+Real WCS::getCrota2() const
+{
+	assert(cdelt1 != 0 && cdelt2 != 0);
+	if (cd[1][0] / cdelt1 > 0)
+		return acos(cd[0][0] / cdelt2) * RADIAN2DEGREE;
+	else
+		return - acos(cd[0][0] / cdelt2) * RADIAN2DEGREE;
+}
 

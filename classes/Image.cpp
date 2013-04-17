@@ -1049,10 +1049,10 @@ inline T Image<T>::interpolate(float x, float y) const
 		x = 0;
 	if(y < 0)
 		y = 0;
-	if(x > xAxes-1.)
-		x = xAxes-1.;
-	if(y > yAxes-1.)
-		y = yAxes-1.;
+	if(x >= xAxes-1.)
+		x = xAxes-1.0001;
+	if(y >= yAxes-1.)
+		y = yAxes-1.0001;
 	
 	unsigned ix = (unsigned) x;
 	unsigned iy = (unsigned) y;
@@ -1100,6 +1100,57 @@ bool Image<T>::readFits(const std::string& filename)
 	this->readFits(file);
 	return file.isGood();
 }
+
+template<class T>
+void Image<T>:: transform(const RealPixLoc transformationCenter, const Real rotationAngle, const RealPixLoc translation, const Real scaling, const Image<T> * image)
+{
+	bool deleteImage = false;
+	if (image == NULL or image == this)
+	{
+		image = new Image(this);
+		deleteImage = true;
+	}
+	else
+	{
+		resize(image->xAxes, image->yAxes);
+	}
+	
+	if (scaling == 0.)
+	{
+		zero(nullpixelvalue);
+	}
+	else
+	{
+		// We compute for each pixel the interpolated value in the original image
+		Real cosRotationAngle = cos(-rotationAngle*DEGREE2RADIAN)/scaling;
+		Real sinRotationAngle = sin(-rotationAngle*DEGREE2RADIAN)/scaling;
+		
+		Real relativeY = - transformationCenter.y - translation.y;
+		for (unsigned y = 0; y < this->yAxes; ++y)
+		{
+			Real relativeX = - transformationCenter.x - translation.x;
+			for (unsigned x = 0; x < this->xAxes; ++x)
+			{
+				Real xOrigin = (relativeX * cosRotationAngle - relativeY * sinRotationAngle) + transformationCenter.x;
+				Real yOrigin = (relativeX * sinRotationAngle + relativeY * cosRotationAngle) + transformationCenter.y;
+				if (xOrigin >= 0 and xOrigin < image->xAxes and yOrigin >= 0 and yOrigin < image->yAxes)
+				{
+					pixel(x, y) = image->interpolate(xOrigin, yOrigin);
+				}
+				else
+				{
+					pixel(x, y) = nullpixelvalue;
+				}
+				relativeX += 1;
+			}
+			relativeY += 1;
+		}
+	}
+	
+	if (deleteImage)
+		delete image;
+}
+
 
 
 /*! @file Image.cpp

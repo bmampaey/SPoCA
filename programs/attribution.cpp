@@ -438,7 +438,7 @@ int main(int argc, const char **argv)
 	
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		header.set(string("IMAGE")+itos(p+1,3), imagesFilenames[p]);
+		header.set(string("IMAGE")+itos(p+1,3), stripPath(imagesFilenames[p]));
 	}
 
 	header.set("CVERSION", version, "SPoCA Version");

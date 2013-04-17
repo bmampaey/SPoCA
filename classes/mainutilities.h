@@ -22,6 +22,7 @@
 #include "HMIImage.h"
 #include "ColorMap.h"
 #include "Header.h"
+#include "Coordinate.h"
 
 extern std::string filenamePrefix;
 extern const char * instruments[];
@@ -39,6 +40,9 @@ void writeCentersToFile(const std::vector< std::vector<RealFeature> >& Bs, const
 
 //! Read and parse the binsize from a string
 bool readbinSize(RealFeature& binSize, std::string sbinSize);
+
+//! Read and parse a coordinate from a string
+bool readCoordinate(RealPixLoc& coordinate, std::string sCoordinate);
 
 //! Read and creates one EUV image from a fits files name
 /*! It will try to guess the Image type if it is UNKNOWN */

@@ -133,6 +133,15 @@ void SWAPImage::fillHeader()
 	header.set<Real>("CD2_2", wcs.cd[1][1]);
 	header.set<string>("DATE-OBS", wcs.date_obs);
 	header.set<Real>("RSUN_ARC", wcs.sun_radius*wcs.cdelt1);
+	
+	if (header.has("CROTA2"))
+	{
+		header.set("CROTA2", wcs.getCrota2());
+	}
+	if (header.has("SC_ROLL"))
+	{
+		header.set("SC_ROLL", wcs.getCrota2());
+	}
 }
 
 

@@ -200,11 +200,11 @@ See ActiveRegion.h and CoronalHole.h for information about how these parameters 
  -# NO_PROJECTION	No projection will be made
  -# EQUIRECTANGULAR_PROJECTION	
  -# LAMBERT_CYLINDRICAL_PROJECTION
- -# SINUOSIDAL_PROJECTION
+ -# SINUSOIDAL_PROJECTION
  -# DISTANCE_TRANSFORM	This is not a projection per se, but the exact disance along the sphere will be used in the morphological transformations
 */
 #if ! defined(AR_PROJECTION)
-#define AR_PROJECTION SINUOSIDAL_PROJECTION
+#define AR_PROJECTION SINUSOIDAL_PROJECTION
 #endif
 
 /*!
@@ -214,11 +214,11 @@ See ActiveRegion.h and CoronalHole.h for information about how these parameters 
  -# NO_PROJECTION	No projection will be made
  -# EQUIRECTANGULAR_PROJECTION	
  -# LAMBERT_CYLINDRICAL_PROJECTION
- -# SINUOSIDAL_PROJECTION
+ -# SINUSOIDAL_PROJECTION
  -# DISTANCE_TRANSFORM	This is not a projection per se, but the exact disance along the sphere will be used in the morphological transformations
 */
 #if ! defined(CH_PROJECTION)
-#define CH_PROJECTION SINUOSIDAL_PROJECTION
+#define CH_PROJECTION SINUSOIDAL_PROJECTION
 #endif
 
 
@@ -291,7 +291,7 @@ See @ref ALC.
 
 */
 
-#define EIT_ALC_PARAMETERS {75, 85, 110, 112}
+#define EIT_ALC_PARAMETERS {80, 95, 107, 112}
 
 /*!
 @page Compilation_Options
@@ -315,7 +315,7 @@ See @ref ALC.
 
 */
 
-#define SWAP_ALC_PARAMETERS {70, 95, 108, 112} 
+#define SWAP_ALC_PARAMETERS {70, 75, 107, 112} 
 
 /*!
 @page Compilation_Options
@@ -454,7 +454,7 @@ See @ref ALC.
 #define NO_PROJECTION 0 
 #define EQUIRECTANGULAR_PROJECTION 1
 #define LAMBERT_CYLINDRICAL_PROJECTION 2
-#define SINUOSIDAL_PROJECTION 3
+#define SINUSOIDAL_PROJECTION 3
 #define DISTANCE_TRANSFORM 4
 
 #endif //end of Constants_H

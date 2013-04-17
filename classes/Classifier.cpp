@@ -465,6 +465,7 @@ ColorMap* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>&
 	{
 		segmentedMap->pixel(j) = transfo[segmentedMap->pixel(j)];
 	}
+
 	return segmentedMap;
 
 }
@@ -710,7 +711,6 @@ void Classifier::stepinit(const string filename)
 	#if DEBUG >= 3
 		cout<<endl<<out.str();
 	#endif
-	
 }
 
 void Classifier::stepout(const unsigned iteration, const Real precisionReached, const int decimals)

@@ -323,7 +323,7 @@ See @ref ALC.
 
 */
 
-#define EUV_ALC_PARAMETERS {95, 100, 105, 110} 
+#define EUV_ALC_PARAMETERS {70, 95, 108, 112} 
 
 /*!
 @page Compilation_Options

@@ -135,7 +135,7 @@ int main(int argc, const char **argv)
 {
 	#if DEBUG >= 1
 	feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
-	cout<<setiosflags(ios::fixed);
+        cout<<setiosflags(ios::fixed);
 	#endif
 
 	// The list of names of the images to process

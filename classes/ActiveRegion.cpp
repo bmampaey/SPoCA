@@ -30,7 +30,7 @@ ColorMap* getAggregatedARMap(const ColorMap* ARMap, const int projection)
 	Real aggregationFactor = Real(AR_AGGREGATION) / sqrt(ARMap->PixelArea());
 	
 	ColorMap* aggregated = new ColorMap(ARMap);
-	
+
 	#if DEBUG >= 2
 	aggregated->writeFits(filename + "pure.fits");
 	#endif

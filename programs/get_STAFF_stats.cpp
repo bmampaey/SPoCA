@@ -137,26 +137,33 @@ int main(int argc, const char **argv)
 	}
 	
 	// We read the CHSegmentedMap
-	ColorMap* CHMap = getImageFromFile(CHSegmentedMap);
+	ColorMap* CHMap_ondisk = getImageFromFile(CHSegmentedMap);
 	// If the ARSegmentedMap is different from the CHSegmentedMap, we read it and check if they are similar
-	ColorMap* ARMap = CHMap;
+	ColorMap* ARMap_ondisk = CHMap_ondisk;
 	if(CHSegmentedMap != ARSegmentedMap)
 	{
-		ARMap = getImageFromFile(ARSegmentedMap);
-		ARMap->recenter(CHMap->SunCenter());
+		ARMap_ondisk = getImageFromFile(ARSegmentedMap);
+		ARMap_ondisk->recenter(CHMap_ondisk->SunCenter());
 		
-		string dissimilarity = checkSimilar(CHMap, ARMap);
+		string dissimilarity = checkSimilar(CHMap_ondisk, ARMap_ondisk);
 		if(! dissimilarity.empty())
 		{
 			cerr<<"Warning: "<<CHSegmentedMap<<" and "<<ARSegmentedMap<<" are not similar: "<<dissimilarity<<endl;
 		}
 	}
+
+	// We construct a total (on-disk + off-disk) copy of ARMap_ondisk
+	ColorMap* ARMap_total = new ColorMap(ARMap_ondisk);
 	
-	RealPixLoc sunCenter = CHMap->SunCenter();
+	// We restrict ARMap_ondisk and CHMap_ondisk to the disk
+	ARMap_ondisk->nullifyAboveRadius();
+	CHMap_ondisk->nullifyAboveRadius();
+	
+	RealPixLoc sunCenter = CHMap_ondisk->SunCenter();
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 		// We read the sun image 
-		string imageFilename = expand(imagesFilenames[p], CHMap->getHeader());
+		string imageFilename = expand(imagesFilenames[p], CHMap_ondisk->getHeader());
 		if(! isFile(imageFilename))
 		{
 			cerr<<"Error : "<<imageFilename<<" is not a regular file!"<<endl;
@@ -166,31 +173,31 @@ int main(int argc, const char **argv)
 		
 		// We align it with the Segmented maps and check if they are similar
 		image->recenter(sunCenter);
-		string dissimilarity = checkSimilar(CHMap, image);
+		string dissimilarity = checkSimilar(CHMap_ondisk, image);
 		if(! dissimilarity.empty())
 		{
 			cerr<<"Warning: image "<<imageFilename<<" and the CHSegmentedMap "<<CHSegmentedMap<<" are not similar: "<<dissimilarity<<endl;
 		}
 		
 		// We extract the STAFF stats on the whole image
-		STAFFStats AR_staff_stats = getSTAFFStats(ARMap, ARClass, image);
+		STAFFStats AR_staff_stats = getSTAFFStats(ARMap_total, ARClass, image);
 		cout<<"Channel"<<separator<<"Type"<<separator<<AR_staff_stats.toString(separator, true)<<endl;
 		cout<<image->Channel()<<separator<<"AR_all"<<separator<<AR_staff_stats.toString(separator)<<endl;
 		
 		// We extract the STAFF stats on the disc
 		image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
-		CHMap->nullifyAboveRadius();
-		ARMap->nullifyAboveRadius();
-		vector<STAFFStats> staff_stats = getSTAFFStats(CHMap, CHClass, ARMap, ARClass, image);
+		vector<STAFFStats> staff_stats = getSTAFFStats(CHMap_ondisk, CHClass, ARMap_ondisk, ARClass, image);
 		cout<<image->Channel()<<separator<<"CH_ondisc"<<separator<<staff_stats[0].toString(separator)<<endl;
 		cout<<image->Channel()<<separator<<"AR_ondisc"<<separator<<staff_stats[1].toString(separator)<<endl;
 		cout<<image->Channel()<<separator<<"QS_ondisc"<<separator<<staff_stats[2].toString(separator)<<endl;
 		delete image;
 	}
 	
-	if (ARMap != CHMap)
-		delete ARMap;
-	delete CHMap;
+	if (ARMap_ondisk != CHMap_ondisk)
+		delete ARMap_ondisk;
+	delete CHMap_ondisk;
+	delete ARMap_total;
+
 	return EXIT_SUCCESS;
 }
 

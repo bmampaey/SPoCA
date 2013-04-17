@@ -1,8 +1,12 @@
+#!/usr/bin/env python2.6
+
 from datetime import datetime, timedelta
 import dateutil.parser
 import logging
 from Queue import Queue
 import os.path
+import sys
+import argparse
 
 class Event:
 	def __init__(self, type = None, time = None, color = None):
@@ -28,7 +32,7 @@ class Event:
 		try:
 			value = getattr(self, key.lower())
 		except AttributeError, why:
-			logging.info("Event does not have the attribute %s", key)
+			logging.error("Event does not have the attribute %s", key)
 			return 'NA'
 		
 		if isinstance(value, datetime):
@@ -46,21 +50,18 @@ class Event:
 			return result
 		
 		if isinstance(keys, (list, tuple)):
-			seen_keys = []
 			for key in keys:
-				if key.lower() in seen_keys:
-					continue
-				else:
-					seen_keys.append(key.lower())
-				
 				if result:
-					result += sep + str(key) + ': ' + self.get_str(key)
+					result += sep + self.get_str(key)
 				else:
-					result = str(key) + ': ' + self.get_str(key)
+					result = self.get_str(key)
 		else:
-			result = str(keys)+ ': ' + self.get_str(keys)
+			result = self.get_str(keys)
 		
 		return result
+	
+	def attributes(self):
+		return self.__dict__.keys()
 
 class MetaEvent:
 	def __init__(self, color=None, events=None):
@@ -156,11 +157,16 @@ def parse_map(filename):
 					logging.debug("%s is not a region table, skipping", hdu.name)
 					continue
 				
+				event_type = 'NA'
+				if 'EXTNAME' in hdu.header:
+					event_type = hdu.header['EXTNAME']
+				
 				for row in hdu.data:
 					event_id = row[id_column]
-					if event_id not in events:
-						events[event_id] = Event()
-					event = events[event_id]
+					if (event_type, event_id) not in events:
+						events[(event_type, event_id)] = Event(type = event_type, color = event_id)
+					
+					event = events[(event_type, event_id)]
 					for i, attribute in enumerate(attributes):
 						event.set(attribute, row[i])
 					if 'date_obs' in attributes:
@@ -226,7 +232,9 @@ def parse_voevent(filename):
 	
 	return event, event_links
 
-def parse_events(filenames, events = list()):
+def get_events(filenames):
+	'''Function that parses files to extract events'''
+	events = list()
 	
 	for filename in filenames:
 		
@@ -234,26 +242,79 @@ def parse_events(filenames, events = list()):
 			# We parse the xml file
 			event, links = parse_voevent(filename)
 			logging.info("Event from file %s: %s", filename, event)
-			if isinstance(events, list):
-				events.append(event)
-			else:
-				events.put(event)
+			events.append(event)
 		
 		elif os.path.splitext(filename)[1].lower() == ".fits":
 			# We parse the map
 			new_events = parse_map(filename)
 			logging.info("Parsed %s events from file %s", len(new_events), filename)
 			logging.debug("\n".join([str(e) for e in new_events]))
-			if isinstance(events, list):
-				events.extend(new_events)
-			else:
-				for event in new_events:
-					events.put(event)
+			events.extend(new_events)
 		
 		else:
 			logging.critical("Unknown file type %s", filename)
 	
-	if isinstance(events, list):
-		return events
+	return events
+
+def setup_logging(filename = None, quiet = False, verbose = False, debug = False):
+	global logging
+	if debug:
+		logging.basicConfig(level = logging.DEBUG, format='%(levelname)-8s: %(message)s')
+	elif verbose:
+		logging.basicConfig(level = logging.INFO, format='%(levelname)-8s: %(message)s')
 	else:
-		events.put(None)
+		logging.basicConfig(level = logging.CRITICAL, format='%(levelname)-8s: %(message)s')
+	
+	if quiet:
+		logging.root.handlers[0].setLevel(logging.CRITICAL + 10)
+	elif verbose:
+		logging.root.handlers[0].setLevel(logging.INFO)
+	else:
+		logging.root.handlers[0].setLevel(logging.CRITICAL)
+	
+	if filename:
+		fh = logging.FileHandler(filename, delay=True)
+		fh.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(funcName)-12s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+		if debug:
+			fh.setLevel(logging.DEBUG)
+		else:
+			fh.setLevel(logging.INFO)
+		
+		logging.root.addHandler(fh)
+
+# Start point of the script
+if __name__ == "__main__":
+	
+	script_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+	
+	# Get the arguments
+	parser = argparse.ArgumentParser(description='Gather all events stats into a csv file.')
+	parser.add_argument('--quiet', '-q', default=False, action='store_true', help='Do not display any error message.')
+	parser.add_argument('--debug', '-d', default=False, action='store_true', help='Set the logging level to debug')
+	parser.add_argument('--output', '-o', default='events_stats.csv', help='Name of the csv file for the events stats.')
+	parser.add_argument('filename', nargs='+', help='The paths of the files. Can be SPoCA fits maps or voevents')
+	args = parser.parse_args()
+	
+	# Setup the logging
+	setup_logging(quiet = args.quiet, verbose = True, debug = args.debug)
+	
+	# Get the events from the files
+	events = get_events(args.filename)
+	
+	# We make the set of column names
+	column_names = set()
+	for event in events:
+		column_names.update(set(event.attributes()))
+	column_names = list(column_names)
+	
+	# We write the csv file
+	try:
+		with open(args.output, 'w') as csv_file:
+			csv_file.write(','.join(column_names))
+			csv_file.write("\n")
+			for event in events:
+				csv_file.write(event.to_str(column_names, sep = ','))
+				csv_file.write("\n")
+	except Exception, why:
+		logging.critical("Could not write csv file %s: %s", str(args.output), str(why))
+

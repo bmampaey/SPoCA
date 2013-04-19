@@ -7,8 +7,9 @@ import subprocess
 import glob
 
 class segmentation:
-	bin = "bin/classification.x"
 	args = dict()
+	#bin = "bin/classification.x"
+	bin = "bin/attribution.x"
 	extra = None
 	output_dir = "results"
 	map_types = {'A': 'ARMap', 'C': 'CHMap', 'S': 'SegmentedMap', 'M': 'MixedMap'}

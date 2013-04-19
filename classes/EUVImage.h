@@ -22,6 +22,7 @@ class EUVImage : public SunImage<EUVPixelType>
 {
 
 	protected :
+
 		//! wavelength of the EUV image in Angstrom
 		Real wavelength;
 		//! median of the EUV image

@@ -10,6 +10,7 @@ using namespace std;
 #define RealMAX (numeric_limits<EUVPixelType>::max())
 #endif
 
+
 EUVImage::~EUVImage()
 {}
 

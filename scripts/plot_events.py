@@ -9,7 +9,7 @@ import argparse
 import matplotlib.dates as mdates
 import numpy as np
 import matplotlib.pyplot as plt
-from event import *
+from get_events_stats import *
 import logging
 import threading, Queue, copy
 

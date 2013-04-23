@@ -8,6 +8,7 @@ import argparse
 import re
 import dateutil.parser
 from glob import glob
+from datetime import datetime
 
 find_numbers = re.compile(r'[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?')
 find_channels = re.compile(r'\w+')
@@ -70,11 +71,11 @@ def parse_voevent(filename):
 		
 		match = find_voevent_class_centers.search(FRM_ParamSet)
 		if match:
-			class_centers = find_voevent_numbers.findall(match.groups(0)[0])
+			class_centers = find_numbers.findall(match.groups(0)[0])
 		
 		match = find_voevent_etas.search(FRM_ParamSet)
 		if match:
-			etas = find_voevent_numbers.findall(match.groups(0)[0])
+			etas = find_numbers.findall(match.groups(0)[0])
 	
 	except Exception, why:
 		logging.critical("Error getting class_centers and etas from file %s, %s", filename, str(why))
@@ -97,7 +98,7 @@ def parse_class_centers_file(filename):
 		
 		channels, class_centers = channels_centers.split("\t", 1)
 		channels = find_channels.findall(channels)
-		class_centers = find_voevent_numbers.findall(class_centers)
+		class_centers = find_numbers.findall(class_centers)
 	except Exception, why:
 		logging.critical("Error getting class_centers from file " + filename + ": "+ str(why))
 	return time, class_centers, channels
@@ -114,7 +115,7 @@ def parse_etas_file(filename):
 		with open (filename, 'r') as etas_file:
 			etas = etas_file.readline()
 		
-		etas = find_voevent_numbers.findall(etas)
+		etas = find_numbers.findall(etas)
 	except Exception, why:
 		logging.critical("Error getting etas from file " + filename + ": "+ str(why))
 	return time, etas
@@ -125,6 +126,8 @@ def get_class_centers_and_etas(filenames):
 	number_centers = 0
 	class_centers_and_etas = dict()
 	for filename in filenames:
+		
+		time, class_centers, etas, channels = None, None, None, None
 		
 		fileprefix, extension = os.path.splitext(filename)
 		
@@ -217,8 +220,20 @@ if __name__ == "__main__":
 	# Setup the logging
 	setup_logging(quiet = args.quiet, verbose = True, debug = args.debug)
 	
+	# We glob the filenames
+	filenames = list()
+	for filename in args.filename:
+		if os.path.exists(filename):
+			filenames.append(filename)
+		else:
+			files = sorted(glob(filename))
+			if files:
+				filenames.extend(files)
+			else:
+				logging.warning("File %s not found, skipping!", filename)
+	
 	# We get the class centers and etas
-	good_channels, number_centers, class_centers_and_etas = get_class_centers_and_etas(args.filename)
+	good_channels, number_centers, class_centers_and_etas = get_class_centers_and_etas(filenames)
 	
 	# We write all class centers and etas
 	try:

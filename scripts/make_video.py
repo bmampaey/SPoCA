@@ -7,36 +7,63 @@ import os.path
 import string
 import logging
 import argparse
-
+import tempfile
 
 # parameters for mencoder
 ffmpeg_bin = '/pool/software/ffmpeg/bin/ffmpeg'
 
 def run_ffmpeg(ffmpeg_cmd, input_filenames = []):
 	
-	logging.debug("About to execute: " + ' '.join(ffmpeg_cmd))
+	# We create a logger for each movie to avoid mixing output when making many movies in parralel
+	log = logging.getLogger(os.path.basename(ffmpeg_cmd[-1]))
+	log.addHandler(logging.FileHandler(ffmpeg_cmd[-1]+'.log', mode='w',delay=True))
+	logging.debug("Logging run ffmpeg to file %s", ffmpeg_cmd[-1]+'.log')
+	
+	# We redirect the stdout and stderr to temporary files
+	try:
+		stdout_file = tempfile.TemporaryFile()
+		stderr_file = tempfile.TemporaryFile()
+	except Exception, why:
+		log.critical('Failed creating temporary files for stout and stderr : %s', str(why))
+		return False
+	
 	try:
 		# We start ffmpeg
-		process = subprocess.Popen(ffmpeg_cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		log.debug("About to execute: %s", ' '.join(ffmpeg_cmd))
+		process = subprocess.Popen(ffmpeg_cmd, bufsize = 100 * 1024 * 1024,shell=False, stdin=subprocess.PIPE, stdout=stdout_file, stderr=stderr_file)
+		log.debug("Created process for: %s", ' '.join(ffmpeg_cmd))
 		
 		# If we have input files, we write their content to the input pipe of ffmpeg
 		for input_filename in input_filenames:
 			try:
 				with open(input_filename, 'rb') as input_file:
-					logging.debug("Adding image %s", input_filename)
+					log.debug("Adding image %s to %s", input_filename, ffmpeg_cmd[-1])
 					process.stdin.write(input_file.read())
 			except Exception, why:
-				logging.error("Could not add image %s to video: %s", input_filename, str(why))
+				log.error("Could not add image %s to video: %s", input_filename, str(why))
 		
-		# We terminate ffmpeg
-		stdout, stderr = process.communicate()
-		return_code = process.poll()
+		process.stdin.close()
+		
+		# We wait for ffmpeg to terminate
+		log.debug("Waiting to terminate process for: %s", ' '.join(ffmpeg_cmd))
+		return_code = process.wait()
 		if return_code != 0:
-			raise Exception("Return code : {}\t StdOut: {}\t StdErr: {}".format(return_code, stderr, stdout))
+			stdout_file.seek(0)
+			stdout = stdout_file.read()
+			stderr_file.seek(0)
+			stderr = stderr_file.read()
+			raise Exception("Return code : {0}\t StdOut: {1}\t StdErr: {2}".format(return_code, stderr, stdout))
 	except Exception, why:
 		logging.critical('Failed running command %s : %s', ' '.join(ffmpeg_cmd), str(why))
 		return False
 	else:
+		if log.getEffectiveLevel() <= logging.DEBUG:
+			stdout_file.seek(0)
+			stdout = stdout_file.read()
+			log.debug("ffmpeg stdout:\n%s\n", stdout)
+			stderr_file.seek(0)
+			stderr = stderr_file.read()
+			log.debug("ffmpeg stderr:\n%s\n", stderr)
 		return True
 
 
@@ -49,7 +76,7 @@ def png_to_mp4_video(input_filenames, output_filename, frame_rate = 24, video_ti
 		logging.warning("Output filename for mp4 video does not have extension .mp4, changing output filename to %s", output_filename)
 	
 	# We set up ffmpeg for the creation of mp4
-	ffmpeg = [ffmpeg_bin, '-y', '-r', str(frame_rate), '-f', 'image2pipe', '-vcodec', 'png', '-i', '-', '-an', '-vcodec', 'libx264', '-preset', 'slow']
+	ffmpeg = [ffmpeg_bin, '-y', '-r', str(frame_rate), '-f', 'image2pipe', '-vcodec', 'png', '-i', '-', '-an', '-vcodec', 'libx264', '-preset', 'slow', '-vprofile', 'baseline', '-pix_fmt', 'yuv420p']
 	if video_bitrate:
 		ffmpeg.extend(['-maxrate', str(video_bitrate) + 'k'])
 	
@@ -117,10 +144,10 @@ def png_to_ts_video(input_filenames, output_filename, frame_rate = 24, video_tit
 	output_path, extension = os.path.splitext(output_filename)
 	if extension != ".ts":
 		output_filename = output_path + ".ts"
-		logging.warning("Output filename for mp4 video does not have extension .mp4, changing output filename to %s", output_filename)
+		logging.warning("Output filename for ts video does not have extension .ts, changing output filename to %s", output_filename)
 	
-	# We set up ffmpeg for the creation of mp4
-	ffmpeg = [ffmpeg_bin, '-y', '-r', str(frame_rate), '-f', 'image2pipe', '-vcodec', 'png', '-i', '-', '-an', '-vcodec', 'libx264', '-preset', video_preset, '-qp', '0']
+	# We set up ffmpeg for the creation of ts
+	ffmpeg = [ffmpeg_bin, '-y', '-loglevel', 'debug', '-r', str(frame_rate), '-f', 'image2pipe', '-vcodec', 'png', '-i', '-', '-an', '-vcodec', 'libx264', '-preset', video_preset, '-qp', '0']
 	if video_bitrate:
 		ffmpeg.extend(['-maxrate', str(video_bitrate) + 'k'])
 	
@@ -153,7 +180,7 @@ def video_to_mp4_video(input_filenames, output_filename, frame_rate = 24, video_
 	else:
 		ffmpeg.append("concat:"+'|'.join(input_filenames))
 	
-	ffmpeg.extend(['-an', '-vcodec', 'libx264', '-preset', 'slow', '-r', str(frame_rate)])
+	ffmpeg.extend(['-an', '-vcodec', 'libx264', '-preset', 'slow', '-vprofile', 'baseline', '-pix_fmt', 'yuv420p', '-r', str(frame_rate)])
 	
 	if video_bitrate:
 		ffmpeg.extend(['-maxrate', str(video_bitrate) + 'k'])
@@ -247,6 +274,8 @@ def setup_logging(filename = None, quiet = False, verbose = False, debug = False
 	
 	if quiet:
 		logging.root.handlers[0].setLevel(logging.CRITICAL + 10)
+	elif debug:
+		logging.root.handlers[0].setLevel(logging.DEBUG)
 	elif verbose:
 		logging.root.handlers[0].setLevel(logging.INFO)
 	else:
@@ -275,8 +304,8 @@ if __name__ == "__main__":
 	parser.add_argument('--debug', '-d', default=False, action='store_true', help='Set the logging level to debug')
 	parser.add_argument('--quiet', '-q', default=False, action='store_true', help='Do not display any error message.')
 	parser.add_argument('--overwrite', '-o', default=False, action='store_true', help='Overwrite the video if it already exists')
-	parser.add_argument('--frame_rate', '-r', default=24, type=int, help='Frame rate for the video')
-	parser.add_argument('--video_bitrate', '-b', default=0, type=int, help='A maximal bitrate for the video')
+	parser.add_argument('--frame_rate', '-r', default=24, type=float, help='Frame rate for the video')
+	parser.add_argument('--video_bitrate', '-b', default=0, type=float, help='A maximal bitrate for the video in kb')
 	parser.add_argument('--video_title', '-t', default=None, help='A title for the video')
 	parser.add_argument('--video_size', '-s', default=None, help='The size of the video. Must be specified like widthxheight in pixels')
 	parser.add_argument('--video_filenames', '-f', action='append', help='The filenames for the video. Must end in ' + ', '.join(known_video_types))	
@@ -291,17 +320,17 @@ if __name__ == "__main__":
 		logging.error("You must specify at least one video filename")
 		sys.exit(2)
 	
-	videos_filenames = dict()
+	videos_to_make = dict()
 	for video_filename in args.video_filenames:
 		video_path, video_extension = os.path.splitext(video_filename)
 		if video_extension in known_video_types:
-			if video_extension in videos_filenames:
+			if video_extension in videos_to_make:
 				logging.warning("Video of type %s has been specfied more than once as argument, using last one %s", video_extension, video_filename)
-			videos_filenames[video_extension] = video_filename
+			videos_to_make[video_extension] = video_filename
 		else:
 			logging.error("Unknown video type %s for video %s", video_extension, video_filename)
 	
-	for video_filename in videos_filenames.values():
+	for video_filename in videos_to_make.values():
 		if video_filename and os.path.exists(video_filename):
 			if not args.overwrite:
 				logging.critical("Video %s already exists, not overwriting", video_filename)
@@ -311,37 +340,39 @@ if __name__ == "__main__":
 	
 	source_path, source_extension = os.path.splitext(args.sources[0])
 	
-	video_sources = list()
-	
 	if source_extension == '.png':
 		logging.info("Source type detected is png images")
 		# We make a video from png images
-		if '.ts' in videos_filenames:
-			png_to_ts_video(args.sources, videos_filenames['.ts'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
-			video_sources.append(videos_filenames['.ts'])
+		if '.ts' in videos_to_make:
+			png_to_ts_video(args.sources, videos_to_make['.ts'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
+			video_sources = videos_to_make['.ts']
+			del videos_to_make['.ts']
 		
-		elif '.mp4' in videos_filenames:
-			png_to_mp4_video(args.sources, videos_filenames['.mp4'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
-			video_sources.append(videos_filenames['.mp4'])
+		elif '.mp4' in videos_to_make:
+			png_to_mp4_video(args.sources, videos_to_make['.mp4'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
+			video_sources = videos_to_make['.mp4']
+			del videos_to_make['.mp4']
 		
-		elif '.webm' in videos_filenames:
-			png_to_webm_video(args.sources, videos_filenames['.webm'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
-			video_sources.append(videos_filenames['.webm'])
+		elif '.webm' in videos_to_make:
+			png_to_webm_video(args.sources, videos_to_make['.webm'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
+			video_sources = videos_to_make['.webm']
+			del videos_to_make['.webm']
 		
-		elif '.ogv' in videos_filenames:
-			png_to_ogv_video(args.sources, videos_filenames['.ogv'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
-			video_sources.append(videos_filenames['.ogv'])
+		elif '.ogv' in videos_to_make:
+			png_to_ogv_video(args.sources, videos_to_make['.ogv'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
+			video_sources = videos_to_make['.ogv']
+			del videos_to_make['.ogv']
 	else:
 		logging.info("Source type detected is videos")
 		video_sources = args.sources
 	
 	# We make the remaining videos from video sources
-	if '.mp4' in videos_filenames:
-		video_to_mp4_video(video_sources, videos_filenames['.mp4'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
+	if '.mp4' in videos_to_make:
+		video_to_mp4_video(video_sources, videos_to_make['.mp4'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
 
-	elif '.webm' in videos_filenames:
-		video_to_webm_video(video_sources, videos_filenames['.webm'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
+	elif '.webm' in videos_to_make:
+		video_to_webm_video(video_sources, videos_to_make['.webm'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
 
-	elif '.ogv' in videos_filenames:
-		video_to_ogv_video(video_sources, videos_filenames['.ogv'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
+	elif '.ogv' in videos_to_make:
+		video_to_ogv_video(video_sources, videos_to_make['.ogv'], frame_rate = args.frame_rate, video_title = args.video_title, video_size = args.video_size, video_bitrate = args.video_bitrate)
 

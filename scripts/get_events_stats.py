@@ -7,6 +7,7 @@ from Queue import Queue
 import os.path
 import sys
 import argparse
+from glob import glob
 
 class Event:
 	def __init__(self, type = None, time = None, color = None):
@@ -298,8 +299,20 @@ if __name__ == "__main__":
 	# Setup the logging
 	setup_logging(quiet = args.quiet, verbose = True, debug = args.debug)
 	
+	# We glob the filenames
+	filenames = list()
+	for filename in args.filename:
+		if os.path.exists(filename):
+			filenames.append(filename)
+		else:
+			files = sorted(glob(filename))
+			if files:
+				filenames.extend(files)
+			else:
+				logging.warning("File %s not found, skipping!", filename)
+	
 	# Get the events from the files
-	events = get_events(args.filename)
+	events = get_events(filenames)
 	
 	# We make the set of column names
 	column_names = set()

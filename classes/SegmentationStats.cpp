@@ -129,6 +129,22 @@ Real SegmentationStats::Median() const
 		return quickselect(intensities, 0.5);
 }
 
+Real SegmentationStats::LowerQuartile() const
+{
+	if (intensities.size() == 0)
+		return NAN;
+	else
+		return quickselect(intensities, 0.25);
+}
+
+Real SegmentationStats::UpperQuartile() const
+{
+	if (intensities.size() == 0)
+		return NAN;
+	else
+		return quickselect(intensities, 0.75);
+}
+
 void SegmentationStats::computeMoments()
 {
 	Real mean = Mean();
@@ -225,12 +241,12 @@ string SegmentationStats::toString(const string& separator, bool header) const
 {
 	if (header)
 	{
-		return "Id"+separator+"ObservationDate"+separator+"NumberPixels"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"Area_Raw"+separator+"Area_AtDiskCenter"+separator+"FillingFactor";
+		return "Id"+separator+"ObservationDate"+separator+"NumberPixels"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"LowerQuartile"+separator+"UpperQuartile"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"Area_Raw"+separator+"Area_AtDiskCenter"+separator+"FillingFactor";
 	}
 	else
 	{
 		ostringstream out;
-		out<<setiosflags(ios::fixed)<<Id()<<separator<<ObservationDate()<<separator<<NumberPixels()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<Area_Raw()<<separator<<Area_AtDiskCenter()<<separator<<FillingFactor();
+		out<<setiosflags(ios::fixed)<<Id()<<separator<<ObservationDate()<<separator<<NumberPixels()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<LowerQuartile()<<separator<<UpperQuartile()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<Area_Raw()<<separator<<Area_AtDiskCenter()<<separator<<FillingFactor();
 		return out.str();
 	}
 }
@@ -347,6 +363,20 @@ FitsFile& writeRegions(FitsFile& file, const vector<SegmentationStats*>& segment
 		for(unsigned r = 0; r < segmentation_stats.size(); ++r)
 			data[r] = segmentation_stats[r]->Median();
 		file.writeColumn("MEDIAN_INTENSITY", data);
+	}
+
+	{
+		vector<Real> data(segmentation_stats.size());
+		for(unsigned r = 0; r < segmentation_stats.size(); ++r)
+			data[r] = segmentation_stats[r]->LowerQuartile();
+		file.writeColumn("LOWERQUARTILE_INTENSITY", data);
+	}
+
+	{
+		vector<Real> data(segmentation_stats.size());
+		for(unsigned r = 0; r < segmentation_stats.size(); ++r)
+			data[r] = segmentation_stats[r]->UpperQuartile();
+		file.writeColumn("UPPERQUARTILE_INTENSITY", data);
 	}
 
 	{

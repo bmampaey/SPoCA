@@ -62,6 +62,10 @@ class SegmentationStats
 		Real Median() const;
 		//! Variance of the intensities the class
 		Real Variance() const;
+		//! Low quartile (25 percentile) of the intensities the class
+		Real LowerQuartile() const;
+		//! High quartile (75 percentile) of the intensities the class
+		Real UpperQuartile() const;
 		//! Skewness of the intensities the class
 		Real Skewness() const;
 		//! Kurtosis of the intensities the class

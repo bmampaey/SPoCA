@@ -169,7 +169,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
 	
 	arguments.new_named_string('c', "colors", "string", "\n\tThe list of colors to select separated by commas (no spaces)\n\tAll colors will be selected if ommited.\n\t", colorsString);
-	arguments.new_flag('s', "sameColors", "\n\tSet this flag if want all colors to be the same.\n\t", sameColors);
+	arguments.new_flag('U', "sameColors", "\n\tSet this flag if want all colors to be the same.\n\t", sameColors);
 	arguments.new_named_string('C', "colorsFilename", "string", "\n\tA file containing a list of colors to select separated by commas\n\tAll colors will be selected if ommited.\n\t", colorsFilename);
 
 	arguments.new_flag('u', "straightenUp", "\n\tSet this flag if you want to have the solar north up.\n\t", straightenUp);

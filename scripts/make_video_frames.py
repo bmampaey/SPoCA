@@ -11,43 +11,48 @@ import threading
 from glob import glob
 
 # Parameters to transform fits to png
-fits2png_bin = '/pool/bem/BRAIN/vero/fits2png.x'
+bin = '/pool/bem/SOLID2/SPoCA/bin/fits2png.x'
 
-def run_fits2png(fits2png_cmd):
+def run_cmd(cmd):
 	
-	logging.debug("About to execute: %s", ' '.join(fits2png_cmd))
+	logging.debug("About to execute: %s", ' '.join(cmd))
 	try:
-		process = subprocess.Popen(fits2png_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		process = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds = True)
 		stdout, stderr = process.communicate()
 		return_code = process.poll()
 		if return_code != 0:
-			logging.error("Failed running command %s : Return code : %d\t Stdout: %s\t StdErr: %s", ' '.join(fits2png_cmd), return_code, stderr, stdout)
+			logging.error("Failed running command %s : Return code : %d\t Stdout: %s\t StdErr: %s", ' '.join(cmd), return_code, stderr, stdout)
 			return False
 	except Exception, why:
-		logging.error('Failed running command %s : %s', ' '.join(fits2png_cmd), str(why))
+		logging.error('Failed running command %s : %s', ' '.join(cmd), str(why))
 		return False
 	else:
+		if logging.root.isEnabledFor(logging.DEBUG):
+			logging.debug("Command %s : Return code : %d\t Stdout: %s\t StdErr: %s", ' '.join(cmd), return_code, stderr, stdout)
 		return True
 
 
 def fits2images(fits_files, output_directory = '.', size = None, recenter = None, label = None, color = None, straighten_up = False, scale = False, preprocessing_steps = None, force = False):
 	
 	# We make up the fits2png command 
-	fits2png_cmd = [fits2png_bin, '-O', output_directory]
+	cmd = [bin, '-O', output_directory]
 	if size:
-		fits2png_cmd.extend(['-S', str(size)])
+		cmd.extend(['-S', str(size)])
 	if recenter:
-		fits2png_cmd.extend(['-r', str(recenter)])
+		cmd.extend(['-r', str(recenter)])
 	if label:
-		fits2png_cmd.extend(['-l'])
+		if label is True:
+			cmd.extend(['-l'])
+		else:
+			cmd.extend(['-L', label])
 	if color:
-		fits2png_cmd.extend(['-c'])
+		cmd.extend(['-c'])
 	if straighten_up:
-		fits2png_cmd.extend(['-u'])
+		cmd.extend(['-u'])
 	if scale and scale != 1:
-		fits2png_cmd.extend(['-s', str(scale)])
+		cmd.extend(['-s', str(scale)])
 	if preprocessing_steps:
-		fits2png_cmd.extend(['-P', str(preprocessing_steps)])
+		cmd.extend(['-P', str(preprocessing_steps)])
 	
 	for fits_file in fits_files:
 		if not force:
@@ -55,7 +60,7 @@ def fits2images(fits_files, output_directory = '.', size = None, recenter = None
 			image_filename = os.path.join(output_directory, fits_filename+ '.png')
 			if os.path.exists(image_filename):
 				continue
-		run_fits2png(fits2png_cmd + [fits_file])
+		run_cmd(cmd + [fits_file])
 
 def setup_logging(filename = None, quiet = False, verbose = False, debug = False):
 	global logging
@@ -97,7 +102,7 @@ if __name__ == "__main__":
 	parser.add_argument('--output_directory', '-o', default='.', help='The directory in which the video frame will be created')
 	parser.add_argument('--size', '-s', default=None, help='The size of the video frames. Must be specified like widthxheight in pixels')
 	parser.add_argument('--recenter', '-r', default=False, help='Specify to recenter the sun in the frame. Must be specified in pixels as centerX,centerY')
-	parser.add_argument('--label', '-l', default=False, action='store_true', help='To write a label in the upper left corner')
+	parser.add_argument('--label', '-l', nargs = '?', default=False, const=True, help='To write a label on the image')
 	parser.add_argument('--color', '-c', default=False, action='store_true', help='To output the frame in color')
 	parser.add_argument('--straighten_up', '-u', default=False, action='store_true', help='To align the solar north upward')
 	parser.add_argument('--zoom', '-z', default=1.0, type=float, help='The scaling factor')

@@ -14,56 +14,51 @@ ffmpeg_bin = '/pool/software/ffmpeg/bin/ffmpeg'
 
 def run_ffmpeg(ffmpeg_cmd, input_filenames = []):
 	
-	# We create a logger for each movie to avoid mixing output when making many movies in parralel
-	log = logging.getLogger(os.path.basename(ffmpeg_cmd[-1]))
-	log.addHandler(logging.FileHandler(ffmpeg_cmd[-1]+'.log', mode='w',delay=True))
-	logging.debug("Logging run ffmpeg to file %s", ffmpeg_cmd[-1]+'.log')
-	
 	# We redirect the stdout and stderr to temporary files
 	try:
 		stdout_file = tempfile.TemporaryFile()
 		stderr_file = tempfile.TemporaryFile()
 	except Exception, why:
-		log.critical('Failed creating temporary files for stout and stderr : %s', str(why))
+		logging.critical('Failed creating temporary files for stout and stderr : %s', str(why))
 		return False
 	
 	try:
 		# We start ffmpeg
-		log.debug("About to execute: %s", ' '.join(ffmpeg_cmd))
-		process = subprocess.Popen(ffmpeg_cmd, bufsize = 100 * 1024 * 1024,shell=False, stdin=subprocess.PIPE, stdout=stdout_file, stderr=stderr_file)
-		log.debug("Created process for: %s", ' '.join(ffmpeg_cmd))
+		logging.debug("About to execute: %s", ' '.join(ffmpeg_cmd))
+		process = subprocess.Popen(ffmpeg_cmd, bufsize = 100 * 1024 * 1024,shell=False, stdin=subprocess.PIPE, stdout=stdout_file, stderr=stderr_file, close_fds = True)
+		#logging.debug("Created process for: %s", ' '.join(ffmpeg_cmd))
 		
 		# If we have input files, we write their content to the input pipe of ffmpeg
 		for input_filename in input_filenames:
 			try:
 				with open(input_filename, 'rb') as input_file:
-					log.debug("Adding image %s to %s", input_filename, ffmpeg_cmd[-1])
+					logging.debug("Adding image %s to %s", input_filename, ffmpeg_cmd[-1])
 					process.stdin.write(input_file.read())
 			except Exception, why:
-				log.error("Could not add image %s to video: %s", input_filename, str(why))
+				logging.error("Could not add image %s to video: %s", input_filename, str(why))
 		
 		process.stdin.close()
 		
 		# We wait for ffmpeg to terminate
-		log.debug("Waiting to terminate process for: %s", ' '.join(ffmpeg_cmd))
+		logging.debug("Waiting to terminate process for: %s", ' '.join(ffmpeg_cmd))
 		return_code = process.wait()
 		if return_code != 0:
 			stdout_file.seek(0)
 			stdout = stdout_file.read()
 			stderr_file.seek(0)
 			stderr = stderr_file.read()
-			raise Exception("Return code : {0}\t StdOut: {1}\t StdErr: {2}".format(return_code, stderr, stdout))
+			logging.error('Failed running command %s :\nReturn code : %d\n StdOut: %s\n StdErr: %s', ' '.join(ffmpeg_cmd), return_code, stdout, stderr)
 	except Exception, why:
 		logging.critical('Failed running command %s : %s', ' '.join(ffmpeg_cmd), str(why))
 		return False
 	else:
-		if log.getEffectiveLevel() <= logging.DEBUG:
+		if logging.root.isEnabledFor(logging.DEBUG):
 			stdout_file.seek(0)
 			stdout = stdout_file.read()
-			log.debug("ffmpeg stdout:\n%s\n", stdout)
+			logging.debug("ffmpeg stdout:\n%s\n", stdout)
 			stderr_file.seek(0)
 			stderr = stderr_file.read()
-			log.debug("ffmpeg stderr:\n%s\n", stderr)
+			logging.debug("ffmpeg stderr:\n%s\n", stderr)
 		return True
 
 
@@ -138,7 +133,7 @@ def png_to_ogv_video(input_filenames, output_filename, frame_rate = 24, video_ti
 	return run_ffmpeg(ffmpeg, input_filenames)
 
 
-def png_to_ts_video(input_filenames, output_filename, frame_rate = 24, video_title = None, video_size = None, video_bitrate = None, video_preset='slow'):
+def png_to_ts_video(input_filenames, output_filename, frame_rate = 24, video_title = None, video_size = None, video_bitrate = None, video_preset='ultrafast'):
 	
 	# We verify the extension
 	output_path, extension = os.path.splitext(output_filename)

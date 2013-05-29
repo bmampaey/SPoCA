@@ -46,7 +46,7 @@ Universe        = vanilla
 Executable      = {executable}
 
 # Arguments for the executable
-Arguments	= {arguments}
+Arguments	= "{arguments}"
 
 # Working directory
 InitialDir      = {initialdir}
@@ -281,6 +281,7 @@ class Job:
 		
 		# We create a condor job description
 		self._condor_job_description = CONDOR_JOB_DESCRIPTION_TEMPLATE.format(executable=executable, arguments=self.arguments, initialdir=Job.TEMP_DIR, input_file=self._input_file, output_file=self._output_file, error_file=self._error_file, log_file=self._log_file)
+		# module_logger.debug("Job"+ self.name + " description file:\n" + self._condor_job_description)
 		
 		# We submit the condor job description file with condor_submit
 		condor_submit = [CONDOR_SUBMIT, '-']

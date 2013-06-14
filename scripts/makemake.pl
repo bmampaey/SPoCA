@@ -212,7 +212,7 @@ while (my $file = shift @untreated)
 	{
 		my $object = object $cpp;
 		
-		my $line = "$object : $makefile $cpp " . (join ' ', @includes) . "\n";
+		my $line = "$object : $makefile $cpp " . (join ' ', @includes) . "| $objectdir\n";
 		$line .= "\t" . '$(CC) -c $(CFLAGS) $(DFLAGS) ' . "$cpp -o $object\n"; 
 		
 		push @lines, $line;
@@ -241,9 +241,10 @@ print MAKEFILE "$CC\n$TRACKINGLFLAGS\n$IDLLFLAGS\n$MAGICKLFLAGS\n$MAGICKCFLAGS\n
 print MAKEFILE "all:$executable\n";
 print MAKEFILE "clean: rm $executable " . (join ' ', @objects) . "\n";
 print MAKEFILE "\n\n";
-print MAKEFILE "$executable : $makefile " . (join ' ', @objects) . "\n";
+print MAKEFILE "$executable : $makefile " . (join ' ', @objects) . " | $bindir\n";
 print MAKEFILE "\t" . '$(CC) $(CFLAGS) $(DFLAGS) ' . (join ' ', @objects) . ' $(LFLAGS) -o ' . $executable . "\n\n";
 print MAKEFILE (join "\n", @lines);
-
+print MAKEFILE "\n$objectdir : \n\t mkdir -p $objectdir\n";
+print MAKEFILE "\n$bindir : \n\t mkdir -p $bindir\n";
 close MAKEFILE;
 

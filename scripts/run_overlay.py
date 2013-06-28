@@ -275,4 +275,6 @@ if __name__ == "__main__":
 		while not job.isTerminated():
 			time.sleep(1)
 		log.info("Job %s has terminated.", job.name)
+		if job.return_code != 0:
+			log.warning("Job %s terminated with return code %s. Error: %s", job.name, job.return_code, job.error)
 		job = output_queue.get()

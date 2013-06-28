@@ -278,6 +278,17 @@ inline unsigned readMaxLimitsFromFile (vector<RealFeature>& maxLimits, const str
 
 }
 
+void replaceAll(string& str, const string& from, const string& to) {
+	if(from.empty())
+		return;
+	size_t start_pos = 0;
+	while((start_pos = str.find(from, start_pos)) != string::npos)
+	{
+		str.replace(start_pos, from.length(), to);
+		start_pos += to.length();
+	}
+}
+
 string expand(string text, const Header& header)
 {
 	size_t key_start = text.find_first_of('{');
@@ -305,6 +316,10 @@ string expand(string text, const Header& header)
 		}
 		key_start = text.find_first_of('{');
 	}
+	replaceAll(text, "\\n", "\n");
+	#if DEBUG >= 3
+	cout<<endl<<"text has been expanded to: "<<text<<endl;
+	#endif
 	return text;
 }
 

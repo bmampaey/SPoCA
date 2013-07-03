@@ -202,10 +202,7 @@ void PFCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	cout<<"--PFCMClassifier::classification--START--"<<endl;
 	#endif
 	
-	#if DEBUG >= 2
-		stepinit(filenamePrefix+"iterations.txt");
-		unsigned decimals = unsigned(1 - log10(precision));;
-	#endif
+	stepinit(filenamePrefix+"iterations.txt");
 	
 	//Initialisation of precision & U
 	this->precision = precision;
@@ -236,9 +233,7 @@ void PFCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 
 		oldB = B;
 
-		#if DEBUG >= 2
-			stepout(iteration, precisionReached, decimals);
-		#endif
+		stepout(iteration, precisionReached, precision);
 	}
 
 	
@@ -373,35 +368,42 @@ Real PFCMClassifier::assess(vector<Real>& V)
 
 void PFCMClassifier::stepinit(const string filename)
 {
-		Classifier::stepinit(filename);
+	Classifier::stepinit(filename);
+	#if defined VERBOSE || defined DEBUG
 		ostringstream out;
 		out<<"\t"<<"J";
 		out<<"\t"<<"eta";
-		if(stepfile.good())
-			stepfile<<out.str();
 		
 		#if DEBUG >= 3
 			cout<<out.str();
 		#endif
-	
+		
+		#if DEBUG >= 2
+			if(stepfile.good())
+				stepfile<<out.str();
+		#endif
+	#endif
 }
 
 
-void PFCMClassifier::stepout(const unsigned iteration, const Real precisionReached, const int decimals)
+void PFCMClassifier::stepout(const unsigned iteration, const Real precisionReached, const Real precision)
 {
-		Classifier::stepout(iteration, precisionReached, decimals);
+	Classifier::stepout(iteration, precisionReached, precision);
+	#if defined VERBOSE || defined DEBUG
 		ostringstream out;
 		out.setf(ios::fixed);
-		out.precision(decimals);
+		out.precision(1 - log10(precision));
 		out<<"\t"<<computeJ();
 		out<<"\t"<<eta;
-
-		if(stepfile.good())
-			stepfile<<out.str();
 		
 		#if DEBUG >= 3
 			cout<<out.str();
 		#endif
 		
+		#if DEBUG >= 2
+			if(stepfile.good())
+				stepfile<<out.str();
+		#endif
+	#endif
 }
 

@@ -153,10 +153,7 @@ void FCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	cout<<"--FCMClassifier::classification--START--"<<endl;
 	#endif
 	
-	#if DEBUG >= 2
-		FCMClassifier::stepinit(filenamePrefix+"iterations.txt");
-		unsigned decimals = unsigned(1 - log10(precision));
-	#endif
+	FCMClassifier::stepinit(filenamePrefix+"iterations.txt");
 	
 	//Initialisation of precision
 	this->precision = precision;
@@ -170,11 +167,8 @@ void FCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 		
 		precisionReached = variation(oldB,B);
 		oldB = B;
-
-		#if DEBUG >= 2
-			FCMClassifier::stepout(iteration, precisionReached, decimals);
-		#endif
-
+		
+		FCMClassifier::stepout(iteration, precisionReached, precision);
 	}
 
 	#if DEBUG >= 3

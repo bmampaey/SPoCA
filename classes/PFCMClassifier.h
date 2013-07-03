@@ -59,7 +59,7 @@ class PFCMClassifier : public virtual PCMClassifier
 		void stepinit(const std::string filename);
 		
 		//! Function to output a classification step
-		void stepout(const unsigned iteration, const Real precisionReached, const int precision = 5);
+		void stepout(const unsigned iteration, const Real precisionReached, const Real precision);
 
 	public :
 		//! Constructor

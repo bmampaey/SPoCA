@@ -151,10 +151,7 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	cout<<"--PCMClassifier::classification--START--"<<endl;
 	#endif
 	
-	#if DEBUG >= 2
-		stepinit(filenamePrefix+"iterations.txt");
-		unsigned decimals = unsigned(1 - log10(precision));;
-	#endif
+	stepinit(filenamePrefix+"iterations.txt");
 	
 	//Initialisation of precision
 	this->precision = precision;
@@ -177,17 +174,14 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 				}
 			}
 		}
-
+		
 		computeU();
 		computeB();
-
+		
 		precisionReached = variation(oldB,B);
-
 		oldB = B;
-
-		#if DEBUG >= 2
-			stepout(iteration, precisionReached, decimals);
-		#endif
+		
+		FCMClassifier::stepout(iteration, precisionReached, precision);
 	}
 
 	
@@ -389,34 +383,41 @@ void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FC
 
 void PCMClassifier::stepinit(const string filename)
 {
-		Classifier::stepinit(filename);
+	Classifier::stepinit(filename);
+	#if DEBUG >= 3
 		ostringstream out;
 		out<<"\t"<<"eta";
-		if(stepfile.good())
-			stepfile<<out.str();
 		
 		#if DEBUG >= 3
 			cout<<out.str();
 		#endif
-	
+		
+		#if DEBUG >= 2
+			if(stepfile.good())
+				stepfile<<out.str();
+		#endif
+	#endif
 }
 
 
-void PCMClassifier::stepout(const unsigned iteration, const Real precisionReached, const int decimals)
+void PCMClassifier::stepout(const unsigned iteration, const Real precisionReached, const Real precision)
 {
-		Classifier::stepout(iteration, precisionReached, decimals);
+	Classifier::stepout(iteration, precisionReached, precision);
+	#if DEBUG >= 3
 		ostringstream out;
 		out.setf(ios::fixed);
-		out.precision(decimals);
+		out.precision(1 - log10(precision));
 		out<<"\t"<<eta;
-
-		if(stepfile.good())
-			stepfile<<out.str();
 		
 		#if DEBUG >= 3
 			cout<<out.str();
 		#endif
 		
+		#if DEBUG >= 2
+			if(stepfile.good())
+				stepfile<<out.str();
+		#endif
+	#endif
 }
 
 void PCMClassifier::sortB()

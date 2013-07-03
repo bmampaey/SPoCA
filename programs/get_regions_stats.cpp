@@ -75,6 +75,7 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 #include <cstdlib>
 #include <string>
 #include <iomanip>
+#include <set>
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
@@ -173,8 +174,48 @@ int main(int argc, const char **argv)
 		cerr<<"No fits image file given as parameter!"<<endl;
 		return EXIT_FAILURE;
 	}
-		
+	
+	// We parse the colors to keep
+	set<ColorType> colors;
+	if(! colorsFilename.empty())
+	{
+		ifstream colorsFile(colorsFilename.c_str());
+		if(colorsFile.good())
+		{
+			vector<ColorType> tmp;
+			colorsFile>>tmp;
+			colors.insert(tmp.begin(),tmp.end());
+		}
+		else
+		{
+			cerr << "Error reading list of colors to overlay from file: "<<colorsFilename<<endl;
+			return 2;
+		}
+	}
+	if(! colorsString.empty())
+	{
+		vector<ColorType> tmp;
+		istringstream ss(colorsString);
+		ss>>tmp;
+		colors.insert(tmp.begin(),tmp.end());
+	}
+	
+	// We read the map
 	ColorMap* colorizedMap = getImageFromFile(colorizedMapFileName);
+	
+	// We erase any colors that is not to be kept
+	if(colors.size() > 0)
+	{
+		for(unsigned j = 0; j < colorizedMap->NumberPixels(); ++j)
+		{
+			if (colors.count(colorizedMap->pixel(j)) == 0)
+				colorizedMap->pixel(j) = colorizedMap->null();
+		}
+		#if DEBUG >= 2
+			colorizedMap->writeFits(filenamePrefix + "color_cleaned." +  stripPath(colorizedMapFileName) );
+		#endif
+	}
+	
 	// We apply the arealimit if any
 	if(areaLimitType == "NAR")
 		colorizedMap->nullifyAboveRadius(areaLimitValue);

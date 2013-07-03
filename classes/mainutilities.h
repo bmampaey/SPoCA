@@ -62,7 +62,7 @@ unsigned readEtaFromFile(std::vector<Real>& eta, const std::string& etaFileName)
 //! Read and parse the max limits from file
 unsigned readMaxLimitsFromFile (std::vector<RealFeature>& maxLimits, const std::string& maxLimitsFileName);
 
-//! Expand the text repacing all keywords between {} by their value in the header
+//! Expand the text repacing all keywords between {} by their value in the header, and \n by newline
 std::string expand(std::string text, const Header& header);
 
 //! Return the median class centers of a list of class centers

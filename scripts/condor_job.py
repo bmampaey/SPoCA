@@ -26,7 +26,7 @@ CONDOR_SUBMIT_TIMEOUT = 20
 CONDOR_RM = 'condor_rm'
 CONDOR_Q = 'condor_q'
 CONDOR_Q_TIMEOUT = 60
-CONDOR_MAX_RUNNING_JOBS = 4
+CONDOR_MAX_RUNNING_JOBS = 10
 SUBMIT_EXPRESSION = r"Proc\s*(?P<cluster_number>\d+)"
 RUNNING_STATUS = [0, 1, 2]
 
@@ -281,7 +281,7 @@ class Job:
 		
 		# We create a condor job description
 		self._condor_job_description = CONDOR_JOB_DESCRIPTION_TEMPLATE.format(executable=executable, arguments=self.arguments, initialdir=Job.TEMP_DIR, input_file=self._input_file, output_file=self._output_file, error_file=self._error_file, log_file=self._log_file)
-		# module_logger.debug("Job"+ self.name + " description file:\n" + self._condor_job_description)
+		#module_logger.debug("Job"+ self.name + " description file:\n" + self._condor_job_description)
 		
 		# We submit the condor job description file with condor_submit
 		condor_submit = [CONDOR_SUBMIT, '-']

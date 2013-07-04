@@ -101,9 +101,8 @@ if __name__ == "__main__":
 	# Plot the very first image
 	plot_images(datetime(csv.index[0].year, csv.index[0].month, csv.index[0].day, csv.index[0].hour, csv.index[0].minute, csv.index[0].second))
 	
-	figure.subplots_adjust(hspace=0.05, wspace=0.05)
+	figure.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.1, wspace=0.1)
 	figure.set_size_inches(19,12)
-	figure.tight_layout()
 	datacursor.datacursor(axes = plot_axes, formatter = formatter, display='multiple', draggable=True, tolerance = 20)
 	plt.show()
 

@@ -223,8 +223,8 @@ int main(int argc, const char **argv)
 		colorizedMap->nullifyAboveLongLat(areaLimitValue);
 	if(areaLimitType == "Lat")
 		colorizedMap->nullifyAboveLongLat(360, areaLimitValue);
-	#if DEBUG >= 2
-	colorizedMap->writeFits(filenamePrefix + "limited." +  stripPath(colorizedMapFileName) );
+	#if DEBUG >= 2 || defined WRITE_LIMITED_MAP
+	colorizedMap->writeFits(filenamePrefix + "limited." +  stripPath(colorizedMapFileName), FitsFile::compress);
 	#endif
 	
 	RealPixLoc sunCenter = colorizedMap->SunCenter();

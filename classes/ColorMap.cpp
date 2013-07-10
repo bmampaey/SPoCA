@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <map>
 #include <deque>
+#include <math.h>
 
 extern std::string filenamePrefix;
 
@@ -483,6 +484,9 @@ ColorMap* ColorMap::drawExternContours(const unsigned width, const ColorType uns
 ColorMap* ColorMap::drawContours(const unsigned width, const ColorType unsetValue)
 {
 	unsigned size = width/2;
+	if (size <= 0)
+		size = 1;
+	
 	ColorType * newPixels = new ColorType[numberPixels];
 	memcpy(newPixels, pixels, numberPixels * sizeof(ColorType));
 	vector<unsigned> shape;
@@ -494,11 +498,11 @@ ColorMap* ColorMap::drawContours(const unsigned width, const ColorType unsetValu
 			if(sqrt(x * x + y *y) <= size)
 				shape.push_back(y * xAxes + x);
 	
-				
-	int j;
+	
+	int j = 0;
 	for(unsigned y = size; y < yAxes - size; ++y)
 	{		
-		j = 	y * xAxes + size;
+		j = y * xAxes + size;
 		for(unsigned x = size; x < xAxes - size; ++x)
 		{
 			ColorType maxColor = pixels[j-1];
@@ -733,6 +737,45 @@ void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projecti
 		
 	}
 	delete projeted;
+}
+
+void ColorMap::computeButterflyStats(vector<unsigned>& totalNumberOfPixels, vector<unsigned>& regionNumberOfPixels)
+{
+	totalNumberOfPixels.clear();
+	totalNumberOfPixels.resize(182, 0);
+	regionNumberOfPixels.clear();
+	regionNumberOfPixels.resize(182, 0);
+	RealPixLoc sun_center = SunCenter();
+	// We try to avoid computing latitude for pixels that are out of the sun disc
+	unsigned miny = sun_center.y - SunRadius() - 1;
+	unsigned maxy = sun_center.y + SunRadius() + 2;
+	unsigned minx = sun_center.x - SunRadius() - 1;
+	unsigned maxx = sun_center.x + SunRadius() + 2;
+	for (unsigned y = miny; y < maxy ; ++y)
+	{
+		for (unsigned x = minx; x < maxx; ++x)
+		{
+			HGS hgs = toHGS(RealPixLoc(x, y));
+			if (!hgs)
+			{
+				//cout<<"No long lat for coord "<<RealPixLoc(x, y)<<"\n";
+			}
+			else
+			{
+				//cout<<"Latitude of coord "<<RealPixLoc(x, y)<< " : "<< int(hgs.latitude * RADIAN2DEGREE)<< "\n";
+				/* Pixels are gathered by the closest inferior integral latitude.
+				I.e the latitude -0.5 will go into the -1 latitude
+				but the latitude 0.5 will go into the 0 latitude
+				*/
+				int latitude = floor(hgs.latitude * RADIAN2DEGREE) + 91;
+				++totalNumberOfPixels[latitude];
+				if(this->pixel(x, y) != this->null())
+				{
+					++regionNumberOfPixels[latitude];
+				}
+			}
+		}
+	}
 }
 
 #ifdef MAGICK

@@ -127,24 +127,12 @@ See Classifier::merge and Classifier::sursegmentation
 @page Compilation_Options
 
 @subsection various_options Various
-
-@param DEBUG The level of debugging
-<BR>  This manage the quantity of output to screen and files, and verification to be done
- - 0 is to disable debugging
- - 1 is for verification and output of the results only
- - 2 is 1 + lots of output to files
- - 3 is 2 + lots of output to screen
+@param DEBUG Enables debugging, a lot of debug files will be written to disk
+@param VERBOSE Enables verbose output, a lot of information will be printed to screen. This can be disruptive to script parsing the output of the programs.
+@param EXTRA_SAFE Enables some additional checks during program execution. Can make the program slower.
+@param WRITE_LIMITED_MAP Will write the maps with the limit applied in program get_region_stats
+@param WRITE_MEMBERSHIP_FILES Will write the membership values to fits files during classification.
 */
-#if ! defined(DEBUG)
-#define DEBUG 0
-#endif
-
-/*!
-@page Compilation_Options
-@param SSW_PATH Path to solarsoft for PixLocConvertor
-*/
-#define SSW_PATH "/usr/local/ssw/"
-#define WCS_ROUTINES_SAV "./idl/wcs_routines.sav"
 
 /*!
 @page Compilation_Options

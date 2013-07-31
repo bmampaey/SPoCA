@@ -31,7 +31,7 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 	
 	ColorMap* aggregated = new ColorMap(CHMap);
 	
-	#if DEBUG >= 2
+	#if defined DEBUG
 	aggregated->writeFits(filename + "pure.fits");
 	#endif
 
@@ -41,7 +41,7 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 		case(SunImage<ColorType>::equirectangular):
 			
 			aggregated->equirectangular_projection(CHMap, false);
-			#if DEBUG >= 2
+			#if defined DEBUG
 			aggregated->writeFits(filename + "equirectangular_projection.fits");
 			#endif
 			cleaningFactor *= (2./3.);
@@ -50,7 +50,7 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 		
 		case(SunImage<ColorType>::Lambert_cylindrical):
 			aggregated->Lambert_cylindrical_projection(CHMap, false);
-			#if DEBUG >= 2
+			#if defined DEBUG
 			aggregated->writeFits(filename + "Lambert_cylindrical_projection.fits");
 			#endif
 			cleaningFactor *= (2./3.);
@@ -59,7 +59,7 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 		
 		case(SunImage<ColorType>::sinusoidal):
 			aggregated->sinusoidal_projection(CHMap, false);
-			#if DEBUG >= 2
+			#if defined DEBUG
 			aggregated->writeFits(filename + "sinusoidal_projection.fits");
 			#endif
 			cleaningFactor *= (2./3.);
@@ -74,21 +74,21 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 	/*! Clean the color map to remove very small components (like protons)*/
 	aggregated->erodeCircular(cleaningFactor, 0);
 	
-	#if DEBUG >= 2
+	#if defined DEBUG
 	aggregated->writeFits(filename + "eroded.fits");
 	#endif
 	
 	/*! Aggregate the blobs together */
 	aggregated->dilateCircular(cleaningFactor + aggregationFactor, 0);
 	
-	#if DEBUG >= 2
+	#if defined DEBUG
 	aggregated->writeFits(filename + "dilated.fits");
 	#endif
 	
 	/*! Give back the original size */
 	aggregated->erodeCircular(aggregationFactor, 0);
 	
-	#if DEBUG >= 2
+	#if defined DEBUG
 	aggregated->writeFits(filename + "closed.fits");
 	#endif
 	
@@ -99,7 +99,7 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 		case(SunImage<ColorType>::equirectangular):
 			projeted = new ColorMap(aggregated);
 			aggregated->equirectangular_deprojection(projeted, false);
-			#if DEBUG >= 2
+			#if defined DEBUG
 			aggregated->writeFits(filename + "equirectangular_deprojection.fits");
 			#endif
 		break;
@@ -107,7 +107,7 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 		case(SunImage<ColorType>::Lambert_cylindrical):
 			projeted = new ColorMap(aggregated);
 			aggregated->Lambert_cylindrical_deprojection(projeted, false);
-			#if DEBUG >= 2
+			#if defined DEBUG
 			aggregated->writeFits(filename + "Lambert_cylindrical_deprojection.fits");
 			#endif
 		break;
@@ -115,7 +115,7 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 		case(SunImage<ColorType>::sinusoidal):
 			projeted = new ColorMap(aggregated);
 			aggregated->sinusoidal_deprojection(projeted, false);
-			#if DEBUG >= 2
+			#if defined DEBUG
 			aggregated->writeFits(filename + "sinusoidal_deprojection.fits");
 			#endif
 		break;
@@ -130,7 +130,7 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 	aggregated->nullifyAboveRadius(1.); 
 	aggregated->colorizeConnectedComponents(1);
 	
-	#if DEBUG >= 2
+	#if defined DEBUG
 	aggregated->writeFits(filename + "aggregated.fits");
 	#endif
 
@@ -197,7 +197,7 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 		CHMap = aggregatedMap;
 	}
 
-	#if DEBUG >= 2
+	#if defined DEBUG
 	CHMap->writeFits(filenamePrefix + "CHMap.all.fits");
 	#endif
 
@@ -207,7 +207,7 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 	else
 		CHMap->thresholdRegionsByRealArea(MIN_CH_SIZE);
 
-	#if DEBUG >= 2
+	#if defined DEBUG
 	CHMap->writeFits(filenamePrefix + "CHMap.large.fits");
 	#endif
 	

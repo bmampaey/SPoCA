@@ -4,7 +4,7 @@ using namespace std;
 
 Header::~Header()
 {
-	#if DEBUG >= 3
+	#if defined VERBOSE
 		cerr<<"Destructor for Header called"<<endl;
 	#endif
 }

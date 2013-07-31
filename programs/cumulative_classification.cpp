@@ -313,7 +313,7 @@ int main(int argc, const char **argv)
 		for (unsigned p = 0; p < images.size(); ++p)
 		{
 			images[p]->preprocessing(preprocessingSteps, radiusRatio);
-			#if DEBUG >= 2
+			#if defined DEBUG
 			images[p]->writeFits(filenamePrefixBase + "preprocessed." + stripPath(imagesFilenames[p]) );
 			#endif
 			// We check if the images are similars

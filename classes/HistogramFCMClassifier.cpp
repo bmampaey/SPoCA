@@ -213,7 +213,7 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 	cout<<setiosflags(ios::fixed);
 	#endif
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"--HistogramFCMClassifier::classification--START--"<<endl;
 	#endif
 	
@@ -236,7 +236,7 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 		HistogramFCMClassifier::stepout(iteration, precisionReached, precision);
 	}
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<endl<<"--HistogramFCMClassifier::classification--END--"<<endl;
 	#endif
 	#if DEBUG >= 1
@@ -375,7 +375,7 @@ void HistogramFCMClassifier::merge(unsigned i1, unsigned i2)
 
 	newB /= sum;
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 
@@ -433,7 +433,7 @@ void HistogramFCMClassifier::merge(unsigned i1, unsigned i2)
 	
 	newB /= sum;
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 	
@@ -480,7 +480,7 @@ void HistogramFCMClassifier::merge(unsigned i1, unsigned i2)
 	
 	newB /= sum;
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 

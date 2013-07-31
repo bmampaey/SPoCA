@@ -100,7 +100,7 @@ void CumulativeFCMClassifier::addImages(std::vector<EUVImage*> images)
 	Yaxes += yaxes;
 	++numberImages;
 
-	#if DEBUG >= 2
+	#if defined DEBUG
 	saveHistogram(filenamePrefix + itos(numberImages) + "images.histogram.txt");
 	#endif
 

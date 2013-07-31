@@ -147,7 +147,7 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	cout<<setiosflags(ios::fixed);
 	#endif
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"--PCMClassifier::classification--START--"<<endl;
 	#endif
 	
@@ -185,7 +185,7 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	}
 
 	
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<endl<<"--PCMClassifier::classification--END--"<<endl;
 	#endif
 	#if DEBUG >= 1
@@ -384,15 +384,15 @@ void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FC
 void PCMClassifier::stepinit(const string filename)
 {
 	Classifier::stepinit(filename);
-	#if DEBUG >= 3
+	#if defined DEBUG || defined VERBOSE
 		ostringstream out;
 		out<<"\t"<<"eta";
 		
-		#if DEBUG >= 3
+		#if defined VERBOSE
 			cout<<out.str();
 		#endif
 		
-		#if DEBUG >= 2
+		#if defined DEBUG
 			if(stepfile.good())
 				stepfile<<out.str();
 		#endif
@@ -403,17 +403,17 @@ void PCMClassifier::stepinit(const string filename)
 void PCMClassifier::stepout(const unsigned iteration, const Real precisionReached, const Real precision)
 {
 	Classifier::stepout(iteration, precisionReached, precision);
-	#if DEBUG >= 3
+	#if defined DEBUG || defined VERBOSE
 		ostringstream out;
 		out.setf(ios::fixed);
 		out.precision(1 - log10(precision));
 		out<<"\t"<<eta;
 		
-		#if DEBUG >= 3
+		#if defined VERBOSE
 			cout<<out.str();
 		#endif
 		
-		#if DEBUG >= 2
+		#if defined DEBUG
 			if(stepfile.good())
 				stepfile<<out.str();
 		#endif

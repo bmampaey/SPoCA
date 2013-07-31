@@ -52,7 +52,7 @@ void PCM2Classifier::computeEta()
 {
 	PCMClassifier::computeEta();
 	
-	#if DEBUG >= 3
+	#if defined VERBOSE
 		cout<<"\npre_eta:\t"<<eta<<"\t";
 	#endif
 	
@@ -111,7 +111,7 @@ void PCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 	cout<<setiosflags(ios::fixed);
 	#endif
 	
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"--PCM2Classifier::classification--START--"<<endl;
 	#endif
 	
@@ -157,7 +157,7 @@ void PCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 		stepout(iteration, precisionReached, precision);
 	}
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<endl<<"--PCM2Classifier::classification--END--"<<endl;
 	#endif
 	#if DEBUG >= 1
@@ -223,7 +223,7 @@ void PCM2Classifier::computeEta(ofstream* iterationsFile)
 		}
 	}
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"eta2:\t"<<eta<<endl;
 	#endif	
 }

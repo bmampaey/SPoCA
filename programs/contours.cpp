@@ -177,7 +177,7 @@ int main(int argc, const char **argv)
 	else
 		inputImage->drawContours(width, 0);
 		
-	#if DEBUG >= 2
+	#if defined DEBUG
 	inputImage->writeFits(filenamePrefix + "contours.fits");
 	#endif
 	
@@ -198,7 +198,7 @@ int main(int argc, const char **argv)
 			return EXIT_FAILURE;
 		}
 		inputImage->transform(rotationAngle, RealPixLoc(newCenter.x - inputImage->SunCenter().x, newCenter.y - inputImage->SunCenter().y), scaling);
-		#if DEBUG >= 2
+		#if defined DEBUG
 		inputImage->writeFits(filenamePrefix + "transformed.fits");
 		#endif
 		

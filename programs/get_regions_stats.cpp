@@ -211,7 +211,7 @@ int main(int argc, const char **argv)
 			if (colors.count(colorizedMap->pixel(j)) == 0)
 				colorizedMap->pixel(j) = colorizedMap->null();
 		}
-		#if DEBUG >= 2
+		#if defined DEBUG
 			colorizedMap->writeFits(filenamePrefix + "color_cleaned." +  stripPath(colorizedMapFileName) );
 		#endif
 	}
@@ -223,7 +223,7 @@ int main(int argc, const char **argv)
 		colorizedMap->nullifyAboveLongLat(areaLimitValue);
 	if(areaLimitType == "Lat")
 		colorizedMap->nullifyAboveLongLat(360, areaLimitValue);
-	#if DEBUG >= 2 || defined WRITE_LIMITED_MAP
+	#if defined DEBUG || defined WRITE_LIMITED_MAP
 		colorizedMap->writeFits(filenamePrefix + "limited." +  stripPath(colorizedMapFileName), FitsFile::compress);
 	#endif
 	
@@ -240,7 +240,7 @@ int main(int argc, const char **argv)
 		EUVImage* image = getImageFromFile(imageType, imageFilename);
 		image->recenter(sunCenter);
 		image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
-		#if DEBUG >= 2
+		#if defined DEBUG
 		image->writeFits(filenamePrefix + "preprocessed." +  stripPath(imageFilename) );
 		#endif
 		
@@ -250,7 +250,7 @@ int main(int argc, const char **argv)
 		{
 			cerr<<"Warning: image "<<imageFilename<<" and the colorizedMap "<<colorizedMapFileName<<" are not similar: "<<dissimilarity<<endl;
 		}
-		#if DEBUG >= 3
+		#if defined VERBOSE
 		cout<<"Region statistics for file "<<stripPath(imageFilename)<<endl;
 		#endif
 		if(totalStats)

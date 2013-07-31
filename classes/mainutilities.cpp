@@ -171,7 +171,7 @@ inline vector<EUVImage*> getImagesFromFiles(const string imageType, const vector
 			{
 				cerr<<"Warning : Image "<<imagesFilenames[p]<<" will be recentered to have the same sun centre than image "<<imagesFilenames[0]<<endl;
 				images[p]->recenter(sunCenter);
-				#if DEBUG >= 3
+				#if defined DEBUG
 				string filename = filenamePrefix + "recentered.";
 				filename +=  stripPath(imagesFilenames[p]);
 				images[p]->writeFits(filename);
@@ -317,7 +317,7 @@ string expand(string text, const Header& header)
 		key_start = text.find_first_of('{');
 	}
 	replaceAll(text, "\\n", "\n");
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<endl<<"text has been expanded to: "<<text<<endl;
 	#endif
 	return text;

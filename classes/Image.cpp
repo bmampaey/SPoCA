@@ -39,7 +39,7 @@ Image<T>::~Image()
 {
 	delete[] pixels;
 	pixels = NULL;
-	#if DEBUG >= 3
+	#if defined VERBOSE
 		cerr<<"Destructor for Image called (pixels = "<<pixels<<" to "<< numberPixels * sizeof(T)<<")"<<endl;
 	#endif
 }
@@ -1034,7 +1034,7 @@ Image<T>* Image<T>::binomial_smoothing(unsigned width, const Image<T>* img)
 
 	for(unsigned i = 1; i < N; ++i)
 		kernel[i] = (factoriel[N] / (factoriel[i] * factoriel[N-i])) / den;
-	#if DEBUG >= 3
+	#if defined VERBOSE
 		cerr<<"Binomial smoothing kernel: "<<kernel<<endl;
 	#endif
 	

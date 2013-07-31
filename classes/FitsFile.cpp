@@ -47,7 +47,7 @@ FitsFile::~FitsFile()
 {
 	if(! isClosed())
 		close();
-	#if DEBUG >= 3
+	#if defined VERBOSE
 		cerr<<"Destructor for FitsFile called (filename = "<<filename<<")"<<endl;
 	#endif
 }
@@ -341,7 +341,7 @@ FitsFile& FitsFile::readHeader(Header& header)
 	}
 	if(status == KEY_OUT_BOUNDS)
 		status = 0;
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Header for file "<<filename<<endl; 
 	for ( map<string,string>::iterator i = header.begin(); i != header.end(); ++i )
 	{

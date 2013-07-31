@@ -79,7 +79,7 @@ unsigned Classifier::sursegmentation(unsigned Cmin)
 	Real oldScore = numeric_limits<Real>::max();
 	vector<RealFeature> oldB; 
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"--Classifier::sursegmentation--START--"<<endl;
 	cout<<"B :\t"<<B<<endl;
 	cout<<"V :\t"<<V<<"\tscore :"<<newScore<<endl;
@@ -122,13 +122,13 @@ unsigned Classifier::sursegmentation(unsigned Cmin)
 		oldScore = newScore;
 		newScore = assess(V);
 
-		#if DEBUG >= 2
+		#if defined DEBUG
 		ColorMap segmentedMap;
 		segmentedMap_maxUij(&segmentedMap);
 		segmentedMap.writeFits(filenamePrefix + "segmented." + itos(numberClasses) + "classes.fits");
 		#endif
 		
-		#if DEBUG >= 3
+		#if defined VERBOSE
 		cout<<"new B :"<<B<<endl;
 		cout<<"V :"<<V<<"\tscore :"<<newScore<<endl;
 		#endif
@@ -146,7 +146,7 @@ unsigned Classifier::sursegmentation(unsigned Cmin)
 
 	}
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"--Classifier::sursegmentation--END--"<<endl;
 	#endif
 
@@ -199,7 +199,7 @@ void Classifier::merge(unsigned i1, unsigned i2)
 	}
 	newB /= sum;
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 	
@@ -242,7 +242,7 @@ void Classifier::merge(unsigned i1, unsigned i2)
 	newB[0] /= caardinal[0];
 	newB[1] /= caardinal[1];
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB[0] + newB[1]<<endl;
 	#endif
 
@@ -262,7 +262,7 @@ void Classifier::merge(unsigned i1, unsigned i2)
 {
 	RealFeature newB = (B[i1] + B[i2]) / 2.;
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 	
@@ -417,7 +417,7 @@ ColorMap* Classifier::segmentedMap_limits(vector<RealFeature>& limits,ColorMap* 
 
 	segmentedMap_maxUij(segmentedMap);
 	
-	#if DEBUG >= 2
+	#if defined DEBUG
 	segmentedMap->writeFits(filenamePrefix + "max.segmented.fits");
 	#endif
 
@@ -445,7 +445,7 @@ ColorMap* Classifier::segmentedMap_fixed(vector<unsigned>& ch, vector<unsigned>&
 
 	segmentedMap_maxUij(segmentedMap);
 
-	#if DEBUG >= 2
+	#if defined DEBUG
 	segmentedMap->writeFits(filenamePrefix + "max.segmented.fits");
 	#endif
 
@@ -689,7 +689,7 @@ vector<RealFeature> Classifier::classAverage() const
 
 void Classifier::stepinit(const string filename)
 {
-	#if defined VERBOSE || defined DEBUG
+	#if defined DEBUG || defined VERBOSE
 		ostringstream out;
 		out<<"iteration"<<"\t"<<"precisionReached";
 		for (unsigned i = 0; i < numberClasses; ++i)
@@ -697,11 +697,11 @@ void Classifier::stepinit(const string filename)
 		for (unsigned i = 0; i < numberClasses; ++i)
 			out<<"\t"<<"classAvg"<<i;
 	
-		#if DEBUG >= 3
+		#if defined VERBOSE
 			cout<<endl<<out.str();
 		#endif
 		
-		#if DEBUG >= 2
+		#if defined DEBUG
 			if(stepfile.is_open())
 				stepfile.close();
 			
@@ -718,24 +718,24 @@ void Classifier::stepinit(const string filename)
 
 void Classifier::stepout(const unsigned iteration, const Real precisionReached, const Real precision)
 {
-	#if defined VERBOSE || defined DEBUG
+	#if defined DEBUG || defined VERBOSE
 		ostringstream out;
 		out.setf(ios::fixed);
 		out.precision(1 - log10(precision));
 		out<<iteration<<"\t"<<precisionReached<<"\t"<<B;
 		out<<"\t"<<classAverage();
 	
-		#if DEBUG >= 3
+		#if defined VERBOSE
 			cout<<endl<<out.str();
 		#endif
 		
-		#if DEBUG >= 2
+		#if defined DEBUG
 		if(stepfile.good())
 			stepfile<<endl<<out.str();
 		#endif
 	#endif
 	
-	#if DEBUG >= 2
+	#if defined DEBUG || defined WRITE_MEMBERSHIP_FILES
 	// We write the fits file of Uij
 	Image<EUVPixelType> image(Xaxes,Yaxes);
 	for (unsigned i = 0; i < numberClasses; ++i)

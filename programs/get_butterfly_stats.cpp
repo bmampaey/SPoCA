@@ -159,7 +159,7 @@ int main(int argc, const char **argv)
 				if (colors.count(colorizedMap->pixel(j)) == 0)
 					colorizedMap->pixel(j) = colorizedMap->null();
 			}
-			#if DEBUG >= 2
+			#if defined DEBUG
 				colorizedMap->writeFits(filenamePrefix + "color_cleaned." +  stripPath(colorizedMapFileName));
 			#endif
 		}

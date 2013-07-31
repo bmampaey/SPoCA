@@ -318,7 +318,7 @@ int main(int argc, const char **argv)
 			if (numberPreviousCenters > 0)
 			{
 				B = median_classcenters(Bs);
-				#if DEBUG >= 3
+				#if defined VERBOSE
 				cout<<"Bmedian "<<B<<endl;
 				for (unsigned b = 0; b < Bs.size(); ++b)
 					cout<<"Bs"<<b<<" "<<Bs[b]<<endl;
@@ -441,7 +441,7 @@ int main(int argc, const char **argv)
 	for (unsigned p = 0; p < images.size(); ++p)
 	{
 		images[p]->preprocessing(preprocessingSteps, radiusRatio);
-		#if DEBUG >= 2
+		#if defined DEBUG
 		images[p]->writeFits(outputDirectory + "/" + stripPath(stripSuffix(imagesFilenames[p])) + ".preprocessed.fits");
 		#endif
 		
@@ -482,13 +482,13 @@ int main(int argc, const char **argv)
 	if(classifierIsPossibilistic)
 	{
 		dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
-		#if DEBUG >= 2
+		#if defined DEBUG
 		// We save the centers we found
 		F->saveB(filenamePrefix + "FCM.centers.txt");
 		#endif
 	}	
 	
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"The centers have been initialized to B :"<<F->getB()<<endl;
 	#endif
 
@@ -509,7 +509,7 @@ int main(int argc, const char **argv)
 		if(Bs.size() > numberPreviousCenters)
 			Bs.resize(numberPreviousCenters);
 			
-		#if DEBUG >= 3
+		#if defined VERBOSE
 		cout<<"Re-Initialized B with "<<B<<endl;
 		#endif
 		F->initB(B, channels);

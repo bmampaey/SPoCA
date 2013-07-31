@@ -185,7 +185,7 @@ int main(int argc, const char **argv)
 		colorizedMap->nullifyAboveLongLat(areaLimitValue);
 	if(areaLimitType == "Lat")
 		colorizedMap->nullifyAboveLongLat(360, areaLimitValue);
-	#if DEBUG >= 2
+	#if defined DEBUG
 	colorizedMap->writeFits(filenamePrefix + "limited." +  stripPath(colorizedMapFileName) );
 	#endif
 	
@@ -207,7 +207,7 @@ int main(int argc, const char **argv)
 		if(! intensitiesStatsPreprocessing.empty())
 			image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
 		
-		#if DEBUG >= 2
+		#if defined DEBUG
 		image->writeFits(filenamePrefix + "preprocessed." +  stripPath(imageFilename) );
 		#endif
 		
@@ -217,7 +217,7 @@ int main(int argc, const char **argv)
 		{
 			cerr<<"Warning: image "<<imageFilename<<" and the colorizedMap "<<colorizedMapFileName<<" are not similar: "<<dissimilarity<<endl;
 		}
-		#if DEBUG >= 3
+		#if defined VERBOSE
 		cout<<"Segmentation statistics for file "<<stripPath(imageFilename)<<endl;
 		#endif
 		// We get the segmentation stats and output them

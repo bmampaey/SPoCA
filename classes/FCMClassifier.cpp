@@ -149,7 +149,7 @@ void FCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	cout<<setiosflags(ios::fixed);
 	#endif
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"--FCMClassifier::classification--START--"<<endl;
 	#endif
 	
@@ -171,7 +171,7 @@ void FCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 		FCMClassifier::stepout(iteration, precisionReached, precision);
 	}
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"--FCMClassifier::classification--END--"<<endl;
 	#endif
 	
@@ -309,7 +309,7 @@ void FCMClassifier::merge(unsigned i1, unsigned i2)
 
 	newB /= sum;
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 	
@@ -367,7 +367,7 @@ void FCMClassifier::merge(unsigned i1, unsigned i2)
 	
 	newB /= sum;
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 
@@ -415,7 +415,7 @@ void FCMClassifier::merge(unsigned i1, unsigned i2)
 	
 	newB /= sum;
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 	

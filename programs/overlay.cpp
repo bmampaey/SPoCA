@@ -273,7 +273,7 @@ int main(int argc, const char **argv)
 	else
 		colorizedMap->drawContours(width, 0);
 	
-	#if DEBUG >= 2
+	#if defined DEBUG
 	colorizedMap->writeFits(filenamePrefix + "contours.fits");
 	#endif
 	
@@ -294,7 +294,7 @@ int main(int argc, const char **argv)
 			return EXIT_FAILURE;
 		}
 		colorizedMap->transform(rotationAngle, RealPixLoc(newCenter.x - colorizedMap->SunCenter().x, newCenter.y - colorizedMap->SunCenter().y), scaling);
-		#if DEBUG >= 2
+		#if defined DEBUG
 		colorizedMap->writeFits(filenamePrefix + "transformed.fits");
 		#endif
 		
@@ -312,7 +312,7 @@ int main(int argc, const char **argv)
 		contours.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
 		contours.label(text);
 	}
-	#if DEBUG >= 2
+	#if defined DEBUG
 	contours.write(outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + ".contours.png");
 	#endif
 	
@@ -344,13 +344,13 @@ int main(int argc, const char **argv)
 			image->enhance_contrast();
 		}
 		
-		#if DEBUG >= 2
+		#if defined DEBUG
 		image->writeFits(filenamePrefix + "preprocessed.fits");
 		#endif
 		
 		// We transform the image to align it with the colorizedMap
 		image->transform(referenceCrota2 - image->Crota2(), RealPixLoc(referenceSunCenter.x - image->SunCenter().x, referenceSunCenter.y - image->SunCenter().y), referenceSunRadius/image->SunRadius());
-		#if DEBUG >= 2
+		#if defined DEBUG
 		image->writeFits(filenamePrefix + "transformed.fits");
 		#endif
 		
@@ -365,7 +365,7 @@ int main(int argc, const char **argv)
 			background.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
 			background.label(text);
 		}
-		#if DEBUG >= 2
+		#if defined DEBUG
 		background.write(filenamePrefix + "background.png");
 		#endif
 		

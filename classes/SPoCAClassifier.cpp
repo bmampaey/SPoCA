@@ -99,7 +99,7 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 	}
 	
 	// We write the fits file of smoothedX for verification
-	#if DEBUG >= 2
+	#if defined DEBUG
 
 	Image<EUVPixelType> image(Xaxes,Yaxes);
 	for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
@@ -112,7 +112,7 @@ void SPoCAClassifier::addImages(vector<EUVImage*> images)
 
 	}
 	#endif
-	#if DEBUG >= 2
+	#if defined DEBUG
 	#include <fstream>
 	ofstream betaFile((filenamePrefix + "betaN.txt").c_str());
 	for (unsigned j = 0; j < numberFeatureVectors && betaFile.good(); ++j)
@@ -406,7 +406,7 @@ void SPoCAClassifier::merge(unsigned i1, unsigned i2)
 
 	newB /= sum;
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 
@@ -462,7 +462,7 @@ void SPoCAClassifier::merge(unsigned i1, unsigned i2)
 	
 	newB /= sum;
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
 	#endif
 	

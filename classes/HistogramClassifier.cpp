@@ -150,7 +150,7 @@ void HistogramClassifier::addFeatures(const FeatureVectorSet& X)
 
 	numberBins = HistoX.size();
 	
-	#if DEBUG >= 2
+	#if defined DEBUG
 	saveHistogram(filenamePrefix + "histogram.txt");
 	#endif
 

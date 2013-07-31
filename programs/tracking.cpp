@@ -165,7 +165,7 @@ int main(int argc, const char **argv)
 	}
 	
 	filenamePrefix = images.size() > 0 ? time2string(images[0]->ObservationTime()) + "." : "nofiles.";
-	#if DEBUG >= 2
+	#if defined DEBUG
 	// We output the regions found
 	ouputRegions(regions, filenamePrefix+"regions_premodification.txt");
 	#endif
@@ -202,7 +202,7 @@ int main(int argc, const char **argv)
 				continue;
 			}	
 			
-			#if DEBUG >= 2
+			#if defined DEBUG
 			if(derotate)
 			{
 				SunImage<ColorType>* rotated = images[s1]->shifted_like(images[s2]);
@@ -245,7 +245,7 @@ int main(int argc, const char **argv)
 	
 	}
 
-	#if DEBUG >= 2
+	#if defined DEBUG
 	// We output the graph before tranformation
 	ouputGraph(tracking_graph, regions, "ar_graph_premodification", false);
 	#endif
@@ -257,7 +257,7 @@ int main(int argc, const char **argv)
 		itn->colorize();
 	}
 
-	#if DEBUG >= 2
+	#if defined DEBUG
 	// We output the graph after tranformation
 	ouputGraph(tracking_graph, regions, "ar_graph_postmodification");
 	// We output the regions found
@@ -350,7 +350,7 @@ int main(int argc, const char **argv)
 		}
 	}
 	
-	#if DEBUG >= 2
+	#if defined DEBUG
 	// We output the graph after recolorization
 	// Ideally I should remove first all regions before previous_overlap from the graph, but there is no remove node in our graph libarry so I recolor them to black
 	for (unsigned s = 0 ; s < previous_last_hek_map; ++s)
@@ -428,7 +428,7 @@ int main(int argc, const char **argv)
 		past_colors[r] = relations[r].past_color;
 		present_colors[r] = relations[r].present_color;
 		relations_type[r] = relations[r].type;
-		#if DEBUG >= 3
+		#if defined VERBOSE
 		cout<<relations[r].past_color<<" "<<relations[r].type<<" "<<relations[r].present_color<<endl;
 		#endif
 	}

@@ -205,7 +205,7 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 	cout<<setiosflags(ios::fixed);
 	#endif
 	
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"--HistogramPCMClassifier::classification--START--"<<endl;
 	#endif
 	
@@ -245,7 +245,7 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 		stepout(iteration, precisionReached, precision);
 	}
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<endl<<"--HistogramPCMClassifier::classification--END--"<<endl;
 	#endif
 	#if DEBUG >= 1

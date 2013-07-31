@@ -300,7 +300,7 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 				{
 					max = limits.back();
 					limits.pop_back();
-					#if DEBUG >= 3
+					#if defined VERBOSE
 					cerr<<"Percentile "<<upper<<": "<<max<<endl;
 					#endif
 				}
@@ -310,7 +310,7 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 				{
 					min = limits.back();
 					limits.pop_back();
-					#if DEBUG >= 3
+					#if defined VERBOSE
 					cerr<<"Percentile "<<lower<<": "<<min<<endl;
 					#endif
 				}
@@ -457,7 +457,7 @@ void EUVImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 	}
 
 	median = quickselect(onDiscList);
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Image preprocessing found median: "<<median<<endl;
 	#endif
 
@@ -542,7 +542,7 @@ void EUVImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
 	}
 
 	median = quickselect(onDiscList);
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"Image preprocessing found median: "<<median<<endl;
 	#endif
 

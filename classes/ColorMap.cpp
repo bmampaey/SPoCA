@@ -655,11 +655,11 @@ void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projecti
 		case(SunImage<ColorType>::equirectangular):
 			projeted = new ColorMap(getWCS(), Xaxes(), Yaxes());
 			projeted->equirectangular_projection(this, false);
-			#if DEBUG >= 2
+			#if defined DEBUG
 			projeted->writeFits(filenamePrefix + "equirectangular_projection.fits");
 			#endif
 			projeted->dilateCircular((2./3.)*aggregationFactor, null());
-			#if DEBUG >= 2
+			#if defined DEBUG
 			projeted->writeFits(filenamePrefix + "dilated.fits");
 			#endif
 		break;
@@ -667,11 +667,11 @@ void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projecti
 		case(SunImage<ColorType>::Lambert_cylindrical):
 			projeted = new ColorMap(getWCS(), Xaxes(), Yaxes());
 			projeted->Lambert_cylindrical_projection(this, false);
-			#if DEBUG >= 2
+			#if defined DEBUG
 			projeted->writeFits(filenamePrefix + "Lambert_cylindrical_projection.fits");
 			#endif
 			projeted->dilateCircular((2./3.)*aggregationFactor, null());
-			#if DEBUG >= 2
+			#if defined DEBUG
 			projeted->writeFits(filenamePrefix + "dilated.fits");
 			#endif
 		break;
@@ -679,11 +679,11 @@ void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projecti
 		case(SunImage<ColorType>::sinusoidal):
 			projeted = new ColorMap(getWCS(), Xaxes(), Yaxes());
 			projeted->sinusoidal_projection(this, false);
-			#if DEBUG >= 2
+			#if defined DEBUG
 			projeted->writeFits(filenamePrefix + "sinusoidal_projection.fits");
 			#endif
 			projeted->dilateCircular((2./3.)*aggregationFactor, null());
-			#if DEBUG >= 2
+			#if defined DEBUG
 			projeted->writeFits(filenamePrefix + "dilated.fits");
 			#endif
 		break;
@@ -693,7 +693,7 @@ void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projecti
 			
 		case(SunImage<ColorType>::no_projection):
 			dilateCircular(aggregationFactor, null());
-			#if DEBUG >= 2
+			#if defined DEBUG
 			writeFits(filenamePrefix + "dilated.fits");
 			#endif
 		break;

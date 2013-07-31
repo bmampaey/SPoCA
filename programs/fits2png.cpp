@@ -181,7 +181,7 @@ int main(int argc, const char **argv)
 		inputImage->enhance_contrast();
 	}
 	
-	#if DEBUG >= 2
+	#if defined DEBUG
 	inputImage->writeFits(filenamePrefix + "preprocessed.fits");
 	#endif
 	
@@ -202,7 +202,7 @@ int main(int argc, const char **argv)
 			return EXIT_FAILURE;
 		}
 		inputImage->transform(rotationAngle, RealPixLoc(newCenter.x - inputImage->SunCenter().x, newCenter.y - inputImage->SunCenter().y), scaling);
-		#if DEBUG >= 2
+		#if defined DEBUG
 		inputImage->writeFits(filenamePrefix + "transformed.fits");
 		#endif
 		
@@ -219,7 +219,7 @@ int main(int argc, const char **argv)
 		{
 			vector<char> intrumentColorTable = inputImage->color_table();
 			colorTable = MagickImage(&(intrumentColorTable[0]), 1, intrumentColorTable.size()/3, "RGB");
-			#if DEBUG >= 2
+			#if defined DEBUG
 			colorTable.write(filenamePrefix + "colortable.png");
 			#endif
 			MagickCore::ClutImage(outputImage.image(), colorTable.image());

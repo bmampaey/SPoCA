@@ -88,7 +88,7 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 	cout<<setiosflags(ios::fixed);
 	#endif
 	
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"--HistogramPCM2Classifier::classification--START--"<<endl;
 	#endif
 	
@@ -138,7 +138,7 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 	
 
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<endl<<"--HistogramPCM2Classifier::classification--END--"<<endl;
 	#endif
 	#if DEBUG >= 1
@@ -152,7 +152,7 @@ void HistogramPCM2Classifier::computeEta()
 {
 	HistogramPCMClassifier::computeEta();
 
-	#if DEBUG >= 3
+	#if defined VERBOSE
 		cout<<"\npre_eta:\t"<<eta<<"\t";
 	#endif
 

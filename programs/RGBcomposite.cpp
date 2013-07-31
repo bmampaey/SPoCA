@@ -193,7 +193,7 @@ int main(int argc, const char **argv)
 			return EXIT_FAILURE;
 		}
 		inputImage->transform(rotationAngle, RealPixLoc(newCenter.x - inputImage->SunCenter().x, newCenter.y - inputImage->SunCenter().y), scaling);
-		#if DEBUG >= 2
+		#if defined DEBUG
 		inputImage->writeFits(filenamePrefix + "transformed.fits");
 		#endif
 		
@@ -207,7 +207,7 @@ int main(int argc, const char **argv)
 	MagickImage red_channel = inputImage->magick();
 	delete inputImage;
 	MagickCore::ClutImage(red_channel.image(), red_gradient.image());
-	#if DEBUG >= 2
+	#if defined DEBUG
 		red_channel.write(filenamePrefix + "red.png");
 	#endif
 	
@@ -227,7 +227,7 @@ int main(int argc, const char **argv)
 	
 	// We transform the image
 	inputImage->transform(referenceCrota2 - inputImage->Crota2(), RealPixLoc(referenceSunCenter.x - inputImage->SunCenter().x, referenceSunCenter.y - inputImage->SunCenter().y), referenceSunRadius/inputImage->SunRadius());
-	#if DEBUG >= 2
+	#if defined DEBUG
 	inputImage->writeFits(filenamePrefix + "transformed.fits");
 	#endif
 	
@@ -235,7 +235,7 @@ int main(int argc, const char **argv)
 	MagickImage green_channel = inputImage->magick();
 	delete inputImage;
 	MagickCore::ClutImage(green_channel.image(), green_gradient.image());
-	#if DEBUG >= 2
+	#if defined DEBUG
 		green_channel.write(filenamePrefix + "green.png");
 	#endif
 	
@@ -254,14 +254,14 @@ int main(int argc, const char **argv)
 	
 	// We transform the image
 	inputImage->transform(referenceCrota2 - inputImage->Crota2(), RealPixLoc(referenceSunCenter.x - inputImage->SunCenter().x, referenceSunCenter.y - inputImage->SunCenter().y), referenceSunRadius/inputImage->SunRadius());
-	#if DEBUG >= 2
+	#if defined DEBUG
 	inputImage->writeFits(filenamePrefix + "transformed.fits");
 	#endif
 	
 	// We make the png
 	MagickImage blue_channel = inputImage->magick();
 	MagickCore::ClutImage(blue_channel.image(), blue_gradient.image());
-	#if DEBUG >= 2
+	#if defined DEBUG
 		blue_channel.write(filenamePrefix + "blue.png");
 	#endif
 	

@@ -115,7 +115,7 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 	++numberImages;
 
 	// We write the fits file of smoothedX for verification
-	#if DEBUG >= 2
+	#if defined DEBUG
 	Image<EUVPixelType> image(Xaxes,Yaxes);
 	for (unsigned p = 0; p <  NUMBERCHANNELS; ++p)
 	{
@@ -129,7 +129,7 @@ void CumulativeSPoCAClassifier::addImages(vector<EUVImage*> images)
 	}
 	#endif
 	
-	#if DEBUG >= 3
+	#if defined DEBUG
 	#include <fstream>
 	ofstream betaFile((filenamePrefix + "betaN.txt").c_str());
 	for (unsigned j = 0; j < numberFeatureVectors && betaFile.good(); ++j)

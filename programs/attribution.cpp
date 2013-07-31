@@ -351,7 +351,7 @@ int main(int argc, const char **argv)
 	for (unsigned p = 0; p < images.size(); ++p)
 	{
 		images[p]->preprocessing(preprocessingSteps, radiusRatio);
-		#if DEBUG >= 2
+		#if defined DEBUG
 		images[p]->writeFits(outputDirectory + "/" + stripPath(stripSuffix(imagesFilenames[p])) + ".preprocessed.fits");
 		#endif
 		
@@ -406,10 +406,10 @@ int main(int argc, const char **argv)
 		}
 		
 		// We save the eta
-		dynamic_cast<PCMClassifier*>(F)->saveEta(filenamePrefix + "eta.txt");		
+		dynamic_cast<PCMClassifier*>(F)->saveEta(filenamePrefix + "eta.txt");
 	}	
 	
-	#if DEBUG >= 3
+	#if defined VERBOSE
 	cout<<"The centers have been initialized to B :"<<F->getB()<<endl;
 	if(classifierIsPossibilistic)
 	{

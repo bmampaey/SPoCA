@@ -81,7 +81,7 @@ void EUVImage::setALCParameters(vector<Real> ALCParameters)
 
 void EUVImage::parseHeader()
 {
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	//If pixel values are negative this can cause problems in some functions
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{

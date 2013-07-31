@@ -77,7 +77,7 @@ void HistogramPCM2Classifier::computeU()
 void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 {
 	
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(HistoX.size() == 0 || B.size() == 0 || B.size() != eta.size())
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
@@ -141,7 +141,7 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 	#if defined VERBOSE
 	cout<<endl<<"--HistogramPCM2Classifier::classification--END--"<<endl;
 	#endif
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	feenableexcept(excepts);
 	#endif
 }

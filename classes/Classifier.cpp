@@ -278,7 +278,7 @@ void Classifier::merge(unsigned i1, unsigned i2)
 ColorMap* Classifier::segmentedMap_maxUij(ColorMap* segmentedMap)
 {
 
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if (U.size() != numberClasses*numberFeatureVectors)
 		cerr<<"The membership matrix U has not yet been calculated"<<endl;
 	#endif
@@ -317,7 +317,7 @@ ColorMap* Classifier::segmentedMap_maxUij(ColorMap* segmentedMap)
 ColorMap* Classifier::segmentedMap_closestCenter(ColorMap* segmentedMap)
 {
 
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if (U.size() != numberClasses*numberFeatureVectors)
 		cerr<<"The membership matrix U has not yet been calculated"<<endl;
 	#endif
@@ -356,7 +356,7 @@ ColorMap* Classifier::segmentedMap_closestCenter(ColorMap* segmentedMap)
 ColorMap* Classifier::segmentedMap_classThreshold(unsigned middleClass, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, ColorMap* segmentedMap)
 {
 
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if (U.size() != numberClasses*numberFeatureVectors)
 		cerr<<"The membership matrix U has not yet been calculated."<<endl;
 	if (middleClass == 0 || middleClass > numberClasses)
@@ -540,7 +540,7 @@ vector<RealFeature> Classifier::percentiles(vector<Real> percentileValues)
 	sort(sortedX.begin(), sortedX.end());
 	for (unsigned h = 0; h < percentileValues.size(); ++h)
 	{
-		#if DEBUG >= 1
+		#if defined EXTRA_SAFE
 		if(percentileValues[h] < 0 || percentileValues[h] > 1)
 		{
 			cerr<<"Percentile values must be between 0 and 1"<<endl;
@@ -581,7 +581,7 @@ EUVImage* Classifier::getImage(unsigned p)
 
 void Classifier::randomInitB(unsigned C)
 {
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(X.size() == 0)
 	{
 		cerr<<"Error : The set of FeatureVector must be initialized before doing a random init."<<endl;

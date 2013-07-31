@@ -229,7 +229,7 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 	/*! We get the chaincode and write them to the fits file */
 	if(chaincodeMaxPoints > 0)
 	{
-		#if DEBUG>= 2
+		#if defined DEBUG
 		ColorMap chaincode_map(CHMap);
 		#endif
 		
@@ -239,14 +239,14 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 			vector<PixLoc> chaincode = regions[r]->chainCode(aggregatedMap, chaincodeMinPoints, chaincodeMaxPoints, chaincodeMaxDeviation);
 			file.writeColumn(itos(regions[r]->Id(),7), chaincode);
 		
-			#if DEBUG>= 2
+			#if defined DEBUG
 			for (unsigned c = 0; c < chaincode.size(); ++c)
 			{
 				chaincode_map.drawCircle(chaincode[c], 3, r+10);
 			}
 			#endif
 		}
-		#if DEBUG>= 2
+		#if defined DEBUG
 		chaincode_map.writeFits(filenamePrefix + "CHMap.chaincodes.fits");
 		#endif
 	}
@@ -275,7 +275,7 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 		
 		file.writeHeader(tableHeader);
 		
-		#if DEBUG>= 3
+		#if defined VERBOSE
 		cerr<<"CoronalHoleStats Table"<<endl;
 		if(regions_stats.size() > 0)
 			cerr<<regions_stats[0]->toString("|", true)<<endl;

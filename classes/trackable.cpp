@@ -217,7 +217,7 @@ inline void ordonate(vector<ColorMap*>& images)
 {
 	sort(images.begin(), images.end(), compare);
 
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	//We remove the ones that have duplicate time
 	vector<ColorMap*>::iterator s1 = images.begin();
 	vector<ColorMap*>::iterator s2 = images.begin() + 1;
@@ -267,7 +267,7 @@ void recolorFromRegions(ColorMap* image, const vector<Region*>& regions)
 	{
 		if(image->pixel(j) != image->null())
 		{
-			#if DEBUG >= 1
+			#if defined EXTRA_SAFE
 				if(colorTransfo.count(image->pixel(j)) == 0)
 				{
 					cerr<<"ERROR trying to colorize image, pixel has no corresponding region"<<endl;

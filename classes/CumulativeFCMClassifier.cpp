@@ -87,7 +87,7 @@ void CumulativeFCMClassifier::addImages(std::vector<EUVImage*> images)
 		Xaxes = Xaxes == 0 ? xaxes : Xaxes;
 	}
 	
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(xaxes != Xaxes)
 	{
 		cerr<<"Error : All the images must have the same Xaxes size."<<endl;

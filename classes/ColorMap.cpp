@@ -514,7 +514,7 @@ ColorMap* ColorMap::drawContours(const unsigned width, const ColorType unsetValu
 				newPixels[j] = maxColor;
 				for(unsigned s = 0; s < shape.size(); ++s)
 				{
-					#if DEBUG >= 1
+					#if defined EXTRA_SAFE
 						if(j + shape[s] >= numberPixels || j - shape[s] < 0)
 						{
 							cerr<<"Error : trying to access pixel out of image in drawContours"<<endl;

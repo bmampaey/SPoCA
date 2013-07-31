@@ -725,7 +725,7 @@ int main(int argc, const char **argv)
 			file.writeTable(image->Channel()+"_SegmentationStats");
 			writeRegions(file, segmentation_stats);
 		
-			#if DEBUG>= 3
+			#if defined VERBOSE
 			cerr<<"SegmentationStats Table"<<endl;
 			if(segmentation_stats.size() > 0)
 				cerr<<segmentation_stats[0]->toString("|", true)<<endl;

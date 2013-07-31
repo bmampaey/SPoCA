@@ -133,7 +133,7 @@ void printLines(const string& filename, const EUVImage* image, const vector<Real
 
 int main(int argc, const char **argv)
 {
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
         cout<<setiosflags(ios::fixed);
 	#endif

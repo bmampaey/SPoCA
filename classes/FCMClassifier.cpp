@@ -5,7 +5,7 @@ using namespace std;
 FCMClassifier::FCMClassifier(Real fuzzifier)
 :Classifier(fuzzifier)
 {
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if (fuzzifier == 1)
 	{
 		cerr<<"Error : Fuzzifier must not equal 1.";
@@ -138,7 +138,7 @@ Real FCMClassifier::computeJ() const
 void FCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 {
 
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(X.size() == 0 || B.size() == 0)
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
@@ -175,7 +175,7 @@ void FCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	cout<<"--FCMClassifier::classification--END--"<<endl;
 	#endif
 	
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	feenableexcept(excepts);
 	#endif
 

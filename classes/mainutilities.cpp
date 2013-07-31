@@ -187,7 +187,7 @@ inline EUVImage* getImageFromFile(const string imageType, const string imageFile
 
 	EUVImage* image;
 
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(imageFilename.find(".fits")==string::npos && imageFilename.find(".fts")==string::npos)
 	{
 		cerr<<imageFilename<<" is not a fits file! (must end in .fits or .fts)"<<endl;
@@ -232,7 +232,7 @@ inline EUVImage* getImageFromFile(const string imageType, const string imageFile
 inline ColorMap* getImageFromFile(const string imageFilename)
 {
 
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(imageFilename.find(".fits")==string::npos && imageFilename.find(".fts")==string::npos)
 	{
 		cerr<<imageFilename<<" is not a fits file! (must end in .fits or .fts)"<<endl;

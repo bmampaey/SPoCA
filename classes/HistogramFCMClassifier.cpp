@@ -202,7 +202,7 @@ Real HistogramFCMClassifier::computeJ() const
 
 void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 {
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(HistoX.size() == 0 || B.size() == 0)
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
@@ -239,7 +239,7 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 	#if defined VERBOSE
 	cout<<endl<<"--HistogramFCMClassifier::classification--END--"<<endl;
 	#endif
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	feenableexcept(excepts);
 	#endif
 }
@@ -550,7 +550,7 @@ void HistogramFCMClassifier::initB(const vector<RealFeature>& B, const vector<st
 /*! B is actually not randomly initialized, but is initialized with values spred over the range of the histogram. */
 void HistogramFCMClassifier::randomInitB(unsigned C)
 {
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(HistoX.size() == 0)
 	{
 		cerr<<"Error : The set of FeatureVector must be initialized before doing a random init."<<endl;

@@ -475,7 +475,7 @@ FitsFile& FitsFile::readImage(T*& image, unsigned &X, unsigned& Y, T* null)
 	unsigned numberPixels = X * Y;
 	
 	// We alocate space for the pixels
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if (image != NULL)
 	{
 		cerr<<"Error : should not allocate memory to a non NULL pointer when reading image from file "<<filename<<endl;			
@@ -493,7 +493,7 @@ FitsFile& FitsFile::readImage(T*& image, unsigned &X, unsigned& Y, T* null)
 		return *this;
 	}
 	
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	// We check that there is no lost of precision
 
 	switch(bitpix)
@@ -595,7 +595,7 @@ FitsFile& FitsFile::writeImage(T* image, const unsigned X, const unsigned Y, int
 		}
 		else if(fits_movrel_hdu(fptr, -1, NULL, &status))
 		{
-			#if DEBUG >= 1
+			#if defined EXTRA_SAFE
 			cerr<<"Error : moving to previous hdu :"<< status <<endl;			
 			fits_report_error(stderr, status);
 			#endif
@@ -635,7 +635,7 @@ FitsFile& FitsFile::writeImage(T* image, const unsigned X, const unsigned Y, int
 		}
 		if(cbitpix != bitpix || cnaxis != naxis || caxes[0] != axes[0] || caxes[1] != axes[1])
 		{
-			#if DEBUG >= 1
+			#if defined EXTRA_SAFE
 			cerr<<"Warning : possible image parameter mismatch while updating image in file "<<filename<<endl;
 			#endif
 		}
@@ -715,7 +715,7 @@ int FitsFile::find_column(const string &name)
 	{
 		if(status == COL_NOT_UNIQUE || (status =! COL_NOT_FOUND && name != colname))
 		{
-			#if DEBUG >= 1
+			#if defined EXTRA_SAFE
 			cerr<<"Warning : searching column "<<name<<". Column name is not unique or exact, using column with name "<<colname<<"."<<endl;
 			#endif
 			status = 0;

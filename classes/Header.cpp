@@ -31,7 +31,7 @@ T Header::get(const string& key) const
 	map<string,string>::const_iterator it = keywords.find(key);
 	if(it == keywords.end())
 	{
-		#if DEBUG>= 1
+		#if defined VERBOSE
 		cerr<<"Warning : No such key in keywords "<<key<<endl;
 		#endif
 	}
@@ -50,7 +50,7 @@ T Header::get(const char* key) const
 	map<string,string>::const_iterator it = keywords.find(key);
 	if(it == keywords.end())
 	{
-		#if DEBUG>= 1
+		#if defined VERBOSE
 		cerr<<"Warning : No such key in keywords "<<key<<endl;
 		#endif
 	}
@@ -68,7 +68,7 @@ string Header::get<string>(const string& key) const
 	map<string,string>::const_iterator it = keywords.find(key);
 	if(it == keywords.end())
 	{
-		#if DEBUG>= 1
+		#if defined VERBOSE
 		cerr<<"Warning : No such key in keywords "<<key<<endl;
 		#endif
 		return "";
@@ -83,7 +83,7 @@ string Header::get<string>(const char* key) const
 	map<string,string>::const_iterator it = keywords.find(key);
 	if(it == keywords.end())
 	{
-		#if DEBUG>= 1
+		#if defined VERBOSE
 		cerr<<"Warning : No such key in keywords "<<key<<endl;
 		#endif
 		return "";

@@ -136,7 +136,7 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	const Real maxFactor = ETA_MAXFACTOR;
 
 
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(X.size() == 0 || B.size() == 0 || B.size() != eta.size())
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
@@ -188,7 +188,7 @@ void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	#if defined VERBOSE
 	cout<<endl<<"--PCMClassifier::classification--END--"<<endl;
 	#endif
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	feenableexcept(excepts);
 	#endif
 }
@@ -310,7 +310,7 @@ void PCMClassifier::saveEta(const string& filename)
 
 void PCMClassifier::initBEta(const vector<RealFeature>& B, const vector<Real>& eta)
 {
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(B.size() != eta.size())
 	{
 		cerr<<"Error : The size of initB is different than the size of initEta"<<endl;
@@ -332,7 +332,7 @@ void PCMClassifier::initEta(const vector<Real>& eta)
 void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FCMfuzzifier)
 {
 
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(X.size() == 0)
 	{
 		cerr<<"Error : The set of FeatureVector must be initialized before doing a FCM init."<<endl;

@@ -100,7 +100,7 @@ void PCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 	const Real maxFactor = ETA_MAXFACTOR;
 
 
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	if(X.size() == 0 || B.size() == 0 || B.size() != eta.size())
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
@@ -160,7 +160,7 @@ void PCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 	#if defined VERBOSE
 	cout<<endl<<"--PCM2Classifier::classification--END--"<<endl;
 	#endif
-	#if DEBUG >= 1
+	#if defined EXTRA_SAFE
 	feenableexcept(excepts);
 	#endif
 }

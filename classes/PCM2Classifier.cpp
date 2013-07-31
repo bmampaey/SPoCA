@@ -105,31 +105,28 @@ void PCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
 		exit(EXIT_FAILURE);
-
+	
 	}
 	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
 	cout<<setiosflags(ios::fixed);
 	#endif
-
+	
 	#if DEBUG >= 3
 	cout<<"--PCM2Classifier::classification--START--"<<endl;
 	#endif
 	
-	#if DEBUG >= 2
-		stepinit(filenamePrefix+"iterations.txt");
-		unsigned decimals = unsigned(1 - log10(precision));;
-	#endif
+	stepinit(filenamePrefix+"iterations.txt");
 	
 	//Initialisation of precision
 	this->precision = precision;
-
+	
 	Real precisionReached = numeric_limits<Real>::max();
 	vector<RealFeature> oldB = B;
 	vector<Real> start_eta = eta;
 	bool recomputeEta = FIXETA != true;
 	for (unsigned iteration = 0; iteration < maxNumberIteration && precisionReached > precision ; ++iteration)
 	{
-
+		
 		if (recomputeEta)
 		{
 			computeEta();
@@ -141,10 +138,10 @@ void PCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 				}
 			}
 		}
-
+		
 		computeU();
 		computeB();
-
+		
 		precisionReached = variation(oldB,B);
 		
 		// avoid class cannibalism
@@ -154,13 +151,10 @@ void PCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 			computeU();
 			computeB();
 		}
-
+		
 		oldB = B;
-
-		#if DEBUG >= 2
-			stepout(iteration, precisionReached, decimals);
-		#endif
-
+		
+		stepout(iteration, precisionReached, precision);
 	}
 
 	#if DEBUG >= 3

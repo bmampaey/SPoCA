@@ -76,39 +76,36 @@ void HistogramPCM2Classifier::computeU()
 
 void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 {
-
+	
 	#if DEBUG >= 1
 	if(HistoX.size() == 0 || B.size() == 0 || B.size() != eta.size())
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
 		exit(EXIT_FAILURE);
-
+	
 	}
 	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
 	cout<<setiosflags(ios::fixed);
 	#endif
-
+	
 	#if DEBUG >= 3
 	cout<<"--HistogramPCM2Classifier::classification--START--"<<endl;
 	#endif
 	
-	#if DEBUG >= 2
-		stepinit(filenamePrefix+"iterations.txt");
-		unsigned decimals = unsigned(1 - log10(precision));;
-	#endif
-
+	stepinit(filenamePrefix+"iterations.txt");
+	
 	const Real maxFactor = ETA_MAXFACTOR;
-
+	
 	//Initialisation of precision & U
 	this->precision = precision;
-
+	
 	Real precisionReached = numeric_limits<Real>::max();
 	vector<RealFeature> oldB = B;
 	vector<Real> start_eta = eta;
 	bool recomputeEta = FIXETA != true;
 	for (unsigned iteration = 0; iteration < maxNumberIteration && precisionReached > precision ; ++iteration)
 	{
-
+	
 		if (recomputeEta)	//eta is to be recalculated each iteration.
 		{
 			computeEta();
@@ -120,10 +117,10 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 				}
 			}
 		}
-
+		
 		computeU();
 		computeB();
-
+		
 		precisionReached = variation(oldB,B);
 		
 		// avoid class cannibalism
@@ -133,12 +130,10 @@ void HistogramPCM2Classifier::classification(Real precision, unsigned maxNumberI
 			computeU();
 			computeB();
 		}
-
+		
 		oldB = B;
-
-		#if DEBUG >= 2
-			stepout(iteration, precisionReached, decimals);
-		#endif
+		
+		stepout(iteration, precisionReached, precision);
 	}
 	
 

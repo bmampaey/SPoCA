@@ -92,7 +92,7 @@ class ColorMap : public SunImage<ColorType>
 		void aggregateBlobs(const Real& aggregationFactor, const int& projection = SunImage<ColorType>::no_projection);
 		
 		//! Method to compute the area per latitude
-		void computeButterflyStats(std::vector<unsigned>& totalNumberOfPixels, std::vector<unsigned>& regionNumberOfPixels);
+		void computeButterflyStats(std::vector<float>& totalNumberOfPixels, std::vector<float>& regionNumberOfPixels, std::vector<float>& correctedTotalNumberOfPixels, std::vector<float>& correctedRegionNumberOfPixels);
 		
 		#ifdef MAGICK
 		//! Routine that creates and return a MagickImage with the specified background

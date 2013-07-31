@@ -90,7 +90,7 @@ class CartesianCoordinate
 		virtual bool operator !() const
 		{
 			if (std::numeric_limits<T>::has_infinity)
-				return isinf(x) || isinf(y);
+				return !(std::isfinite(x) && std::isfinite(y));
 			else
 				return x == std::numeric_limits<T>::max() || y == std::numeric_limits<T>::max();
 			
@@ -273,7 +273,7 @@ class HeliographicCoordinate
 		//! Test if coordinate is null
 		virtual bool operator !() const
 		{
-			return isinf(latitude) || isinf(longitude);
+			return !(std::isfinite(latitude) && std::isfinite(longitude));
 		}
 		
 	public :

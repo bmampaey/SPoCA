@@ -132,11 +132,13 @@ int main(int argc, const char **argv)
 	ofstream outputFile(output.c_str(), ios_base::trunc);
 	
 	
-	vector<unsigned> totalNumberOfPixels;
-	vector<unsigned> regionNumberOfPixels;
+	vector<float> totalNumberOfPixels;
+	vector<float> regionNumberOfPixels;
+	vector<float> correctedTotalNumberOfPixels;
+	vector<float> correctedRegionNumberOfPixels;
 	
 	// We write the header of the columns
-	outputFile<<"time";
+	outputFile<<"time"<<separator<<"stat";
 	for (int latitude = -91; latitude < 0; ++latitude)
 		outputFile<<separator<<latitude;
 	for (int latitude = 0; latitude < 91; ++latitude)
@@ -163,12 +165,30 @@ int main(int argc, const char **argv)
 		}
 		
 		// We compute the butterfly stats
-		colorizedMap->computeButterflyStats(totalNumberOfPixels, regionNumberOfPixels);
+		colorizedMap->computeButterflyStats(totalNumberOfPixels, regionNumberOfPixels, correctedTotalNumberOfPixels, correctedRegionNumberOfPixels);
+		
+		// We write the absolute number of pixels to the file
+		outputFile<<colorizedMap->ObservationDate()<<separator<<"absoluteNumberOfPixels";
+		for (unsigned i = 0 ; i < regionNumberOfPixels.size(); ++i)
+			outputFile<<separator<<regionNumberOfPixels[i];
+		outputFile<<"\n";
 		
 		// We write the relative number of pixels to the file
-		outputFile<<colorizedMap->ObservationDate();
-		for (unsigned i = 0 ; i < totalNumberOfPixels.size(); ++i)
-			outputFile<<separator<<float(regionNumberOfPixels[i])/float(totalNumberOfPixels[i]);
+		outputFile<<colorizedMap->ObservationDate()<<separator<<"relativeNumberOfPixels";
+		for (unsigned i = 0 ; i < regionNumberOfPixels.size(); ++i)
+			outputFile<<separator<<regionNumberOfPixels[i]/totalNumberOfPixels[i];
+		outputFile<<"\n";
+		
+		// We write the absolute corrected number of pixels to the file
+		outputFile<<colorizedMap->ObservationDate()<<separator<<"absoluteCorrectedNumberOfPixels";
+		for (unsigned i = 0 ; i < correctedRegionNumberOfPixels.size(); ++i)
+			outputFile<<separator<<correctedRegionNumberOfPixels[i];
+		outputFile<<"\n";
+		
+		// We write the relative corrected number of pixels to the file
+		outputFile<<colorizedMap->ObservationDate()<<separator<<"relativeCorrectedNumberOfPixels";
+		for (unsigned i = 0 ; i < correctedRegionNumberOfPixels.size(); ++i)
+			outputFile<<separator<<correctedRegionNumberOfPixels[i]/correctedTotalNumberOfPixels[i];
 		outputFile<<"\n";
 		
 		delete colorizedMap;

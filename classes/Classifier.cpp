@@ -689,46 +689,63 @@ vector<RealFeature> Classifier::classAverage() const
 
 void Classifier::stepinit(const string filename)
 {
-	if(stepfile.is_open())
-		stepfile.close();
-	
-	stepfile.open(filename.c_str(), ios_base::app);
-	if(!stepfile)
-	{
-		cerr<<"Error : could not open iterations file "<<filenamePrefix<<"iterations.txt !"<<endl;
-	}
-	ostringstream out;
-	out<<"iteration"<<"\t"<<"precisionReached";
-	for (unsigned i = 0; i < numberClasses; ++i)
-		out<<"\t"<<"B"<<i;
-	#if DEBUG >= 4
+	#if defined VERBOSE || defined DEBUG
+		ostringstream out;
+		out<<"iteration"<<"\t"<<"precisionReached";
+		for (unsigned i = 0; i < numberClasses; ++i)
+			out<<"\t"<<"B"<<i;
 		for (unsigned i = 0; i < numberClasses; ++i)
 			out<<"\t"<<"classAvg"<<i;
-	#endif
-	if(stepfile.good())
-		stepfile<<endl<<out.str();
-		
-	#if DEBUG >= 3
-		cout<<endl<<out.str();
-	#endif
-}
-
-void Classifier::stepout(const unsigned iteration, const Real precisionReached, const int decimals)
-{
-		ostringstream out;
-		out.setf(ios::fixed);
-		out.precision(decimals);
-		out<<iteration<<"\t"<<precisionReached<<"\t"<<B;
-		#if DEBUG >= 4
-			out<<"\t"<<classAverage();
-		#endif
-		if(stepfile.good())
-			stepfile<<endl<<out.str();
-		
+	
 		#if DEBUG >= 3
 			cout<<endl<<out.str();
 		#endif
 		
+		#if DEBUG >= 2
+			if(stepfile.is_open())
+				stepfile.close();
+			
+			stepfile.open(filename.c_str(), ios_base::app);
+			if(!stepfile)
+			{
+				cerr<<"Error : could not open iterations file "<<filename<<"!"<<endl;
+			}
+			if(stepfile.good())
+				stepfile<<endl<<out.str();
+		#endif
+	#endif
+}
+
+void Classifier::stepout(const unsigned iteration, const Real precisionReached, const Real precision)
+{
+	#if defined VERBOSE || defined DEBUG
+		ostringstream out;
+		out.setf(ios::fixed);
+		out.precision(1 - log10(precision));
+		out<<iteration<<"\t"<<precisionReached<<"\t"<<B;
+		out<<"\t"<<classAverage();
+	
+		#if DEBUG >= 3
+			cout<<endl<<out.str();
+		#endif
+		
+		#if DEBUG >= 2
+		if(stepfile.good())
+			stepfile<<endl<<out.str();
+		#endif
+	#endif
+	
+	#if DEBUG >= 2
+	// We write the fits file of Uij
+	Image<EUVPixelType> image(Xaxes,Yaxes);
+	for (unsigned i = 0; i < numberClasses; ++i)
+	{
+		image.zero();
+		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
+			image.pixel(coordinates[j]) = U[j*numberClasses + i];
+		image.writeFits(filenamePrefix + "membership.iteration_" + itos(iteration) + ".class_" + itos(i) + ".fits");
+	}
+	#endif
 }
 
 Real Classifier::variation(const vector<RealFeature>& oldB, const vector<RealFeature>& newB) const

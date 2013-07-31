@@ -100,7 +100,7 @@ class Classifier
 		virtual void stepinit(const std::string filename);
 		
 		//! Function to output a classification step
-		virtual void stepout(const unsigned iteration, const Real precisionReached, const int precision = 5);
+		virtual void stepout(const unsigned iteration, const Real precisionReached, const Real precision);
 
 	public :
 		//! Constructor

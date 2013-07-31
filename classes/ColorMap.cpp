@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <map>
 #include <deque>
+#include <math.h>
 
 extern std::string filenamePrefix;
 
@@ -483,6 +484,9 @@ ColorMap* ColorMap::drawExternContours(const unsigned width, const ColorType uns
 ColorMap* ColorMap::drawContours(const unsigned width, const ColorType unsetValue)
 {
 	unsigned size = width/2;
+	if (size <= 0)
+		size = 1;
+	
 	ColorType * newPixels = new ColorType[numberPixels];
 	memcpy(newPixels, pixels, numberPixels * sizeof(ColorType));
 	vector<unsigned> shape;
@@ -494,11 +498,11 @@ ColorMap* ColorMap::drawContours(const unsigned width, const ColorType unsetValu
 			if(sqrt(x * x + y *y) <= size)
 				shape.push_back(y * xAxes + x);
 	
-				
-	int j;
+	
+	int j = 0;
 	for(unsigned y = size; y < yAxes - size; ++y)
 	{		
-		j = 	y * xAxes + size;
+		j = y * xAxes + size;
 		for(unsigned x = size; x < xAxes - size; ++x)
 		{
 			ColorType maxColor = pixels[j-1];
@@ -733,6 +737,65 @@ void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projecti
 		
 	}
 	delete projeted;
+}
+
+void ColorMap::computeButterflyStats(vector<float>& totalNumberOfPixels, vector<float>& regionNumberOfPixels, vector<float>& correctedTotalNumberOfPixels, vector<float>& correctedRegionNumberOfPixels)
+{
+	totalNumberOfPixels.clear();
+	totalNumberOfPixels.resize(182, 0);
+	regionNumberOfPixels.clear();
+	regionNumberOfPixels.resize(182, 0);
+	correctedTotalNumberOfPixels.clear();
+	correctedTotalNumberOfPixels.resize(182, 0);
+	correctedRegionNumberOfPixels.clear();
+	correctedRegionNumberOfPixels.resize(182, 0);
+	
+	RealPixLoc sun_center = SunCenter();
+	Real sun_radius = SunRadius();
+	Real radius_squared = sun_radius * sun_radius;
+	
+	// We try to avoid computing latitude for pixels that are out of the sun disc
+	unsigned miny = sun_center.y - sun_radius - 1;
+	unsigned maxy = sun_center.y + sun_radius + 2;
+	unsigned minx = sun_center.x - sun_radius - 1;
+	unsigned maxx = sun_center.x + sun_radius + 2;
+	for (unsigned y = miny; y < maxy ; ++y)
+	{
+		for (unsigned x = minx; x < maxx; ++x)
+		{
+			// We compute sigma, the square distance of the pixel to the sun edge
+			Real dx = fabs(x - sun_center.x);
+			Real dy = fabs(y - sun_center.y);
+			Real sigma = radius_squared - (dx * dx) - (dy * dy);
+			
+			if(sigma > 0)
+			{
+				HGS hgs = toHGS(RealPixLoc(x, y));
+				if (!!hgs)
+				{
+					//cout<<"Latitude of coord "<<RealPixLoc(x, y)<< " : "<< int(hgs.latitude * RADIAN2DEGREE)<< "\n";
+					/* Pixels are gathered by the closest inferior integral latitude.
+					I.e the latitude -0.5 will go into the -1 latitude
+					but the latitude 0.5 will go into the 0 latitude
+					*/
+					// We compute the correction factor to compensate for the projection
+					Real correction_factor = sun_radius/sqrt(sigma);
+					int latitude = floor(hgs.latitude * RADIAN2DEGREE) + 91;
+					++totalNumberOfPixels[latitude];
+					// If the area correction factor is more than some value (i.e. the pixel is near the limb) we don't count it
+					if (correction_factor <= HIGGINS_FACTOR)
+						correctedTotalNumberOfPixels[latitude] += correction_factor;
+					if(this->pixel(x, y) != this->null())
+					{
+						++regionNumberOfPixels[latitude];
+						// If the area correction factor is more than some value (i.e. the pixel is near the limb) we don't count it
+						if (correction_factor <= HIGGINS_FACTOR)
+							correctedRegionNumberOfPixels[latitude] += correction_factor;
+					}
+				}
+			}
+		}
+	}
 }
 
 #ifdef MAGICK

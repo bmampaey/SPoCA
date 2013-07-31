@@ -3,11 +3,12 @@
 from datetime import datetime, timedelta
 import dateutil.parser
 import logging
-from Queue import Queue
 import os.path
 import sys
 import argparse
 from glob import glob
+from multiprocessing import Pool
+
 
 class Event:
 	def __init__(self, type = None, time = None, color = None):
@@ -90,29 +91,35 @@ class MetaEvent:
 		if not self.events:
 			return timedelta(seconds=0)
 		else:
-			self.events.sort()
-			return self.events[-1].time - self.events[0].time
+			return self.end_time() - self.start_time()
 	
 	def estimated_lifetime(self):
 		if not self.events:
 			return timedelta(seconds=0)
 		else:
-			self.events.sort()
-			return self.events[-1].time - min(self.get("first_time"))
+			return self.end_time() - self.estimated_start_time()
 	
 	def start_time(self):
 		if not self.events:
 			return None
 		else:
-			self.events.sort()
-			return self.events[0].time
+			return min(filter(None,self.get("time")))
 	
 	def end_time(self):
 		if not self.events:
 			return None
 		else:
-			self.events.sort()
-			return self.events[-1].time
+			return max(filter(None,self.get("time")))
+	
+	def estimated_start_time(self):
+		if not self.events:
+			return None
+		else:
+			first_times = filter(None,self.get("first_time"))
+			if first_times:
+				return min(first_times)
+			else:
+				return self.start_time()
 	
 	def get(self, attributes, start_time=None, end_time=None):
 		self.events.sort()
@@ -126,7 +133,7 @@ class MetaEvent:
 					if (start_time == None or e.time >= start_time) and (end_time == None or e.time < end_time):
 						try:
 							attribute_values.append(getattr(e, attribute.lower()))
-				
+						
 						except AttributeError, why:
 							#print "Event does not have the attribute " + str(attribute)
 							attribute_values.append(None)
@@ -234,26 +241,28 @@ def parse_voevent(filename):
 	return event, event_links
 
 def get_events(filenames):
-	'''Function that parses files to extract events'''
-	events = list()
+	'''Function that parses many files to extract the events in parralel'''
+	pool = Pool()
+	all_events = pool.map(get_event, filenames)
+	return [e for events in all_events for e in events]
+
+
+def get_event(filename):
+	'''Function that parses a files to extract the events'''
+	if os.path.splitext(filename)[1].lower() == ".xml":
+		# We parse the xml file
+		event, links = parse_voevent(filename)
+		events = [event]
 	
-	for filename in filenames:
-		
-		if os.path.splitext(filename)[1].lower() == ".xml":
-			# We parse the xml file
-			event, links = parse_voevent(filename)
-			logging.info("Event from file %s: %s", filename, event)
-			events.append(event)
-		
-		elif os.path.splitext(filename)[1].lower() == ".fits":
-			# We parse the map
-			new_events = parse_map(filename)
-			logging.info("Parsed %s events from file %s", len(new_events), filename)
-			logging.debug("\n".join([str(e) for e in new_events]))
-			events.extend(new_events)
-		
-		else:
-			logging.critical("Unknown file type %s", filename)
+	elif os.path.splitext(filename)[1].lower() == ".fits":
+		# We parse the map
+		events = parse_map(filename)
+	
+	else:
+		logging.critical("Unknown file type %s", filename)
+	
+	logging.info("Parsed %s events from file %s", len(events), filename)
+	logging.debug("\n".join([str(e) for e in events]))
 	
 	return events
 

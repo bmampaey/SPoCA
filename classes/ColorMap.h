@@ -17,10 +17,10 @@ class ColorMap : public SunImage<ColorType>
 		//! Constructor
 		ColorMap(const unsigned& xAxes = 0, const unsigned& yAxes = 0);
 		
-		//! Constructor for an ColorMap from an header
+		//! Constructor for a ColorMap from an header
 		ColorMap(const Header& header, const unsigned& xAxes = 0, const unsigned& yAxes = 0);
 
-		//! Constructor for an ColorMap from a WCS
+		//! Constructor for a ColorMap from a WCS
 		ColorMap(const WCS& wcs, const unsigned& xAxes = 0, const unsigned& yAxes = 0);
 		
 		//! Copy Constructor
@@ -90,6 +90,9 @@ class ColorMap : public SunImage<ColorType>
 		
 		//! Method to aggregates pixels into blobs by perfoming a closing
 		void aggregateBlobs(const Real& aggregationFactor, const int& projection = SunImage<ColorType>::no_projection);
+		
+		//! Method to compute the area per latitude
+		void computeButterflyStats(std::vector<float>& totalNumberOfPixels, std::vector<float>& regionNumberOfPixels, std::vector<float>& correctedTotalNumberOfPixels, std::vector<float>& correctedRegionNumberOfPixels);
 		
 		#ifdef MAGICK
 		//! Routine that creates and return a MagickImage with the specified background

@@ -101,7 +101,15 @@ int main(int argc, const char **argv)
 	
 	string programDescription = "This Program generates a RGB image out of 3 fits files.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nDEBUG: "+ itos(DEBUG);
+	#if defined DEBUG
+	programDescription+="\nDEBUG: ON";
+	#endif
+	#if defined EXTRA_SAFE
+	programDescription+="\nEXTRA_SAFE: ON";
+	#endif
+	#if defined VERBOSE
+	programDescription+="\VERBOSE: ON";
+	#endif
 	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 
 	ArgumentHelper arguments;

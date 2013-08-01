@@ -93,7 +93,15 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This program transform a color map into a png.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nDEBUG: "+ itos(DEBUG);
+	#if defined DEBUG
+	programDescription+="\nDEBUG: ON";
+	#endif
+	#if defined EXTRA_SAFE
+	programDescription+="\nEXTRA_SAFE: ON";
+	#endif
+	#if defined VERBOSE
+	programDescription+="\VERBOSE: ON";
+	#endif
 	programDescription+="\nColorType: " + string(typeid(ColorType).name());
 
 	ArgumentHelper arguments;

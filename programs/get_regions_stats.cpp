@@ -136,7 +136,15 @@ int main(int argc, const char **argv)
 	string programDescription = "This Programm output regions info and statistics.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
-	programDescription+="\nDEBUG: "+ itos(DEBUG);
+	#if defined DEBUG
+	programDescription+="\nDEBUG: ON";
+	#endif
+	#if defined EXTRA_SAFE
+	programDescription+="\nEXTRA_SAFE: ON";
+	#endif
+	#if defined VERBOSE
+	programDescription+="\VERBOSE: ON";
+	#endif
 	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
 

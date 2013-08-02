@@ -263,6 +263,7 @@ vector<SegmentationStats*> getSegmentationStats(const ColorMap* coloredMap, cons
 	
 	RealPixLoc sunCenter = image->SunCenter();
 	Real sunRadius = image->SunRadius();
+	unsigned totalNonNullPixels = 0;
 	
 	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
 	{
@@ -278,10 +279,16 @@ vector<SegmentationStats*> getSegmentationStats(const ColorMap* coloredMap, cons
 					// We add the pixel to the class
 					segmentation_stats[color]->add(PixLoc(x,y), image->pixel(x, y), sunCenter, sunRadius);
 				}
+				
+				++totalNonNullPixels;
 			}
 		}
 	}
 	
+	// We correct the filling factors
+	for (std::map<ColorType,SegmentationStats*>::iterator it=segmentation_stats.begin(); it!=segmentation_stats.end(); ++it)
+		it->second->fillingFactor = Real(it->second->NumberPixels())/ Real(totalNonNullPixels);;
+
 	return values(segmentation_stats);
 }
 
@@ -291,6 +298,7 @@ vector<SegmentationStats*> getSegmentationStats(const ColorMap* coloredMap, cons
 	
 	RealPixLoc sunCenter = image->SunCenter();
 	Real sunRadius = image->SunRadius();
+	unsigned totalNonNullPixels = 0;
 	
 	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
 	{
@@ -307,9 +315,15 @@ vector<SegmentationStats*> getSegmentationStats(const ColorMap* coloredMap, cons
 				}
 				// We add the pixel to the class
 				segmentation_stats[color]->add(PixLoc(x,y), image->pixel(x, y), sunCenter, sunRadius);
+				
+				++totalNonNullPixels;
 			}
 		}
 	}
+	
+	// We correct the filling factors
+	for (std::map<ColorType,SegmentationStats*>::iterator it=segmentation_stats.begin(); it!=segmentation_stats.end(); ++it)
+		it->second->fillingFactor = Real(it->second->NumberPixels())/ Real(totalNonNullPixels);;
 	
 	return values(segmentation_stats);
 }

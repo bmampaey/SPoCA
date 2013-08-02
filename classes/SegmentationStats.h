@@ -87,6 +87,10 @@ class SegmentationStats
 
 		//! Routine to update a class with a new pixel
 		void add(const PixLoc& coordinate, const EUVPixelType& pixelIntensity, const RealPixLoc& sunCenter, const Real& R);
+		
+		// We must make the getSTAFFStats functions as friends so they can correct the filling factor
+		friend std::vector<SegmentationStats*> getSegmentationStats(const ColorMap*, const EUVImage*);
+		friend std::vector<SegmentationStats*> getSegmentationStats(const ColorMap*, const EUVImage*, const std::vector<ColorType>&);
 };
 
 //! Compute all statistics of an image using a ColorMap as a cache

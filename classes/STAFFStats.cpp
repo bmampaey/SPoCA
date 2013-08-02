@@ -13,7 +13,7 @@ using namespace std;
 
 // CONSTRUCTOR INITIALIZATION EXTENDED BY CIS, Nov 28, 2012
 STAFFStats::STAFFStats(const time_t& observationTime, const unsigned id)
-:id(id),observationTime(observationTime), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0), area_AtDiskCenter(0), fillingFactor(0), numberPixels(0)
+:id(id),observationTime(observationTime), numberPixels(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0), area_AtDiskCenter(0), fillingFactor(0)
 {}
 
 // CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (Nov 28, 2012)
@@ -130,6 +130,22 @@ Real STAFFStats::Median() const
 		return quickselect(intensities, 0.5);
 }
 
+Real STAFFStats::LowerQuartile() const
+{
+	if (intensities.size() == 0)
+		return NAN;
+	else
+		return quickselect(intensities, 0.25);
+}
+
+Real STAFFStats::UpperQuartile() const
+{
+	if (intensities.size() == 0)
+		return NAN;
+	else
+		return quickselect(intensities, 0.75);
+}
+
 void STAFFStats::computeMoments()
 {
 	Real mean = Mean();
@@ -225,12 +241,12 @@ string STAFFStats::toString(const string& separator, bool header) const
 {
 	if (header)
 	{
-		return "ObservationDate"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"Area_Raw"+separator+"Area_AtDiskCenter"+separator+"FillingFactor";
+		return "ObservationDate"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"LowerQuartile"+separator+"UpperQuartile"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"Area_Raw"+separator+"Area_AtDiskCenter"+separator+"FillingFactor";
 	}
 	else
 	{
 		ostringstream out;
-		out<<setiosflags(ios::fixed)<<ObservationDate()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<Area_Raw()<<separator<<Area_AtDiskCenter()<<separator<<FillingFactor();
+		out<<setiosflags(ios::fixed)<<ObservationDate()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<LowerQuartile()<<separator<<UpperQuartile()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<Area_Raw()<<separator<<Area_AtDiskCenter()<<separator<<FillingFactor();
 		return out.str();
 	}
 }
@@ -277,6 +293,7 @@ STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVI
 	
 	RealPixLoc sunCenter = image->SunCenter();
 	Real sunRadius = image->SunRadius();
+	unsigned totalNonNullPixels = 0;
 	
 	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
 	{
@@ -287,9 +304,15 @@ STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVI
 				// We add the pixel to the region
 				stats.add(PixLoc(x,y), image->pixel(x, y), sunCenter, sunRadius);
 			}
+			
+			if(coloredMap->pixel(x,y)!= coloredMap->null())
+			{
+				++totalNonNullPixels;
+			}
 		}
 	}
-	
+	// We correct the filling factor
+	stats.fillingFactor = Real(stats.NumberPixels())/ Real(totalNonNullPixels);
 	return stats;
 }
 
@@ -380,6 +403,20 @@ FitsFile& writeRegions(FitsFile& file, const vector<STAFFStats>& regions_stats)
 		for(unsigned r = 0; r < regions_stats.size(); ++r)
 			data[r] = regions_stats[r].Median();
 		file.writeColumn("MEDIAN_INTENSITY", data);
+	}
+
+	{
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r].LowerQuartile();
+		file.writeColumn("LOWERQUARTILE_INTENSITY", data);
+	}
+
+	{
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r].UpperQuartile();
+		file.writeColumn("UPPERQUARTILE_INTENSITY", data);
 	}
 
 	{

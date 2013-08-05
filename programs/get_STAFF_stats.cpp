@@ -94,7 +94,7 @@ int main(int argc, const char **argv)
 	vector<string> imagesFilenames;
 
 	// Options for the preprocessing of images
-	double intensitiesStatsRadiusRatio = 1;
+	double intensitiesStatsRadiusRatio = 3;
 	string intensitiesStatsPreprocessing = "NAR";
 
 	// The Segmented Maps and corresponding classes color
@@ -219,6 +219,9 @@ int main(int argc, const char **argv)
 			cerr<<"Warning: image "<<imageFilename<<" and the CHSegmentedMap "<<CHSegmentedMap<<" are not similar: "<<dissimilarity<<endl;
 		}
 		
+		// We apply the intensities preprocessing
+		image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
+
 		// We open the output file
 		ofstream outputFile((outputFileName + stripSuffix(stripPath(imageFilename)) + ".csv").c_str(), ios_base::trunc);
 		outputFile<<setiosflags(ios::fixed);
@@ -233,7 +236,6 @@ int main(int argc, const char **argv)
 		outputFile<<image->Channel()<<separator<<"CH_central_meridian"<<separator<<CH_staff_stats.toString(separator)<<endl;
 		
 		// We extract the STAFF stats on the disc
-		image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
 		vector<STAFFStats> staff_stats = getSTAFFStats(CHMap_ondisk, CHClass, ARMap_ondisk, ARClass, image);
 		outputFile<<image->Channel()<<separator<<"CH_ondisc"<<separator<<staff_stats[0].toString(separator)<<endl;
 		outputFile<<image->Channel()<<separator<<"AR_ondisc"<<separator<<staff_stats[1].toString(separator)<<endl;

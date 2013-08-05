@@ -11,12 +11,10 @@ using namespace std;
 #endif
 
 
-// CONSTRUCTOR INITIALIZATION EXTENDED BY CIS, Nov 28, 2012
 STAFFStats::STAFFStats(const time_t& observationTime, const unsigned id)
 :id(id),observationTime(observationTime), numberPixels(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0), area_AtDiskCenter(0), fillingFactor(0)
 {}
 
-// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (Nov 28, 2012)
 void STAFFStats::add(const PixLoc& coordinate, const EUVPixelType& pixelIntensity, const RealPixLoc& sunCenter, const Real& sun_radius)
 {
 	// If the intensity is not a number we omit it
@@ -39,7 +37,6 @@ void STAFFStats::add(const PixLoc& coordinate, const EUVPixelType& pixelIntensit
 		m4 = NAN;
 	}
 
-	// ADAPTED BY CIS (October 9, 2012)
 	Real dx = fabs(coordinate.x - sunCenter.x);
 	Real dy = fabs(coordinate.y - sunCenter.y);
 	Real radius_squared = sun_radius * sun_radius;
@@ -107,7 +104,6 @@ Real STAFFStats::MaxIntensity() const
 }
 
 
-// ADDED BY CIS, Nov 28, 2012.
 unsigned STAFFStats::NumberPixels() const
 {
 	return numberPixels;
@@ -262,8 +258,8 @@ vector<STAFFStats*> getSTAFFStats(const ColorMap* coloredMap, const EUVImage* im
 			regions_stats[regions[r]->Color()] = new STAFFStats(image->ObservationTime(), regions[r]->Id());
 	}
 	
-	RealPixLoc sunCenter = image->SunCenter();
-	Real sunRadius = image->SunRadius();
+	RealPixLoc sunCenter = coloredMap->SunCenter();
+	Real sunRadius = coloredMap->SunRadius();
 	
 	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
 	{
@@ -286,13 +282,13 @@ vector<STAFFStats*> getSTAFFStats(const ColorMap* coloredMap, const EUVImage* im
 	return values(regions_stats);
 }
 
-// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (Nov 28, 2012)
+
 STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVImage* image)
 {
 	STAFFStats stats(image->ObservationTime());
 	
-	RealPixLoc sunCenter = image->SunCenter();
-	Real sunRadius = image->SunRadius();
+	RealPixLoc sunCenter = coloredMap->SunCenter();
+	Real sunRadius = coloredMap->SunRadius();
 	unsigned totalNonNullPixels = 0;
 	
 	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
@@ -316,13 +312,12 @@ STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVI
 	return stats;
 }
 
-// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (Nov 28, 2012)
 vector<STAFFStats> getSTAFFStats(const ColorMap* CHMap, ColorType CHClass, const ColorMap* ARMap, ColorType ARClass, const EUVImage* image)
 {
 	vector<STAFFStats> stats(3, image->ObservationTime());
 	
-	RealPixLoc sunCenter = image->SunCenter();
-	Real sunRadius = image->SunRadius();
+	RealPixLoc sunCenter = CHMap->SunCenter();
+	Real sunRadius = CHMap->SunRadius();
 	
 	for (unsigned y = 0; y < CHMap->Yaxes(); ++y)
 	{
@@ -346,7 +341,6 @@ vector<STAFFStats> getSTAFFStats(const ColorMap* CHMap, ColorType CHClass, const
 		}
 	}
 	
-	// Changed by Cis Verbeeck, Nov 28, 2012.
 	// Filling factor can only be calculated reliably after the CH+QS+AR area is known.
 	// The previous calculation using 1/(pi r^2) produced up to 4% error in filling factor.
 	Real areaRaw_CH = stats[0].Area_Raw();

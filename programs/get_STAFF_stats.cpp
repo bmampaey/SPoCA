@@ -196,9 +196,19 @@ int main(int argc, const char **argv)
 	ARMap_ondisk->nullifyAboveRadius();
 	CHMap_ondisk->nullifyAboveRadius();
 	
+	#if defined DEBUG
+	CHMap_ondisk->writeFits(filenamePrefix + "ondisk." +  stripPath(CHSegmentedMap), FitsFile::compress);
+	if(CHSegmentedMap != ARSegmentedMap)
+		ARMap_ondisk->writeFits(filenamePrefix + "ondisk." +  stripPath(ARSegmentedMap), FitsFile::compress);
+	#endif
+	
 	// We construct a CHmap limited to 15 deg longitude
 	ColorMap* CHMap_limited = new ColorMap(CHMap_ondisk);
 	CHMap_limited->nullifyAboveLongLat(15);
+	
+	#if defined DEBUG
+	CHMap_limited->writeFits(filenamePrefix + "limited." +  stripPath(CHSegmentedMap), FitsFile::compress);
+	#endif
 	
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{

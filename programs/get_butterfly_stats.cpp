@@ -71,6 +71,10 @@ int main(int argc, const char **argv)
 	string colorsString;
 	string colorsFilename;
 	
+	// Options for the preprocessing of maps
+	double areaLimitValue = 1.;
+	string areaLimitType = "";
+	
 	// Option for the output
 	string separator = ",";
 	
@@ -96,6 +100,8 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('s', "separator", "string", "\n\tThe separator to put between columns.\n\t", separator);
 	arguments.new_named_string('c', "colors", "string", "\n\tThe list of colors to select separated by commas (no spaces)\n\tAll colors will be selected if ommited.\n\t", colorsString);
 	arguments.new_named_string('C', "colorsFilename", "string", "\n\tA file containing a list of colors to select separated by commas\n\tAll colors will be selected if ommited.\n\t", colorsFilename);
+	arguments.new_named_double('r', "areaLimitValue", "positive real", "\n\tThe value for the areaLimitType.\n\t",areaLimitValue);
+	arguments.new_named_string('g', "areaLimitType", "string", "\n\tThe type of the limit of the area of the map taken into account the computation of stats.\n\tPossible values :\n\t\tNAR\n\t\tLong\n\t\tLat\n\t", areaLimitType);
 	arguments.new_named_string('O', "output","file name", "\n\tThe name for the output file.\n\t", output);
 	arguments.set_string_vector("colorizedMap colorizedMap ...", "The name of the fits files containing the colorized maps.", imagesFilenames);
 
@@ -171,6 +177,18 @@ int main(int argc, const char **argv)
 				colorizedMap->writeFits(filenamePrefix + "color_cleaned." +  stripPath(colorizedMapFileName));
 			#endif
 		}
+		
+		// We apply the arealimit if any
+		if(areaLimitType == "NAR")
+			colorizedMap->nullifyAboveRadius(areaLimitValue);
+		if(areaLimitType == "Long")
+			colorizedMap->nullifyAboveLongLat(areaLimitValue);
+		if(areaLimitType == "Lat")
+			colorizedMap->nullifyAboveLongLat(360, areaLimitValue);
+		#if defined DEBUG || defined WRITE_LIMITED_MAP
+			colorizedMap->writeFits(filenamePrefix + "limited." +  stripPath(colorizedMapFileName), FitsFile::compress);
+		#endif
+
 		
 		// We compute the butterfly stats
 		colorizedMap->computeButterflyStats(totalNumberOfPixels, regionNumberOfPixels, correctedTotalNumberOfPixels, correctedRegionNumberOfPixels);

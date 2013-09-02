@@ -33,6 +33,25 @@ def what_ring(r):
 			return ring
 	return 0
 
+def show_rings(filename):
+	
+	hdu = pyfits.open(filename)[1]
+	header = hdu.header
+	center_x = header['CRPIX1'] - 1
+	center_y = header['CRPIX2'] - 1
+	radius = header['R_SUN']
+	data = hdu.data
+	for y in range(data.shape[0]):
+		for x in range(data.shape[1]):
+			try:
+				data[y][x] = what_ring(sqrt((x - center_x)**2 + (y - center_y)**2)/radius)
+			except Exception, why:
+				logging.error("Error getting value of ring: %s", str(why))
+	hdu = pyfits.PrimaryHDU(data, header)
+	hdulist = pyfits.HDUList([hdu])
+	hdulist.writeto(os.path.splitext(filename)+".rings.fits", clobber=True, output_verify='silentfix')
+
+
 def get_spectra(filename):
 	
 	hdu = pyfits.open(filename)[1]
@@ -45,11 +64,11 @@ def get_spectra(filename):
 	radius = header['R_SUN']
 	data = hdu.data
 	results = numpy.zeros((len(rings)+1,number_classes+1), dtype=numpy.int)
-	for y in range(header['NAXIS2']):
-		for x in range(header['NAXIS1']):
+	for y in range(data.shape[0]):
+		for x in range(data.shape[1]):
 			try:
 				ring = what_ring(sqrt((x - center_x)**2 + (y - center_y)**2)/radius)
-				results[ring][data[x][y]] += 1
+				results[ring][data[y][x]] += 1
 			except Exception, why:
 				logging.error("Error getting value of ring: %s", str(why))
 

@@ -519,6 +519,7 @@ class get_STAFF_stats(get_stats):
 				arguments.append(value)
 		
 		arguments.extend(['-C', os.path.abspath(CHmapfile), '-A', os.path.abspath(ARmapfile)])
+		arguments.extend(['-O', cls.output_dir])
 		
 		for fitsfile in fitsfiles:
 			if os.path.exists(fitsfile):
@@ -528,21 +529,32 @@ class get_STAFF_stats(get_stats):
 		
 		return arguments
 	
+	@classmethod
+	def result_files(cls, CHmapfile, ARmapfile, fitsfiles):
+		
+		results = list()
+		base = os.path.splitext(os.path.split(CHmapfile)[1])[0] + "_and_" + os.path.splitext(os.path.split(ARmapfile)[1])[0] + "_on_"
+		for fitsfile in fitsfiles:
+			results.append(os.path.join(cls.output_dir, base + os.path.splitext(os.path.split(fitsfile)[1])[0] + ".csv"))
+		
+		return results
+	
 	def __init__(self, name, CHmapfile, ARmapfile, fitsfiles=[], auto_start=True, force=False):
 		from condor_job import Job
 		if not fitsfiles:
 			fitsfiles = ['{IMAGE001}']
-		self.results = get_stats.result_files(CHmapfile)
+		self.results = get_STAFF_stats.result_files(CHmapfile, ARmapfile, fitsfiles)
 		
-		make_job = force or not os.path.exists(self.results)
+		make_job = force
+		if not force:
+			for result in self.results:
+				if not os.path.exists(result):
+					make_job = True
+					break
 		
 		if make_job:
-			def write_stats(job):
-				with open(self.results, "w") as f:
-					f.write(job.output)
-			
 			arguments = ' '.join(self.build_arguments(CHmapfile, ARmapfile, fitsfiles))
-			self.job = Job(name, self.bin, arguments, extra=self.extra, call_back=write_stats, auto_start=auto_start)
+			self.job = Job(name, self.bin, arguments, extra=self.extra, auto_start=auto_start)
 		else:
 			self.job = None
 

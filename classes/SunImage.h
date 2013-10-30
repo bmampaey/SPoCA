@@ -186,9 +186,6 @@ class SunImage : public Image<T>
 		//! Compute the area of a pixel in arcsec²
 		Real PixelArea() const;
 		
-		//! Compute the approximate raw area of a pixel in Mm²
-		Real RawPixelArea() const;
-		
 		//! Compute the area of a pixel at disk center in Mm²
 		Real RealPixelArea(const RealPixLoc& c) const;
 		

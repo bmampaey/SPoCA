@@ -35,6 +35,7 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 #include <stdlib.h>
 #include <fstream>
 #include <set>
+#include <map>
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
@@ -71,6 +72,10 @@ int main(int argc, const char **argv)
 	string colorsString;
 	string colorsFilename;
 	
+	// Options for the preprocessing of maps
+	double areaLimitValue = 1.;
+	string areaLimitType = "";
+	
 	// Option for the output
 	string separator = ",";
 	
@@ -96,6 +101,8 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('s', "separator", "string", "\n\tThe separator to put between columns.\n\t", separator);
 	arguments.new_named_string('c', "colors", "string", "\n\tThe list of colors to select separated by commas (no spaces)\n\tAll colors will be selected if ommited.\n\t", colorsString);
 	arguments.new_named_string('C', "colorsFilename", "string", "\n\tA file containing a list of colors to select separated by commas\n\tAll colors will be selected if ommited.\n\t", colorsFilename);
+	arguments.new_named_double('r', "areaLimitValue", "positive real", "\n\tThe value for the areaLimitType.\n\t",areaLimitValue);
+	arguments.new_named_string('g', "areaLimitType", "string", "\n\tThe type of the limit of the area of the map taken into account the computation of stats.\n\tPossible values :\n\t\tNAR\n\t\tLong\n\t\tLat\n\t", areaLimitType);
 	arguments.new_named_string('O', "output","file name", "\n\tThe name for the output file.\n\t", output);
 	arguments.set_string_vector("colorizedMap colorizedMap ...", "The name of the fits files containing the colorized maps.", imagesFilenames);
 
@@ -136,22 +143,24 @@ int main(int argc, const char **argv)
 		colors.insert(tmp.begin(),tmp.end());
 	}
 	
-	// We open the output file
-	ofstream outputFile(output.c_str(), ios_base::trunc);
-	
-	
+	// We create one output file per stat type
+	string stats[] = {"AbsoluteNumberOfPixels", "RelativeNumberOfPixels", "AbsoluteCorrectedNumberOfPixels", "RelativeCorrectedNumberOfPixels"} ;
+	map<string,ofstream*> output_files;
+	for(unsigned s = 0; s < sizeof(stats)/sizeof(stats[0]); ++s)
+	{
+		ofstream* outputFile = new ofstream((stats[s] + "." + output).c_str(), ios_base::trunc);
+		// We write the header of the columns
+		*outputFile<<"time";
+		for (int latitude = -91; latitude < 0; ++latitude)
+			*outputFile<<separator<<latitude;
+		for (int latitude = 0; latitude < 91; ++latitude)
+			*outputFile<<separator<<latitude;
+		output_files[stats[s]] = outputFile;
+	}
 	vector<float> totalNumberOfPixels;
 	vector<float> regionNumberOfPixels;
 	vector<float> correctedTotalNumberOfPixels;
 	vector<float> correctedRegionNumberOfPixels;
-	
-	// We write the header of the columns
-	outputFile<<"time"<<separator<<"stat";
-	for (int latitude = -91; latitude < 0; ++latitude)
-		outputFile<<separator<<latitude;
-	for (int latitude = 0; latitude < 91; ++latitude)
-		outputFile<<separator<<latitude;
-	outputFile<<endl;
 	
 	// We process files one by one
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
@@ -172,36 +181,66 @@ int main(int argc, const char **argv)
 			#endif
 		}
 		
+		// We apply the arealimit if any
+		if(areaLimitType == "NAR")
+			colorizedMap->nullifyAboveRadius(areaLimitValue);
+		if(areaLimitType == "Long")
+			colorizedMap->nullifyAboveLongLat(areaLimitValue);
+		if(areaLimitType == "Lat")
+			colorizedMap->nullifyAboveLongLat(360, areaLimitValue);
+		#if defined DEBUG || defined WRITE_LIMITED_MAP
+			colorizedMap->writeFits(filenamePrefix + "limited." +  stripPath(colorizedMapFileName), FitsFile::compress);
+		#endif
+
+		
 		// We compute the butterfly stats
 		colorizedMap->computeButterflyStats(totalNumberOfPixels, regionNumberOfPixels, correctedTotalNumberOfPixels, correctedRegionNumberOfPixels);
 		
 		// We write the absolute number of pixels to the file
-		outputFile<<colorizedMap->ObservationDate()<<separator<<"absoluteNumberOfPixels";
+		*(output_files["AbsoluteNumberOfPixels"])<<"\n"<<colorizedMap->ObservationDate();
 		for (unsigned i = 0 ; i < regionNumberOfPixels.size(); ++i)
-			outputFile<<separator<<regionNumberOfPixels[i];
-		outputFile<<"\n";
+		{
+			if(totalNumberOfPixels[i] > 0)
+				*(output_files["AbsoluteNumberOfPixels"])<<separator<<regionNumberOfPixels[i];
+			else
+				*(output_files["AbsoluteNumberOfPixels"])<<separator<<"nan";
+		}
 		
 		// We write the relative number of pixels to the file
-		outputFile<<colorizedMap->ObservationDate()<<separator<<"relativeNumberOfPixels";
+		*(output_files["RelativeNumberOfPixels"])<<"\n"<<colorizedMap->ObservationDate();
 		for (unsigned i = 0 ; i < regionNumberOfPixels.size(); ++i)
-			outputFile<<separator<<regionNumberOfPixels[i]/totalNumberOfPixels[i];
-		outputFile<<"\n";
+		{
+			if(totalNumberOfPixels[i] > 0)
+				*(output_files["RelativeNumberOfPixels"])<<separator<<regionNumberOfPixels[i]/totalNumberOfPixels[i];
+			else
+				*(output_files["RelativeNumberOfPixels"])<<separator<<"nan";
+		}
 		
 		// We write the absolute corrected number of pixels to the file
-		outputFile<<colorizedMap->ObservationDate()<<separator<<"absoluteCorrectedNumberOfPixels";
+		*(output_files["AbsoluteCorrectedNumberOfPixels"])<<"\n"<<colorizedMap->ObservationDate();
 		for (unsigned i = 0 ; i < correctedRegionNumberOfPixels.size(); ++i)
-			outputFile<<separator<<correctedRegionNumberOfPixels[i];
-		outputFile<<"\n";
+		{
+			if(totalNumberOfPixels[i] > 0)
+				*(output_files["AbsoluteCorrectedNumberOfPixels"])<<separator<<correctedRegionNumberOfPixels[i];
+			else
+				*(output_files["AbsoluteCorrectedNumberOfPixels"])<<separator<<"nan";
+		}
 		
 		// We write the relative corrected number of pixels to the file
-		outputFile<<colorizedMap->ObservationDate()<<separator<<"relativeCorrectedNumberOfPixels";
+		*(output_files["RelativeCorrectedNumberOfPixels"])<<"\n"<<colorizedMap->ObservationDate();
 		for (unsigned i = 0 ; i < correctedRegionNumberOfPixels.size(); ++i)
-			outputFile<<separator<<correctedRegionNumberOfPixels[i]/correctedTotalNumberOfPixels[i];
-		outputFile<<"\n";
+		{
+			if(totalNumberOfPixels[i] > 0)
+				*(output_files["RelativeCorrectedNumberOfPixels"])<<separator<<correctedRegionNumberOfPixels[i]/correctedTotalNumberOfPixels[i];
+			else
+				*(output_files["RelativeCorrectedNumberOfPixels"])<<separator<<"nan";
+		}
 		
 		delete colorizedMap;
 	}
-	outputFile.close();
+	// We close the files
+	for (map<string,ofstream*>::iterator it=output_files.begin(); it!=output_files.end(); ++it)
+		it->second->close();
 	return EXIT_SUCCESS;
 	
 }

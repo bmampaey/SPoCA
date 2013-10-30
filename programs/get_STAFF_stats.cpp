@@ -94,7 +94,7 @@ int main(int argc, const char **argv)
 	vector<string> imagesFilenames;
 
 	// Options for the preprocessing of images
-	double intensitiesStatsRadiusRatio = 1;
+	double intensitiesStatsRadiusRatio = 3;
 	string intensitiesStatsPreprocessing = "NAR";
 
 	// The Segmented Maps and corresponding classes color
@@ -103,6 +103,9 @@ int main(int argc, const char **argv)
 	
 	// Option for the output
 	string separator = "\t";
+	
+	// Option for the output file/directory
+	string output = ".";
 	
 	string programDescription = "This Programm output regions info and statistics.\n";
 	programDescription+="Compiled with options :";
@@ -128,7 +131,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('C', "CHSegmentedMap", "string", "\n\tA segmented map for the Coronal Hole class.\n\t", CHSegmentedMap);
 	arguments.new_named_unsigned_int('a', "ARClass", "unsigned integer", "\n\tThe color corresponding to the AR class in the ARSegmentedMap.\n\t", ARClass);
 	arguments.new_named_string('A', "ARSegmentedMap", "string", "\n\tA segmented map for the Active Region class.\n\t", ARSegmentedMap);
-
+	arguments.new_named_string('O', "output","file/directory name", "\n\tThe name for the output file/directory.\n\t", output);
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "The name of the fits files containing the images of the sun.", imagesFilenames);
 
 	arguments.set_description(programDescription.c_str());
@@ -137,21 +140,47 @@ int main(int argc, const char **argv)
 	arguments.set_version(version.c_str());
 	arguments.process(argc, argv);
 
-
 	if(imagesFilenames.size() < 1)
 	{
 		cerr<<"No fits image file given as parameter!"<<endl;
 		return EXIT_FAILURE;
 	}
 	
+	
+	// We check if the output is a directory
+	string outputDirectory, outputFileName;
+	if (isDir(output))
+	{
+		outputDirectory = output;
+		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(CHSegmentedMap)) + "_and_" + stripSuffix(stripPath(ARSegmentedMap)) + ".";
+		outputFileName = outputDirectory + "/" + stripSuffix(stripPath(CHSegmentedMap)) + "_and_" + stripSuffix(stripPath(ARSegmentedMap)) + "_on_";
+	}
+	else
+	{
+		outputDirectory = getPath(output);
+		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(CHSegmentedMap)) + "_and_" + stripSuffix(stripPath(ARSegmentedMap)) + ".";
+		outputFileName = output + "_on_";
+		
+		// We check if the outputDirectory exists
+		if (! isDir(outputDirectory))
+		{
+			cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
+			return EXIT_FAILURE;
+		}
+	}
+	
 	// We read the CHSegmentedMap
 	ColorMap* CHMap_ondisk = getImageFromFile(CHSegmentedMap);
+	
+	// We will align all files on the suncenter of the CHSegmentedMap
+	RealPixLoc sunCenter = CHMap_ondisk->SunCenter();
+	
 	// If the ARSegmentedMap is different from the CHSegmentedMap, we read it and check if they are similar
 	ColorMap* ARMap_ondisk = CHMap_ondisk;
 	if(CHSegmentedMap != ARSegmentedMap)
 	{
 		ARMap_ondisk = getImageFromFile(ARSegmentedMap);
-		ARMap_ondisk->recenter(CHMap_ondisk->SunCenter());
+		ARMap_ondisk->recenter(sunCenter);
 		
 		string dissimilarity = checkSimilar(CHMap_ondisk, ARMap_ondisk);
 		if(! dissimilarity.empty())
@@ -167,7 +196,20 @@ int main(int argc, const char **argv)
 	ARMap_ondisk->nullifyAboveRadius();
 	CHMap_ondisk->nullifyAboveRadius();
 	
-	RealPixLoc sunCenter = CHMap_ondisk->SunCenter();
+	#if defined DEBUG
+	CHMap_ondisk->writeFits(filenamePrefix + "ondisk." +  stripPath(CHSegmentedMap), FitsFile::compress);
+	if(CHSegmentedMap != ARSegmentedMap)
+		ARMap_ondisk->writeFits(filenamePrefix + "ondisk." +  stripPath(ARSegmentedMap), FitsFile::compress);
+	#endif
+	
+	// We construct a CHmap limited to 15 deg longitude
+	ColorMap* CHMap_limited = new ColorMap(CHMap_ondisk);
+	CHMap_limited->nullifyAboveLongLat(15);
+	
+	#if defined DEBUG
+	CHMap_limited->writeFits(filenamePrefix + "limited." +  stripPath(CHSegmentedMap), FitsFile::compress);
+	#endif
+	
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 		// We read the sun image 
@@ -187,17 +229,29 @@ int main(int argc, const char **argv)
 			cerr<<"Warning: image "<<imageFilename<<" and the CHSegmentedMap "<<CHSegmentedMap<<" are not similar: "<<dissimilarity<<endl;
 		}
 		
-		// We extract the STAFF stats on the whole image
+		// We apply the intensities preprocessing
+		image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
+
+		// We open the output file
+		ofstream outputFile((outputFileName + stripSuffix(stripPath(imageFilename)) + ".csv").c_str(), ios_base::trunc);
+		outputFile<<setiosflags(ios::fixed);
+		
+		// We extract the AR STAFF stats on the whole image
 		STAFFStats AR_staff_stats = getSTAFFStats(ARMap_total, ARClass, image);
-		cout<<"Channel"<<separator<<"Type"<<separator<<AR_staff_stats.toString(separator, true)<<endl;
-		cout<<image->Channel()<<separator<<"AR_all"<<separator<<AR_staff_stats.toString(separator)<<endl;
+		outputFile<<"Channel"<<separator<<"Type"<<separator<<AR_staff_stats.toString(separator, true)<<endl;
+		outputFile<<image->Channel()<<separator<<"AR_all"<<separator<<AR_staff_stats.toString(separator)<<endl;
+		
+		// We extract the CH STAFF stats on the limited image
+		STAFFStats CH_staff_stats = getSTAFFStats(CHMap_limited, CHClass, image);
+		outputFile<<image->Channel()<<separator<<"CH_central_meridian"<<separator<<CH_staff_stats.toString(separator)<<endl;
 		
 		// We extract the STAFF stats on the disc
-		image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
 		vector<STAFFStats> staff_stats = getSTAFFStats(CHMap_ondisk, CHClass, ARMap_ondisk, ARClass, image);
-		cout<<image->Channel()<<separator<<"CH_ondisc"<<separator<<staff_stats[0].toString(separator)<<endl;
-		cout<<image->Channel()<<separator<<"AR_ondisc"<<separator<<staff_stats[1].toString(separator)<<endl;
-		cout<<image->Channel()<<separator<<"QS_ondisc"<<separator<<staff_stats[2].toString(separator)<<endl;
+		outputFile<<image->Channel()<<separator<<"CH_ondisc"<<separator<<staff_stats[0].toString(separator)<<endl;
+		outputFile<<image->Channel()<<separator<<"AR_ondisc"<<separator<<staff_stats[1].toString(separator)<<endl;
+		outputFile<<image->Channel()<<separator<<"QS_ondisc"<<separator<<staff_stats[2].toString(separator)<<endl;
+		
+		outputFile.close();
 		delete image;
 	}
 	

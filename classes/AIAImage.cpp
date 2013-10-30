@@ -108,11 +108,13 @@ void AIAImage::parseHeader()
 	}
 	
 	// We read the radius
-	if (header.has("R_SUN"))
-		wcs.setSunradius(header.get<Real>("R_SUN"));
-	else if(header.has("RSUN_OBS"))
+	if(header.has("RSUN_OBS"))
 	{
 		wcs.setSunradius(header.get<Real>("RSUN_OBS")/wcs.cdelt1);
+	}
+	else if(header.has("R_SUN"))
+	{
+		wcs.setSunradius(header.get<Real>("R_SUN"));
 	}
 	else
 	{

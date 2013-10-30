@@ -90,22 +90,29 @@ string Region::FirstObservationDate() const
 
 inline void Region::add(const PixLoc& coordinate)
 {
+	// We compute the positions
 	if(!first)
+	{
 		first = coordinate;
+	}
 	else if( coordinate.y < first.y || (coordinate.y == first.y && coordinate.x < first.x))
 	{
 		first.y = coordinate.y;
 		first.x = coordinate.x;
 	}
 	if(!boxmin)
+	{
 		boxmin = coordinate;
+	}
 	else
 	{
 		boxmin.x = coordinate.x < boxmin.x ? coordinate.x : boxmin.x;
 		boxmin.y = coordinate.y < boxmin.y ? coordinate.y : boxmin.y;
 	}
 	if(!boxmax)
+	{
 		boxmax = coordinate;
+	}
 	else
 	{
 		boxmax.x = coordinate.x > boxmax.x ? coordinate.x : boxmax.x;

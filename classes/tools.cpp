@@ -1,3 +1,4 @@
+
 #include "tools.h"
 
 using namespace std;
@@ -70,6 +71,17 @@ istream& operator>>(istream& in, vector<string>& v)
 }
 
 
+vector<string> split(const string &s, const char delim)
+{
+	vector<string> elems;
+	stringstream ss(s);
+	string item;
+	while (getline(ss, item, delim))
+	{
+		elems.push_back(item);
+	}
+	return elems;
+}
 
 inline string itos(const int& i, const int size)
 {
@@ -221,4 +233,5 @@ EUVPixelType quickselect(deque<EUVPixelType>& arr, Real percentil)
 	}
 }
 #undef ELEM_SWAP
+
 

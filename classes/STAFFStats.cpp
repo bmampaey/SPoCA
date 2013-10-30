@@ -11,12 +11,10 @@ using namespace std;
 #endif
 
 
-// CONSTRUCTOR INITIALIZATION EXTENDED BY CIS, Nov 28, 2012
 STAFFStats::STAFFStats(const time_t& observationTime, const unsigned id)
-:id(id),observationTime(observationTime), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0), area_AtDiskCenter(0), fillingFactor(0), numberPixels(0)
+:id(id),observationTime(observationTime), numberPixels(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0), area_AtDiskCenter(0), fillingFactor(0)
 {}
 
-// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (Nov 28, 2012)
 void STAFFStats::add(const PixLoc& coordinate, const EUVPixelType& pixelIntensity, const RealPixLoc& sunCenter, const Real& sun_radius)
 {
 	// If the intensity is not a number we omit it
@@ -39,7 +37,6 @@ void STAFFStats::add(const PixLoc& coordinate, const EUVPixelType& pixelIntensit
 		m4 = NAN;
 	}
 
-	// ADAPTED BY CIS (October 9, 2012)
 	Real dx = fabs(coordinate.x - sunCenter.x);
 	Real dy = fabs(coordinate.y - sunCenter.y);
 	Real radius_squared = sun_radius * sun_radius;
@@ -107,7 +104,6 @@ Real STAFFStats::MaxIntensity() const
 }
 
 
-// ADDED BY CIS, Nov 28, 2012.
 unsigned STAFFStats::NumberPixels() const
 {
 	return numberPixels;
@@ -128,6 +124,22 @@ Real STAFFStats::Median() const
 		return NAN;
 	else
 		return quickselect(intensities, 0.5);
+}
+
+Real STAFFStats::LowerQuartile() const
+{
+	if (intensities.size() == 0)
+		return NAN;
+	else
+		return quickselect(intensities, 0.25);
+}
+
+Real STAFFStats::UpperQuartile() const
+{
+	if (intensities.size() == 0)
+		return NAN;
+	else
+		return quickselect(intensities, 0.75);
 }
 
 void STAFFStats::computeMoments()
@@ -225,12 +237,12 @@ string STAFFStats::toString(const string& separator, bool header) const
 {
 	if (header)
 	{
-		return "ObservationDate"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"Area_Raw"+separator+"Area_AtDiskCenter"+separator+"FillingFactor";
+		return "ObservationDate"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"LowerQuartile"+separator+"UpperQuartile"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"Area_Raw"+separator+"Area_AtDiskCenter"+separator+"FillingFactor";
 	}
 	else
 	{
 		ostringstream out;
-		out<<setiosflags(ios::fixed)<<ObservationDate()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<Area_Raw()<<separator<<Area_AtDiskCenter()<<separator<<FillingFactor();
+		out<<setiosflags(ios::fixed)<<ObservationDate()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<LowerQuartile()<<separator<<UpperQuartile()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<Area_Raw()<<separator<<Area_AtDiskCenter()<<separator<<FillingFactor();
 		return out.str();
 	}
 }
@@ -246,8 +258,8 @@ vector<STAFFStats*> getSTAFFStats(const ColorMap* coloredMap, const EUVImage* im
 			regions_stats[regions[r]->Color()] = new STAFFStats(image->ObservationTime(), regions[r]->Id());
 	}
 	
-	RealPixLoc sunCenter = image->SunCenter();
-	Real sunRadius = image->SunRadius();
+	RealPixLoc sunCenter = coloredMap->SunCenter();
+	Real sunRadius = coloredMap->SunRadius();
 	
 	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
 	{
@@ -270,13 +282,14 @@ vector<STAFFStats*> getSTAFFStats(const ColorMap* coloredMap, const EUVImage* im
 	return values(regions_stats);
 }
 
-// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (Nov 28, 2012)
+
 STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVImage* image)
 {
 	STAFFStats stats(image->ObservationTime());
 	
-	RealPixLoc sunCenter = image->SunCenter();
-	Real sunRadius = image->SunRadius();
+	RealPixLoc sunCenter = coloredMap->SunCenter();
+	Real sunRadius = coloredMap->SunRadius();
+	unsigned totalNonNullPixels = 0;
 	
 	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
 	{
@@ -287,19 +300,24 @@ STAFFStats getSTAFFStats(const ColorMap* coloredMap, ColorType color, const EUVI
 				// We add the pixel to the region
 				stats.add(PixLoc(x,y), image->pixel(x, y), sunCenter, sunRadius);
 			}
+			
+			if(coloredMap->pixel(x,y)!= coloredMap->null())
+			{
+				++totalNonNullPixels;
+			}
 		}
 	}
-	
+	// We correct the filling factor
+	stats.fillingFactor = Real(stats.NumberPixels())/ Real(totalNonNullPixels);
 	return stats;
 }
 
-// CALL ADAPTED BY CIS TO INCLUDE CENTER AREA AND FILLING FACTOR (Nov 28, 2012)
 vector<STAFFStats> getSTAFFStats(const ColorMap* CHMap, ColorType CHClass, const ColorMap* ARMap, ColorType ARClass, const EUVImage* image)
 {
 	vector<STAFFStats> stats(3, image->ObservationTime());
 	
-	RealPixLoc sunCenter = image->SunCenter();
-	Real sunRadius = image->SunRadius();
+	RealPixLoc sunCenter = CHMap->SunCenter();
+	Real sunRadius = CHMap->SunRadius();
 	
 	for (unsigned y = 0; y < CHMap->Yaxes(); ++y)
 	{
@@ -323,7 +341,6 @@ vector<STAFFStats> getSTAFFStats(const ColorMap* CHMap, ColorType CHClass, const
 		}
 	}
 	
-	// Changed by Cis Verbeeck, Nov 28, 2012.
 	// Filling factor can only be calculated reliably after the CH+QS+AR area is known.
 	// The previous calculation using 1/(pi r^2) produced up to 4% error in filling factor.
 	Real areaRaw_CH = stats[0].Area_Raw();
@@ -380,6 +397,20 @@ FitsFile& writeRegions(FitsFile& file, const vector<STAFFStats>& regions_stats)
 		for(unsigned r = 0; r < regions_stats.size(); ++r)
 			data[r] = regions_stats[r].Median();
 		file.writeColumn("MEDIAN_INTENSITY", data);
+	}
+
+	{
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r].LowerQuartile();
+		file.writeColumn("LOWERQUARTILE_INTENSITY", data);
+	}
+
+	{
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r].UpperQuartile();
+		file.writeColumn("UPPERQUARTILE_INTENSITY", data);
 	}
 
 	{

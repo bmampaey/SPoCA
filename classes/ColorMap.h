@@ -60,18 +60,28 @@ class ColorMap : public SunImage<ColorType>
 		ColorMap* erodeDiamond(const unsigned size, const ColorType pixelValueToErode);
 		
 		//! Routine to do dilation with the shape of a disc
-		/*! Much slower than dilateDiamond */
 		ColorMap* dilateCircular(const Real size, const ColorType unsetValue);
 		
 		//! Routine to do erosion with the shape of a disc
-		/*! Much slower than erodeDiamond */
 		ColorMap* erodeCircular(const Real size, const ColorType unsetValue);
+		
+		//! Compute the hcc coordinates of the right half circle of radius size around the center of the sun
+		std::vector<HCC> get_half_circle(Real size);
+		
+		//! Given a line, returns the location of the pixel between the line and it's mirror centered at center
+		std::vector<PixLoc> get_shape(PixLoc center, const std::vector<HCC>& line);
+		
+		//! Routine to do dilation with the shape of a disc projected onto the sun
+		ColorMap* dilateCircularProjected(const Real size, const ColorType unsetValue);
+		
+		//! Routine to do dilation with the shape of a disc projected onto the sun
+		ColorMap* erodeCircularProjected(const Real size, const ColorType unsetValue);
 		
 		//! Routine to threshold regions by its raw size
 		void thresholdRegionsByRawArea(const double minSize);
 		
 		//! Routine to threshold regions by its size at disc center
-		void thresholdRegionsByRealArea(const double minSize);
+		void thresholdRegionsByRealArea(double minSize);
 		
 		//! Routine that removes connected component of a size (number of pixels) smaller than minSize
 		unsigned thresholdConnectedComponents(const unsigned minSize, const ColorType setValue = 0);

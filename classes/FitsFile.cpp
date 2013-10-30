@@ -1117,6 +1117,54 @@ FitsFile& FitsFile::readColumn(const string &name, vector<RealPixLoc>& data)
 	return *this;
 }
 
+//! Write a list of HGS coordinates to a FitsFile
+template<>
+FitsFile& FitsFile::writeColumn(const string &name, const vector<HGS>& data, const int mode)
+{
+	string xname = "LONGITUDE" + name;
+	string yname = "LATITUDE" + name;
+	
+	vector<unsigned> xarray(data.size());
+	vector<unsigned> yarray(data.size());
+	for (unsigned d = 0; d < data.size(); ++d)
+	{
+		xarray[d] = data[d].longitude;
+		yarray[d] = data[d].latitude;
+	}
+	writeColumn(xname, xarray, mode);
+	writeColumn(yname, yarray, mode);
+	return *this;
+}
+
+//! Read a list of HGS coordinates from a FitsFile
+template<>
+FitsFile& FitsFile::readColumn(const string &name, vector<HGS>& data)
+{
+	string xname = "LONGITUDE" + name;
+	string yname = "LATITUDE" + name;
+	
+	vector<unsigned> xarray;
+	vector<unsigned> yarray;
+	readColumn(xname, xarray);
+	readColumn(yname, yarray);
+	if (xarray.size() != yarray.size())
+	{
+		cerr<<"Error reading column "<<name<<", number of x coordinate is different than y coordinate!"<<endl;
+		data.clear();
+	}
+	else
+	{
+		data.resize(xarray.size());
+		for (unsigned d = 0; d < data.size(); ++d)
+		{
+			data[d].longitude = xarray[d];
+			data[d].latitude = yarray[d];
+		}
+	}
+	return *this;
+}
+
+
 time_t iso2ctime(const string& date)
 {
 	int status = 0;

@@ -128,6 +128,9 @@ std::vector<V> values(const std::map<K,V>& M)
 	return result;
 }
 
+//! Split a string into substring using delimiter
+std::vector<std::string> split(const std::string &s, const char delim);
+
 //! Convert a integer as a string
 /*! @param size Minimal size of the integer. It will be padded on the left with 0 if needed */
 std::string itos(const int& i, const int size = 0);

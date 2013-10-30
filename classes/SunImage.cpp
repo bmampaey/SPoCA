@@ -448,6 +448,7 @@ inline Real SunImage<T>::PixelArea() const
 	return wcs.cdelt1 * wcs.cdelt2;
 }
 
+
 template<class T>
 inline Real SunImage<T>::RealPixelArea(const RealPixLoc& c) const
 {
@@ -458,12 +459,6 @@ inline Real SunImage<T>::RealPixelArea(const RealPixLoc& c) const
 		return (wcs.sunradius_Mm * wcs.sunradius_Mm) / (sqrt(sigma) * wcs.sun_radius);
 	else
 		return NAN;
-}
-
-template<class T>
-inline Real SunImage<T>::RawPixelArea() const
-{
-	return PixelArea() * ((BIPI * BIPI * wcs.dsun_obs * wcs.dsun_obs) / (360. * 3600. * 360. * 3600.));
 }
 
 template<class T>

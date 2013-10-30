@@ -53,12 +53,6 @@ class CartesianCoordinate
 				return false;
 		}
 		
-		CartesianCoordinate& operator+=(const CartesianCoordinate& c)
-		{
-			x += c.x;
-			y += c.y;
-			return *this;
-		}
 		CartesianCoordinate& operator-=(const CartesianCoordinate& c)
 		{
 			x -= c.x;
@@ -85,7 +79,12 @@ class CartesianCoordinate
 			return CartesianCoordinate(x / value, y / value);
 		}
 		*/
-		
+		CartesianCoordinate& operator+=(const CartesianCoordinate& c)
+		{
+			x += c.x;
+			y += c.y;
+			return *this;
+		}
 		//! Test if coordinate is null
 		virtual bool operator !() const
 		{
@@ -199,6 +198,14 @@ class HCC: public CartesianCoordinate<Real>
 		//! Casting from CartesianCoordinate
 		explicit HCC(const CartesianCoordinate<Real>& c): CartesianCoordinate<Real>(c){}
 		
+		HCC& operator+=(const HCC& c)
+		{
+			x += c.x;
+			y += c.y;
+			z += c.z;
+			return *this;
+		}
+		
 		//! The null coordinate
 		static const HCC null()
 		{
@@ -270,6 +277,12 @@ class HeliographicCoordinate
 			return result-=(c);
 		}
 		*/
+		HeliographicCoordinate& operator+=(const HeliographicCoordinate& c)
+		{
+			longitude += c.longitude;
+			latitude += c.latitude;
+			return *this;
+		}
 		//! Test if coordinate is null
 		virtual bool operator !() const
 		{

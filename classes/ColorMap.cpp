@@ -171,79 +171,58 @@ void ColorMap::thresholdRegionsByRawArea(const double minSize)
 	
 	//First we compute the area for each color
 	map<ColorType,double> areas;
-	ColorType* p = pixels;
-	
-	for (unsigned y = 0; y < yAxes; ++y)
+	for (ColorType* j = pixels; j < pixels + numberPixels; ++j)
 	{
-		for (unsigned x = 0 ; x < xAxes; ++x)
+		if(*j != nullpixelvalue)
 		{
-			if(*p != nullpixelvalue)
-			{
-				if (areas.count(*p) == 0)
-					areas[*p] = pixelarea;
-				else
-					areas[*p] += pixelarea;
-			}
-			++p;
+			if (areas.count(*j) == 0)
+				areas[*j] = pixelarea;
+			else
+				areas[*j] += pixelarea;
 		}
 	}
 	
 	//Now we nullify those that are too small
-	p = pixels;
-	
-	for (unsigned j = 0; j < numberPixels; ++j)
+	for (ColorType* j = pixels; j < pixels + numberPixels; ++j)
 	{
-		if(*p != nullpixelvalue && areas[*p] < minSize)
+		if(*j != nullpixelvalue && areas[*j] < minSize)
 		{
-			*p = nullpixelvalue;
+			*j = nullpixelvalue;
 		}
-		++p;
 	}
 
 }
 
-void ColorMap::thresholdRegionsByRealArea(const double minSize)
+void ColorMap::thresholdRegionsByRealArea(double minSize)
 {
-	const Real R0 = wcs.sun_radius * PixelArea();
-	const Real R2 =  wcs.sun_radius *  wcs.sun_radius;
+	//minSize is given as a number of pixels so we convert to Mm2
+	minSize *= RealPixelArea(wcs.sun_center);
 	
-	//First we compute the area for each color
+	//We compute the area for each color
 	map<ColorType,Real> areas;
-
-	ColorType* p = pixels;
 	
-	const Real xmax = Real(xAxes) - wcs.sun_center.x;
-	const Real ymax = Real(yAxes) - wcs.sun_center.y;
-	
-	for (Real y = - wcs.sun_center.y; y < ymax; ++y)
+	for (PixLoc j(0,0); j.y < yAxes; ++j.y)
 	{
-		for (Real x = - wcs.sun_center.x ; x < xmax; ++x)
+		for (; j.x < xAxes; ++j.x)
 		{
-			if(*p != nullpixelvalue)
+			const ColorType& color = pixel(j);
+			if(color != nullpixelvalue)
 			{
-				if (areas.count(*p) == 0)
-					areas[*p] = 0;
-				
-				Real pixelArea2 = R2 - (x * x) - (y * y);
-				if(pixelArea2 > 0)
-					areas[*p] += R0 / sqrt(pixelArea2);
+				if (areas.count(color) == 0)
+					areas[color] = RealPixelArea(j);
 				else
-					areas[*p] = numeric_limits<Real>::infinity();
+					areas[color] += RealPixelArea(j);
 			}
-			++p;
 		}
 	}
 	
 	//Now we nullify those that are too small
-	p = pixels;
-	
-	for (unsigned j = 0; j < numberPixels; ++j)
+	for (ColorType* j = pixels; j < pixels + numberPixels; ++j)
 	{
-		if(*p != nullpixelvalue && areas[*p] < minSize)
+		if(*j != nullpixelvalue && areas[*j] < minSize)
 		{
-			*p = nullpixelvalue;
+			*j = nullpixelvalue;
 		}
-		++p;
 	}
 
 }
@@ -445,6 +424,132 @@ ColorMap* ColorMap::erodeCircular(const Real size, const ColorType unsetValue)
 	
 	delete[] pixels;
 	pixels = newPixels;
+	return this;
+}
+
+vector<HCC> ColorMap::get_half_circle(Real size)
+{
+	vector<HCC> line;
+	RealPixLoc sun_center = SunCenter();
+	for (Real y = - size; y <= size; ++y)
+	{
+		Real x = sqrt(size * size - y * y);
+		line.push_back(toHCC(RealPixLoc(sun_center.x + x, sun_center.y + y)));
+	}
+	return line;
+}
+
+vector<PixLoc> ColorMap::get_shape(PixLoc center, const vector<HCC>& line)
+{
+	vector<PixLoc> shape;
+	HGS hgs = toHGS(center);
+	
+	if(! hgs)
+	{
+		return shape;
+	}
+	// The rotation matrix is such that we need to invert THE latitude 
+	double sin_lat = sin(-hgs.latitude);
+	double cos_lat = cos(-hgs.latitude);
+	double sin_long = sin(hgs.longitude);
+	double cos_long = cos(hgs.longitude);
+	
+	// We compute the rotation of the shape
+	for (unsigned i = 0; i < line.size(); ++i)
+	{
+		// We rotate around the x axis, x stays the same
+		double y = line[i].y * cos_lat - line[i].z * sin_lat;
+		double z = line[i].y * sin_lat + line[i].z * cos_lat;
+		// We rotate around the y axis, y stays the same
+		RealPixLoc max = toRealPixLoc(HCC(line[i].x * cos_long + sin_long * z, y, -line[i].x * sin_long + cos_long * z));
+		RealPixLoc min = toRealPixLoc(HCC(-line[i].x * cos_long + sin_long * z, y, line[i].x * sin_long + cos_long * z));
+		// We fill up the shape
+		for (unsigned x = round(min.x); x <= round(max.x); ++x)
+			shape.push_back(PixLoc(x, round(min.y)));
+	}
+	return shape;
+}
+
+ColorMap* ColorMap::dilateCircularProjected(const Real size, const ColorType unsetValue)
+{
+	ColorType* original = new ColorType[numberPixels];
+	memcpy(original, pixels, numberPixels * sizeof(ColorType));
+	vector<HCC> line = get_half_circle(size);
+	
+	// We need to temporarly disable b0
+	Real cos_b0 = wcs.cos_b0;
+	Real sin_b0 = wcs.sin_b0;
+	wcs.cos_b0 = 1;
+	wcs.sin_b0 = 0;
+	RealPixLoc sun_center = SunCenter();
+	Real sun_radius = SunRadius();
+	
+	unsigned min_y = ceil(sun_center.y - sun_radius);
+	unsigned max_y = floor(sun_center.y + sun_radius);
+	for(unsigned y = min_y; y <= max_y; ++y)
+	{
+		Real delta_x = sqrt(sun_radius * sun_radius - (y - sun_center.y) * (y - sun_center.y));
+		unsigned min_x = ceil(sun_center.x - delta_x);
+		unsigned max_x = floor(sun_center.x + delta_x);
+		ColorType* j = original + y * xAxes + min_x;
+		for(unsigned x = min_x; x <= max_x; ++x, ++j)
+		{
+			if(*j != unsetValue)
+			{
+				if(*(j-1) == unsetValue || *(j+1) == unsetValue || *(j-xAxes) == unsetValue || *(j+xAxes) == unsetValue)
+				{
+					vector<PixLoc> shape = get_shape(PixLoc(x, y), line);
+					for (vector<PixLoc>::iterator s = shape.begin() ; s != shape.end(); ++s)
+					{
+						pixel(*s) = *j;
+					}
+				}
+			}
+		}
+	}
+	wcs.cos_b0 = cos_b0;
+	wcs.sin_b0 = sin_b0;
+	delete[] original;
+	return this;
+}
+
+ColorMap* ColorMap::erodeCircularProjected(const Real size, const ColorType unsetValue)
+{
+	ColorType* original = new ColorType[numberPixels];
+	memcpy(original, pixels, numberPixels * sizeof(ColorType));
+	vector<HCC> line = get_half_circle(size);
+	
+	// We need to temporarly disable b0
+	Real cos_b0 = wcs.cos_b0;
+	Real sin_b0 = wcs.sin_b0;
+	wcs.cos_b0 = 1;
+	wcs.sin_b0 = 0;
+	RealPixLoc sun_center = SunCenter();
+	Real sun_radius = SunRadius();
+	
+	unsigned min_y = ceil(sun_center.y - sun_radius);
+	unsigned max_y = floor(sun_center.y + sun_radius);
+	for(unsigned y = min_y; y <= max_y; ++y)
+	{
+		Real delta_x = sqrt(sun_radius * sun_radius - (y - sun_center.y) * (y - sun_center.y));
+		unsigned min_x = ceil(sun_center.x - delta_x);
+		unsigned max_x = floor(sun_center.x + delta_x);
+		ColorType* j = original + y * xAxes + min_x;
+		for(unsigned x = min_x; x <= max_x; ++x, ++j)
+		{
+			if(*j == unsetValue && (*(j-1) != unsetValue || *(j+1) != unsetValue || *(j-xAxes) != unsetValue || *(j+xAxes) != unsetValue))
+			{
+				vector<PixLoc> shape = get_shape(PixLoc(x, y), line);
+				for (vector<PixLoc>::iterator s = shape.begin() ; s != shape.end(); ++s)
+				{
+					pixel(*s) = unsetValue;
+				}
+			}
+		}
+	}
+	wcs.cos_b0 = cos_b0;
+	wcs.sin_b0 = sin_b0;
+	delete[] original;
 	return this;
 }
 

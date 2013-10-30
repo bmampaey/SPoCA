@@ -407,10 +407,10 @@ if __name__ == "__main__":
 	# We wait for all jobs to terminate
 	job = output_queue.get()
 	while job != None:
-		log.debug("Waiting for job %s to terminate", job.name)
-		while not job.isTerminated():
+		log.debug("Waiting for job %s to terminate", job.job.name)
+		while not job.job.isTerminated():
 			time.sleep(1)
-		log.info("Job %s has terminated successfully.", job.name)
-		if job.return_code != 0:
-			log.warning("Job %s terminated with return code %s. Error: %s", job.name, job.return_code, job.error)
+		log.info("Job %s has terminated successfully.", job.job.name)
+		if job.job.return_code != 0:
+			log.warning("Job %s terminated with return code %s. Error: %s", job.job.name, job.job.return_code, job.job.error)
 		job = output_queue.get()

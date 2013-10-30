@@ -99,6 +99,48 @@ class segmentation:
 		else:
 			self.job = None
 
+class get_SOLID_stats(segmentation):
+	bin = "bin/get_SOLID_stats.x"
+	@classmethod
+	def result_files(cls, name):
+		return [os.path.join(cls.output_dir, '.'.join([name, "ring_stats", "csv"]))]
+	
+	@classmethod
+	def test_parameters(cls):
+		if not os.path.isdir(cls.output_dir):
+			return False, "Output dir does not exists: " + str(cls.output_dir)
+		if not os.access(cls.output_dir, os.W_OK):
+			return False, "Output dir is not writable: " + str(cls.output_dir)
+		if not os.path.exists(cls.bin):
+			return False, "Could not find executable: " + str(cls.bin)
+		
+		
+		arguments = cls.build_arguments(["testfile"], "test")
+		if not arguments:
+			return False, "Could not create arguments"
+		
+		test_args = [cls.bin] + arguments + ['--help']
+		process = subprocess.Popen(test_args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		(output, error) = process.communicate()
+		if process.returncode != 0:
+			return False, "Arguments could be wrong :"+ ' '.join(test_args) + "\treturned error:" + error  
+		else:
+			return True, output
+	
+	def __init__(self, name, fitsfiles, previous=None, auto_start=True, force=False):
+		from condor_job import Job
+		self.results = get_SOLID_stats.result_files(name)
+		make_job = force
+		if not force:
+			for result in self.results:
+				 if not os.path.exists(result):
+				 	make_job = True
+				 	break
+		if make_job:
+			arguments = ' '.join(self.build_arguments(fitsfiles, name))
+			self.job = Job(name, self.bin, arguments, require=previous, extra=self.extra, auto_start=auto_start)
+		else:
+			self.job = None
 
 class resegmentation(segmentation):
 	bin = "bin/attribution.x"

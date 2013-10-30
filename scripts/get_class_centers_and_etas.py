@@ -239,9 +239,9 @@ if __name__ == "__main__":
 	try:
 		with open(args.output, 'w') as class_centers_and_eta_file:
 			class_centers_and_eta_file.write("time,")
-			class_centers_and_eta_file.write(','.join(["class_center_" + str(i) + "_" + channel for i in range(number_centers) for channel in good_channels]))
+			class_centers_and_eta_file.write(','.join(["class_center_" + str(i+1) + "_" + channel for i in range(number_centers) for channel in good_channels]))
 			class_centers_and_eta_file.write(",")
-			class_centers_and_eta_file.write(','.join(["eta_" + str(i) for i in range(number_centers)]))
+			class_centers_and_eta_file.write(','.join(["eta_" + str(i+1) for i in range(number_centers)]))
 			class_centers_and_eta_file.write("\n")
 			for time in sorted(class_centers_and_etas.keys()):
 				class_centers_and_eta_file.write(time.strftime('%Y-%m-%d %H:%M:%S,'))

@@ -23,9 +23,9 @@ if __name__ == "__main__":
 			parts = class_center_regex.match(header)
 			if parts:
 				class_number, channel = parts.group("class_number", "channel")
-				number_classes = int(class_number) if int(class_number) > number_classes else number_classes
-				if channel not in channels: channels.append(channel)
-	number_classes += 1
+				number_classes += 1
+				if channel not in channels:
+					channels.append(channel)
 	
 	# Parse the csv file
 	csv = pandas.read_csv(args.filename, parse_dates = time_index, index_col = time_index)

@@ -22,11 +22,11 @@ string TrackingEdge::toJSON() const
 {
 	ostringstream out;
 	out<<"{\n";
-	out<<"\"origin\": \""<<origin<<"\",\n";
-	out<<"\"destination\": \""<<destination<<"\",\n";
+	out<<"\"Origin\": \""<<origin<<"\",\n";
+	out<<"\"Destination\": \""<<destination<<"\",\n";
 	out<<"\"NumberPixels\" :"<<intersectNumberPixels<<",\n";
 	out<<"\"Area_arcsec2\" :"<<intersectArea_arcsec2<<",\n";
-	out<<"\"Area_Mm2\" :"<<intersectArea_Mm2<<",\n";
+	out<<"\"Area_Mm2\" :"<<intersectArea_Mm2<<"\n";
 	out<<"}";
 	return out.str();
 }

@@ -65,7 +65,7 @@ int main(int argc, const char **argv)
 	string version = "2.0";
 
 	// Options for the tracking
-	unsigned max_delta_t = 3600;
+	unsigned max_delta_t = 0;
 	bool derotate = false;
 	
 	// The list of names of the sun images to process
@@ -91,7 +91,7 @@ int main(int argc, const char **argv)
 	ArgumentHelper arguments;
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the maps of the regions to track.\n\t", imagesFilenames);
 	arguments.new_named_string('O', "output","output file name", "\n\tThe name for the output file.\n\t", output);
-	arguments.new_named_unsigned_int('d',"max_delta_t","positive integer","\n\tThe maximal delta time between 2 tracked regions\n\t",max_delta_t);
+	arguments.new_named_unsigned_int('d',"max_delta_t","positive integer","\n\tThe maximal number of seconds between 2 tracked regions\n\t",max_delta_t);
 	arguments.new_flag('D', "derotate", "\n\tSet this flag if you want images to be derotated before comparison.\n\t", derotate);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
@@ -122,17 +122,31 @@ int main(int argc, const char **argv)
 	
 	// We extract the edges of the graph
 	vector< vector<TrackingEdge*> > edges;
-	for (unsigned d = 1; d < indices.size(); ++d)
-	{	
-		for (unsigned i = 0; d + i < indices.size(); ++i)
+	if(max_delta_t == 0)
+	{
+		// We only extract the edges between 2 consecutive images
+		for (unsigned i = 0; i < indices.size() - 1; ++i)
 		{
 			unsigned s1 = indices[i];
-			unsigned s2 = indices[i + d];
-			//If the time difference between the 2 images is too big, we don't need to continue
-			unsigned delta_t = unsigned(difftime(images[s2]->ObservationTime(),images[s1]->ObservationTime()));
-			if (delta_t <= max_delta_t)
+			unsigned s2 = indices[i + 1];
+			edges.push_back(get_edges(images[s1], regions[s1], images[s2], regions[s2], derotate));
+		}
+	}
+	else
+	{
+		// We extract the edges to all following images
+		for (unsigned d = 1; d < indices.size(); ++d)
+		{	
+			for (unsigned i = 0; d + i < indices.size(); ++i)
 			{
-				edges.push_back(get_edges(images[s1], regions[s1], images[s2], regions[s2], derotate));
+				unsigned s1 = indices[i];
+				unsigned s2 = indices[i + d];
+				//If the time difference between the 2 images is too big, we don't need to continue
+				unsigned delta_t = unsigned(difftime(images[s2]->ObservationTime(),images[s1]->ObservationTime()));
+				if (delta_t <= max_delta_t)
+				{
+					edges.push_back(get_edges(images[s1], regions[s1], images[s2], regions[s2], derotate));
+				}
 			}
 		}
 	}
@@ -141,7 +155,7 @@ int main(int argc, const char **argv)
 	ofstream output_file(output.c_str());
 	output_file<<"{\n";
 	// We write the nodes
-	output_file<<"nodes : [\n";
+	output_file<<"\"nodes\" : [\n";
 	for (unsigned r = 0; r < regions.size(); ++r)
 	{
 		for (unsigned rr = 0; rr < regions[r].size(); ++rr)
@@ -149,11 +163,11 @@ int main(int argc, const char **argv)
 			output_file<<regions[r][rr]->toJSON()<<",\n";
 		}
 	}
-	output_file.seekp(-1, ios_base::cur);
-	output_file<<"]"<<endl;
+	output_file.seekp(-2, ios_base::cur);
+	output_file<<"],"<<endl;
 	
 	// We write the edges
-	output_file<<"edges : [\n";
+	output_file<<"\"edges\" : [\n";
 	for (unsigned e = 0; e < edges.size(); ++e)
 	{
 		for (unsigned ee = 0; ee < edges[e].size(); ++ee)
@@ -161,7 +175,7 @@ int main(int argc, const char **argv)
 			output_file<<edges[e][ee]->toJSON()<<",\n";
 		}
 	}
-	output_file.seekp(-1, ios_base::cur);
+	output_file.seekp(-2, ios_base::cur);
 	output_file<<"]"<<endl;
 	
 	output_file<<"}\n";

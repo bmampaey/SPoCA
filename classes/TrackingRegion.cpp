@@ -158,16 +158,17 @@ string TrackingRegion::toJSON() const
 {
 	ostringstream out;
 	out<<"{\n";
+	out<<"\"Label\": \""<<HekLabel()<<"\",\n";
 	out<<"\"Id\": "<<Id()<<",\n";
 	out<<"\"ObservationDate\": \""<<ObservationDate()<<"\",\n";
 	out<<"\"Center\": \""<<Center()<<"\",\n";
 	out<<"\"HGCenter\": \""<<HGCenter()<<"\",\n";
-	out<<"\"NumberPixels\" :"<<NumberPixels()<<",\n";
+	out<<"\"NumberPixels\" : "<<NumberPixels()<<",\n";
 	out<<"\"Area_arcsec2\": "<<Area_arcsec2()<<",\n";
 	out<<"\"Area_Mm2\" :"<<Area_Mm2()<<",\n";
 	out<<"\"FirstPixel\": \""<<FirstPixel()<<"\",\n";
 	out<<"\"BoxMin\": \""<<Boxmin()<<"\",\n";
-	out<<"\"BoxMax\": \""<<Boxmax()<<"\",\n";
+	out<<"\"BoxMax\": \""<<Boxmax()<<"\"\n";
 	out<<"}";
 	return out.str();
 }

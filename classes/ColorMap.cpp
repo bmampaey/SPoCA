@@ -1,8 +1,8 @@
 #include "ColorMap.h"
 #include <assert.h>
-#include <map>
 #include <deque>
 #include <math.h>
+#include <stdexcept>
 
 extern std::string filenamePrefix;
 
@@ -653,7 +653,6 @@ unsigned ColorMap::colorizeConnectedComponents(const ColorType setValue)
 		{
 			++color;
 			propagateColor(color, j);
-
 		}
 	}
 
@@ -662,6 +661,18 @@ unsigned ColorMap::colorizeConnectedComponents(const ColorType setValue)
 }
 
 
+void ColorMap::recolorizeConnectedComponents(const map<ColorType,ColorType>& LUT)
+{
+	ColorType* end = pixels + numberPixels;
+	for (ColorType* j = pixels; j < end; ++j)
+	{
+		try {
+			*j = LUT.at(*j);
+		}
+		catch (const out_of_range& oor) {
+		}
+	}
+}
 
 unsigned ColorMap::propagateColor(const ColorType color, const PixLoc& firstPixel)
 {

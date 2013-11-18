@@ -2,6 +2,8 @@
 #ifndef ColorMap_H
 #define ColorMap_H
 
+#include <map>
+
 #include "Header.h"
 #include "SunImage.h"
 
@@ -94,6 +96,9 @@ class ColorMap : public SunImage<ColorType>
 		
 		//! Routine that gives a different color to each connected component
 		unsigned colorizeConnectedComponents(const ColorType setValue = 0);
+		
+		//! Routine that recolors connected component using a color lookup table
+		void recolorizeConnectedComponents(const std::map<ColorType,ColorType>& LUT);
 		
 		//! Routine that tries to remove holes in connected components
 		ColorMap* removeHoles(ColorType unusedColor = std::numeric_limits<ColorType>::max() - 1);

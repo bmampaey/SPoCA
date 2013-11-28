@@ -113,7 +113,7 @@ int main(int argc, const char **argv)
 	programDescription+="\nEXTRA_SAFE: ON";
 	#endif
 	#if defined VERBOSE
-	programDescription+="\VERBOSE: ON";
+	programDescription+="\nVERBOSE: ON";
 	#endif
 	programDescription+="\nColorType: " + string(typeid(ColorType).name());
 

@@ -445,4 +445,16 @@ See @ref ALC.
 #define SINUSOIDAL_PROJECTION 3
 #define DISTANCE_TRANSFORM 4
 
+#ifndef NAN
+#define NAN (numeric_limits<Real>::quiet_NaN())
+#endif
+
+#ifndef INF
+#define INF (numeric_limits<Real>::infinity())
+#endif
+
+#ifndef RealMAX
+#define RealMAX (numeric_limits<EUVPixelType>::max())
+#endif
+
 #endif //end of Constants_H

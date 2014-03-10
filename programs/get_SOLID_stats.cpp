@@ -310,7 +310,15 @@ int main(int argc, const char **argv)
 	string programDescription = "This Programm does attribution (or fix classification) and segmentation.\n";
 	programDescription+="Compiled with options :";
 	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
-	programDescription+="\nDEBUG: "+ itos(DEBUG);
+	#if defined DEBUG
+	programDescription+="\nDEBUG: ON";
+	#endif
+	#if defined EXTRA_SAFE
+	programDescription+="\nEXTRA_SAFE: ON";
+	#endif
+	#if defined VERBOSE
+	programDescription+="\nVERBOSE: ON";
+	#endif
 	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
 

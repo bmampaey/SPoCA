@@ -2,16 +2,6 @@
 
 using namespace std;
 
-#ifndef NAN
-#define NAN (numeric_limits<Real>::quiet_NaN())
-#endif
-
-#ifndef INF
-#define INF (numeric_limits<Real>::infinity())
-#endif
-
-
-
 TrackingRegion::TrackingRegion(const time_t& observationTime, const unsigned id)
 :id(id),observationTime(observationTime), numberPixels(0), area_arcsec2(0), area_Mm2(0), center(0,0), HGcenter(0, 0), first(PixLoc::null()), boxmin(PixLoc::null()), boxmax(PixLoc::null())
 {}
@@ -114,6 +104,7 @@ HGS TrackingRegion::HGCenter() const
 	else
 		return HGS(NAN, NAN);
 }
+
 
 PixLoc TrackingRegion::FirstPixel() const
 {

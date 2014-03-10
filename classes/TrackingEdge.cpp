@@ -1,4 +1,5 @@
 #include "TrackingEdge.h"
+#include <iostream>
 
 using namespace std;
 
@@ -7,15 +8,17 @@ TrackingEdge::TrackingEdge()
 	intersectNumberPixels = 0;
 	intersectArea_arcsec2 = 0;
 	intersectArea_Mm2 = 0;
+	separation = NAN;
 }
 
-TrackingEdge::TrackingEdge(const string& origin, const string& destination, const unsigned& intersectNumberPixels, const Real& intersectArea_arcsec2, const Real& intersectArea_Mm2)
+TrackingEdge::TrackingEdge(const string& origin, const string& destination, const unsigned& intersectNumberPixels, const Real& intersectArea_arcsec2, const Real& intersectArea_Mm2, const Real& separation)
 {
 	this->origin = origin;
 	this->destination = destination;
 	this->intersectNumberPixels = intersectNumberPixels;
 	this->intersectArea_arcsec2 = intersectArea_arcsec2;
 	this->intersectArea_Mm2 = intersectArea_Mm2;
+	this->separation = separation;
 }
 
 string TrackingEdge::toJSON() const
@@ -26,7 +29,11 @@ string TrackingEdge::toJSON() const
 	out<<"\"Destination\": \""<<destination<<"\",\n";
 	out<<"\"NumberPixels\" :"<<intersectNumberPixels<<",\n";
 	out<<"\"Area_arcsec2\" :"<<intersectArea_arcsec2<<",\n";
-	out<<"\"Area_Mm2\" :"<<intersectArea_Mm2<<"\n";
+	out<<"\"Area_Mm2\" :"<<intersectArea_Mm2<<",\n";
+	if (separation != separation) // We test for NAN
+		out<<"\"Distance\" : null\n";
+	else
+		out<<"\"Distance\" :"<<separation<<"\n";
 	out<<"}";
 	return out.str();
 }
@@ -66,9 +73,24 @@ TrackingEdge* get_edge(const ColorMap* image1, const TrackingRegion* region1 , c
 			}
 		}
 	}
+	
 	if (intersectPixels > 0)
 	{
-		return new TrackingEdge(region1->HekLabel(), region2->HekLabel(), intersectPixels, intersectArea_arcsec2, intersectArea_Mm2);
+		// We compute the distance between the 2 regions
+		// We project the center1 to image 2 to take into account the differential rotation
+		HGS center1 = image1->shift_like(region1->HGCenter(), image2);
+		if(!center1)
+		{
+			return new TrackingEdge(region1->HekLabel(), region2->HekLabel(), intersectPixels, intersectArea_arcsec2, intersectArea_Mm2);
+		}
+		else
+		{
+			HGS center2 = region2->HGCenter();
+			double sinlat = sin(fabs(center1.latitude - center2.latitude)/2.);
+			double sinlong = sin(fabs(center1.longitude - center2.longitude)/2.);
+			double separation = asin(sqrt(sinlat * sinlat + cos(center1.longitude) * cos(center2.longitude) * sinlong * sinlong));
+			return new TrackingEdge(region1->HekLabel(), region2->HekLabel(), intersectPixels, intersectArea_arcsec2, intersectArea_Mm2, separation);
+		}
 	}
 	else
 	{
@@ -128,7 +150,21 @@ TrackingEdge* get_edge_derotate(const ColorMap* image1, const TrackingRegion* re
 	
 	if (intersectPixels > 0)
 	{
-		return new TrackingEdge(region1->HekLabel(), region2->HekLabel(), intersectPixels, intersectArea_arcsec2, intersectArea_Mm2);
+		// We compute the distance between the 2 regions
+		// We project the center1 to image 2 to take into account the differential rotation
+		HGS center1 = image1->shift_like(region1->HGCenter(), image2);
+		if(!center1)
+		{
+			return new TrackingEdge(region1->HekLabel(), region2->HekLabel(), intersectPixels, intersectArea_arcsec2, intersectArea_Mm2);
+		}
+		else
+		{
+			HGS center2 = region2->HGCenter();
+			double sinlat = sin(fabs(center1.latitude - center2.latitude)/2.);
+			double sinlong = sin(fabs(center1.longitude - center2.longitude)/2.);
+			double separation = asin(sqrt(sinlat * sinlat + cos(center1.longitude) * cos(center2.longitude) * sinlong * sinlong));
+			return new TrackingEdge(region1->HekLabel(), region2->HekLabel(), intersectPixels, intersectArea_arcsec2, intersectArea_Mm2, separation);
+		}
 	}
 	else
 	{

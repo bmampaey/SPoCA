@@ -67,6 +67,7 @@ int main(int argc, const char **argv)
 	// Options for the tracking
 	unsigned max_delta_t = 0;
 	bool derotate = false;
+	bool unique;
 	
 	// The list of names of the sun images to process
 	vector<string> imagesFilenames;
@@ -92,6 +93,7 @@ int main(int argc, const char **argv)
 	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the maps of the regions to track.\n\t", imagesFilenames);
 	arguments.new_named_string('O', "output","output file name", "\n\tThe name for the output file.\n\t", output);
 	arguments.new_named_unsigned_int('d',"max_delta_t","positive integer","\n\tThe maximal number of seconds between 2 tracked regions\n\t",max_delta_t);
+	arguments.new_flag('U', "unique", "\n\tSet this flag if you want at most one path between 2 nodes.\n\t", unique);
 	arguments.new_flag('D', "derotate", "\n\tSet this flag if you want images to be derotated before comparison.\n\t", derotate);
 	arguments.set_description(programDescription.c_str());
 	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");

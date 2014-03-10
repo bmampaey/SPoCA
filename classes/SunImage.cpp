@@ -294,17 +294,14 @@ inline RealPixLoc SunImage<T>::shift_like(const RealPixLoc c, const SunImage* im
 }
 
 template<class T>
-inline HGS SunImage<T>::shift_like(HGS c, const SunImage* img) const
+inline HGS SunImage<T>::shift_like(HGS hgs, const SunImage* img) const
 {
 	if(! hgs)
-		return RealPixLoc::null();
+		return HGS::null();
 	int delta_t = int(difftime(img->ObservationTime(),ObservationTime()));
 	hgs.longitude += delta_t * SunDifferentialAngularSpeed(hgs.latitude);
 	
-	if(hgs.longitude > MIPI || hgs.longitude < -MIPI)
-		return RealPixLoc::null();
-	else
-		return hgs;
+	return hgs;
 
 }
 

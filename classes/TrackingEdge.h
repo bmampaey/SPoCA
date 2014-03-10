@@ -17,10 +17,11 @@ class TrackingEdge
 		unsigned intersectNumberPixels;
 		Real intersectArea_arcsec2;
 		Real intersectArea_Mm2;
+		Real separation;
 	
 	public:
 		TrackingEdge();
-		TrackingEdge(const std::string& origin, const std::string& destination, const unsigned& intersectNumberPixels = 0, const Real& intersectArea_arcsec2 = 0, const Real& intersectArea_Mm2 = 0);
+		TrackingEdge(const std::string& origin, const std::string& destination, const unsigned& intersectNumberPixels = 0, const Real& intersectArea_arcsec2 = 0, const Real& intersectArea_Mm2 = 0, const Real& separation = NAN);
 		std::string toJSON() const;
 };
 

@@ -127,6 +127,9 @@ class SunImage : public Image<T>
 		//! Routine that transform a coordinate to the referenciel of img 
 		RealPixLoc shift_like(const RealPixLoc c, const SunImage* img) const;
 		
+		//! Routine that transform a heliographic coordinate to the referenciel of img 
+		HGS shift_like(HGS hgs, const SunImage* img) const;
+		
 		//! Routine that converts the pixel location to Helioprojective cartesian coordinate
 		HPC toHPC(const RealPixLoc& c) const;
 		

@@ -7,10 +7,6 @@
 
 using namespace std;
 
-#ifndef NAN
-#define NAN (numeric_limits<Real>::quiet_NaN())
-#endif
-
 template<class T>
 SunImage<T>::~SunImage()
 {
@@ -280,7 +276,6 @@ inline RealPixLoc SunImage<T>::rotate(const RealPixLoc c, const int delta_t) con
 
 }
 
-
 template<class T>
 inline RealPixLoc SunImage<T>::shift_like(const RealPixLoc c, const SunImage* img) const
 {
@@ -295,6 +290,18 @@ inline RealPixLoc SunImage<T>::shift_like(const RealPixLoc c, const SunImage* im
 		return RealPixLoc::null();
 	else
 		return img->toRealPixLoc(hgs);
+
+}
+
+template<class T>
+inline HGS SunImage<T>::shift_like(HGS hgs, const SunImage* img) const
+{
+	if(! hgs)
+		return HGS::null();
+	int delta_t = int(difftime(img->ObservationTime(),ObservationTime()));
+	hgs.longitude += delta_t * SunDifferentialAngularSpeed(hgs.latitude);
+	
+	return hgs;
 
 }
 

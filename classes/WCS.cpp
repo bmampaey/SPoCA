@@ -6,12 +6,6 @@
 
 using namespace std;
 
-#ifndef NAN
-#define NAN (numeric_limits<Real>::quiet_NaN())
-#endif
-
-
-
 WCS::WCS()
 :sun_center(NAN), sun_radius(NAN), date_obs(""), cdelt1(0), cdelt2(0), b0(NAN), l0(NAN), carrington_l0(NAN), dsun_obs(NAN), sunradius_Mm(SUN_RADIUS), time_obs(0), cos_b0(NAN), sin_b0(NAN) 
 {

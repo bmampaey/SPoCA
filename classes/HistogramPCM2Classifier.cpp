@@ -2,26 +2,21 @@
 
 using namespace std;
 
-HistogramPCM2Classifier::HistogramPCM2Classifier(Real fuzzifier)
-:HistogramPCMClassifier(), PCM2Classifier()
+HistogramPCM2Classifier::HistogramPCM2Classifier(Real fuzzifier, unsigned numberClasses, Real precision, unsigned maxNumberIteration, const RealFeature& binSize)
+:FCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), PCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), HistogramPCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration, binSize)
 {
-	this->fuzzifier = fuzzifier;
+	#if defined DEBUG
+	cout<<"Called HPCM2 constructor"<<endl;
+	#endif
 }
 
-HistogramPCM2Classifier::HistogramPCM2Classifier(const RealFeature& binSize, Real fuzzifier)
-:HistogramPCMClassifier(), PCM2Classifier()
+HistogramPCM2Classifier::HistogramPCM2Classifier(ParameterSection& parameters)
+:FCMClassifier(parameters), PCMClassifier(parameters), HistogramPCMClassifier(parameters)
 {
-	this->fuzzifier = fuzzifier;
-	initBinSize(binSize);
+	#if defined DEBUG
+	cout<<"Called HPCM2 constructor with parameter section"<<endl;
+	#endif
 }
-
-HistogramPCM2Classifier::HistogramPCM2Classifier(const std::string& histogramFilename, Real fuzzifier)
-:HistogramPCMClassifier(), PCM2Classifier()
-{
-	this->fuzzifier = fuzzifier;
-	initHistogram(histogramFilename);
-}
-
 
 void HistogramPCM2Classifier::attribution()
 {

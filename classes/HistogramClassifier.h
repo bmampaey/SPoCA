@@ -62,11 +62,8 @@ class HistogramClassifier
 
 	public :
 		//! Constructor
-		HistogramClassifier();
-		//! Constructor
-		HistogramClassifier(const RealFeature& binSize);
-		//! Constructor
-		HistogramClassifier(const std::string& histogramFilename);
+		HistogramClassifier(const RealFeature& binSize = 0);
+		
 		//! Destructor
 		virtual ~HistogramClassifier(){}
 		

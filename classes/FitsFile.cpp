@@ -280,7 +280,7 @@ FitsFile& FitsFile::readHeader(Header& header)
 	char card[FLEN_CARD];
 	if( fits_read_record (fptr, 0, card, &status))
 	{
-		cerr<<"Error reseting the fits pointer to the beginning of the header for file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error reseting the fits pointer to the beginning of the header for file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		status = 0;
 	}
@@ -288,7 +288,7 @@ FitsFile& FitsFile::readHeader(Header& header)
 	char value[FLEN_VALUE];
 	char key[FLEN_KEYWORD];
 	int keylength = 0;
-	char* comment = NULL; //By specifying NULL we say that we don't want the comments
+	char comment[FLEN_CARD];
 	int i = 0;
 	while(status != KEY_OUT_BOUNDS)
 	{
@@ -334,7 +334,7 @@ FitsFile& FitsFile::readHeader(Header& header)
 				size_t endpos = cleanValue.find_last_not_of("' \t");
 				if((startpos != string::npos) && (endpos != string::npos))
 				{
-					header.set(key,cleanValue.substr(startpos, endpos-startpos+1));
+					header.set(key,cleanValue.substr(startpos, endpos-startpos+1), comment);
 				}
 			}
 		}
@@ -365,15 +365,15 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 		
 		return *this;
 	}
-	char* comment = NULL;
 	for ( Header::const_iterator i = header.begin(); i != header.end(); ++i )
 	{
+		string comment = header.comment(i->first);
 		// To avoid cfitsio to put quotes around values (why does it do it in the first place ???) we have to know if the value is a number or not
 		// We cannot use fits_get_keytype to determine the type of the value because it is bugged
 		if(i->second.find_first_not_of(" \t") == string::npos)
 		{
 			// The value is all white
-			if(fits_update_key_null(fptr, i->first.c_str(), comment, &status))
+			if(fits_update_key_null(fptr, i->first.c_str(), const_cast<char *>(comment.c_str()), &status))
 			{
 				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
@@ -383,7 +383,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 		else if(i->second.find_first_not_of(" \t0123456789.-") != string::npos)
 		{
 			// It is a string
-			if(fits_update_key(fptr, TSTRING, i->first.c_str(), const_cast<char *>(i->second.c_str()), comment, &status))
+			if(fits_update_key(fptr, TSTRING, i->first.c_str(), const_cast<char *>(i->second.c_str()), const_cast<char *>(comment.c_str()), &status))
 			{
 				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
@@ -394,7 +394,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 		{
 			//It is probably a integer
 			int value = stoi(i->second);
-			if(fits_update_key(fptr, TINT, i->first.c_str(), &value, comment, &status))
+			if(fits_update_key(fptr, TINT, i->first.c_str(), &value, const_cast<char *>(comment.c_str()), &status))
 			{
 				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
@@ -406,7 +406,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 		{
 			//It is probably a double
 			double value = stod(i->second);
-			if(fits_update_key(fptr, TDOUBLE, i->first.c_str(), &value, comment, &status))
+			if(fits_update_key(fptr, TDOUBLE, i->first.c_str(), &value, const_cast<char *>(comment.c_str()), &status))
 			{
 				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);

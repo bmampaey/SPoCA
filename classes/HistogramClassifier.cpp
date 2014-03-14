@@ -5,18 +5,12 @@ using namespace std;
 
 extern string filenamePrefix;
 
-HistogramClassifier::HistogramClassifier()
-:binSize(0),numberBins(0)
-{}
-
 HistogramClassifier::HistogramClassifier(const RealFeature& binSize)
 :binSize(binSize),numberBins(0)
-{}
-
-HistogramClassifier::HistogramClassifier(const std::string& histogramFilename)
-:binSize(0),numberBins(0)
 {
-	initHistogram(histogramFilename);
+	#if defined DEBUG
+	cout<<"Called HistogramClassifier constructor"<<endl;
+	#endif
 }
 
 // Function to insert a new HistoFeatureVector into HistoX

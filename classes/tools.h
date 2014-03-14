@@ -95,6 +95,14 @@ std::string vtos(const std::vector<T>& v)
 	return Z.str();
 }
 
+//! Convert a deque to a string
+template<class T>
+std::string to_string(const std::deque<T>& v)
+{
+//	std::vector<T> temp(v.begin(), v.end());
+	return vtos(std::vector<T>(v.begin(), v.end()));
+}
+
 //! General string parsing
 template<class T>
 std::string& operator>>(std::string& input, T& value)
@@ -129,11 +137,12 @@ std::vector<V> values(const std::map<K,V>& M)
 }
 
 //! Split a string into substring using delimiter
-std::vector<std::string> split(const std::string &s, const char delim);
+std::vector<std::string> split(const std::string &s, const char delim = ',');
 
 //! Convert a integer as a string
 /*! @param size Minimal size of the integer. It will be padded on the left with 0 if needed */
 std::string itos(const int& i, const int size = 0);
+
 //! Convert a double as a string
 /*! @param size Minimal size of the double. It will be padded on the left with 0 if needed */
 std::string dtos(const double& d, const int size = 0);
@@ -155,6 +164,9 @@ std::string getSuffix(const std::string &name);
 bool isDir(const std::string path);
 //! Check if the path is an existing and regular file
 bool isFile(const std::string path);
+//! Check if the path is an empty file
+bool isEmpty(const std::string path);
+
 //! Return a time as a string of the form yyyymmdd_hhmmss
 std::string time2string(const time_t time);
 

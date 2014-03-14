@@ -26,26 +26,31 @@ The modifications are identical to the one done to the PCM2Classifier.
 
 */
 
-class SPoCA2Classifier :  public PCM2Classifier, public virtual SPoCAClassifier
+class SPoCA2Classifier :  public PCM2Classifier, public SPoCAClassifier
 {
 	protected :
-		//Basic functions
+		
 		using SPoCAClassifier::computeB;
+		
+		//! Computation of the probability
 		void computeU();
+		
 		using PCM2Classifier::computeEta;
+		
 		//We don't know how to compute J for SPoCA2
 		using SPoCAClassifier::computeJ;
 
 	public :
-		SPoCA2Classifier(unsigned neighborhoodRadius = 1, Real fuzzifier = 2.);
+		//! Constructor
+		SPoCA2Classifier(Real fuzzifier = 2., unsigned numberClasses = 0, Real precision = 0.0015, unsigned maxNumberIteration = 100, unsigned neighborhoodRadius = 1);
+		
+		//! Constructor
+		SPoCA2Classifier(ParameterSection& parameters);
 
-		//Classification functions
+		//! Classification function
 		using PCM2Classifier::classification;
 		
-		// Function to initialise the eta
+		//! Function to initialise the eta
 		using PCM2Classifier::initEta;
-		
-
-			
 };
 #endif

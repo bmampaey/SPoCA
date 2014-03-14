@@ -15,6 +15,7 @@ class Header
 {
 	private:
 		std::map<std::string,std::string> keywords;
+		std::map<std::string,std::string> keywords_comments;
 	public :
 		
 		//! Constructor
@@ -26,33 +27,21 @@ class Header
 		//! Destructor
 		~Header();
 		
-		//! Return the value of the keyword key
-		template<class T>
-		T get(const std::string& key) const;
-		//! Return the value of the keyword key
-		template<class T>
-		T get(const char* key) const;
-		
 		//! Ckeck if the keyword key is in the header
 		bool has(const std::string& key) const;
 		//! Ckeck if the keyword key is in the header
 		bool has(const char* key) const;
 		
-		//! Set/Update the value of the keyword key
+		//! Return the value of the keyword key
 		template<class T>
-		void set(const std::string& key, const T& value);
-		//! Set/Update the value of the keyword key
-		template<class T>
-		void set(const char* key, const T& value);
+		T get(const std::string& key) const;
+		
+		//! Get comment for keyword key
+		std::string comment(const std::string& key) const;
 		
 		//! Set/Update the value and the comment of the keyword key
-		/*! (Not yet implemented) */
 		template<class T>
-		void set(const std::string& key, const T& value, const std::string& comment);
-		//! Set/Update the value and the comment of the keyword key
-		/*! (Not yet implemented) */
-		template<class T>
-		void set(const char* key, const T& value, const char* comment);
+		void set(const std::string& key, const T& value, const std::string& comment = "");
 		
 		//! Iterator
 		typedef std::map<std::string,std::string>::iterator iterator;
@@ -65,7 +54,40 @@ class Header
 
 };
 
+template<class T>
+T Header::get(const std::string& key) const
+{
+	T value = 0;
+	std::map<std::string,std::string>::const_iterator it = keywords.find(key);
+	if(it == keywords.end())
+	{
+		#if defined VERBOSE
+		cerr<<"Warning : No such key in keywords "<<key<<endl;
+		#endif
+	}
+	else
+	{
+		std::istringstream ss(it->second);
+		ss >> value;
+	}
+	return value;
+}
 
+template<>
+std::string Header::get(const std::string& key) const;
+
+template<class T>
+void Header::set(const std::string& key, const T& value, const std::string& comment)
+{
+	std::ostringstream ss;
+	ss << value;
+	keywords[key] = ss.str();
+	if(!comment.empty())
+		keywords_comments[key] = comment;
+}
+
+template<>
+void Header::set(const std::string& key, const std::string& value, const std::string& comment);
 
 
 #endif

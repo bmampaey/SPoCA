@@ -2,25 +2,23 @@
 
 using namespace std;
 
-HistogramPCMClassifier::HistogramPCMClassifier(Real fuzzifier)
-:PCMClassifier(), HistogramFCMClassifier()
+
+HistogramPCMClassifier::HistogramPCMClassifier(Real fuzzifier, unsigned numberClasses, Real precision, unsigned maxNumberIteration, const RealFeature& binSize)
+:FCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), PCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), HistogramFCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration, binSize)
 {
-	this->fuzzifier = fuzzifier;
+	#if defined DEBUG
+	cout<<"Called HPCM constructor"<<endl;
+	#endif
 }
 
-HistogramPCMClassifier::HistogramPCMClassifier(const RealFeature& binSize, Real fuzzifier)
-:PCMClassifier(), HistogramFCMClassifier()
+HistogramPCMClassifier::HistogramPCMClassifier(ParameterSection& parameters)
+:FCMClassifier(parameters), PCMClassifier(parameters), HistogramFCMClassifier(parameters)
 {
-	this->fuzzifier = fuzzifier;
-	initBinSize(binSize);
+	#if defined DEBUG
+	cout<<"Called HPCM constructor with parameter section"<<endl;
+	#endif
 }
 
-HistogramPCMClassifier::HistogramPCMClassifier(const std::string& histogramFilename, Real fuzzifier)
-:PCMClassifier(), HistogramFCMClassifier()
-{
-	this->fuzzifier = fuzzifier;
-	initHistogram(histogramFilename);
-}
 
 void HistogramPCMClassifier::attribution()
 {
@@ -253,97 +251,23 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 	#endif
 }
 
-
-Real HistogramPCMClassifier::assess(vector<Real>& V)
+void HistogramPCMClassifier::FCMinit()
 {
-	V.assign(numberClasses, 0.);
-	Real score = 0;
-	unsigned numberElements = 0;
-	vector<Real> sum(numberClasses,0.);
-	
-	//This is the vector of the min distances between the centers Bi and all the others centers Bii with ii!=i
-	vector<Real> minDist(numberClasses, numeric_limits<Real>::max());
-	//The min distance between any 2 centers
-	Real minDistBiBii = numeric_limits<Real>::max() ;
-
-	Real distBiBii;
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
-		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
-		{
-			distBiBii = distance_squared(B[i],B[ii]);
-			if(distBiBii < minDist[i])
-				minDist[i] = distBiBii;
-			if(distBiBii < minDist[ii])
-				minDist[ii] = distBiBii;
-		}
-	
-	MembershipSet::iterator uij = U.begin();
-	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
-	if (fuzzifier == 2)
-	{
-		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
-		{
-			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
-			{
-				V[i] += distance_squared(*xj,B[i]) * *uij * *uij * xj->c;
-				sum[i] += (1 - *uij) * (1 - *uij) * xj->c; 
-				numberElements += xj->c;
-			}
-		}
-	}
-	else
-	{
-		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
-		{
-			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
-			{
-				V[i] += distance_squared(*xj,B[i]) * pow(*uij, fuzzifier) * xj->c;
-				sum[i] += pow(Real(1. - *uij), fuzzifier) * xj->c; 
-				numberElements += xj->c;
-			}
-		}
-	}
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
-	{
-		V[i] += eta[i] * sum[i];
-		score += V[i];
-		if(minDist[i] < minDistBiBii)
-			minDistBiBii = minDist[i];
-
-		V[i] /= (minDist[i] * numberElements);
-
-	}
-
-	score /= (minDistBiBii * numberElements);
-
-	return score;
-
-}
-
-
-void HistogramPCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FCMfuzzifier)
-{
-
-	#if defined EXTRA_SAFE
 	if(HistoX.size() == 0)
 	{
 		cerr<<"Error : The set of FeatureVector must be initialized before doing a centers only init."<<endl;
 		exit(EXIT_FAILURE);
-
 	}
 	if(B.size() == 0)
 	{
 		cerr<<"Error : The centers must be initialised before doing FCM."<<endl;
 		exit(EXIT_FAILURE);
-
 	}
-	#endif
-
+	
 	numberClasses = B.size();
 	Real temp = fuzzifier;
 	fuzzifier = FCMfuzzifier;
 	HistogramFCMClassifier::classification(precision, maxNumberIteration);
-
 	
 	//We like our centers to be sorted 
 	HistogramFCMClassifier::sortB();
@@ -352,7 +276,6 @@ void HistogramPCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration
 	//We initialise eta
 	computeEta();
 	
-
 	#ifdef ETA_BEN
 	//This is just a test
 	//We try to stabilize eta before starting the classification
@@ -362,7 +285,6 @@ void HistogramPCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration
 	{		
 		computeU();
 		computeEta();
-
 		
 		for (unsigned i = 0 ; i < numberClasses ; ++i)
 		{

@@ -21,33 +21,36 @@ class HistogramFCMClassifier : public virtual FCMClassifier, public HistogramCla
 {
 
 	protected :
+		//! Computation of the centers of classes
 		void computeB();
-		void computeU();
-		Real computeJ() const;
-
-
-		//Asses & Merge functions for the sursegmentation
-		Real assess(std::vector<Real>& V);
-		void merge(unsigned i1, unsigned i2);
-
-	public :
-		//Constructors & Destructors
-		HistogramFCMClassifier(Real fuzzifier = 2.);
-		HistogramFCMClassifier(const RealFeature& binSize, Real fuzzifier = 2.);
-		HistogramFCMClassifier(const std::string& histogramFilename, Real fuzzifier = 2.);
 		
-		//Function to add images to the Histogram
+		//! Computation of the membership
+		void computeU();
+		
+		//! Computation of J the total intracluster variance
+		Real computeJ() const;
+	
+	public :
+		//! Constructor
+		HistogramFCMClassifier(Real fuzzifier = 2., unsigned numberClasses = 0, Real precision = 0.0015, unsigned maxNumberIteration = 100, const RealFeature& binSize = 0.);
+		
+		//! Constructor
+		HistogramFCMClassifier(ParameterSection& parameters);
+		
+		//! Function to add images to the Histogram
 		virtual void addImages(std::vector<EUVImage*> images);
-
-		//Classification functions
+		
+		//! Classification function
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
+		
+		//! Function to do attribution (Fix center classification).
 		void attribution();
-
-		//Utilities functions for outputing results	
+		
+		//! Utilities functions for outputing results
 		std::vector<RealFeature> classAverage() const;
 		
-		//Function to initialise the centers
-		void initB(const std::vector<RealFeature>& B, const std::vector<std::string>& channels);
+		//! Function to initialise the centers
+		void initB(const std::vector<std::string>& channels, const std::vector<RealFeature>& B);
 		void randomInitB(unsigned C);
 
 };

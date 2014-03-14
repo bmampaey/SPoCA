@@ -2,24 +2,26 @@
 
 using namespace std;
 
-HistogramFCMClassifier::HistogramFCMClassifier(Real fuzzifier)
-:FCMClassifier(), HistogramClassifier()
+HistogramFCMClassifier::HistogramFCMClassifier(Real fuzzifier, unsigned numberClasses, Real precision, unsigned maxNumberIteration, const RealFeature& binSize)
+:FCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), HistogramClassifier(binSize)
 {
-	this->fuzzifier = fuzzifier;
+	#if defined DEBUG
+	cout<<"Called HFCM constructor"<<endl;
+	#endif
 }
 
-HistogramFCMClassifier::HistogramFCMClassifier(const RealFeature& binSize, Real fuzzifier)
-:FCMClassifier(), HistogramClassifier()
+HistogramFCMClassifier::HistogramFCMClassifier(ParameterSection& parameters)
+:FCMClassifier(parameters)
 {
-	this->fuzzifier = fuzzifier;
-	initBinSize(binSize);
-}
-
-HistogramFCMClassifier::HistogramFCMClassifier(const std::string& histogramFilename, Real fuzzifier)
-:FCMClassifier(), HistogramClassifier()
-{
-	this->fuzzifier = fuzzifier;
-	initHistogram(histogramFilename);
+	if (parameters["binSize"].is_set())
+		initBinSize(parameters["binSize"]);
+	
+	else if (parameters["histogramFilename"].is_set())
+		initHistogram(parameters["histogramFilename"]);
+	
+	#if defined DEBUG
+	cout<<"Called HFCM constructor with parameter section"<<endl;
+	#endif
 }
 
 void HistogramFCMClassifier::attribution()
@@ -244,253 +246,6 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 	#endif
 }
 
-Real HistogramFCMClassifier::assess(vector<Real>& V)
-{
-	V.assign(numberClasses, 0.);
-	Real score = 0;
-	unsigned numberElements = 0;
-	//This is the vector of the min distances between the centers Bi and all the others centers Bii with ii!=i
-	vector<Real> minDist(numberClasses, numeric_limits<Real>::max());
-	//The min distance between any 2 centers
-	Real minDistBiBii = numeric_limits<Real>::max() ;
-
-	Real distBiBii;
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
-		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
-		{
-			distBiBii = distance_squared(B[i],B[ii]);
-			if(distBiBii < minDist[i])
-				minDist[i] = distBiBii;
-			if(distBiBii < minDist[ii])
-				minDist[ii] = distBiBii;
-		}
-	
-	MembershipSet::iterator uij = U.begin();
-	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
-	if (fuzzifier == 2)
-	{
-		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
-		{
-			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
-			{
-				V[i] += distance_squared(*xj,B[i]) * *uij * *uij * xj->c;
-				numberElements += xj->c;
-			}
-		}
-	}
-	else
-	{
-		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
-		{
-			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
-			{
-				V[i] += distance_squared(*xj,B[i]) * pow(*uij, fuzzifier) * xj->c;
-				numberElements += xj->c;
-			}
-		}
-	}
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
-	{
-		score += V[i];
-		if(minDist[i] < minDistBiBii)
-			minDistBiBii = minDist[i];
-
-		V[i] /= (minDist[i] * numberElements);
-
-	}
-
-	score /= (minDistBiBii * numberElements);
-
-	return score;
-
-}
-
-
-
-#if MERGE_TYPE==MERGEMAX
-/*!
-Compute the new center by computing the mean value of the featurevector belonging to one of the 2 centers to be merged, weighted by the max value of the membership of the 2 centers.
-A featurevector belong to a class if it's memebership is maximal for that class. 
-The values of the membership are computed using the regular method for computing memebership with the new centers.
-*/
-
-void HistogramFCMClassifier::merge(unsigned i1, unsigned i2)
-{
-	Real sum = 0;
-	RealFeature newB = 0;
-	
-	MembershipSet::iterator uij = U.begin();
-	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
-	if (fuzzifier == 2)
-	{
-		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
-		{
-			// We search to which class belongs the featureVector 
-			Real max_uij = 0;
-			unsigned max_i = 0;
-			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
-			{
-				if (*uij > max_uij)
-				{
-					max_uij = *uij;
-					max_i = i;
-				}
-			}
-			// If it belongs to one of the 2 class I am merging, I update it's B
-			if(max_i == i1 || max_i == i2)
-			{
-				Real uij_m = max_uij * max_uij * xj->c;
-				newB += *xj * uij_m;
-				sum += uij_m;
-			}
-		}
-	}
-	else
-	{
-		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
-		{
-			// We search to which class belongs the featureVector 
-			Real max_uij = 0;
-			unsigned max_i = 0;
-			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
-			{
-				if (*uij > max_uij)
-				{
-					max_uij = *uij;
-					max_i = i;
-				}
-			}
-			// If it belongs to one of the 2 class I am merging, I update it's B
-			if(max_i == i1 || max_i == i2)
-			{
-				Real uij_m = pow(max_uij,fuzzifier) * xj->c;
-				newB +=*xj * uij_m;
-				sum += uij_m;
-
-			}
-		}
-	}
-
-	
-
-	newB /= sum;
-
-	#if defined VERBOSE
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
-	#endif
-
-	B[i1] = newB;
-	B.erase(B.begin()+i2);
-	--numberClasses;
-	
-	computeU();
-}
-
-
-#elif MERGE_TYPE==MERGECIS
-/*!
-The values of the membership are computed by taking the maximal membership value for the 2 classes to be merged.
-The new center is computed using the regular method for computing centers with the new membership.
-
-N.B. This method invalidate the constarint that the sum of membership for a feature vector is equal to 1 
-*/
-void HistogramFCMClassifier::merge(unsigned i1, unsigned i2)
-{
-	Real sum = 0;
-	RealFeature newB = 0;
-	MembershipSet::iterator uij = U.begin();
-	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
-	if (fuzzifier == 2)
-	{
-		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
-		{
-			// We search to which class belongs the featureVector 
-			if(*(uij+i1) < *(uij+i2))
-				*(uij+i1) = *(uij+i2);
-			
-			Real uij_m = *(uij+i1) **(uij+i1) * xj->c;
-			newB += *xj * uij_m;
-			sum += uij_m;
-			
-			uij = U.erase(uij + i2) + numberClasses - (i2 + 1);
-		}
-	}
-	else
-	{
-		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
-		{
-			// We search to which class belongs the featureVector 
-			if(*(uij+i1) < *(uij+i2))
-				*(uij+i1) = *(uij+i2);
-			
-			Real uij_m = pow(*(uij+i1),fuzzifier) * xj->c;
-			newB += *xj * uij_m;
-			sum += uij_m;
-			
-			uij = U.erase(uij + i2) + numberClasses - (i2 + 1);
-		}
-	}
-	
-	newB /= sum;
-
-	#if defined VERBOSE
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
-	#endif
-	
-	B[i1] = newB;
-	B.erase(B.begin()+i2);
-	--numberClasses;
-
-}
-#elif MERGE_TYPE==MERGESUM
-/*!
-The values of the membership are computed by taking the sum of the membership value for the 2 classes to be merged.
-The new center is computed using the regular method for computing centers with the new membership.
-*/
-void HistogramFCMClassifier::merge(unsigned i1, unsigned i2)
-{
-	Real sum = 0;
-	RealFeature newB = 0;
-	MembershipSet::iterator uij = U.begin();
-	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
-	if (fuzzifier == 2)
-	{
-		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
-		{ 
-			*(uij+i1) += *(uij+i2);
-			Real uij_m = *(uij+i1) **(uij+i1) * xj->c;
-			newB += *xj * uij_m;
-			sum += uij_m;
-			
-			uij = U.erase(uij + i2) + numberClasses - (i2 + 1);
-		}
-	}
-	else
-	{
-		for (HistoFeatureVectorSet::iterator xj = HistoX.begin(); xj != HistoX.end(); ++xj)
-		{
-			*(uij+i1) += *(uij+i2);
-			Real uij_m = pow(*(uij+i1),fuzzifier) * xj->c;
-			newB += *xj * uij_m;
-			sum += uij_m;
-			
-			uij = U.erase(uij + i2) + numberClasses - (i2 + 1);
-		}
-	}
-	
-	newB /= sum;
-
-	#if defined VERBOSE
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
-	#endif
-
-	B[i1] = newB;
-	B.erase(B.begin()+i2);
-	--numberClasses;
-
-}
-#endif
-
 // Computes the real average of each class
 vector<RealFeature> HistogramFCMClassifier::classAverage() const
 {
@@ -522,7 +277,7 @@ vector<RealFeature> HistogramFCMClassifier::classAverage() const
 	return class_average;
 }
 
-void HistogramFCMClassifier::initB(const vector<RealFeature>& B, const vector<string>& channels)
+void HistogramFCMClassifier::initB(const vector<string>& channels, const vector<RealFeature>& B)
 {
 	if(histoChannels.empty())
 	{
@@ -544,20 +299,18 @@ void HistogramFCMClassifier::initB(const vector<RealFeature>& B, const vector<st
 			}
 		}
 	}
-	FCMClassifier::initB(B, channels);
+	FCMClassifier::initB(channels, B);
 }
 
 /*! B is actually not randomly initialized, but is initialized with values spred over the range of the histogram. */
 void HistogramFCMClassifier::randomInitB(unsigned C)
 {
-	#if defined EXTRA_SAFE
 	if(HistoX.size() == 0)
 	{
 		cerr<<"Error : The set of FeatureVector must be initialized before doing a random init."<<endl;
 		exit(EXIT_FAILURE);
-
 	}
-	#endif
+	
 	numberClasses = C;
 	srand(unsigned(time(0)));
 	B.resize(numberClasses);
@@ -568,8 +321,8 @@ void HistogramFCMClassifier::randomInitB(unsigned C)
 		for (unsigned j = 0; j < delta; ++j)
 			++xj;
 		B[i]=*xj;
-
 	}
+	
 	//We like our centers to be sorted
 	FCMClassifier::sortB();
 }

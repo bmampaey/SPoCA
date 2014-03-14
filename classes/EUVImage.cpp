@@ -623,4 +623,3 @@ MagickImage EUVImage::magick()
 
 #endif
 
-

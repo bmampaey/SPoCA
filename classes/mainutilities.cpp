@@ -229,7 +229,7 @@ inline EUVImage* getImageFromFile(const string imageType, const string imageFile
 	return image;
 }
 
-inline ColorMap* getImageFromFile(const string imageFilename)
+inline ColorMap* getColorMapFromFile(const string imageFilename)
 {
 
 	#if defined EXTRA_SAFE
@@ -259,23 +259,6 @@ inline unsigned readEtaFromFile (vector<Real>& eta, const string& etaFileName)
 		cerr<<"Error : could not read eta from file "<<etaFileName<<endl;
 	}
 	return eta.size();
-}
-
-inline unsigned readMaxLimitsFromFile (vector<RealFeature>& maxLimits, const string& maxLimitsFileName)
-{
-	maxLimits.clear();
-	ifstream maxLimitsFile(maxLimitsFileName.c_str());
-	if (maxLimitsFile.good())
-	{
-		maxLimitsFile>>maxLimits;
-		maxLimitsFile.close();
-	}
-	else
-	{
-		cerr<<"Error : could not read the max limits from file "<<maxLimitsFileName<<endl;
-	}
-	return maxLimits.size();
-
 }
 
 void replaceAll(string& str, const string& from, const string& to) {
@@ -349,3 +332,4 @@ vector<RealFeature> median_classcenters(const vector< vector<RealFeature> >& Bs)
 	}
 	return Bmedian;
 }
+

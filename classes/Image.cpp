@@ -584,7 +584,7 @@ void Image<T>::localMean(const Image<T>* image, int Nradius)
 	
 	vector<unsigned> neigboorhood;
 	int Nradius2 = Nradius * Nradius;
-	//We construct the neighboorhood disc offsets
+	//We construct the neighborhood disc offsets
 	for (int y = -Nradius; y <= Nradius; ++y)
 	{
 		for (int x = -Nradius; x <= Nradius; ++x)
@@ -630,7 +630,7 @@ void Image<T>::localVariance(const Image<T>* image, int Nradius)
 
 	vector<unsigned> neigboorhood;
 	int Nradius2 = Nradius * Nradius;
-	//We construct the neighboorhood disc offsets
+	//We construct the neighborhood disc offsets
 	for (int y = -Nradius; y <= Nradius; ++y)
 	{
 		for (int x = -Nradius; x <= Nradius; ++x)
@@ -682,7 +682,7 @@ void Image<T>::localSkewness(const Image<T>* image, int Nradius)
 
 	vector<unsigned> neigboorhood;
 	int Nradius2 = Nradius * Nradius;
-	//We construct the neighboorhood disc offsets
+	//We construct the neighborhood disc offsets
 	for (int y = -Nradius; y <= Nradius; ++y)
 	{
 		for (int x = -Nradius; x <= Nradius; ++x)
@@ -741,7 +741,7 @@ void Image<T>::localKurtosis(const Image<T>* image, int Nradius)
 
 	vector<unsigned> neigboorhood;
 	int Nradius2 = Nradius * Nradius;
-	//We construct the neighboorhood disc offsets
+	//We construct the neighborhood disc offsets
 	for (int y = -Nradius; y <= Nradius; ++y)
 	{
 		for (int x = -Nradius; x <= Nradius; ++x)

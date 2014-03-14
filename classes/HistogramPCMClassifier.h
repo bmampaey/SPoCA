@@ -15,34 +15,43 @@
 #include "HistogramFCMClassifier.h"
 #include "PCMClassifier.h"
 
-class HistogramPCMClassifier : public virtual PCMClassifier,  public virtual HistogramFCMClassifier
+class HistogramPCMClassifier : public virtual PCMClassifier, public HistogramFCMClassifier
 {
 	protected :
 
-		void computeB(){HistogramFCMClassifier::computeB();}
+		using HistogramFCMClassifier::computeB;
+		
+		//! Computation of the probability
 		void computeU();
+		
+		//! Computation of J the total intracluster variance
 		Real computeJ() const;
+		
+		//! Function to compute eta
 		virtual void computeEta();
+		
+		//! Function to compute eta
 		virtual void computeEta(Real alpha);
 
-		//Asses & Merge functions for the sursegmentation
-		Real assess(std::vector<Real>& V);
-		using HistogramFCMClassifier::merge;
-
 	public :
-		//Constructors & Destructors
-		HistogramPCMClassifier(Real fuzzifier = 1.5);
-		HistogramPCMClassifier(const RealFeature& binSize, Real fuzzifier = 2.);
-		HistogramPCMClassifier(const std::string& histogramFilename, Real fuzzifier = 2.);
+		//! Constructor
+		HistogramPCMClassifier(Real fuzzifier = 2., unsigned numberClasses = 0, Real precision = 0.0015, unsigned maxNumberIteration = 100, const RealFeature& binSize = 0.);
 		
-		//Classification functions
+		//! Constructor
+		HistogramPCMClassifier(ParameterSection& parameters);
+		
+		//! Classification function
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
+		
+		//! Function to do attribution (Fix center classification)
 		void attribution();
 
 		//Function to initialise the centers
 		using HistogramFCMClassifier::initB;
 		using HistogramFCMClassifier::randomInitB;
-		void FCMinit(Real precision = 0.00001, unsigned maxNumberIteration = 100, Real FCMfuzzifier = 2);
+		
+		//! Function to initialise the centers and eta by doing an FCM
+		void FCMinit();
 
 		//Utilities functions for outputing results
 		using HistogramFCMClassifier::classAverage;

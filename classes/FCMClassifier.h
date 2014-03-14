@@ -23,20 +23,22 @@ The class implements a multi channel Fuzzy C-Means clustering algorithm.
 class FCMClassifier : public Classifier
 {
 	protected :
-		Real precision;
-
+		//! Computation of the centers of classes
 		void computeB();
+		
+		//! Computation of the membership
 		void computeU();
+		
+		//! Computation of J the total intracluster variance
 		Real computeJ() const;
-
-		//Asses & Merge functions for the sursegmentation
-		Real assess(std::vector<Real>& V);
-		void merge(unsigned i1, unsigned i2);
-
+	
 	public :
-		//Constructors & Destructors
-		FCMClassifier(Real fuzzifier = 2.);
-
+		//! Constructor
+		FCMClassifier(Real fuzzifier = 2., unsigned numberClasses = 0, Real precision = 0.0015, unsigned maxNumberIteration = 100);
+		
+		//! Constructor
+		FCMClassifier(ParameterSection& parameters);
+		
 		//Classification functions
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
 };

@@ -2,9 +2,34 @@
 
 using namespace std;
 
-PCMClassifier::PCMClassifier(Real fuzzifier)
-:FCMClassifier(fuzzifier)
-{}
+PCMClassifier::PCMClassifier(Real fuzzifier, unsigned numberClasses, Real precision, unsigned maxNumberIteration)
+:FCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), FCMfuzzifier(fuzzifier)
+{
+	#if defined DEBUG
+	cout<<"Called PCM constructor"<<endl;
+	#endif
+}
+
+PCMClassifier::PCMClassifier(ParameterSection& parameters)
+:FCMClassifier(parameters)
+{
+	FCMfuzzifier = fuzzifier;
+	if(parameters["PCMfuzzifier"].is_set())
+	{
+		fuzzifier = parameters["PCMfuzzifier"];
+	}
+	#if defined EXTRA_SAFE
+	if (fuzzifier == 1 )
+	{
+		cerr<<"Error : Fuzzifier must not equal 1.";
+		exit(EXIT_FAILURE);
+	}
+	#endif
+	
+	#if defined DEBUG
+	cout<<"Called PCM constructor with parameter section"<<endl;
+	#endif
+}
 
 void PCMClassifier::computeU()
 {
@@ -229,97 +254,29 @@ Real PCMClassifier::computeJ() const
 
 }
 
-Real PCMClassifier::assess(vector<Real>& V)
-{
-	V.assign(numberClasses, 0.);
-	Real score = 0;
-	vector<Real> sum(numberClasses,0.);
-	
-	//This is the vector of the min distances between the centers Bi and all the others centers Bii with ii!=i
-	vector<Real> minDist(numberClasses, numeric_limits<Real>::max());
-	//The min distance between any 2 centers
-	Real minDistBiBii = numeric_limits<Real>::max() ;
-
-	Real distBiBii;
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
-		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
-		{
-			distBiBii = distance_squared(B[i],B[ii]);
-			if(distBiBii < minDist[i])
-				minDist[i] = distBiBii;
-			if(distBiBii < minDist[ii])
-				minDist[ii] = distBiBii;
-		}
-	
-	MembershipSet::iterator uij = U.begin();
-	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
-	if (fuzzifier == 2)
-	{
-		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
-		{
-			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
-			{
-				V[i] += distance_squared(*xj,B[i]) * *uij * *uij;
-				sum[i] += (1 - *uij) * (1 - *uij); 
-			}
-		}
-	}
-	else
-	{
-		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
-		{
-			for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
-			{
-				V[i] += distance_squared(*xj,B[i]) * pow(*uij, fuzzifier);
-				sum[i] += pow(Real(1. - *uij), fuzzifier); 
-			}
-		}
-	}
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
-	{
-		V[i] += eta[i] * sum[i];
-		score += V[i];
-		if(minDist[i] < minDistBiBii)
-			minDistBiBii = minDist[i];
-
-		V[i] /= (minDist[i] * numberFeatureVectors);
-
-	}
-
-	score /= (minDistBiBii * numberFeatureVectors);
-
-	return score;
-
-}
-
 
 vector<Real> PCMClassifier::getEta()
 {
 	return eta;
 }
 
-void PCMClassifier::saveEta(const string& filename)
+void PCMClassifier::fillHeader(Header& header)
 {
-	ofstream etaFile(filename.c_str());
-	if (etaFile.good())
-	{
-		etaFile<<eta<<endl;
-		etaFile.close();
-	}
+	FCMClassifier::fillHeader(header);
+	header.set("CFCMFUZ", FCMfuzzifier, "FCM Fuzzifier");
+	for (unsigned i = 0; i < eta.size(); ++i)
+		header.set("CETA"+itos(i+1,2), dtos(eta[i]), "Classification eta " + itos(i+1,2));
 }
 
-void PCMClassifier::initBEta(const vector<RealFeature>& B, const vector<Real>& eta)
+void PCMClassifier::initBEta(const std::vector<std::string>& channels, const std::vector<RealFeature>& B, const vector<Real>& eta)
 {
-	#if defined EXTRA_SAFE
 	if(B.size() != eta.size())
 	{
-		cerr<<"Error : The size of initB is different than the size of initEta"<<endl;
+		cerr<<"Error : The number of class centers is different than the number of eta"<<endl;
 		exit(EXIT_FAILURE);
-
 	}
-	#endif
-
-	initB(B);
+	
+	initB(channels, B);
 	this->eta = eta;
 }
 
@@ -329,24 +286,19 @@ void PCMClassifier::initEta(const vector<Real>& eta)
 }
 
 
-void PCMClassifier::FCMinit(Real precision, unsigned maxNumberIteration, Real FCMfuzzifier)
+void PCMClassifier::FCMinit()
 {
-
-	#if defined EXTRA_SAFE
 	if(X.size() == 0)
 	{
 		cerr<<"Error : The set of FeatureVector must be initialized before doing a FCM init."<<endl;
 		exit(EXIT_FAILURE);
-
 	}
 	if(B.size() == 0)
 	{
 		cerr<<"Error : The centers must be initialised before doing a FCM init."<<endl;
 		exit(EXIT_FAILURE);
-
 	}
-	#endif
-
+	
 	numberClasses = B.size();
 	Real temp = fuzzifier;
 	fuzzifier = FCMfuzzifier;

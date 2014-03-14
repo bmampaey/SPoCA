@@ -2,10 +2,21 @@
 
 using namespace std;
 
-SPoCA2Classifier::SPoCA2Classifier(unsigned neighborhoodRadius, Real fuzzifier)
-:SPoCAClassifier(neighborhoodRadius), PCM2Classifier(fuzzifier)
-{}
+SPoCA2Classifier::SPoCA2Classifier(Real fuzzifier, unsigned numberClasses, Real precision, unsigned maxNumberIteration, unsigned neighborhoodRadius)
+:FCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), SPoCAClassifier(fuzzifier, numberClasses, precision, maxNumberIteration, neighborhoodRadius)
+{
+	#if defined DEBUG
+	cout<<"Called SPoCA2 constructor"<<endl;
+	#endif
+}
 
+SPoCA2Classifier::SPoCA2Classifier(ParameterSection& parameters)
+:FCMClassifier(parameters), PCMClassifier(parameters), SPoCAClassifier(parameters)
+{
+	#if defined DEBUG
+	cout<<"Called SPoCA2 constructor with parameter section"<<endl;
+	#endif
+}
 
 void SPoCA2Classifier::computeU()
 {

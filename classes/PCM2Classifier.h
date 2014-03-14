@@ -35,13 +35,16 @@ class PCM2Classifier : public virtual PCMClassifier
 
 	public :
 		
-		//Constructors & Destructors
-		PCM2Classifier(Real fuzzifier = 2);
+		//! Constructor
+		PCM2Classifier(Real fuzzifier = 2., unsigned numberClasses = 0, Real precision = 0.0015, unsigned maxNumberIteration = 100);
 
-		//Classification functions
+		//! Constructor
+		PCM2Classifier(ParameterSection& parameters);
+
+		//! Classification functions
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
 		
-		// Function to initialise the eta
+		//! Function to initialise the eta
 		void initEta(const std::vector<Real>& eta);
 
 };

@@ -24,16 +24,23 @@ class PCMClassifier : public virtual FCMClassifier
 	protected :
 		//! Vector of eta values
 		std::vector<Real> eta;
-
+		
+		//! Fuzzifier for FCM init
+		Real FCMfuzzifier;
+		
 		using FCMClassifier::computeB;
+		
+		//! Computation of the probability
 		void computeU();
+		
+		//! Computation of J the total intracluster variance
 		Real computeJ() const;
+		
 		//! Function to compute eta
 		virtual void computeEta();
+		
 		//! Function to compute eta
 		virtual void computeEta(Real alpha);
-
-		Real assess(std::vector<Real>& V);
 		
 		//! Function to sort the centers
 		virtual void sortB();
@@ -43,10 +50,13 @@ class PCMClassifier : public virtual FCMClassifier
 		virtual void stepout(const unsigned iteration, const Real precisionReached, const Real precision);
 
 	public :
-		// Constructors & Destructors
-		PCMClassifier(Real fuzzifier = 1.5);
+		//! Constructor
+		PCMClassifier(Real fuzzifier = 2., unsigned numberClasses = 0, Real precision = 0.0015, unsigned maxNumberIteration = 100);
+	
+		//! Constructor
+		PCMClassifier(ParameterSection& parameters);
 
-		// Classification functions
+		//! Classification functions
 		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
 
 		//! Function to initialise the centers
@@ -56,16 +66,16 @@ class PCMClassifier : public virtual FCMClassifier
 		virtual void initEta(const std::vector<Real>& eta);
 		
 		//! Function to initialise the centers and eta
-		void initBEta(const std::vector<RealFeature>& B, const std::vector<Real>& eta);
+		void initBEta(const std::vector<std::string>& channels, const std::vector<RealFeature>& B, const std::vector<Real>& eta);
 		
 		//! Function to initialise the centers and eta by doing an FCM
-		virtual void FCMinit(Real precision = 0.00001, unsigned maxNumberIteration = 100, Real FCMfuzzifier = 2);
+		virtual void FCMinit();
 
 		//! Accessors to retrieve eta
 		std::vector<Real> getEta();
 		
-		//! Function to save eta to a file
-		void saveEta(const std::string& filename);
+		//! Function to fill a fits header with classification information
+		void fillHeader(Header& header);
 
 };
 #endif

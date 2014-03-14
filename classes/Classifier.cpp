@@ -2,9 +2,21 @@
 
 using namespace std;
 
-Classifier::Classifier(Real fuzzifier)
-:fuzzifier(fuzzifier),numberClasses(0),numberFeatureVectors(0),Xaxes(0),Yaxes(0)
-{}
+Classifier::Classifier(Real fuzzifier, unsigned numberClasses, Real precision, unsigned maxNumberIteration)
+:fuzzifier(fuzzifier),numberClasses(numberClasses),precision(precision), maxNumberIteration(maxNumberIteration),numberFeatureVectors(0),Xaxes(0),Yaxes(0)
+{
+	#if defined DEBUG
+	cout<<"Called Classifier constructor"<<endl;
+	#endif
+}
+
+Classifier::Classifier(ParameterSection& parameters)
+:fuzzifier(parameters["fuzzifier"]),numberClasses(parameters["numberClasses"]),precision(parameters["precision"]), maxNumberIteration(parameters["maxNumberIteration"]),numberFeatureVectors(0),Xaxes(0),Yaxes(0)
+{
+	#if defined DEBUG
+	cout<<"Called Classifier constructor with parameter section"<<endl;
+	#endif
+}
 
 Classifier::~Classifier()
 {
@@ -15,17 +27,12 @@ Classifier::~Classifier()
 void Classifier::addImages(vector<EUVImage*> images)
 {
 
-	if(images.size() < NUMBERCHANNELS)
+	if(images.size() != NUMBERCHANNELS)
 	{
 		cerr<<"Error : The number of images is not equal to "<<NUMBERCHANNELS<<endl;
 		exit(EXIT_FAILURE);
 	}
-	else if(images.size() > NUMBERCHANNELS)
-	{
-		cerr<<"Warning : The number of images is not equal to "<<NUMBERCHANNELS<<". Only using the first ones."<<endl;
-	}
 	
-	ordonateImages(images);
 	unsigned numberPixelsEstimate = images[0]->NumberPixels();
 	Xaxes = images[0]->Xaxes();
 	Yaxes = images[0]->Yaxes();
@@ -37,8 +44,8 @@ void Classifier::addImages(vector<EUVImage*> images)
 	}
 
 	//We initialise the valid pixels vector X
-	X.reserve(numberPixelsEstimate);
-	coordinates.reserve(numberPixelsEstimate);
+	X.reserve(numberPixelsEstimate * 1.1);
+	coordinates.reserve(numberPixelsEstimate * 1.1);
 
 	RealFeature f;
 	bool validPixel;
@@ -61,9 +68,13 @@ void Classifier::addImages(vector<EUVImage*> images)
 
 		}
 	}
-
+	
 	numberFeatureVectors = X.size();
+}
 
+void Classifier::classification()
+{
+	this->classification(precision, maxNumberIteration);
 }
 
 void Classifier::attribution()
@@ -72,216 +83,109 @@ void Classifier::attribution()
 	computeU();
 }
 
-unsigned Classifier::sursegmentation(unsigned Cmin)
+ColorMap* Classifier::getSegmentedMap(ParameterSection& parameters, ColorMap* segmentedMap)
 {
-	vector<Real> V;
-	Real newScore = assess(V);
-	Real oldScore = numeric_limits<Real>::max();
-	vector<RealFeature> oldB; 
-
-	#if defined VERBOSE
-	cout<<"--Classifier::sursegmentation--START--"<<endl;
-	cout<<"B :\t"<<B<<endl;
-	cout<<"V :\t"<<V<<"\tscore :"<<newScore<<endl;
-	#endif
-	
-
-	for (unsigned C = numberClasses - 1; C >= Cmin; --C)
+	// We do the segmentation
+	if (parameters["type"] == "max")
 	{
-
-		//We search for the max validity index (<=> worst center)
-		unsigned indMax1 = 0, indMax2 = 0;
-		Real max1Vi = 0;
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
+		segmentedMap_maxUij(segmentedMap);
+	}
+	else if (parameters["type"] == "closest")
+	{
+		segmentedMap_closestCenter(segmentedMap);
+	}
+	else if (parameters["type"] == "threshold")
+	{
+		if(!parameters["thresholds"].is_set())
 		{
-			if (V[i] > max1Vi)
-			{
-				indMax1 = i;
-				max1Vi = V[i];
-			}
-		}
-		//We look for it's worst neighboor
-		if(indMax1 == 0)
-		{
-			indMax2 = 1;
-		}
-		else if(indMax1 == numberClasses -1)
-		{
-			indMax2 = numberClasses -2;
+			cerr<<"Error : For threshold segmentation the thresholds parameter is mandatory."<<endl;
+			exit(EXIT_FAILURE);
 		}
 		else
 		{
-			indMax2 = V[indMax1 - 1] > V[indMax1 + 1] ? indMax1 - 1 : indMax1 + 1;
+			vector<Real> thresholds = parameters["thresholds"];
+			segmentedMap_classThreshold(thresholds[0], thresholds[1], thresholds[2], segmentedMap);
 		}
-
-		oldB = B;
-		//We merge
-		merge(indMax1, indMax2);
-
-		//And we re-asses
-		oldScore = newScore;
-		newScore = assess(V);
-
-		#if defined DEBUG
-		ColorMap segmentedMap;
-		segmentedMap_maxUij(&segmentedMap);
-		segmentedMap.writeFits(filenamePrefix + "segmented." + itos(numberClasses) + "classes.fits");
-		#endif
-		
-		#if defined VERBOSE
-		cout<<"new B :"<<B<<endl;
-		cout<<"V :"<<V<<"\tscore :"<<newScore<<endl;
-		#endif
-
-		/*	If we don't specify a min number of class to reach(i.e. Cmin == 0)
-			then we stop when the oldScore is smaller than the newScore	*/
-		if( Cmin == 0 && oldScore < newScore )
-		{
-			//We put back the old center, and we stop
-			initB(oldB);
-			attribution();
-			break;
-
-		}
-
 	}
-
-	#if defined VERBOSE
-	cout<<"--Classifier::sursegmentation--END--"<<endl;
-	#endif
-
-	return numberClasses;
-}
-
-unsigned Classifier::sursegmentation(vector<RealFeature>& B, unsigned Cmin)
-{
-
-	
-	//We must be sure that some classification has been done
-	initB(B);
-	attribution();
-
-	return sursegmentation(Cmin);
-
-}
-
-#if MERGE_TYPE==MERGEMAX
-/*!
-Compute the new center by computing the mean value of the featurevector belonging to one of the 2 centers to be merged.
-A featurevector belong to a class if it's memebership is maximal for that class. 
-The values of the membership are computed using the regular method for computing membership with the new centers.
-*/
-void Classifier::merge(unsigned i1, unsigned i2)
-{
-	Real sum = 0;
-	RealFeature newB = 0;
-	MembershipSet::iterator uij = U.begin();
-	
-	for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+	else if (parameters["type"] == "limits")
 	{
-		// We search to which class belongs the featureVector 
-		Real max_uij = 0;
-		unsigned max_i = 0;
-		for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
+		if(!parameters["maxLimits"].is_set())
 		{
-			if (*uij > max_uij)
-			{
-				max_uij = *uij;
-				max_i = i;
-			}
+			cerr<<"Error : For limits segmentation the limits parameter is mandatory."<<endl;
+			exit(EXIT_FAILURE);
 		}
-		// If it belongs to one of the 2 class I am merging, I update it's B
-		if(max_i == i1 || max_i == i2)
+		else
 		{
-			newB += *xj;
-			sum += 1;
+			vector<RealFeature> limits = parameters["limits"];
+			segmentedMap_limits(limits, segmentedMap);
 		}
 	}
-	newB /= sum;
-
-	#if defined VERBOSE
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
-	#endif
-	
-	B[i1] = newB;
-	B.erase(B.begin()+i2);
-	--numberClasses;
-	
-	computeU();
-}
-
-
-#elif MERGE_TYPE==MERGEVINCENT
-/*!
-Compute the new center by a strange method.
-The values of the membership are computed using the regular method for computing membership with the new centers.
-*/
-void Classifier::merge(unsigned i1, unsigned i2)
-{
-	Real alpha = MERGEVINCENT_ALPHA;
-	RealFeature newB[] = {0., 0.};
-	Real caardinal[] = {0., 0.};
-	MembershipSet::iterator uij = U.begin();
-	for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+	else if (parameters["type"] == "fix")
 	{
-		if(*(uij + i1) > alpha)
+		vector<unsigned> CH, QS, AR;
+		if(parameters["CH"].is_set())
 		{
-			++caardinal[0];
-			newB[0] += *xj * *(uij + i1);
-
+			CH = parameters["CH"];
 		}
-		if( *(uij + i2) > alpha)
+		if(parameters["QS"].is_set())
 		{
-			++caardinal[1];
-			newB[1] += *xj * *(uij + i2);
-
+			QS = parameters["QS"];
 		}
-		uij+=numberClasses;
+		if(parameters["AR"].is_set())
+		{
+			AR = parameters["AR"];
+		}
+		segmentedMap_fixed(CH, QS, AR, segmentedMap);
 	}
-
-	newB[0] /= caardinal[0];
-	newB[1] /= caardinal[1];
-
-	#if defined VERBOSE
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB[0] + newB[1]<<endl;
-	#endif
-
-	B[i1] = newB[0] + newB[1];
-	B.erase(B.begin()+i2);
-	--numberClasses;
+	else 
+	{
+		cerr<<"Error : "<<parameters["type"]<<" is not a known segmentation type!"<<endl;
+		exit(EXIT_FAILURE);
+	}
 	
-	computeU();
+	//We add information about the classification to the header of the segmented map
+	Header& header = segmentedMap->getHeader();
+	fillHeader(header);
+	
+	//We add information about the segmentation to the header of the segmented map
+	header.set("SEGMTYPE", parameters["type"], "Segmentation type");
+	if (parameters["type"] == "fix")
+	{
+		if(parameters["CH"].is_set())
+			header.set("SFIXCH", str(parameters["CH"]));
+		if(parameters["QS"].is_set())
+			header.set("SFIXQS", str(parameters["QS"]));
+		if(parameters["AR"].is_set())
+			header.set("SFIXAR", str(parameters["AR"]));
+	}
+	else if (parameters["type"] == "threshold")
+		header.set("STRSHLD", str(parameters["thresholds"]));
+	else if (parameters["type"] == "limits")
+		header.set("SLIMITS", str(parameters["limits"]));
+	
+	return segmentedMap;
 }
 
-#else
-/*!
-Compute the new center by a taking the mean value of the 2 centers to be merged.
-The values of the membership are computed using the regular method for computing membership with the new centers.
-*/
-void Classifier::merge(unsigned i1, unsigned i2)
+void Classifier::fillHeader(Header& header)
 {
-	RealFeature newB = (B[i1] + B[i2]) / 2.;
-
-	#if defined VERBOSE
-	cout<<"Merging centers :"<<B[i1]<<"\t"<<B[i2]<<" into new center :"<<newB<<endl;
-	#endif
+	header.set("CNBRCLAS", numberClasses, "Number Classes");
+	header.set("CPRECIS", precision, "Classifier Precision");
+	header.set("CMAXITER", maxNumberIteration, "Maximum Number of Iteration");
+	header.set("CFUZFIER", fuzzifier, "Classifier Fuzzifier");
+	header.set("CHANNELS", vtos(getChannels()), "Classification Channels");
 	
-	B[i1] = newB;
-	B.erase(B.begin()+i2);
-	--numberClasses;
-
-	computeU();
-
+	B = getB();
+	for (unsigned i = 0; i < numberClasses; ++i)
+		header.set("CLSCTR"+itos(i+1,2), B[i].toString(4), "Classification class center " + itos(i+1,2));
 }
-#endif
 
 ColorMap* Classifier::segmentedMap_maxUij(ColorMap* segmentedMap)
 {
-
-	#if defined EXTRA_SAFE
 	if (U.size() != numberClasses*numberFeatureVectors)
+	{
 		cerr<<"The membership matrix U has not yet been calculated"<<endl;
-	#endif
+		exit(EXIT_FAILURE);
+	}
 	
 	if(segmentedMap)
 	{
@@ -316,12 +220,12 @@ ColorMap* Classifier::segmentedMap_maxUij(ColorMap* segmentedMap)
 
 ColorMap* Classifier::segmentedMap_closestCenter(ColorMap* segmentedMap)
 {
-
-	#if defined EXTRA_SAFE
 	if (U.size() != numberClasses*numberFeatureVectors)
+	{
 		cerr<<"The membership matrix U has not yet been calculated"<<endl;
-	#endif
-
+		exit(EXIT_FAILURE);
+	}
+	
 	if(segmentedMap)
 	{
 		segmentedMap->resize(Xaxes, Yaxes);
@@ -355,10 +259,11 @@ ColorMap* Classifier::segmentedMap_closestCenter(ColorMap* segmentedMap)
 
 ColorMap* Classifier::segmentedMap_classThreshold(unsigned middleClass, Real lowerIntensity_minMembership, Real higherIntensity_minMembership, ColorMap* segmentedMap)
 {
-
-	#if defined EXTRA_SAFE
 	if (U.size() != numberClasses*numberFeatureVectors)
-		cerr<<"The membership matrix U has not yet been calculated."<<endl;
+	{
+		cerr<<"The membership matrix U has not yet been calculated"<<endl;
+		exit(EXIT_FAILURE);
+	}
 	if (middleClass == 0 || middleClass > numberClasses)
 	{
 		cerr<<"The class number for threshold segmentation should be between 1 and numberClasses. It was set to: "<<middleClass<<endl;
@@ -374,7 +279,6 @@ ColorMap* Classifier::segmentedMap_classThreshold(unsigned middleClass, Real low
 		cerr<<"The higherIntensity minMembership must be a real between 0 and 1. It was set to: "<<higherIntensity_minMembership<<endl;
 		exit(EXIT_FAILURE);
 	}
-	#endif
 	
 	--middleClass;
 	
@@ -412,7 +316,7 @@ ColorMap* Classifier::segmentedMap_classThreshold(unsigned middleClass, Real low
 }
 
 
-ColorMap* Classifier::segmentedMap_limits(vector<RealFeature>& limits,ColorMap* segmentedMap)
+ColorMap* Classifier::segmentedMap_limits(vector<RealFeature>& limits, ColorMap* segmentedMap)
 {
 
 	segmentedMap_maxUij(segmentedMap);
@@ -521,39 +425,6 @@ EUVImage* Classifier::normalizedFuzzyMap(const unsigned i, EUVImage* fuzzyMap)
 }
 
 
-void Classifier::saveB(const string& filename)
-{
-	ofstream centersFile(filename.c_str());
-	if (centersFile.good())
-	{
-		centersFile<<channels<<"\t"<<B<<endl;
-		centersFile.close();
-	}
-}
-
-
-vector<RealFeature> Classifier::percentiles(vector<Real> percentileValues)
-{
-
-	vector<RealFeature> sortedX = X;
-	vector<RealFeature> result;
-	sort(sortedX.begin(), sortedX.end());
-	for (unsigned h = 0; h < percentileValues.size(); ++h)
-	{
-		#if defined EXTRA_SAFE
-		if(percentileValues[h] < 0 || percentileValues[h] > 1)
-		{
-			cerr<<"Percentile values must be between 0 and 1"<<endl;
-			exit(EXIT_FAILURE);
-		}
-		#endif
-		result.push_back(sortedX[unsigned(percentileValues[h] * sortedX.size())]);
-
-	}
-	return result;
-}
-
-
 vector<RealFeature> Classifier::getB()
 {
 	return B;
@@ -566,29 +437,24 @@ vector<string> Classifier::getChannels()
 
 EUVImage* Classifier::getImage(unsigned p)
 {
-
 	EUVImage* image = new EUVImage(Xaxes, Yaxes);
 	image->zero();
 	for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 	{
 		image->pixel(coordinates[j]) = X[j].v[p];
 	}
-
+	
 	return image;
-
 }
 
 
 void Classifier::randomInitB(unsigned C)
 {
-	#if defined EXTRA_SAFE
 	if(X.size() == 0)
 	{
 		cerr<<"Error : The set of FeatureVector must be initialized before doing a random init."<<endl;
 		exit(EXIT_FAILURE);
-
 	}
-	#endif
 	numberClasses = C;
 	//We initialise the centers by setting each one randomly to one of the actual pixel. This is vincent's method!
 	srand(unsigned(time(0)));
@@ -602,15 +468,13 @@ void Classifier::randomInitB(unsigned C)
 	sort(B.begin(), B.end());
 }
 
-
-void Classifier::initB(const vector<RealFeature>& B)
+void Classifier::initB(const std::vector<std::string>& channels, const std::vector<RealFeature>& B)
 {
-	this->B = B;
-	numberClasses = B.size();
-}
-
-void Classifier::initB(const vector<RealFeature>& B, const vector<string>& channels)
-{
+	if(channels.size() != NUMBERCHANNELS)
+	{
+		cerr<<"Error : The number of channels is not correct."<<endl;
+		exit(EXIT_FAILURE);
+	}
 	this->B = B;
 	numberClasses = B.size();
 	this->channels = channels;
@@ -621,40 +485,6 @@ void Classifier::sortB()
 	sort(B.begin(), B.end());
 }
 
-void Classifier::ordonateImages(vector<EUVImage*>& images)
-{
-	if(channels.size() == NUMBERCHANNELS)
-	{
-		for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
-		{
-			if(channels[p] != images[p]->Channel())
-			{
-				unsigned pp = p+1;
-				while(pp < NUMBERCHANNELS && channels[p] != images[pp]->Channel())
-					++pp;
-				if(pp < NUMBERCHANNELS)
-				{
-					EUVImage* temp = images[pp];
-					images[pp] = images[p];
-					images[p] = temp;
-				}
-				else
-				{
-
-					cerr<<"Error : the wavelengths of the sun images provided do not match the wavelengths of the centers file!"<<endl;
-					exit(EXIT_FAILURE);
-				}
-			}
-		}
-	}
-	else
-	{
-		channels.resize(NUMBERCHANNELS);
-		for (unsigned p = 0; p < NUMBERCHANNELS; ++p)
-			channels[p] = images[p]->Channel();
-	}
-	
-}
 
 // Computes the real average of each class
 vector<RealFeature> Classifier::classAverage() const
@@ -764,4 +594,34 @@ Real Classifier::variation(const vector<RealFeature>& oldB, const vector<RealFea
 		}
 	}
 	return maximalVariation;
+}
+
+
+
+ParameterSection Classifier::classificationParameters()
+{
+	ParameterSection parameters;
+	parameters["maxNumberIteration"] = ArgParser::Parameter(100, 'i', "The maximal number of iteration for the classification.");
+	parameters["precision"] = ArgParser::Parameter(0.0015, 'p', "The precision to be reached to stop the classification.");
+	parameters["fuzzifier"] = ArgParser::Parameter(2, 'f', "The fuzzifier value");
+	parameters["FCMfuzzifier"] = ArgParser::Parameter(2, "The FCM fuzzifier value. Set if you want to override the global fuzzifier value for FCM.");
+	parameters["PCMfuzzifier"] = ArgParser::Parameter(2, "The PCM fuzzifier value. Set if you want to override the global fuzzifier value for PCM.");
+	parameters["FCMweight"] = ArgParser::Parameter(2, "The FCM weight for PFCM classification.");
+	parameters["PCMweight"] = ArgParser::Parameter(2, "The PCM  weight for PFCM classification.");
+	parameters["numberClasses"] = ArgParser::Parameter(4, 'C', "The number of classes to classify the sun images into.");
+	parameters["neighborhoodRadius"] = ArgParser::Parameter(1, 'N', "Only for spatial classifiers like SPoCA. The neighborhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.");
+	parameters["binSize"] = ArgParser::Parameter(1, 'z', "The size of the bins of the histogram. NB : Be carreful that the histogram is built after the image preprocessing.");
+	return parameters;
+}
+
+ParameterSection Classifier::segmentationParameters()
+{
+	ParameterSection parameters;
+	parameters["type"] = ArgParser::Parameter("max", 'T', "The type of segmentation. Possible values are : max, closest, threshold, limits, fix");
+	parameters["limits"] = ArgParser::Parameter('L', "Only for limit segmentation. A vector of feature vectors to group class centers.");
+	parameters["CH"] = ArgParser::Parameter('c', "Only for fix segmentation. The classes of the Coronal Hole.");
+	parameters["AR"] = ArgParser::Parameter('a', "Only for fix segmentation. The classes of the Active Region.");
+	parameters["QS"] = ArgParser::Parameter('q', "Only for fix segmentation. The classes of the Quiet Sun.");
+	parameters["thresholds"] = ArgParser::Parameter('t', "Only for threshold segmentation. The parameter of the threshold segmentation. Must be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership");
+	return parameters;
 }

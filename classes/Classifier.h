@@ -21,6 +21,8 @@
 #include "FeatureVector.h"
 #include "Region.h"
 #include "Coordinate.h"
+#include "ArgParser.h"
+#include "Header.h"
 
 //! Base class of all classifier classes
 /*!
@@ -44,9 +46,15 @@ class Classifier
 	protected :
 		//! The fuzzifier value, usually represented by the m value
 		Real fuzzifier;
-
+		
 		//! Number of classes
 		unsigned numberClasses;
+		
+		//! The precision to stop the classification
+		Real precision;
+		
+		//! The maximum number of iteration of classification
+		unsigned maxNumberIteration;
 		
 		//! Number of feature vectors
 		unsigned numberFeatureVectors;
@@ -56,16 +64,16 @@ class Classifier
 		
 		//! Vector describing the channels
 		std::vector<std::string> channels;
-
+		
 		//! Set of membership/probability
 		MembershipSet U;
-
+		
 		//! Set of the centers of the classes
 		ClassCenterSet B;
-
+		
 		//! Set of the feature vectors (pixel intensities for example)
 		FeatureVectorSet X;
-
+		
 		//! The coordinates of the feature vectors (needed to output the results)
 		std::vector<PixLoc> coordinates;
 		
@@ -78,20 +86,9 @@ class Classifier
 		
 		//! Computation of the membership/probability
 		virtual void computeU() = 0;
-
+		
 		//! Computation of J the total intracluster variance
 		virtual Real computeJ() const = 0;
-
-		//! Asses function for the sursegmentation
-		/*! Computes the compactness of each class and returns the global score of the classification*/
-		virtual Real assess(std::vector<Real>& V) = 0;
-		
-		//! Merge function for the sursegmentation
-		/*! Merge 2 classes into 1 */
-		virtual void merge(unsigned i1, unsigned i2);
-		
-		//! Function to initialise the centers
-		virtual void initB(const std::vector<RealFeature>& B);
 		
 		//! Function to sort the centers
 		virtual void sortB();
@@ -101,31 +98,40 @@ class Classifier
 		
 		//! Function to output a classification step
 		virtual void stepout(const unsigned iteration, const Real precisionReached, const Real precision);
-
+	
 	public :
 		//! Constructor
-		Classifier(Real fuzzifier = 2.);
+		Classifier(Real fuzzifier = 2., unsigned numberClasses = 0, Real precision = 0.0015, unsigned maxNumberIteration = 100);
+		
+		//! Constructor
+		Classifier(ParameterSection& parameters);
 		
 		//! Destructor
 		virtual ~Classifier();
 		
-		//! Function to ordonate the images according to the channels
-		void ordonateImages(std::vector<EUVImage*>& images);
-		
 		//! Function to add images to the classifier
 		virtual void addImages (std::vector<EUVImage*> images);
-
+		
 		//! Function to do the classification
 		virtual void classification(Real precision = 1., unsigned maxNumberIteration = 100) = 0;
 		
-		//! Function to do attribution (Fix center classification).
+		//! Function to do the classification
+		void classification();
+		
+		//! Function to do attribution (Fix center classification)
 		virtual void attribution();
-
+		
 		//! Function to initialise the centers of classes
-		virtual void initB(const std::vector<RealFeature>& B, const std::vector<std::string>& channels);
+		virtual void initB(const std::vector<std::string>& channels, const std::vector<RealFeature>& B);
 		
 		//! Function to randomly initialise the centers of classes
 		virtual void randomInitB(unsigned C);
+		
+		//! Function to return a segmented map according to the passed parameters
+		ColorMap* getSegmentedMap(ParameterSection& parameters, ColorMap* segmentedMap);
+		
+		//! Function to fill a fits header with classification information
+		virtual void fillHeader(Header& header);
 		
 		//! Function to segment by selection of the class that has the maximal value of membership/probability
 		virtual ColorMap* segmentedMap_maxUij(ColorMap* segmentedMap = NULL);
@@ -148,15 +154,6 @@ class Classifier
 		//! Function that returns the normalized membership/probability for a class
 		virtual EUVImage* normalizedFuzzyMap(const unsigned i, EUVImage* fuzzyMap = NULL);
 		
-		//! Function to do sursegmentation
-		unsigned sursegmentation(std::vector<RealFeature>& B, unsigned C = 0);
-		
-		//! Function to do sursegmentation
-		unsigned sursegmentation(unsigned C = 0);
-
-		//! Function to save the centers of classes to a file
-		void saveB(const std::string& filename);
-		
 		//! Function to compute the class average
 		virtual std::vector<RealFeature> classAverage() const;
 		
@@ -172,8 +169,11 @@ class Classifier
 		//! Accessor to retrieve the channels
 		std::vector<std::string> getChannels();
 		
-		//! Accessor to retrieve the percentiles of the feature vectors
-		std::vector<RealFeature> percentiles(std::vector<Real> percentileValues);
+		//! Parameters for the classification
+		static ParameterSection classificationParameters();
+		
+		//! Parameters for the segmentation
+		static ParameterSection segmentationParameters();
 
 };
 

@@ -162,7 +162,11 @@ inline bool isFile(const string path)
 	return (stat(path.c_str(), &statbuf) != -1) && (S_ISREG(statbuf.st_mode));
 }
 
-
+inline bool isEmpty(const string path)
+{
+	struct stat statbuf;
+	return (stat(path.c_str(), &statbuf) != -1) && (statbuf.st_size > 0);
+}
 
 inline string time2string(const time_t time)
 {

@@ -37,36 +37,42 @@ class SPoCAClassifier : public virtual PCMClassifier
 	protected :
 		//! Vector of precalculated neighbors smoothing (Xj + (betaj * sum Xn) for n belonging to Nj)
 		FeatureVectorSet smoothedX;
-
+		
 		//! Vector of the beta function (1/Nj)
 		std::vector<Real> beta;
-
+		
 		//! Vector of neighbors indices (Nj are the strict neighbors of pixel j)
 		NeighborhoodVector N;
 		
 		//! The neighborhoodRadius <=> half the size of the square of neighbors. i.e. The square of neighbors has a side of (2 * Nradius) + 1
 		unsigned Nradius;
-
-		// Basic functions
+		
+		//! Computation of the centers of classes
 		void computeB();
+		
+		//! Computation of the probability
 		void computeU();
+		
+		//! Computation of J the total intracluster variance
 		Real computeJ() const;
+		
 		using PCMClassifier::computeEta;
-
-		//Asses & Merge functions for the sursegmentation
-		Real assess(std::vector<Real>& V);
-		void merge(unsigned i1, unsigned i2);
-
+	
 	public :
-		//Constructors & Destructors
-		SPoCAClassifier(unsigned neighborhoodRadius = 1, Real fuzzifier = 2);
-
+		//! Constructor
+		SPoCAClassifier(Real fuzzifier = 2., unsigned numberClasses = 0, Real precision = 0.0015, unsigned maxNumberIteration = 100, unsigned neighborhoodRadius = 1);
+		
+		//! Constructor
+		SPoCAClassifier(ParameterSection& parameters);
+		
 		//! Function to add images to the classifier 
 		void addImages(std::vector<EUVImage*> images);
-
-		//Classification functions
+		
+		//! Classification functions
 		using PCMClassifier::classification;
-
+		
+		//! Function to fill a fits header with classification information
+		void fillHeader(Header& header);
 
 };
 #endif

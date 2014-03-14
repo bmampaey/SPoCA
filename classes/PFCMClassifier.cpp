@@ -2,20 +2,30 @@
 
 using namespace std;
 
-PFCMClassifier::PFCMClassifier(Real fuzzifier, Real nfuzzifier, Real a, Real b)
-:PCMClassifier(fuzzifier),nfuzzifier(nfuzzifier),a(a),b(b)
-{}
+PFCMClassifier::PFCMClassifier(Real fuzzifier, unsigned numberClasses, Real precision, unsigned maxNumberIteration, Real FCMweight, Real PCMweight)
+:PCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), FCMweight(FCMweight), PCMweight(PCMweight)
+{
+	#if defined DEBUG
+	cout<<"Called PFCM constructor"<<endl;
+	#endif
+}
 
+PFCMClassifier::PFCMClassifier(ParameterSection& parameters)
+:PCMClassifier(parameters), FCMweight(parameters["FCMweight"]), PCMweight(parameters["PCMweight"])
+{
+	#if defined DEBUG
+	cout<<"Called PFCM constructor with parameter section"<<endl;
+	#endif}
 
 void PFCMClassifier::computeT()
 {
 	T.resize(numberFeatureVectors * numberClasses);
 	vector<Real> beta(numberClasses);
 	for (unsigned i = 0 ; i < numberClasses ; ++i)
-		beta[i] = b / eta[i];
+		beta[i] = PCMweight / eta[i];
 	
 	TipicalitySet::iterator tij = T.begin();
-	if(nfuzzifier == 1.5)
+	if(fuzzifier == 1.5)
 	{
 		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 		{
@@ -27,7 +37,7 @@ void PFCMClassifier::computeT()
 			}
 		}
 	}
-	else if(nfuzzifier == 2)
+	else if(fuzzifier == 2)
 	{
 		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 		{
@@ -45,7 +55,7 @@ void PFCMClassifier::computeT()
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij)
 			{
 				*tij = distance_squared(*xj,B[i]) * beta[i] ;
-				*tij = pow( *tij , Real(1./(nfuzzifier-1.)));
+				*tij = pow( *tij , Real(1./(fuzzifier-1.)));
 				*tij = 1. / (1. + *tij);
 			}
 		}
@@ -60,7 +70,7 @@ void PFCMClassifier::computeUT()
 	T.resize(numberFeatureVectors * numberClasses);
 	vector<Real> beta(numberClasses);
 	for (i = 0 ; i < numberClasses ; ++i)
-		beta[i] = b / eta[i];
+		beta[i] = PCMweight / eta[i];
 	
 	TipicalitySet::iterator tij = T.begin();
 	MembershipSet::iterator uij = U.begin();
@@ -89,27 +99,27 @@ void PFCMClassifier::computeUT()
 				Real sum = 0;
 				for (unsigned ii = 0 ; ii < numberClasses ; ++ii)
 				{
-					if (fuzzifier == 2)
+					if (FCMfuzzifier == 2)
 					{
 						sum += (d2XjB[i]/d2XjB[ii]);
 					}
 					else
 					{
-						sum += pow(d2XjB[i]/d2XjB[ii],Real(1./(fuzzifier-1.)));
+						sum += pow(d2XjB[i]/d2XjB[ii],Real(1./(FCMfuzzifier-1.)));
 					}
 				}
 				*uij = 1./sum;
 				
 				*tij = d2XjB[i] * beta[i] ;
 
-				if(nfuzzifier == 1.5)
+				if(fuzzifier == 1.5)
 				{
 					*tij *=  *tij;
 
 				}
-				else if(nfuzzifier != 2)
+				else if(fuzzifier != 2)
 				{
-					*tij = pow( *tij , Real(1./(nfuzzifier-1.)));
+					*tij = pow( *tij , Real(1./(fuzzifier-1.)));
 				}
 				
 				*tij = 1. / (1. + *tij);
@@ -125,14 +135,26 @@ void PFCMClassifier::computeB()
 
 	TipicalitySet::iterator tij = T.begin();
 	MembershipSet::iterator uij = U.begin();
-	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
-	if(fuzzifier == 2 && nfuzzifier == 2)
+	// If the FCMfuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if(FCMfuzzifier == 2 && fuzzifier == 2)
 	{
 		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
 			{
-				Real aubt = (a * *uij * *uij) + (b * *tij * *tij);
+				Real aubt = (FCMweight * *uij * *uij) + (PCMweight * *tij * *tij);
+				B[i] += *xj * aubt;
+				sum[i] += aubt;
+			}
+		}
+	}
+	else if(FCMfuzzifier == 2)
+	{
+		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
+			{
+				Real aubt = (FCMweight * *uij * *uij) + (PCMweight * pow(*tij,fuzzifier));
 				B[i] += *xj * aubt;
 				sum[i] += aubt;
 			}
@@ -144,19 +166,7 @@ void PFCMClassifier::computeB()
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
 			{
-				Real aubt = (a * *uij * *uij) + (b * pow(*tij,nfuzzifier));
-				B[i] += *xj * aubt;
-				sum[i] += aubt;
-			}
-		}
-	}
-	else if(nfuzzifier == 2)
-	{
-		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
-		{
-			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
-			{
-				Real aubt = (a * pow(*uij,fuzzifier)) + (b * *tij * *tij);
+				Real aubt = (FCMweight * pow(*uij,FCMfuzzifier)) + (PCMweight * *tij * *tij);
 				B[i] += *xj * aubt;
 				sum[i] += aubt;
 			}
@@ -168,7 +178,7 @@ void PFCMClassifier::computeB()
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
 			{
-				Real aubt = (a * pow(*uij,fuzzifier)) + (b * pow(*tij,nfuzzifier));
+				Real aubt = (FCMweight * pow(*uij,FCMfuzzifier)) + (PCMweight * pow(*tij,fuzzifier));
 				B[i] += *xj * aubt;
 				sum[i] += aubt;
 			}
@@ -192,7 +202,6 @@ void PFCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
 		exit(EXIT_FAILURE);
-
 	}
 	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
 	cout<<setiosflags(ios::fixed);
@@ -253,15 +262,26 @@ Real PFCMClassifier::computeJ() const
 	MembershipSet::const_iterator uij = U.begin();
 	vector<Real> sum(numberClasses,0.);
 	
-	// If the fuzzifier is 2 we can optimise by avoiding the call to the pow function
-	if(fuzzifier == 2 && nfuzzifier == 2)
+	// If the FCMfuzzifier is 2 we can optimise by avoiding the call to the pow function
+	if(FCMfuzzifier == 2 && fuzzifier == 2)
 	{
 		for (FeatureVectorSet::const_iterator xj = X.begin(); xj != X.end(); ++xj)
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
 			{
-				result += (a * *uij * *uij) + (b * *tij * *tij) * distance_squared(*xj,B[i]);
+				result += (FCMweight * *uij * *uij) + (PCMweight * *tij * *tij) * distance_squared(*xj,B[i]);
 				sum[i] += (1. - *tij) * (1. - *tij);
+			}
+		}
+	}
+	else if(FCMfuzzifier == 2)
+	{
+		for (FeatureVectorSet::const_iterator xj = X.begin(); xj != X.end(); ++xj)
+		{
+			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
+			{
+				result += (FCMweight * *uij * *uij) + (PCMweight * pow(*tij,fuzzifier)) * distance_squared(*xj,B[i]);
+				sum[i] += pow(Real(1. - *tij), fuzzifier);
 			}
 		}
 	}
@@ -271,18 +291,7 @@ Real PFCMClassifier::computeJ() const
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
 			{
-				result += (a * *uij * *uij) + (b * pow(*tij,nfuzzifier)) * distance_squared(*xj,B[i]);
-				sum[i] += pow(Real(1. - *tij), nfuzzifier);
-			}
-		}
-	}
-	else if(nfuzzifier == 2)
-	{
-		for (FeatureVectorSet::const_iterator xj = X.begin(); xj != X.end(); ++xj)
-		{
-			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
-			{
-				result += (a * pow(*uij,fuzzifier)) + (b * *tij * *tij) * distance_squared(*xj,B[i]);
+				result += (FCMweight * pow(*uij,FCMfuzzifier)) + (PCMweight * *tij * *tij) * distance_squared(*xj,B[i]);
 				sum[i] += (1. - *tij) * (1. - *tij);
 			}
 		}
@@ -293,8 +302,8 @@ Real PFCMClassifier::computeJ() const
 		{
 			for (unsigned i = 0 ; i < numberClasses ; ++i, ++tij, ++uij)
 			{
-				result += (a * pow(*uij,fuzzifier)) + (b * pow(*tij,nfuzzifier)) * distance_squared(*xj,B[i]);
-				sum[i] += pow(Real(1. - *tij), nfuzzifier);
+				result += (FCMweight * pow(*uij,FCMfuzzifier)) + (PCMweight * pow(*tij,fuzzifier)) * distance_squared(*xj,B[i]);
+				sum[i] += pow(Real(1. - *tij), fuzzifier);
 			}
 		}
 	}
@@ -305,65 +314,6 @@ Real PFCMClassifier::computeJ() const
 	return result;
 
 }
-
-//! TO BE DONE
-Real PFCMClassifier::assess(vector<Real>& V)
-{
-	V.assign(numberClasses, 0.);
-	Real score = 0;
-/*
-	//This is the vector of the min distances between the centers Bi and all the others centers Bii with ii!=i
-	vector<Real> minDist(numberClasses, numeric_limits<Real>::max());
-	//The min distance between all centers
-	Real minDistBiBii = numeric_limits<Real>::max() ;
-
-	Real distBiBii;
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
-	{
-		for (unsigned ii = i + 1 ; ii < numberClasses ; ++ii)
-		{
-			distBiBii = distance_squared(B[i],B[ii]);
-			if(distBiBii < minDist[i])
-				minDist[i] = distBiBii;
-			if(distBiBii < minDist[ii])
-				minDist[ii] = distBiBii;
-		}
-	}
-
-	for (unsigned i = 0 ; i < numberClasses ; ++i)
-	{
-		Real sum1 = 0, sum2 = 0;
-
-		for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
-		{
-
-			if(fuzzifier == 2)
-				sum1 +=  *uij * *uij * distance_squared(*xj,B[i]);
-			else
-				sum1 +=  pow(*uij, fuzzifier) * distance_squared(*xj,B[i]);
-
-			if(fuzzifier == 2)
-				sum2 += (1 - *uij) * (1 - *uij);
-			else
-				sum2 +=  pow(Real(1 - *uij), fuzzifier);
-
-		}
-
-		V[i] = sum1 + (eta[i] * sum2);
-		score += V[i];
-		if(minDist[i] < minDistBiBii)
-			minDistBiBii = minDist[i];
-
-		V[i] /= (minDist[i] * numberFeatureVectors);
-
-	}
-
-	score /= (minDistBiBii * numberFeatureVectors);
-	*/
-	return score;
-
-}
-
 
 
 void PFCMClassifier::stepinit(const string filename)
@@ -385,7 +335,6 @@ void PFCMClassifier::stepinit(const string filename)
 	#endif
 }
 
-
 void PFCMClassifier::stepout(const unsigned iteration, const Real precisionReached, const Real precision)
 {
 	Classifier::stepout(iteration, precisionReached, precision);
@@ -405,5 +354,13 @@ void PFCMClassifier::stepout(const unsigned iteration, const Real precisionReach
 				stepfile<<out.str();
 		#endif
 	#endif
+}
+
+void PFCMClassifier::fillHeader(Header& header)
+{
+	PCMClassifier::fillHeader(header);
+	header.set("CFCMW8", FCMweight, "PFCM classifier FCM Weight");
+	header.set("CPCMW8", PCMweight, "PFCM classifier PCM Weight");
+
 }
 

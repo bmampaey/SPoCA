@@ -2,9 +2,21 @@
 
 using namespace std;
 
-PCM2Classifier::PCM2Classifier(Real fuzzifier)
-:PCMClassifier(fuzzifier)
-{}
+PCM2Classifier::PCM2Classifier(Real fuzzifier, unsigned numberClasses, Real precision, unsigned maxNumberIteration)
+:PCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration)
+{
+	#if defined DEBUG
+	cout<<"Called PCM2 constructor"<<endl;
+	#endif
+}
+
+PCM2Classifier::PCM2Classifier(ParameterSection& parameters)
+:PCMClassifier(parameters)
+{
+	#if defined DEBUG
+	cout<<"Called PCM2 constructor with parameter section"<<endl;
+	#endif
+}
 
 void PCM2Classifier::computeU()
 {
@@ -170,62 +182,3 @@ void PCM2Classifier::initEta(const vector<Real>& eta)
 	this->eta = eta;
 	reduceEta();
 }
-
-
-
-
-/*
-// BAD RESULTS, BUT KEEP FOR NOW
-// ALTERNATIVE VERSION: INCREASING ETAS
-void PCM2Classifier::computeEta(ofstream* iterationsFile)
-{
-	PCMClassifier::computeEta(iterationsFile);
-
-	signed i, j, p;
-	const Real dilation = 1.02;
-	Real max;
-
-	vector< vector<Real> > alpha;
-	vector< vector<Real> > beta;
-	vector<Real>           gamma;
-
-	alpha.resize(numberClasses);
-	beta .resize(numberClasses);
-	gamma.resize(numberClasses);
-	for (i = 0; i < numberClasses; ++i)
-	{
-		alpha[i].resize(numberClasses);
-		beta [i].resize(numberClasses);
-	}
-
-	for (i = numberClasses - 2; i >= 0; i--)
-	{
-		for (j = i + 1; j < numberClasses; ++j)
-		{	
-			max = numeric_limits<Real>::min();
-			for(p = 0; p < NUMBERCHANNELS; ++p)
-				if (B[i].v[p]/B[j].v[p] > max)
-					max = B[i].v[p]/B[j].v[p];
-
-			alpha[i][j] = max;
-			beta [i][j] = eta[j] * alpha[i][j];
-		}
-
-		max = numeric_limits<Real>::min();
-		for (j = i + 1; j < numberClasses; ++j)
-			if (beta[i][j] > max)
-				max = beta[i][j];
-
-		gamma[i] = max;
-		if (eta[i] <= gamma[i])
-		{
-			eta[i] = dilation * gamma[i];
-		}
-	}
-
-	#if defined VERBOSE
-	cout<<"eta2:\t"<<eta<<endl;
-	#endif	
-}
-*/
-

@@ -54,13 +54,10 @@ EUVImage* getImageFromFile(const std::string imageType, const std::string sunIma
 std::vector<EUVImage*> getImagesFromFiles(const std::string imageType, const std::vector<std::string>& sunImagesFileNames, bool align = false);
 
 //! Read and creates one color map from a fits files name
-ColorMap* getImageFromFile(const std::string sunImageFileName);
+ColorMap* getColorMapFromFile(const std::string sunImageFileName);
 
 //! Read and parse the eta from a file
 unsigned readEtaFromFile(std::vector<Real>& eta, const std::string& etaFileName);
-
-//! Read and parse the max limits from file
-unsigned readMaxLimitsFromFile (std::vector<RealFeature>& maxLimits, const std::string& maxLimitsFileName);
 
 //! Expand the text repacing all keywords between {} by their value in the header, and \n by newline
 std::string expand(std::string text, const Header& header);

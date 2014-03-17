@@ -218,14 +218,15 @@ inline void ordonate(vector<ColorMap*>& images)
 	sort(images.begin(), images.end(), compare);
 
 	#if defined EXTRA_SAFE
-	//We remove the ones that have duplicate time
+	//We verify that 2 images do not have the exact same time
 	vector<ColorMap*>::iterator s1 = images.begin();
 	vector<ColorMap*>::iterator s2 = images.begin() + 1;
 	while (s2 != images.end())
 	{
 		if (unsigned(difftime((*s2)->ObservationTime(),(*s1)->ObservationTime())) == 0)
 		{
-			s1 = images.erase(s1,s2);
+			cerr<<"Error : 2 images have exactly the same time."<<endl;
+			exit(EXIT_FAILURE);
 		}
 		else
 		{
@@ -270,7 +271,7 @@ void recolorFromRegions(ColorMap* image, const vector<Region*>& regions)
 			#if defined EXTRA_SAFE
 				if(colorTransfo.count(image->pixel(j)) == 0)
 				{
-					cerr<<"ERROR trying to colorize image, pixel has no corresponding region"<<endl;
+					cerr<<"Error: trying to colorize image, pixel has no corresponding region"<<endl;
 					exit (EXIT_FAILURE); 
 				}
 			#endif

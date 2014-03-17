@@ -40,6 +40,6 @@ class FCMClassifier : public Classifier
 		FCMClassifier(ParameterSection& parameters);
 		
 		//Classification functions
-		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
+		void classification();
 };
 #endif

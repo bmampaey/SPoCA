@@ -58,6 +58,7 @@ class ArgParser
 				std::string default_value;
 				std::string value;
 				bool set;
+				bool default_value_set;
 				unsigned position;
 				bool config_file;
 				bool help;
@@ -146,7 +147,7 @@ class ArgParser
 
 template<class T>
 ArgParser::Parameter::Parameter(const T& default_value, const char short_name, const std::string& description)
-:short_name(short_name), description(description), set(false), position(0), config_file(false), help(false), remaining_parameters(false), remaining_parameter_min(-1), remaining_parameter_max(-1)
+:short_name(short_name), description(description), set(false), default_value_set(true), position(0), config_file(false), help(false), remaining_parameters(false), remaining_parameter_min(-1), remaining_parameter_max(-1)
 {
 	std::ostringstream out;
 	out<<default_value;
@@ -155,7 +156,7 @@ ArgParser::Parameter::Parameter(const T& default_value, const char short_name, c
 
 template<class T>
 ArgParser::Parameter::Parameter(const T& default_value, const std::string& description)
-:short_name('\0'), description(description), set(false), position(0), config_file(false), help(false), remaining_parameters(false), remaining_parameter_min(-1), remaining_parameter_max(-1)
+:short_name('\0'), description(description), set(false), default_value_set(true), position(0), config_file(false), help(false), remaining_parameters(false), remaining_parameter_min(-1), remaining_parameter_max(-1)
 {
 	std::ostringstream out;
 	out<<default_value;
@@ -176,7 +177,7 @@ ArgParser::Parameter::operator T() const
 			throw std::invalid_argument("Cannot convert value " + value + " to type " + std::string(typeid(T).name()));
 		return result;
 	}
-	else if(!default_value.empty())
+	else if(default_value_set)
 	{
 		T result;
 		std::istringstream in(default_value);

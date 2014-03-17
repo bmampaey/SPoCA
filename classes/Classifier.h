@@ -90,9 +90,6 @@ class Classifier
 		//! Computation of J the total intracluster variance
 		virtual Real computeJ() const = 0;
 		
-		//! Function to sort the centers
-		virtual void sortB();
-		
 		//! Function to initialize the output of the classification steps
 		virtual void stepinit(const std::string filename);
 		
@@ -110,13 +107,10 @@ class Classifier
 		virtual ~Classifier();
 		
 		//! Function to add images to the classifier
-		virtual void addImages (std::vector<EUVImage*> images);
+		virtual void addImages(std::vector<EUVImage*> images);
 		
 		//! Function to do the classification
-		virtual void classification(Real precision = 1., unsigned maxNumberIteration = 100) = 0;
-		
-		//! Function to do the classification
-		void classification();
+		virtual void classification() = 0;
 		
 		//! Function to do attribution (Fix center classification)
 		virtual void attribution();
@@ -168,6 +162,9 @@ class Classifier
 		
 		//! Accessor to retrieve the channels
 		std::vector<std::string> getChannels();
+		
+		//! Function to sort the centers
+		virtual void sortB();
 		
 		//! Parameters for the classification
 		static ParameterSection classificationParameters();

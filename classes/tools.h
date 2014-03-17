@@ -15,12 +15,12 @@
 #include <sys/stat.h>
 #include <locale>
 #include <map>
+#include <stdexcept> 
 #include "constants.h"
 
 /*!
 @file tools.h
 A collection of little function to make life easier.
-
 */
 
 //! General vector output
@@ -53,12 +53,16 @@ std::istream& operator>>(std::istream& in, std::vector<T>& v)
 	{
 		in.get();
 	}
-	if(! in.good())
+	if(in.eof())
 	{
-		std::cerr<<"Error parsing Vector from stream"<<std::endl;
 		return in;
 	}
-	if(in.peek() == '[')
+	else if(!in)
+	{
+		throw std::runtime_error("Error parsing vector from stream");
+		return in;
+	}
+	else if(in.peek() == '[')
 	{
 		in>>trash>>value;
 		while (in.good() && in.peek() != ']')
@@ -81,14 +85,15 @@ std::istream& operator>>(std::istream& in, std::vector<T>& v)
 		v.push_back(value);
 	}
 	return in;
-
 }
 
-
+//! String vector input
+template<>
+std::istream& operator>>(std::istream& in, std::vector<std::string>& v);
 
 //! Convert a vector to a string
 template<class T>
-std::string vtos(const std::vector<T>& v)
+std::string toString(const std::vector<T>& v)
 {
 	std::ostringstream Z;
 	Z << v;
@@ -97,11 +102,34 @@ std::string vtos(const std::vector<T>& v)
 
 //! Convert a deque to a string
 template<class T>
-std::string to_string(const std::deque<T>& v)
+std::string toString(const std::deque<T>& v)
 {
-//	std::vector<T> temp(v.begin(), v.end());
-	return vtos(std::vector<T>(v.begin(), v.end()));
+	return toString(std::vector<T>(v.begin(), v.end()));
 }
+
+//! Convert a time to a string of the form yyyymmdd_hhmmss
+std::string toString(const time_t time);
+
+//! Convert a integer as a string
+/*! @param size Minimal size of the integer. It will be padded on the left with 0 if needed */
+std::string toString(const int& i, const int size = 0);
+
+//! Convert an unsigned as a string
+/*! @param size Minimal size of the integer. It will be padded on the left with 0 if needed */
+std::string toString(const unsigned& i, const int size = 0);
+
+//! Convert a double as a string
+/*! @param size Minimal size of the double. It will be padded on the left with 0 if needed */
+std::string toString(const double& d, const int size = 0);
+
+//! Convert a string to a unsigned
+unsigned toUnsigned(const std::string& s);
+
+//! Convert a string to a integer
+int toInt(const std::string& s);
+
+//! Convert a string to a double
+double toDouble(const std::string& s);
 
 //! General string parsing
 template<class T>
@@ -139,36 +167,35 @@ std::vector<V> values(const std::map<K,V>& M)
 //! Split a string into substring using delimiter
 std::vector<std::string> split(const std::string &s, const char delim = ',');
 
-//! Convert a integer as a string
-/*! @param size Minimal size of the integer. It will be padded on the left with 0 if needed */
-std::string itos(const int& i, const int size = 0);
+//! Replace all occurences of from to to in string str
+std::string replaceAll(const std::string& str, const std::string& from, const std::string& to);
 
-//! Convert a double as a string
-/*! @param size Minimal size of the double. It will be padded on the left with 0 if needed */
-std::string dtos(const double& d, const int size = 0);
-
-//! Convert a string to a integer
-int stoi(const std::string& s);
-//! Convert a string to a double
-double stod(const std::string& s);
+//! Remove all white space and tab at the beggining and end of str
+std::string trimWhites(const std::string& str);
 
 //! Return the name of the file without the preceding path (/ si the directory limiter)
-std::string stripPath(const std::string &name); 
+std::string stripPath(const std::string &name);
+
 //! Return the path of the file without the last suffix (. is the suffix delimitor)
 std::string stripSuffix(const std::string &name);
+
 //! Return the path of the directory containing the file (/ si the directory limiter)
 std::string getPath(const std::string &name);
+
 //! Return the last suffix of the file (. is the suffix delimitor)
 std::string getSuffix(const std::string &name);
+
+//! Return the join path with the correct OS separator
+std::string makePath(const std::string &path1, const std::string &path2);
+
 //! Check if the path is an existing directory
 bool isDir(const std::string path);
+
 //! Check if the path is an existing and regular file
 bool isFile(const std::string path);
-//! Check if the path is an empty file
-bool isEmpty(const std::string path);
 
-//! Return a time as a string of the form yyyymmdd_hhmmss
-std::string time2string(const time_t time);
+//! Check if the path is an empty file
+bool emptyFile(const std::string path);
 
 //! Routine that return the requested percentil of an array
 /* The array will be modified */ 

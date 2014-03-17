@@ -237,7 +237,7 @@ void writeARMap(ColorMap*& ARMap, const string& filename, bool compressed, unsig
 		for (unsigned r = 0; r < regions.size(); ++r)
 		{
 			vector<PixLoc> chaincode = regions[r]->chainCode(aggregatedMap, chaincodeMinPoints, chaincodeMaxPoints, chaincodeMaxDeviation);
-			file.writeColumn(itos(regions[r]->Id(),7), chaincode);
+			file.writeColumn(toString(regions[r]->Id(),7), chaincode);
 		
 			#if defined DEBUG
 			for (unsigned c = 0; c < chaincode.size(); ++c)

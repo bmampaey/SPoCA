@@ -189,16 +189,15 @@ Real HistogramPCMClassifier::computeJ() const
 
 // VERSION WITH LIMITED VARIATION OF ETA W.R.T. ITS INITIAL VALUE
 
-void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIteration)
+void HistogramPCMClassifier::classification()
 {
-
-	#if defined EXTRA_SAFE
 	if(HistoX.size() == 0 || B.size() == 0 || B.size() != eta.size())
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
 		exit(EXIT_FAILURE);
-
 	}
+	
+	#if defined EXTRA_SAFE
 	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
 	cout<<setiosflags(ios::fixed);
 	#endif
@@ -242,10 +241,11 @@ void HistogramPCMClassifier::classification(Real precision, unsigned maxNumberIt
 		
 		stepout(iteration, precisionReached, precision);
 	}
-
+	
 	#if defined VERBOSE
 	cout<<endl<<"--HistogramPCMClassifier::classification--END--"<<endl;
 	#endif
+	
 	#if defined EXTRA_SAFE
 	feenableexcept(excepts);
 	#endif
@@ -267,7 +267,7 @@ void HistogramPCMClassifier::FCMinit()
 	numberClasses = B.size();
 	Real temp = fuzzifier;
 	fuzzifier = FCMfuzzifier;
-	HistogramFCMClassifier::classification(precision, maxNumberIteration);
+	HistogramFCMClassifier::classification();
 	
 	//We like our centers to be sorted 
 	HistogramFCMClassifier::sortB();

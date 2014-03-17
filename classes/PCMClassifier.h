@@ -42,23 +42,22 @@ class PCMClassifier : public virtual FCMClassifier
 		//! Function to compute eta
 		virtual void computeEta(Real alpha);
 		
-		//! Function to sort the centers
-		virtual void sortB();
+		//! Function to initialize the output of the classification steps
+		void stepinit(const std::string filename);
 		
-		//Function to output classification steps
-		virtual void stepinit(const std::string filename);
-		virtual void stepout(const unsigned iteration, const Real precisionReached, const Real precision);
-
+		//! Function to output a classification step
+		void stepout(const unsigned iteration, const Real precisionReached, const Real precision);
+	
 	public :
 		//! Constructor
 		PCMClassifier(Real fuzzifier = 2., unsigned numberClasses = 0, Real precision = 0.0015, unsigned maxNumberIteration = 100);
-	
+		
 		//! Constructor
 		PCMClassifier(ParameterSection& parameters);
-
+		
 		//! Classification functions
-		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
-
+		void classification();
+		
 		//! Function to initialise the centers
 		using Classifier::initB;
 		
@@ -70,12 +69,14 @@ class PCMClassifier : public virtual FCMClassifier
 		
 		//! Function to initialise the centers and eta by doing an FCM
 		virtual void FCMinit();
-
+		
+		//! Function to sort the centers
+		virtual void sortB();
+		
 		//! Accessors to retrieve eta
 		std::vector<Real> getEta();
 		
 		//! Function to fill a fits header with classification information
 		void fillHeader(Header& header);
-
 };
 #endif

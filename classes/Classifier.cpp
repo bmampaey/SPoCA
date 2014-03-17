@@ -26,13 +26,33 @@ Classifier::~Classifier()
 
 void Classifier::addImages(vector<EUVImage*> images)
 {
-
+	// We verify and set the classifier channels
 	if(images.size() != NUMBERCHANNELS)
 	{
 		cerr<<"Error : The number of images is not equal to "<<NUMBERCHANNELS<<endl;
 		exit(EXIT_FAILURE);
 	}
-	
+	if(channels.empty())
+	{
+		for(unsigned p = 0; p < images.size(); ++p)
+			channels.push_back(images[p]->Channel());
+	}
+	else
+	{
+		if(images.size() != channels.size())
+		{
+			cerr<<"Error : The number of images is not equal to "<<NUMBERCHANNELS<<endl;
+			exit(EXIT_FAILURE);
+		}
+		for(unsigned p = 0; p < channels.size(); ++p)
+		{
+			if(channels[p] != images[p]->Channel())
+			{
+				cerr<<"Error : The images channels do not correspond to classifier channels."<<endl;
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
 	unsigned numberPixelsEstimate = images[0]->NumberPixels();
 	Xaxes = images[0]->Xaxes();
 	Yaxes = images[0]->Yaxes();
@@ -54,7 +74,7 @@ void Classifier::addImages(vector<EUVImage*> images)
 		for (unsigned x = 0; x < Xaxes; ++x)
 		{
 			validPixel = true;
-			for (unsigned p = 0; p <  NUMBERCHANNELS && validPixel; ++p)
+			for (unsigned p = 0; p < NUMBERCHANNELS && validPixel; ++p)
 			{
 				f.v[p] = images[p]->pixel(x, y);
 				if(f.v[p] == images[p]->null())
@@ -65,16 +85,10 @@ void Classifier::addImages(vector<EUVImage*> images)
 				coordinates.push_back(PixLoc(x,y));
 				X.push_back(f);
 			}
-
 		}
 	}
 	
 	numberFeatureVectors = X.size();
-}
-
-void Classifier::classification()
-{
-	this->classification(precision, maxNumberIteration);
 }
 
 void Classifier::attribution()
@@ -172,11 +186,11 @@ void Classifier::fillHeader(Header& header)
 	header.set("CPRECIS", precision, "Classifier Precision");
 	header.set("CMAXITER", maxNumberIteration, "Maximum Number of Iteration");
 	header.set("CFUZFIER", fuzzifier, "Classifier Fuzzifier");
-	header.set("CHANNELS", vtos(getChannels()), "Classification Channels");
+	header.set("CHANNELS", toString(getChannels()), "Classification Channels");
 	
 	B = getB();
 	for (unsigned i = 0; i < numberClasses; ++i)
-		header.set("CLSCTR"+itos(i+1,2), B[i].toString(4), "Classification class center " + itos(i+1,2));
+		header.set("CLSCTR"+toString(i+1,2), B[i].toString(4), "Classification class center " + toString(i+1,2));
 }
 
 ColorMap* Classifier::segmentedMap_maxUij(ColorMap* segmentedMap)
@@ -462,7 +476,6 @@ void Classifier::randomInitB(unsigned C)
 	for (unsigned i = 0; i < numberClasses; ++i)
 	{
 		B[i]=X[rand() % numberFeatureVectors];
-
 	}
 	//We like our centers to be sorted
 	sort(B.begin(), B.end());
@@ -470,14 +483,35 @@ void Classifier::randomInitB(unsigned C)
 
 void Classifier::initB(const std::vector<std::string>& channels, const std::vector<RealFeature>& B)
 {
+	// We verify and set the classifier channels
 	if(channels.size() != NUMBERCHANNELS)
 	{
 		cerr<<"Error : The number of channels is not correct."<<endl;
 		exit(EXIT_FAILURE);
 	}
+	if(X.empty())
+	{
+		this->channels = channels;
+	}
+	else if(this->channels.size() != channels.size())
+	{
+		cerr<<"Error : The number of channels is not correct."<<endl;
+		exit(EXIT_FAILURE);
+	}
+	else
+	{
+		for(unsigned p = 0; p < channels.size(); ++p)
+		{
+			if(channels[p] != this->channels[p])
+			{
+				cerr<<"Error : The class centers channels do not correspond to the classifier channels."<<endl;
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+
 	this->B = B;
 	numberClasses = B.size();
-	this->channels = channels;
 }
 
 void Classifier::sortB()
@@ -573,7 +607,7 @@ void Classifier::stepout(const unsigned iteration, const Real precisionReached, 
 		image.zero();
 		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
 			image.pixel(coordinates[j]) = U[j*numberClasses + i];
-		image.writeFits(filenamePrefix + "membership.iteration_" + itos(iteration) + ".class_" + itos(i) + ".fits");
+		image.writeFits(filenamePrefix + "membership.iteration_" + toString(iteration) + ".class_" + toString(i) + ".fits");
 	}
 	#endif
 }
@@ -610,7 +644,7 @@ ParameterSection Classifier::classificationParameters()
 	parameters["PCMweight"] = ArgParser::Parameter(2, "The PCM  weight for PFCM classification.");
 	parameters["numberClasses"] = ArgParser::Parameter(4, 'C', "The number of classes to classify the sun images into.");
 	parameters["neighborhoodRadius"] = ArgParser::Parameter(1, 'N', "Only for spatial classifiers like SPoCA. The neighborhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.");
-	parameters["binSize"] = ArgParser::Parameter(1, 'z', "The size of the bins of the histogram. NB : Be carreful that the histogram is built after the image preprocessing.");
+	parameters["binSize"] = ArgParser::Parameter(RealFeature(1), 'z', "The size of the bins of the histogram. NB : Be carreful that the histogram is built after the image preprocessing.");
 	return parameters;
 }
 

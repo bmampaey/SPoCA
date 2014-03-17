@@ -15,7 +15,8 @@ PFCMClassifier::PFCMClassifier(ParameterSection& parameters)
 {
 	#if defined DEBUG
 	cout<<"Called PFCM constructor with parameter section"<<endl;
-	#endif}
+	#endif
+}
 
 void PFCMClassifier::computeT()
 {
@@ -192,17 +193,16 @@ void PFCMClassifier::computeB()
 
 
 // VERSION WITH LIMITED VARIATION OF ETA W.R.T. ITS INITIAL VALUE
-void PFCMClassifier::classification(Real precision, unsigned maxNumberIteration)
-{	
+void PFCMClassifier::classification()
+{
 	const Real maxFactor = ETA_MAXFACTOR;
-
-
-	#if defined EXTRA_SAFE
 	if(X.size() == 0 || B.size() == 0 || B.size() != eta.size())
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
 		exit(EXIT_FAILURE);
 	}
+	
+	#if defined EXTRA_SAFE
 	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
 	cout<<setiosflags(ios::fixed);
 	#endif
@@ -234,21 +234,21 @@ void PFCMClassifier::classification(Real precision, unsigned maxNumberIteration)
 				}
 			}
 		}
-
+		
 		computeUT();
 		computeB();
-
+		
 		precisionReached = variation(oldB,B);
-
+		
 		oldB = B;
-
+		
 		stepout(iteration, precisionReached, precision);
 	}
-
 	
 	#if defined VERBOSE
 	cout<<endl<<"--PFCMClassifier::classification--END--"<<endl;
 	#endif
+	
 	#if defined EXTRA_SAFE
 	feenableexcept(excepts);
 	#endif

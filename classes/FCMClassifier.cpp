@@ -153,16 +153,15 @@ Real FCMClassifier::computeJ() const
 }
 
 
-void FCMClassifier::classification(Real precision, unsigned maxNumberIteration)
+void FCMClassifier::classification()
 {
-
-	#if defined EXTRA_SAFE
 	if(X.size() == 0 || B.size() == 0)
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
 		exit(EXIT_FAILURE);
-
 	}
+	
+	#if defined EXTRA_SAFE
 	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
 	cout<<setiosflags(ios::fixed);
 	#endif

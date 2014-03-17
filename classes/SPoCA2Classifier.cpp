@@ -11,7 +11,7 @@ SPoCA2Classifier::SPoCA2Classifier(Real fuzzifier, unsigned numberClasses, Real 
 }
 
 SPoCA2Classifier::SPoCA2Classifier(ParameterSection& parameters)
-:FCMClassifier(parameters), PCMClassifier(parameters), SPoCAClassifier(parameters)
+:FCMClassifier(parameters), PCMClassifier(parameters), PCM2Classifier(parameters), SPoCAClassifier(parameters)
 {
 	#if defined DEBUG
 	cout<<"Called SPoCA2 constructor with parameter section"<<endl;

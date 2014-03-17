@@ -45,18 +45,17 @@ void HistogramClassifier::initHistogram(const std::string& histogramFilename, bo
 		streampos length = histoFile.tellg();
 		histoFile.seekg(0,ios::beg);
 		buffer.resize(length);
-
+	
 		//We read the whole file into the buffer.
 		histoFile.read(&buffer[0],length);
-
+	
 		// We create the string stream.
 		histoStream.rdbuf()->pubsetbuf(&buffer[0],length);
-
 	}
 	else
 	{
 		cerr<<"Error : file "<<histogramFilename<<" not found."<<endl;
-		return;
+		exit(EXIT_FAILURE);
 	}
 	histoFile.close();
 	
@@ -82,10 +81,7 @@ void HistogramClassifier::initHistogram(const std::string& histogramFilename, bo
 			x.c = 0;
 			insert(x);
 		}
-		
-
 	}
-	
 }
 
 void HistogramClassifier::initBinSize(const RealFeature& binSize)
@@ -108,27 +104,23 @@ void HistogramClassifier::saveHistogram(const std::string& histogramFilename)
 		{
 			histoFile<<*xj<<endl;
 		}
-
 	}
 	else
 	{
 		cerr<<"Error : Could not open file "<<histogramFilename<<" for writing."<<endl;
-
 	}
 	
-
 	histoFile.close();
 }
 
 void HistogramClassifier::addFeatures(const FeatureVectorSet& X)
 {
-
-	if(binSize.has_null() )
+	if(binSize.has_null())
 	{
 		cerr<<"binSize cannot be 0."<<endl;
 		exit(EXIT_FAILURE);
 	}
-
+	
 	//TODO: test if it is faster to use the other insert
 	HistoRealFeature f;
 	f.c = 1;
@@ -138,10 +130,9 @@ void HistogramClassifier::addFeatures(const FeatureVectorSet& X)
 		{
 			f.v[p] = (floor(xj->v[p]/binSize.v[p]) * binSize.v[p]) + ( binSize.v[p] / 2 );
 		}
-
 		insert(f);
 	}
-
+	
 	numberBins = HistoX.size();
 	
 	#if defined DEBUG
@@ -153,16 +144,15 @@ void HistogramClassifier::addFeatures(const FeatureVectorSet& X)
 
 void HistogramClassifier::addImages(vector<EUVImage*> images, const unsigned xaxes, const unsigned yaxes)
 {
-
 	if(binSize.has_null() )
 	{
 		cerr<<"binSize cannot be 0."<<endl;
 		exit(EXIT_FAILURE);
 	}
-
+	
 	HistoRealFeature f;
 	f.c = 1;
-
+	
 	for (unsigned y = 0; y < yaxes; ++y)
 	{
 		for (unsigned x = 0; x < xaxes; ++x)
@@ -182,9 +172,8 @@ void HistogramClassifier::addImages(vector<EUVImage*> images, const unsigned xax
 			}
 		}
 	}
-
+	
 	numberBins = HistoX.size();
-
 }
 
 

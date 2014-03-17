@@ -220,6 +220,13 @@ class SunImage : public Image<T>
 		//! Routine that does the inverse of the sinusoidal projection of the sunimage
 		void sinusoidal_deprojection(const SunImage<T>* image, bool exact = false);
 		
+		//! Routine that register an image with the one passed in parameters. This method uses simple bilinear interpolation.
+		template<class U>
+		void align(const SunImage<U>* image)
+		{
+			this->transform(Crota2() - image->Crota2(), RealPixLoc(SunCenter() - image->SunCenter()), PixelWidth() / image->PixelWidth());
+		}
+		
 		//! Routine that applies transformation to a SunImage: rotation, translation and scaling.
 		/*	@param rotationAngle The angle of rotation in degrees. Rotation is done in the trigonometric direction i.e. counter clockwise.
 			@param translation The translation to apply to the image in the x and y direction.

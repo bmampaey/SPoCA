@@ -124,7 +124,7 @@ int main(int argc, const char **argv)
 	
 	string programDescription = "This Programm output segmentation statistics.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
+	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
 	#endif

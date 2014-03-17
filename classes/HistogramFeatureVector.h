@@ -71,7 +71,7 @@ class HistogramFeatureVector : public FeatureVector<T, N>
 		
 		std::string toString(const unsigned& precision = 0) const
 		{
-			return FeatureVector<T, N>::toString(precision) + "x" + itos(c);
+			return FeatureVector<T, N>::toString(precision) + "x" + toString(c);
 		}
 
 };

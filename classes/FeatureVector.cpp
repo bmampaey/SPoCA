@@ -106,8 +106,6 @@ inline FeatureVector<Real, N> sqrt(const FeatureVector<T, N>& fv)
 	return result;
 }
 
-
-
 /*! @file FeatureVector.cpp
 Instantiation of the template class FeatureVector for Real
 See @ref Compilation_Options constants.h */

@@ -3,132 +3,246 @@
 
 using namespace std;
 
-
-inline bool readCentersFromStream(vector<RealFeature>& B, vector<string>& channels, istream& stream)
+bool readCentersFromFile(const string& filename, vector<string>& channels, vector<RealFeature>& B)
 {
 	B.clear();
-	while(stream.good() && isspace(char(stream.peek())))
+	vector<string> read_channels;
+	ifstream file(filename.c_str());
+	if(file)
 	{
-		stream.get();
+		file>>read_channels>>B;
+		if(! file)
+		{
+			cerr<<"Error : could not read class centers from file "<<filename<<endl;
+			return false;
+		}
+		else if(channels.size() == 0)
+		{
+			channels = read_channels;
+		}
+		else if(channels.size() != read_channels.size())
+		{
+			cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+			return false;
+		}
+		else
+		{
+			for(unsigned i = 0; i < channels.size(); ++i)
+			{
+				if(channels[i] != read_channels[i])
+				{
+					cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+					return false;
+				}
+			}
+		}
+		return true;
 	}
-	if (stream.good())
-		stream>>channels;
-	while(stream.good() && isspace(char(stream.peek())))
-	{
-		stream.get();
-	}
-	if (stream.good())
-		stream>>B;
-	return stream.good();
+	return false;
 }
 
-inline unsigned readCentersFromFile(vector<RealFeature>& B, vector<string>& channels, const string& centersFileName)
-{
-	B.clear();
-	ifstream centersFile(centersFileName.c_str());
-	if (not readCentersFromStream(B, channels, centersFile))
-	{
-		cerr<<"Error : could not read class centers from file "<<centersFileName<<endl;
-	}
-	return B.size();
-}
-
-inline unsigned readCentersFromFile(vector< vector<RealFeature> >& Bs, vector<string>& channels, const string& centersFileName)
+bool readCentersFromFile(const string& filename, vector<string>& channels, deque< vector<RealFeature> >& Bs, const unsigned max)
 {
 	Bs.clear();
-	vector<RealFeature> B;
-	ifstream centersFile(centersFileName.c_str());
-	if (not readCentersFromStream(B, channels, centersFile))
+	if(max == 0)
+		return true;
+	
+	vector<RealFeature> read_B;
+	vector<string> read_channels;
+	ifstream file(filename.c_str());
+	if(file)
 	{
-		cerr<<"Error : could not read class centers from file "<<centersFileName<<endl;
-	}
-	else
-	{
-		Bs.push_back(B);
-		vector<string> channels2;
-		while(readCentersFromStream(B, channels2, centersFile))
+		for(unsigned i = 0; i < max && file.good(); ++i)
 		{
-			bool ok = true;
-			if(channels2.size() != channels.size())
+			file>>read_channels>>read_B;
+			if(! file)
 			{
-				cerr<<"Warning : Reading class centers from file "<<centersFileName<<". Number of channels do not match, omitting centers "<<B<<endl;
-				ok = false;
+				cerr<<"Error : could not read class centers from file "<<filename<<endl;
+				return false;
+			}
+			else if(channels.size() == 0)
+			{
+				channels = read_channels;
+			}
+			else if(channels.size() != read_channels.size())
+			{
+				cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+				return false;
 			}
 			else
 			{
-				for(unsigned p = 0; p < channels.size() && ok; ++p)
+				for(unsigned i = 0; i < channels.size(); ++i)
 				{
-					if(channels2[p] != channels[p])
+					if(channels[i] != read_channels[i])
 					{
-						cerr<<"Warning : Reading class centers from file "<<centersFileName<<". Channels do not match, omitting centers "<<B<<endl;
-						ok = false;
+						cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+						return false;
 					}
 				}
-				
 			}
-			if( ok && B.size() != Bs[0].size())
-			{
-				cerr<<"Warning : Reading class centers from file "<<centersFileName<<". Number of classes do not match, omitting centers "<<B<<endl;
-				ok = false;
-			}
-			if(ok)
-			{
-				Bs.push_back(B);
-			}
+			Bs.push_back(read_B);
 		}
+		return true;
 	}
-	return Bs.size();
+	return false;
 }
 
-inline bool writeCentersToStream(const vector<RealFeature> & B, const vector<string>& channels, ostream& stream)
+bool writeCentersToFile(const string& filename, const vector<string>& channels, const vector<RealFeature>& B)
 {
-	if (stream.good())
-		stream<<channels;
-	if (stream.good())
-		stream<<"\t"<<B<<endl;
-	return stream.good();
-}
-
-inline void writeCentersToFile(const vector<RealFeature> & B, const vector<string>& channels, const string& centersFileName)
-{
-	ofstream centersFile(centersFileName.c_str(), ios_base::trunc);
-	if (not writeCentersToStream(B, channels, centersFile))
+	ofstream file(filename.c_str(), ios_base::trunc);
+	if(file)
 	{
-		cerr<<"Error : could not write class centers to file "<<centersFileName<<endl;
-	}
-	centersFile.close();
-}
-
-
-inline void writeCentersToFile(const vector< vector<RealFeature> >& Bs, const vector<string>& channels, const string& centersFileName)
-{
-	ofstream centersFile(centersFileName.c_str(), ios_base::trunc);
-	for(unsigned b = 0; b < Bs.size() && centersFile.good(); ++b)
-	{
-		if (not writeCentersToStream(Bs[b], channels, centersFile))
+		file<<setiosflags(ios::fixed)<<channels<<"\t"<<B<<endl;
+		if(! file)
 		{
-			cerr<<"Error : could not write class centers to file "<<centersFileName<<endl;
-		}
-	}
-	centersFile.close();
-}
-
-inline bool readbinSize(RealFeature& binSize, string sbinSize)
-{
-	if(!sbinSize.empty())
-	{
-		sbinSize.erase(remove_if(sbinSize.begin(), sbinSize.end(), ::isspace), sbinSize.end());
-		if (sbinSize[0] != '(')
-			sbinSize = "(" + sbinSize + ")";
-		istringstream Z(sbinSize);
-		Z>>binSize;
-		if(Z.fail())
-		{
-			cerr<<"Error reading the binSize."<<endl;
+			cerr<<"Error : could not write class centers to file "<<filename<<endl;
 			return false;
 		}
+		return true;
 	}
-	return true;
+	return false;
+}
+
+bool writeCentersToFile(const string& filename, const vector<string>& channels, const deque< vector<RealFeature> >& Bs, const unsigned max)
+{
+	ofstream file(filename.c_str(), ios_base::trunc);
+	if(file)
+	{
+		for(unsigned i = 0; i < max && file.good() && i < Bs.size(); ++i)
+		{
+			file<<setiosflags(ios::fixed)<<channels<<"\t"<<Bs[i]<<endl;
+			if(! file)
+			{
+				cerr<<"Error : could not write class centers to file "<<filename<<endl;
+				return false;
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+bool readCentersEtasFromFile(const string& filename, vector<string>& channels, vector<RealFeature>& B, vector<Real>& Eta)
+{
+	B.clear();
+	Eta.clear();
+	vector<string> read_channels;
+	ifstream file(filename.c_str());
+	if(file)
+	{
+		file>>read_channels>>B>>Eta;
+		if(! file)
+		{
+			cerr<<"Error : could not read class centers from file "<<filename<<endl;
+			return false;
+		}
+		else if(channels.size() == 0)
+		{
+			channels = read_channels;
+		}
+		else if(channels.size() != read_channels.size())
+		{
+			cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+			return false;
+		}
+		else
+		{
+			for(unsigned i = 0; i < channels.size(); ++i)
+			{
+				if(channels[i] != read_channels[i])
+				{
+					cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+bool readCentersEtasFromFile(const string& filename, vector<string>& channels, deque< vector<RealFeature> >& Bs, deque< vector<Real> >& Etas, const unsigned max)
+{
+	Bs.clear();
+	Etas.clear();
+	if(max == 0)
+		return true;
+	
+	vector<RealFeature> read_B;
+	vector<Real> read_Eta;
+	vector<string> read_channels;
+	ifstream file(filename.c_str());
+	if(file)
+	{
+		for(unsigned i = 0; i < max && file.good(); ++i)
+		{
+			file>>read_channels>>read_B>>read_Eta;
+			if(! file)
+			{
+				cerr<<"Error : could not read class centers from file "<<filename<<endl;
+				return false;
+			}
+			else if(channels.size() == 0)
+			{
+				channels = read_channels;
+			}
+			else if(channels.size() != read_channels.size())
+			{
+				cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+				return false;
+			}
+			else
+			{
+				for(unsigned i = 0; i < channels.size(); ++i)
+				{
+					if(channels[i] != read_channels[i])
+					{
+						cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+						return false;
+					}
+				}
+			}
+			Bs.push_back(read_B);
+			Etas.push_back(read_Eta);
+		}
+		return true;
+	}
+	return false;
+}
+
+bool writeCentersEtasToFile(const string& filename, const vector<string>& channels, const vector<RealFeature>& B, const vector<Real>& Eta)
+{
+	ofstream file(filename.c_str(), ios_base::trunc);
+	if(file)
+	{
+		file<<setiosflags(ios::fixed)<<channels<<"\t"<<B<<"\t"<<Eta<<endl;
+		if(! file)
+		{
+			cerr<<"Error : could not write class centers to file "<<filename<<endl;
+			return false;
+		}
+		return true;
+	}
+	return false;
+}
+
+bool writeCentersEtasToFile(const string& filename, const vector<string>& channels, const deque< vector<RealFeature> >& Bs, const deque< vector<Real> >& Etas, const unsigned max)
+{
+	ofstream file(filename.c_str(), ios_base::trunc);
+	if(file)
+	{
+		for(unsigned i = 0; i < max && file.good() && i < Bs.size() && i < Etas.size(); ++i)
+		{
+			file<<setiosflags(ios::fixed)<<channels<<"\t"<<Bs[i]<<"\t"<<Etas[i]<<endl;
+			if(! file)
+			{
+				cerr<<"Error : could not write class centers to file "<<filename<<endl;
+				return false;
+			}
+		}
+		return true;
+	}
+	return false;
 }
 
 inline bool readCoordinate(RealPixLoc& coordinate, string sCoordinate)
@@ -149,51 +263,22 @@ inline bool readCoordinate(RealPixLoc& coordinate, string sCoordinate)
 	return true;
 }
 
-inline vector<EUVImage*> getImagesFromFiles(const string imageType, const vector<string>& imagesFilenames, bool align)
-{
-
-	vector<EUVImage*> images;
-
-	// We read the files
-	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
-	{
-		images.push_back(getImageFromFile(imageType, imagesFilenames[p]));
-	}
-	
-	
-	if(align) // We align the images so they all have the same sun center
-	{
-		RealPixLoc sunCenter = images[0]->SunCenter();
-		
-		for (unsigned p = 1; p < imagesFilenames.size(); ++p)
-		{
-			if(distance_squared(sunCenter, images[p]->SunCenter()) > 2)
-			{
-				cerr<<"Warning : Image "<<imagesFilenames[p]<<" will be recentered to have the same sun centre than image "<<imagesFilenames[0]<<endl;
-				images[p]->recenter(sunCenter);
-				#if defined DEBUG
-				string filename = filenamePrefix + "recentered.";
-				filename +=  stripPath(imagesFilenames[p]);
-				images[p]->writeFits(filename);
-				#endif
-			}
-		}
-	}
-	return images;
-}
 
 inline EUVImage* getImageFromFile(const string imageType, const string imageFilename)
 {
-
 	EUVImage* image;
-
+	
 	#if defined EXTRA_SAFE
 	if(imageFilename.find(".fits")==string::npos && imageFilename.find(".fts")==string::npos)
 	{
-		cerr<<imageFilename<<" is not a fits file! (must end in .fits or .fts)"<<endl;
+		cerr<<"Warning: "<<imageFilename<<" is not a fits file! (must end in .fits or .fts)"<<endl;
 	}
 	#endif
-		
+	if(!isFile(imageFilename))
+	{
+		cerr<<"Error: Cannot find file "<<imageFilename<<endl;
+		exit(EXIT_FAILURE);
+	}
 	FitsFile file(imageFilename);
 	if (imageType == "EIT")
 		image = new EITImage();
@@ -245,68 +330,8 @@ inline ColorMap* getColorMapFromFile(const string imageFilename)
 
 }
 
-inline unsigned readEtaFromFile (vector<Real>& eta, const string& etaFileName)
-{
-	eta.clear();
-	ifstream etaFile(etaFileName.c_str());
-	if (etaFile.good())
-	{
-		etaFile>>eta;
-		etaFile.close();
-	}
-	else
-	{
-		cerr<<"Error : could not read eta from file "<<etaFileName<<endl;
-	}
-	return eta.size();
-}
 
-void replaceAll(string& str, const string& from, const string& to) {
-	if(from.empty())
-		return;
-	size_t start_pos = 0;
-	while((start_pos = str.find(from, start_pos)) != string::npos)
-	{
-		str.replace(start_pos, from.length(), to);
-		start_pos += to.length();
-	}
-}
-
-string expand(string text, const Header& header)
-{
-	size_t key_start = text.find_first_of('{');
-	while (key_start != string::npos)
-	{
-		size_t key_end = text.find_first_of('}', key_start);
-		if(key_end != string::npos)
-		{
-			string key_name = text.substr(key_start + 1, key_end - key_start - 1);
-			string value = "";
-			if(header.has(key_name))
-			{
-				value = header.get<string>(key_name);
-			}
-			else
-			{
-				cerr<<"Warning: key_name "<<key_name<<" requested in "<<text<<" not found in header."<<endl;
-			}
-			text.replace(key_start, key_end - key_start + 1, value);
-		}
-		else
-		{
-			cerr<<"Warning: malformed string, no closing } after position "<<key_start<<" in "<<text<<endl;
-			break;
-		}
-		key_start = text.find_first_of('{');
-	}
-	replaceAll(text, "\\n", "\n");
-	#if defined VERBOSE
-	cout<<endl<<"text has been expanded to: "<<text<<endl;
-	#endif
-	return text;
-}
-
-vector<RealFeature> median_classcenters(const vector< vector<RealFeature> >& Bs)
+vector<RealFeature> median(const deque< vector<RealFeature> >& Bs)
 {
 	vector<RealFeature> Bmedian;
 	if(Bs.size() > 0)
@@ -328,8 +353,64 @@ vector<RealFeature> median_classcenters(const vector< vector<RealFeature> >& Bs)
 	}
 	else
 	{
-		cerr<<"Warning : computing median of an empty vector."<<endl;
+		throw invalid_argument("Vector of class center is empty, cannot compute median of an empty vector.");
 	}
 	return Bmedian;
+}
+
+
+vector<Real> median(const deque< vector<Real> >& Etas)
+{
+	vector<Real> Etamedian;
+	if(Etas.size() > 0)
+	{
+		Etamedian.resize(Etas[0].size());
+		for(unsigned i = 0; i < Etas[0].size(); ++i)
+		{
+			vector<Real> values(Etas.size());
+			for(unsigned b = 0; b < Etas.size(); ++b)
+			{
+				values[b] = Etas[b].at(i);
+			}
+			sort(values.begin(), values.end());
+			Etamedian[i] = values[values.size()/2];
+		}
+	}
+	else
+	{
+		throw invalid_argument("Vector of Eta is empty, cannot compute median of an empty vector.");
+	}
+	return Etamedian;
+}
+
+bool reorderImages(vector<EUVImage*>& images, const vector<string>& channels)
+{
+	if(channels.size() != images.size())
+	{
+		return false;
+	}
+	else
+	{
+		for (unsigned p = 0; p < images.size(); ++p)
+		{
+			if(channels[p] != images[p]->Channel())
+			{
+				unsigned pp = p+1;
+				while(pp < images.size() && channels[p] != images[pp]->Channel())
+					++pp;
+				if(pp < images.size())
+				{
+					EUVImage* temp = images[pp];
+					images[pp] = images[p];
+					images[p] = temp;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
+	}
+	return true;
 }
 

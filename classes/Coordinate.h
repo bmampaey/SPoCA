@@ -33,6 +33,17 @@ class CartesianCoordinate
 			else
 				return fabs(x - c.x) < std::numeric_limits<T>::epsilon() && fabs(y - c.y) < std::numeric_limits<T>::epsilon();
 		}
+		CartesianCoordinate& operator-=(const CartesianCoordinate& c)
+		{
+			x -= c.x;
+			y -= c.y;
+			return *this;
+		}
+		CartesianCoordinate operator-(const CartesianCoordinate& c) const
+		{
+			CartesianCoordinate result(*this);
+			return result-=(c);
+		}
 		/*
 		//! Comparison operator
 		bool operator!=(const CartesianCoordinate& c)const
@@ -53,23 +64,6 @@ class CartesianCoordinate
 				return false;
 		}
 		
-		CartesianCoordinate& operator-=(const CartesianCoordinate& c)
-		{
-			x -= c.x;
-			y -= c.y;
-			return *this;
-		}
-		CartesianCoordinate operator+(const CartesianCoordinate& c) const
-		{
-			CartesianCoordinate result(*this);
-			return result+=(c);
-		}
-		CartesianCoordinate operator-(const CartesianCoordinate& c) const
-		{
-			CartesianCoordinate result(*this);
-			return result-=(c);
-		}
-		
 		CartesianCoordinate operator*(const T& value) const
 		{
 			return CartesianCoordinate(x * value, y * value);
@@ -84,6 +78,11 @@ class CartesianCoordinate
 			x += c.x;
 			y += c.y;
 			return *this;
+		}
+		CartesianCoordinate operator+(const CartesianCoordinate& c) const
+		{
+			CartesianCoordinate result(*this);
+			return result+=(c);
 		}
 		//! Test if coordinate is null
 		virtual bool operator !() const

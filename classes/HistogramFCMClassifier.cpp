@@ -13,11 +13,11 @@ HistogramFCMClassifier::HistogramFCMClassifier(Real fuzzifier, unsigned numberCl
 HistogramFCMClassifier::HistogramFCMClassifier(ParameterSection& parameters)
 :FCMClassifier(parameters)
 {
-	if (parameters["binSize"].is_set())
+	if (parameters["histogramFilename"].is_set())
+		initHistogram(parameters["histogramFilename"]);
+	else
 		initBinSize(parameters["binSize"]);
 	
-	else if (parameters["histogramFilename"].is_set())
-		initHistogram(parameters["histogramFilename"]);
 	
 	#if defined DEBUG
 	cout<<"Called HFCM constructor with parameter section"<<endl;
@@ -32,53 +32,44 @@ void HistogramFCMClassifier::attribution()
 
 void HistogramFCMClassifier::addImages(vector<EUVImage*> images)
 {
-
-	if(images.size() < NUMBERCHANNELS)
+	if(images.size() != NUMBERCHANNELS)
 	{
 		cerr<<"Error : The number of images is not equal to "<<NUMBERCHANNELS<<endl;
 		exit(EXIT_FAILURE);
 	}
-	else if(images.size() > NUMBERCHANNELS)
-	{
-		cerr<<"Warning : The number of images is not equal to "<<NUMBERCHANNELS<<". Only using the first ones."<<endl;
-	}
 	
 	// We must verify that the channels of the histogram are the same as the channels of the classifier
-	if(channels.size() > 0)
+	if(channels.empty() && histoChannels.empty())
 	{
-		if(histoChannels.empty())
+		for(unsigned p = 0; p < images.size(); ++p)
+			channels.push_back(images[p]->Channel());
+		histoChannels = channels;
+	}
+	else if(histoChannels.empty())
+	{
+		histoChannels = channels;
+	}
+	else if(channels.empty())
+	{
+		channels = histoChannels;
+	}
+	else if(histoChannels.size() != channels.size())
+	{
+		cerr<<"Error : number of channels of the histogram differ from the number of channels of the classifier, check centers file or histogram file."<<endl;
+		exit(EXIT_FAILURE);
+	}
+	else
+	{
+		for(unsigned p = 0; p < channels.size(); ++p)
 		{
-			histoChannels = channels;
-		}
-		else if(histoChannels.size() != channels.size())
-		{
-			cerr<<"Error : number of channels of the histogram differ from the number of channels of the classifier, check centers file or histogram file."<<endl;
-			exit(EXIT_FAILURE);
-		}
-		else
-		{
-			for(unsigned p = 0; p < channels.size(); ++p)
+			if(histoChannels[p] != channels[p])
 			{
-				if(histoChannels[p] != channels[p])
-				{
-					cerr<<"Error : channel "<<p<<" of the histogram ("<<histoChannels[p]<<") differ from classifier ("<<channels[p]<<"), check centers file or histogram file."<<endl;
-					exit(EXIT_FAILURE);
-				}
+				cerr<<"Error : channel "<<p<<" of the histogram ("<<histoChannels[p]<<") differ from classifier ("<<channels[p]<<"), check centers file or histogram file."<<endl;
+				exit(EXIT_FAILURE);
 			}
 		}
 	}
-	else 
-	{
-		if(histoChannels.empty())
-		{
-			histoChannels.resize(NUMBERCHANNELS);
-			for (unsigned p = 0; p< NUMBERCHANNELS; ++p)
-				histoChannels[p] = images[p]->Channel();
-		}
-		channels = histoChannels;
-	}
 	
-
 	// I will need the images in the end to show the classification
 	// so I add them to the FCM Classifier, and use it's Feture vectors to build the histogram
 	FCMClassifier::addImages(images);
@@ -202,15 +193,16 @@ Real HistogramFCMClassifier::computeJ() const
 	return result;
 }
 
-void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIteration)
+void HistogramFCMClassifier::classification()
 {
-	#if defined EXTRA_SAFE
 	if(HistoX.size() == 0 || B.size() == 0)
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
 		exit(EXIT_FAILURE);
-
+	
 	}
+	
+	#if defined EXTRA_SAFE
 	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
 	cout<<setiosflags(ios::fixed);
 	#endif
@@ -237,10 +229,11 @@ void HistogramFCMClassifier::classification(Real precision, unsigned maxNumberIt
 	
 		HistogramFCMClassifier::stepout(iteration, precisionReached, precision);
 	}
-
+	
 	#if defined VERBOSE
 	cout<<endl<<"--HistogramFCMClassifier::classification--END--"<<endl;
 	#endif
+	
 	#if defined EXTRA_SAFE
 	feenableexcept(excepts);
 	#endif
@@ -279,7 +272,13 @@ vector<RealFeature> HistogramFCMClassifier::classAverage() const
 
 void HistogramFCMClassifier::initB(const vector<string>& channels, const vector<RealFeature>& B)
 {
-	if(histoChannels.empty())
+	// We verify and set the classifier channels
+	if(channels.size() != NUMBERCHANNELS)
+	{
+		cerr<<"Error : The number of channels is not correct."<<endl;
+		exit(EXIT_FAILURE);
+	}
+	if(HistoX.empty())
 	{
 		histoChannels = channels;
 	}

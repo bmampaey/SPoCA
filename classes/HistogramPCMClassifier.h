@@ -41,7 +41,7 @@ class HistogramPCMClassifier : public virtual PCMClassifier, public HistogramFCM
 		HistogramPCMClassifier(ParameterSection& parameters);
 		
 		//! Classification function
-		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
+		void classification();
 		
 		//! Function to do attribution (Fix center classification)
 		void attribution();

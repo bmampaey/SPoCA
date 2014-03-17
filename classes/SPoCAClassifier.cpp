@@ -3,7 +3,7 @@
 using namespace std;
 
 SPoCAClassifier::SPoCAClassifier(Real fuzzifier, unsigned numberClasses, Real precision, unsigned maxNumberIteration, unsigned neighborhoodRadius)
-:PCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), Nradius(neighborhoodRadius)
+:FCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), PCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), Nradius(neighborhoodRadius)
 {
 	#if defined DEBUG
 	cout<<"Called SPoCA constructor"<<endl;
@@ -11,7 +11,7 @@ SPoCAClassifier::SPoCAClassifier(Real fuzzifier, unsigned numberClasses, Real pr
 }
 
 SPoCAClassifier::SPoCAClassifier(ParameterSection& parameters)
-:PCMClassifier(parameters), Nradius(parameters["neighborhoodRadius"])
+:FCMClassifier(parameters), PCMClassifier(parameters), Nradius(parameters["neighborhoodRadius"])
 {
 	#if defined DEBUG
 	cout<<"Called SPoCA constructor with parameter section"<<endl;
@@ -20,16 +20,35 @@ SPoCAClassifier::SPoCAClassifier(ParameterSection& parameters)
 
 void SPoCAClassifier::addImages(vector<EUVImage*> images)
 {
-	
-	if(images.size() < NUMBERCHANNELS)
+
+	// We verify and set the classifier channels
+	if(images.size() != NUMBERCHANNELS)
 	{
 		cerr<<"Error : The number of images is not equal to "<<NUMBERCHANNELS<<endl;
 		exit(EXIT_FAILURE);
 	}
-	else if(images.size() > NUMBERCHANNELS)
+	if(channels.empty())
 	{
-		cerr<<"Warning : The number of images is not equal to "<<NUMBERCHANNELS<<". Only using the first ones."<<endl;
+		for(unsigned p = 0; p < images.size(); ++p)
+			channels.push_back(images[p]->Channel());
 	}
+	else
+	{
+		if(images.size() != channels.size())
+		{
+			cerr<<"Error : The number of images is not equal to "<<NUMBERCHANNELS<<endl;
+			exit(EXIT_FAILURE);
+		}
+		for(unsigned p = 0; p < channels.size(); ++p)
+		{
+			if(channels[p] != images[p]->Channel())
+			{
+				cerr<<"Error : The images channels do not correspond to classifier channels."<<endl;
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+	
 	
 	Xaxes = images[0]->Xaxes();
 	Yaxes = images[0]->Yaxes();

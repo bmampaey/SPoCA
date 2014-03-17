@@ -393,7 +393,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 		else if(i->second.find_first_of(".") == string::npos)
 		{
 			//It is probably a integer
-			int value = stoi(i->second);
+			int value = toInt(i->second);
 			if(fits_update_key(fptr, TINT, i->first.c_str(), &value, const_cast<char *>(comment.c_str()), &status))
 			{
 				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
@@ -405,7 +405,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 		else
 		{
 			//It is probably a double
-			double value = stod(i->second);
+			double value = toDouble(i->second);
 			if(fits_update_key(fptr, TDOUBLE, i->first.c_str(), &value, const_cast<char *>(comment.c_str()), &status))
 			{
 				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
@@ -474,11 +474,12 @@ FitsFile& FitsFile::readImage(T*& image, unsigned &X, unsigned& Y, T* null)
 	Y = axes[1];
 	unsigned numberPixels = X * Y;
 	
-	// We alocate space for the pixels
+	// We allocate space for the pixels
 	#if defined EXTRA_SAFE
 	if (image != NULL)
 	{
-		cerr<<"Error : should not allocate memory to a non NULL pointer when reading image from file "<<filename<<endl;			
+		cerr<<"Error : should not allocate memory to a non NULL pointer when reading image from file "<<filename<<endl;
+		exit(EXIT_FAILURE);
 	}
 	#endif
 	image = new T[numberPixels];
@@ -929,7 +930,7 @@ FitsFile& FitsFile::writeColumn(const string &name, const vector<string>& data, 
 	for (unsigned s = 0; s < data.size(); ++s)
 		stringwidth = data[s].length() > stringwidth ?  data[s].length() : stringwidth;
 		
-	string format = itos(stringwidth)+ "A";
+	string format = toString(stringwidth)+ "A";
 	char* tform = const_cast<char *>(format.c_str());
 	
 	// We create the column

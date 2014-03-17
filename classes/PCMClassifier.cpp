@@ -18,13 +18,12 @@ PCMClassifier::PCMClassifier(ParameterSection& parameters)
 	{
 		fuzzifier = parameters["PCMfuzzifier"];
 	}
-	#if defined EXTRA_SAFE
+	
 	if (fuzzifier == 1 )
 	{
 		cerr<<"Error : Fuzzifier must not equal 1.";
 		exit(EXIT_FAILURE);
 	}
-	#endif
 	
 	#if defined DEBUG
 	cout<<"Called PCM constructor with parameter section"<<endl;
@@ -156,7 +155,7 @@ void PCMClassifier::computeEta(Real alpha)
 }
 
 // VERSION WITH LIMITED VARIATION OF ETA W.R.T. ITS INITIAL VALUE
-void PCMClassifier::classification(Real precision, unsigned maxNumberIteration)
+void PCMClassifier::classification()
 {	
 	const Real maxFactor = ETA_MAXFACTOR;
 
@@ -265,7 +264,7 @@ void PCMClassifier::fillHeader(Header& header)
 	FCMClassifier::fillHeader(header);
 	header.set("CFCMFUZ", FCMfuzzifier, "FCM Fuzzifier");
 	for (unsigned i = 0; i < eta.size(); ++i)
-		header.set("CETA"+itos(i+1,2), dtos(eta[i]), "Classification eta " + itos(i+1,2));
+		header.set("CETA"+toString(i+1,2), toString(eta[i]), "Classification eta " + toString(i+1,2));
 }
 
 void PCMClassifier::initBEta(const std::vector<std::string>& channels, const std::vector<RealFeature>& B, const vector<Real>& eta)
@@ -302,7 +301,7 @@ void PCMClassifier::FCMinit()
 	numberClasses = B.size();
 	Real temp = fuzzifier;
 	fuzzifier = FCMfuzzifier;
-	FCMClassifier::classification(precision, maxNumberIteration);
+	FCMClassifier::classification();
 	
 	//We like our centers to be sorted 
 	FCMClassifier::sortB();

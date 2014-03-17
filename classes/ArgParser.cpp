@@ -9,19 +9,19 @@
 
 using namespace std;
 ArgParser::Parameter::Parameter(const char short_name, const string& description)
-:short_name(short_name), description(description), set(false), position(0), config_file(false), help(false), remaining_parameters(false), remaining_parameter_min(-1), remaining_parameter_max(-1)
+:short_name(short_name), description(description), set(false), default_value_set(false), position(0), config_file(false), help(false), remaining_parameters(false), remaining_parameter_min(-1), remaining_parameter_max(-1)
 {}
 
 template<>
 ArgParser::Parameter::Parameter(const bool& default_value, const char short_name, const string& description)
-:short_name(short_name), description(description), set(false), position(0), config_file(false), help(false), remaining_parameters(false), remaining_parameter_min(-1), remaining_parameter_max(-1)
+:short_name(short_name), description(description), set(false), default_value_set(true), position(0), config_file(false), help(false), remaining_parameters(false), remaining_parameter_min(-1), remaining_parameter_max(-1)
 {
 	this->default_value = default_value ? "true" : "false";
 }
 
 template<>
 ArgParser::Parameter::Parameter(const bool& default_value, const string& description)
-:short_name('\0'), description(description), set(false), position(0), config_file(false), help(false), remaining_parameters(false), remaining_parameter_min(-1), remaining_parameter_max(-1)
+:short_name('\0'), description(description), set(false), default_value_set(true), position(0), config_file(false), help(false), remaining_parameters(false), remaining_parameter_min(-1), remaining_parameter_max(-1)
 {
 	this->default_value = default_value ? "true" : "false";
 }
@@ -60,13 +60,14 @@ string ArgParser::Parameter::help_message(const string& long_name, string sectio
 	{
 		if(!description.empty())
 			message = "# " + description + "\n";
-		if(default_value.empty())
+		if(default_value_set)
 		{
-			message += long_name + " = ";
+			message += "#" + long_name + " = " + default_value;
+
 		}
 		else
 		{
-			message += "#" + long_name + " = " + default_value;
+			message += long_name + " = ";
 		}
 	}
 	else if(doxygen)
@@ -89,7 +90,7 @@ string ArgParser::Parameter::help_message(const string& long_name, string sectio
 		message += "--" + section + long_name;
 		if(short_name)
 			message += " | -" + section + short_name;
-		if(!default_value.empty())
+		if(default_value_set)
 			message += "\tdefault: " + default_value;
 		if(!description.empty())
 			message += "\n\t" + description;
@@ -126,13 +127,13 @@ ArgParser::Parameter::operator string() const
 	{
 		return value;
 	}
-	else if(!default_value.empty())
+	else if(default_value_set)
 	{
 		return default_value;
 	}
 	else
 	{
-		throw std::invalid_argument("Value is undefined");
+		throw invalid_argument("Value is undefined");
 	}
 }
 
@@ -144,18 +145,8 @@ bool ArgParser::Parameter::operator ==(const char* v) const
 
 ostream& operator<<(ostream& os, const ArgParser::Parameter& parameter)
 {
-	if(parameter.set)
-	{
-		os << parameter.value;
-	}
-	else if(!parameter.default_value.empty())
-	{
-		os << parameter.default_value;
-	}
-	else
-	{
-		throw invalid_argument("Value is undefined");
-	}
+	string value = parameter;
+	os << value;
 	return os;
 }
 
@@ -530,18 +521,18 @@ void ArgParser::parse(const int argc, const char **argv, bool warn_duplicate, bo
 		if(int(positional_arguments.size()) < sections["global"][remaining_parameters_name].remaining_parameter_min)
 		{
 			// We have less remaining positional arguments than requested
-			throw invalid_argument("You must specify at least " + itos(sections["global"][remaining_parameters_name].remaining_parameter_min) + " " + remaining_parameters_name);
+			throw invalid_argument("You must specify at least " + toString(sections["global"][remaining_parameters_name].remaining_parameter_min) + " " + remaining_parameters_name);
 		}
 		else if(sections["global"][remaining_parameters_name].remaining_parameter_max > 0 && int(positional_arguments.size()) > sections["global"][remaining_parameters_name].remaining_parameter_max)
 		{
 			// We have more remaining positional arguments than allowed
-			throw invalid_argument("You must specify at most " + itos(sections["global"][remaining_parameters_name].remaining_parameter_max) + " " + remaining_parameters_name);
+			throw invalid_argument("You must specify at most " + toString(sections["global"][remaining_parameters_name].remaining_parameter_max) + " " + remaining_parameters_name);
 		}
 	}
 	else
 	{
 		// We have remaining positional arguments that were not declared
-		throw invalid_argument("The following positional arguments are superfluous: " + to_string(positional_arguments));
+		throw invalid_argument("The following positional arguments are superfluous: " + toString(positional_arguments));
 	}
 	
 	// We parse the config files
@@ -581,7 +572,7 @@ void ArgParser::parse_file(const string& filename, bool warn_duplicate, bool ove
 			}
 			else
 			{
-				throw invalid_argument("Unknown section " + section + " on line " + itos(line_number));
+				throw invalid_argument("Unknown section " + section + " on line " + toString(line_number));
 			}
 		}
 		else if(parse_option(argument, parameter, section, value))
@@ -590,11 +581,11 @@ void ArgParser::parse_file(const string& filename, bool warn_duplicate, bool ove
 			section = section.empty() ? current_section : section;
 			if(!sections.count(section))
 			{
-				throw invalid_argument("Unknown section " + section + " on line " + itos(line_number) + " in file " + filename);
+				throw invalid_argument("Unknown section " + section + " on line " + toString(line_number) + " in file " + filename);
 			}
 			if(!sections[section].count(parameter))
 			{
-				throw invalid_argument("Unknown parameter " + parameter + " for " + section + " section on line " + itos(line_number) + " in file " + filename);
+				throw invalid_argument("Unknown parameter " + parameter + " for " + section + " section on line " + toString(line_number) + " in file " + filename);
 			}
 			string spv[] = {section, parameter, value};
 			nominal_arguments.push_back(vector<string>(spv, spv + 3));
@@ -605,7 +596,7 @@ void ArgParser::parse_file(const string& filename, bool warn_duplicate, bool ove
 		if(trim(argument) && ! argument.empty() && ! parse_comment(argument))
 		{
 			// We have an error
-			throw invalid_argument("Invalid line number " + itos(line_number) + " in file " + filename);
+			throw invalid_argument("Invalid line number " + toString(line_number) + " in file " + filename);
 		}
 	}
 	

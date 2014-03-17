@@ -1,5 +1,6 @@
 #include "EUVImage.h"
 #include "colortables.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -121,12 +122,12 @@ void EUVImage::fillHeader()
 
 inline string EUVImage::Channel() const
 {
-	return Instrument() + "_" + itos(int(Wavelength()));
+	return Instrument() + "_" + toString(int(Wavelength()));
 }
 
 inline string EUVImage::Label() const
 {
-		return Instrument() + " " + itos(int(Wavelength())) + "Å " + ObservationDate();
+		return Instrument() + " " + toString(int(Wavelength())) + "Å " + ObservationDate();
 }
 
 inline Real EUVImage::Wavelength() const
@@ -156,76 +157,64 @@ inline Real EUVImage::ExposureTime() const
 }
 
 
-string nextStep(string& preprocessingList)
+void EUVImage::preprocessing(string preprocessingList)
 {
-	size_t pos = preprocessingList.find(',');
-	string preprocessingStep;
-	if (pos != string::npos)
+	double maxRadius = MAXRADIUS();
+	vector<string> preprocessingSteps = split(preprocessingList);
+	for(unsigned s = 0; s < preprocessingSteps.size(); ++s)
 	{
-		preprocessingStep = preprocessingList.substr(0, pos);
-		preprocessingList = preprocessingList.substr(pos + 1);
-	}
-	else
-	{
-		preprocessingStep = preprocessingList;
-		preprocessingList.clear();
-	}
-	return preprocessingStep;
-}
-
-void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
-{
-
-	string preprocessingStep = nextStep(preprocessingList);
-	while(!preprocessingStep.empty())
-	{
-		if(preprocessingStep == "NAR")
+		vector<string> stepParameters = split(preprocessingSteps[s], '=');
+		string stepType = trimWhites(stepParameters[0]);
+		if(stepType == "NAR")
 		{
-			nullifyAboveRadius(radiusRatio);
-		}
-		else if( preprocessingStep == "ALC")
-		{
-			//The successive operations ALC + DivMedian have been optimized
-			preprocessingStep = nextStep(preprocessingList);
-			if( preprocessingStep == "DivMedian")
+			if(stepParameters.size() > 1)
 			{
-				ALCDivMedian(radiusRatio, MINRADIUS());
-				median /= median;
-				datap01 /= median;
-				datap99 /= median;
-				mode /= median;
+				double radiusRatio = toDouble(stepParameters[1]);
+				if(radiusRatio < maxRadius)
+				{
+					nullifyAboveRadius(radiusRatio);
+					maxRadius = radiusRatio;
+				}
 			}
 			else
 			{
-				annulusLimbCorrection(radiusRatio, MINRADIUS());
-				preprocessingList = preprocessingStep + "," + preprocessingList;
+				nullifyAboveRadius();
+				maxRadius = 1;
 			}
 		}
-		else if(preprocessingStep.find("Div") == 0)
+		else if(stepType == "ALC")
 		{
-			Real denominator = 1.;
-			while(preprocessingStep.find("Div") == 0)
+			annulusLimbCorrection(maxRadius, MINRADIUS());
+		}
+		else if(stepType.find("Div") == 0)
+		{
+			double denominator = 1.;
+			while(true)
 			{
-				if(preprocessingStep == "DivMedian")
+				if(stepType == "DivMedian")
 					denominator *= Median();
-				else if(preprocessingStep == "DivMode")
+				else if(stepType == "DivMode")
 					denominator *= Mode();
-				else if(preprocessingStep == "DivExpTime")
+				else if(stepType == "DivExpTime")
 					denominator *= exposureTime;
 				else
-					cerr<<"Error during preprocessing : Unknown preprocessing step "<<preprocessingStep<<endl;
-				
-				if(denominator == 0)
 				{
-					cerr<<"Error during preprocessing step "<<preprocessingStep<<". Division by 0."<<endl;
+					cerr<<"Error : Unknown preprocessing step "<<stepType<<endl;
 					exit(EXIT_FAILURE);
 				}
-				preprocessingStep = nextStep(preprocessingList);
+				if(s + 1 < preprocessingSteps.size() && preprocessingSteps[s+1].find("Div") == 0)
+				{
+					++s;
+					stepParameters = split(preprocessingSteps[s], '=');
+					stepType = trimWhites(stepParameters[0]);
+				}
 			}
-			
-			preprocessingList = preprocessingStep + "," + preprocessingList;
-			
-			if(denominator != 1)
+			if(denominator == 0)
+			{
+				cerr<<"Error: In preprocessing step "<<preprocessingSteps[s]<<". Division by 0."<<endl;
+				exit(EXIT_FAILURE);
+			}
+			else if(denominator != 1.)
 			{
 				for (unsigned j=0; j < numberPixels; ++j)
 				{
@@ -237,8 +226,8 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 				datap99 /= denominator;
 				mode /= denominator;
 			}
-		}	
-		else if( preprocessingStep == "TakeSqrt")
+		}
+		else if(stepType == "TakeSqrt")
 		{
 			for (unsigned j=0; j < numberPixels; ++j)
 			{
@@ -250,7 +239,7 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 			datap01 = sqrt(datap01);
 			datap99 = sqrt(datap99);
 		}	
-		else if( preprocessingStep == "TakeLog")
+		else if(stepType == "TakeLog")
 		{
 			for (unsigned j=0; j < numberPixels; ++j)
 			{
@@ -263,75 +252,79 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 			datap99 = log(datap99);
 			
 		}
-		else if(preprocessingStep.find("Thr") == 0)
+		else if(stepType.find("Thr") == 0)
 		{
-			double upper = 100, lower = 0;
-			while(preprocessingStep.find("Thr") == 0)
+			double upperPercentile = 100, lowerPercentile = 0;
+			double upperValue = std::numeric_limits<double>::max(), lowerValue = std::numeric_limits<double>::min();
+			while(true)
 			{
-				if(preprocessingStep.find("ThrMin") == 0)
+				if(stepParameters.size() < 2)
 				{
-					lower = stod(preprocessingStep.substr(6));
+					cerr<<"Error: No value specified for threshold preprocessing step"<<preprocessingSteps[s]<<endl;
+					exit(EXIT_FAILURE);
 				}
-				else if (preprocessingStep.find("ThrMax") == 0)
+				if(stepType == "ThrMinPer")
 				{
-					upper = stod(preprocessingStep.substr(6));
+					lowerPercentile = max(toDouble(stepParameters[1]), lowerPercentile);
+				}
+				else if(stepType == "ThrMaxPer")
+				{
+					upperPercentile = min(toDouble(stepParameters[1]), upperPercentile);
+				}
+				else if(stepType == "ThrMin")
+				{
+					lowerValue = max(toDouble(stepParameters[1]), lowerValue);
+				}
+				else if(stepType == "ThrMax")
+				{
+					upperValue = min(toDouble(stepParameters[1]), upperValue);
 				}
 				else
-					cerr<<"Error during preprocessing : Unknown preprocessing step "<<preprocessingStep<<endl;
-				preprocessingStep = nextStep(preprocessingList);
+				{
+					cerr<<"Error: Unknown preprocessing step "<<preprocessingSteps[s]<<endl;
+					exit(EXIT_FAILURE);
+				}
+				if(s + 1 < preprocessingSteps.size() && preprocessingSteps[s+1].find("Thr") == 0)
+				{
+					++s;
+					stepParameters = split(preprocessingSteps[s], '=');
+					stepType = trimWhites(stepParameters[0]);
+				}
 			}
-			
-			preprocessingList = preprocessingStep + "," + preprocessingList;
 			
 			vector<Real> percents;
-			if(lower > 0)
-				percents.push_back(lower/100.);
-			if(upper < 100)
-				percents.push_back(upper/100.);
+			if(lowerPercentile > 0)
+				percents.push_back(lowerPercentile/100.);
+			if(upperPercentile < 100)
+				percents.push_back(upperPercentile/100.);
 				
-			
 			if(percents.size() > 0)
 			{
-				vector<EUVPixelType> temp(pixels, pixels+numberPixels);
 				vector<EUVPixelType> limits = percentiles(percents);
 				
-				EUVPixelType max = RealMAX;
-				if(upper < 100)
+				if(upperPercentile < 100)
 				{
-					max = limits.back();
+					upperValue = min(double(limits.back()), upperValue);
 					limits.pop_back();
-					#if defined VERBOSE
-					cerr<<"Percentile "<<upper<<": "<<max<<endl;
-					#endif
 				}
 				
-				EUVPixelType min = -RealMAX;
-				if(lower > 0)
+				if(lowerPercentile > 0)
 				{
-					min = limits.back();
+					lowerValue = max(double(limits.back()), lowerValue);
 					limits.pop_back();
-					#if defined VERBOSE
-					cerr<<"Percentile "<<lower<<": "<<min<<endl;
-					#endif
 				}
-				
-				threshold(min, max);
 			}
+			threshold(lowerValue, upperValue);
 		}
-		else if(preprocessingStep.find("Smooth") == 0)
+		else if(stepType == "Smooth")
 		{
-			double factor = stod(preprocessingStep.substr(6));
-			binomial_smoothing(int(factor/PixelWidth()+0.5));
+			binomial_smoothing(int(toDouble(stepParameters[1])/PixelWidth()+0.5));
 		}
 		else
 		{
-			cerr<<"Error during preprocessing : Unknown preprocessing step "<<preprocessingStep<<endl;
+			cerr<<"Error: Unknown preprocessing step "<<preprocessingSteps[s]<<endl;
 		}
-		
-		preprocessingStep = nextStep(preprocessingList);
-			
 	}
-	
 }
 
 /* Function that returns the percentage of correction necessary for an annulus, given the percentage of the annulus radius to the radius of the sun */
@@ -366,51 +359,6 @@ inline Real EUVImage::percentCorrection(const Real r)const
 	}
 
 }
-
-/* Older methods kept for historical reasons
-
-// Method proposed by Vincent
-// No Correction before r1, Full correction after r1 
-inline Real EUVImage::percentCorrection(const Real r)const
-{
-	const Real r1 = DISCRETE_CORR_R1 / 100.;
-	if (r < r1)
-		return 0;
-	else
-		return 1;
-}
-
-
-
-
-// Method proposed by Cis
-// No Correction before r1, Full correction after r2, progressive correction in between
-inline Real EUVImage::percentCorrection(const Real r)const
-{
-
-	const Real r1 = SLOPE_CORR_R1 / 100.;
-	const Real r2 = SLOPE_CORR_R2 / 100.;
-	if (r < r1)
-		return 0;
-	else if (r >= r1 && r <= r2)
-	{
-		return (r - r1)/(r2 - r1);
-	}
-	else
-		return 1;
-
-}
-
-
-//2nd Method of Cis
-inline Real EUVImage::percentCorrection(const Real r)const
-{
-	return exp(-0.01 * pow(100 * (r-1),4));
-}
-
-*/
-
-
 
 void EUVImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 {
@@ -450,7 +398,6 @@ void EUVImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 					annulusMean.at(indice) += (*pixelValue);
 					annulusNbrPixels.at(indice) += 1;
 				}
-
 			}
 			++pixelValue;
 		}
@@ -478,113 +425,20 @@ void EUVImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 			if ((*pixelValue) != nullpixelvalue)
 			{
 				pixelRadius2 = x*x + y*y;
-				if (maxLimbRadius2 < pixelRadius2)
-				{
-					(*pixelValue) = nullpixelvalue;
-				}
-				else if (pixelRadius2 > minLimbRadius2)	  //We are in the limb
+				// If we are in the limb, we apply the correction
+				if (minLimbRadius2 < pixelRadius2 && pixelRadius2 <= maxLimbRadius2)
 				{
 					Real pixelRadius = sqrt(pixelRadius2);
 					Real fraction = percentCorrection(pixelRadius/SunRadius());
 					indice = unsigned((pixelRadius-minLimbRadius)/deltaR);
 					(*pixelValue) = (1. - fraction) * (*pixelValue) + (fraction * (*pixelValue) * median) / annulusMean.at(indice);
 				}
-
 			}
 			++pixelValue;
 		}
 	}
 
 }
-
-void EUVImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
-{						  
-	minLimbRadius *= SunRadius();
-	maxLimbRadius *= SunRadius();
-	Real minLimbRadius2 = minLimbRadius*minLimbRadius;
-	Real maxLimbRadius2 = maxLimbRadius*maxLimbRadius;
-	const Real deltaR = ANNULUS_WIDTH;	//This is the width of an annulus in pixel
-	vector<Real> annulusMean(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
-	vector<unsigned> annulusNbrPixels(unsigned((maxLimbRadius-minLimbRadius)/deltaR)+2,0);
-
-	EUVPixelType* pixelValue = pixels;
-	const Real xmax = Real(Xaxes()) - SunCenter().x;
-	const Real ymax = Real(Yaxes()) - SunCenter().y;
-	Real pixelRadius2 = 0;
-	unsigned indice = 0;
-
-	vector<EUVPixelType> onDiscList;
-	onDiscList.reserve(unsigned(BIPI * minLimbRadius * minLimbRadius));
-
-	// During the first pass we compute the total value of the annulus post limb, and the median value of the ante limb disc
-	for (Real y = - SunCenter().y; y < ymax; ++y)
-	{
-		for (Real x = - SunCenter().x ; x < xmax; ++x)
-		{
-			if ((*pixelValue) != nullpixelvalue)
-			{
-				pixelRadius2 = x*x + y*y;
-
-				if (pixelRadius2 <=  minLimbRadius2)
-				{
-					onDiscList.push_back((*pixelValue));
-				}
-				else if (pixelRadius2 <=  maxLimbRadius2)
-				{
-					indice = unsigned((sqrt(pixelRadius2)-minLimbRadius)/deltaR);
-					annulusMean.at(indice) += (*pixelValue);
-					annulusNbrPixels.at(indice) += 1;
-				}
-
-			}
-			++pixelValue;
-		}
-	}
-
-	median = quickselect(onDiscList);
-	#if defined VERBOSE
-	cout<<"Image preprocessing found median: "<<median<<endl;
-	#endif
-
-
-	// We calculate the mean value of each annulus
-	for (unsigned i=0; i<annulusMean.size(); ++i)
-	{
-		if(annulusNbrPixels.at(i)>0)
-			annulusMean.at(i) = annulusMean.at(i) / Real(annulusNbrPixels.at(i));
-	}
-	// We correct the limb
-	pixelValue = pixels;
-	for (Real y = - SunCenter().y; y < ymax; ++y)
-	{
-		for (Real x = - SunCenter().x ; x < xmax; ++x)
-		{
-			if ((*pixelValue) != nullpixelvalue)
-			{
-				pixelRadius2 = x*x + y*y;
-				if (maxLimbRadius2 < pixelRadius2)
-				{
-					(*pixelValue) = nullpixelvalue;
-				}
-				else if (pixelRadius2 > minLimbRadius2)	  //We are in the limb
-				{
-					Real pixelRadius = sqrt(pixelRadius2);
-					Real fraction = percentCorrection(pixelRadius/SunRadius());
-					indice = unsigned((pixelRadius-minLimbRadius)/deltaR);
-					(*pixelValue) = (1. - fraction) * (*pixelValue) / median + (fraction * (*pixelValue)) / annulusMean.at(indice);
-
-				}
-				else
-				{
-					(*pixelValue) = (*pixelValue) / median;
-				}
-			}
-			++pixelValue;
-		}
-	}
-
-}
-
 
 void EUVImage::enhance_contrast()
 {

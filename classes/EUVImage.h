@@ -39,9 +39,12 @@ class EUVImage : public SunImage<EUVPixelType>
 		//! Parameters fo the Annulus Limb Correction
 		std::vector<Real> ALCParameters;
 	
-		//! Routine to return the radius of the disc not corrected by the ALC
+		//! Routine to return the min radius of the disc not corrected by the ALC
 		virtual Real MINRADIUS()
 		{ return ALCParameters[0]; }
+		//! Routine to return the max radius of the disc not corrected by the ALC
+		virtual Real MAXRADIUS()
+		{ return ALCParameters[3]; }
 
 	public :
 		//! Constructor for an EUVImage of size xAxes x yAxes
@@ -96,13 +99,10 @@ class EUVImage : public SunImage<EUVPixelType>
 		virtual void setALCParameters(std::vector<Real> ALCParameters);
 
 		//! Routine to do image preprocessing
-		void preprocessing(std::string preprocessingList, const Real radiusRatio = 1.0);
+		void preprocessing(std::string preprocessingList);
 		
 		//! Routine to do Annulus Limb Correction (ALC)
 		void annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius);
-		
-		//! Routine to do Annulus Limb Correction followed by a division by the median of the inner disc
-		void ALCDivMedian(Real maxLimbRadius, Real minLimbRadius);
 		
 		//! Function that gives the percententage of necessary correction for the Annulus Limb Correction
 		Real percentCorrection(const Real r) const;

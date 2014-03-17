@@ -12,12 +12,16 @@ istream& operator>>(istream& in, vector<string>& v)
 	{
 		in.get();
 	}
-	if(! in.good())
+	if(in.eof())
 	{
-		cerr<<"Error parsing Vector from stream"<<endl;
 		return in;
 	}
-	if(in.peek() == '[')
+	else if(!in)
+	{
+		throw std::runtime_error("Error parsing vector from stream");
+		return in;
+	}
+	else if(in.peek() == '[')
 	{
 		in.get();
 		char c;
@@ -67,23 +71,16 @@ istream& operator>>(istream& in, vector<string>& v)
 		}
 	}
 	return in;
-
 }
 
-
-vector<string> split(const string &s, const char delim)
+inline string toString(const time_t time)
 {
-	vector<string> elems;
-	stringstream ss(s);
-	string item;
-	while (getline(ss, item, delim))
-	{
-		elems.push_back(item);
-	}
-	return elems;
+	char datetime_string[100];
+	strftime(datetime_string, 100, "%Y%m%d_%H%M%S", gmtime(&time));
+	return string(datetime_string);
 }
 
-inline string itos(const int& i, const int size)
+inline string toString(const int& i, const int size)
 {
 	ostringstream ss;
 	if (size > 0)
@@ -93,7 +90,17 @@ inline string itos(const int& i, const int size)
 	return ss.str();
 }
 
-inline string dtos(const double& d, const int size)
+inline string toString(const unsigned& i, const int size)
+{
+	ostringstream ss;
+	if (size > 0)
+		ss << setw( size ) << setfill( '0' ) << i;
+	else
+		ss << i;
+	return ss.str();
+}
+
+inline string toString(const double& d, const int size)
 {
 	ostringstream ss;
 	if (size > 0)
@@ -105,7 +112,7 @@ inline string dtos(const double& d, const int size)
 
 
 
-inline int stoi(const string& s)
+inline int toInt(const string& s)
 {
 	int i = 0;
 	istringstream ss(s);
@@ -113,7 +120,15 @@ inline int stoi(const string& s)
 	return i;
 }
 
-inline double stod(const string& s)
+inline unsigned toUnsigned(const string& s)
+{
+	unsigned i = 0;
+	istringstream ss(s);
+	ss >> i;
+	return i;
+}
+
+inline double toDouble(const string& s)
 {
 	double d = 0;
 	istringstream ss(s);
@@ -150,29 +165,79 @@ inline string getSuffix(const string &name)
 		return  name.substr(pos);
 }
 
+inline string makePath(const string &path1, const string &path2)
+{
+	if(path1.empty())
+		return path2;
+	else if(path2.empty())
+		return path1;
+	#if defined _WIN32
+	if(*path1.rbegin() == '\\')
+		return path1 + path2;
+	else
+		return path1 + "\\" + path2;
+	#else
+	if(*path1.rbegin() == '/')
+		return path1 + path2;
+	else
+		return path1 + "/" + path2;
+	#endif
+}
+
+
 inline bool isDir(const string path)
 {
 	struct stat statbuf;
-	return (stat(path.c_str(), &statbuf) != -1) && (S_ISDIR(statbuf.st_mode));
+	return (stat(path.c_str(), &statbuf) == 0) && (S_ISDIR(statbuf.st_mode));
 }
 
 inline bool isFile(const string path)
 {
 	struct stat statbuf;
-	return (stat(path.c_str(), &statbuf) != -1) && (S_ISREG(statbuf.st_mode));
+	return (stat(path.c_str(), &statbuf) == 0) && (S_ISREG(statbuf.st_mode));
 }
 
-inline bool isEmpty(const string path)
+inline bool emptyFile(const string path)
 {
 	struct stat statbuf;
-	return (stat(path.c_str(), &statbuf) != -1) && (statbuf.st_size > 0);
+	return (stat(path.c_str(), &statbuf) == 0) && (statbuf.st_size == 0);
 }
 
-inline string time2string(const time_t time)
+vector<string> split(const string &s, const char delim)
 {
-	char datetime_string[100];
-	strftime(datetime_string, 100, "%Y%m%d_%H%M%S", gmtime(&time));
-	return string(datetime_string);
+	vector<string> elems;
+	stringstream ss(s);
+	string item;
+	while (getline(ss, item, delim))
+	{
+		elems.push_back(item);
+	}
+	return elems;
+}
+
+string replaceAll(const string& str, const string& from, const string& to)
+{
+	if(from.empty())
+		return str;
+	string result = str;
+	size_t start_pos = 0;
+	while((start_pos = result.find(from, start_pos)) != string::npos)
+	{
+		result.replace(start_pos, from.length(), to);
+		start_pos += to.length();
+	}
+	return result;
+}
+
+string trimWhites(const string& str)
+{
+	string result = str;
+	size_t pos = result.find_first_not_of(" \t");
+	if(pos != string::npos)
+		result.erase(0, pos);
+	else
+		result.clear();
+	return result;
 }
 
 #define ELEM_SWAP(a,b) { register EUVPixelType t=(a);(a)=(b);(b)=t; }

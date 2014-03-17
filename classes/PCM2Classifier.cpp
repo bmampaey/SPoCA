@@ -3,7 +3,7 @@
 using namespace std;
 
 PCM2Classifier::PCM2Classifier(Real fuzzifier, unsigned numberClasses, Real precision, unsigned maxNumberIteration)
-:PCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration)
+:FCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration), PCMClassifier(fuzzifier, numberClasses, precision, maxNumberIteration)
 {
 	#if defined DEBUG
 	cout<<"Called PCM2 constructor"<<endl;
@@ -11,7 +11,7 @@ PCM2Classifier::PCM2Classifier(Real fuzzifier, unsigned numberClasses, Real prec
 }
 
 PCM2Classifier::PCM2Classifier(ParameterSection& parameters)
-:PCMClassifier(parameters)
+:FCMClassifier(parameters), PCMClassifier(parameters)
 {
 	#if defined DEBUG
 	cout<<"Called PCM2 constructor with parameter section"<<endl;
@@ -107,18 +107,16 @@ void PCM2Classifier::reduceEta()
 
 
 // VERSION WITH LIMITED VARIATION OF ETA W.R.T. ITS INITIAL VALUE
-void PCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
+void PCM2Classifier::classification()
 {	
 	const Real maxFactor = ETA_MAXFACTOR;
-
-
-	#if defined EXTRA_SAFE
 	if(X.size() == 0 || B.size() == 0 || B.size() != eta.size())
 	{
 		cerr<<"Error : The Classifier must be initialized before doing classification."<<endl;
 		exit(EXIT_FAILURE);
-	
 	}
+	
+	#if defined EXTRA_SAFE
 	int excepts = feenableexcept(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW);
 	cout<<setiosflags(ios::fixed);
 	#endif
@@ -168,10 +166,11 @@ void PCM2Classifier::classification(Real precision, unsigned maxNumberIteration)
 		
 		stepout(iteration, precisionReached, precision);
 	}
-
+	
 	#if defined VERBOSE
 	cout<<endl<<"--PCM2Classifier::classification--END--"<<endl;
 	#endif
+	
 	#if defined EXTRA_SAFE
 	feenableexcept(excepts);
 	#endif

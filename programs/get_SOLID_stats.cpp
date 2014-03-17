@@ -66,7 +66,7 @@
 @param radiusratio	The ratio of the radius of the sun that will be processed.
 
 
-@param neighboorhoodRadius	The neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3. <BR>Only for spatial classifiers like SPoCA.
+@param neighborhoodRadius	The neighborhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3. <BR>Only for spatial classifiers like SPoCA.
 
 @param segmentation	The segmentation type.
 <BR>Possible values :
@@ -229,15 +229,15 @@ void write_ring_stats(const string& filename, const vector< vector<float> >& sta
 			else if (r == number_rings + 1)
 				header += "other";
 			else
-				header += "ring" + itos(r);
+				header += "ring" + toString(r);
 			header += "'; '";
 			if (i == 0)
 				header += "noclass";
 			else
-				header += "class" + itos(i);
+				header += "class" + toString(i);
 			header += "')";
 			if (r < stats[i].size())
-				values += ", " + dtos(stats[i][r]);
+				values += ", " + toString(stats[i][r]);
 			else
 				values += ", 0";
 		}
@@ -281,7 +281,7 @@ int main(int argc, const char **argv)
 	string etaFileName;
 		
 	// Option for the Spacial Classifiers (SPoCA)
-	unsigned neighboorhoodRadius = 1;
+	unsigned neighborhoodRadius = 1;
 	
 	// Options for the segmentation
 	string segmentation = "max";
@@ -309,7 +309,7 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This Programm does attribution (or fix classification) and segmentation.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
+	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
 	#endif
@@ -333,7 +333,7 @@ int main(int argc, const char **argv)
 	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
 	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
 	arguments.new_named_string('E',"etaFile","file name", "\n\tThe name of the file containing eta.\n\tBe carefull that the order of the eta must be the same than the order of the centers in the centersFile!\n\tIf it it not provided the eta will be computed with a FCM (then it is not a real attribution).\n\t", etaFileName);
-	arguments.new_named_unsigned_int('N', "neighboorhoodRadius", "positive integer", "\n\tOnly for spatial classifiers like SPoCA.\n\tThe neighboorhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.\n\t", neighboorhoodRadius);
+	arguments.new_named_unsigned_int('N', "neighborhoodRadius", "positive integer", "\n\tOnly for spatial classifiers like SPoCA.\n\tThe neighborhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.\n\t", neighborhoodRadius);
 	arguments.new_named_string('S', "segmentation", "string", "\n\tThe segmentation type.\n\tPossible values :\n\t\tmax (Maximum of Uij)\n\t\tclosest (Closest center)\n\t\tthreshold (Threshold on Uij)\n\t\tlimits (Merge on centers value limits)\n\t\tfix (Merge on fix CH QS AR)\n\t", segmentation);
 	arguments.new_named_string('L',"maxLimitsFile","file", "\n\tOnly for limit segmentation.\n\tThe name of the file containing the max limits.\n\t", maxLimitsFileName);
 	arguments.new_named_string('c',"ch","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Coronal Hole.\n\t", coronalHole);
@@ -420,12 +420,12 @@ int main(int argc, const char **argv)
 	}
 	else if (classifierType == "SPoCA")
 	{
-		F = new SPoCAClassifier(neighboorhoodRadius, fuzzifier);
+		F = new SPoCAClassifier(neighborhoodRadius, fuzzifier);
 		classifierIsPossibilistic = true;
 	}
 	else if (classifierType == "SPoCA2")
 	{
-		F = new SPoCA2Classifier(neighboorhoodRadius, fuzzifier);
+		F = new SPoCA2Classifier(neighborhoodRadius, fuzzifier);
 		classifierIsPossibilistic = true;
 	}
 	else 
@@ -455,7 +455,7 @@ int main(int argc, const char **argv)
 	// We set the name of the output files prefix
 	// to the outputDirectory + the date_obs of the first image in the form YYYYMMDD_HHMMSS
 	if(filenamePrefix.empty())
-		filenamePrefix = outputDirectory + "/" + time2string(images[0]->ObservationTime()) + ".";
+		filenamePrefix = outputDirectory + "/" + toString(images[0]->ObservationTime()) + ".";
 
 	// We add the images to the classifier
 	F->addImages(images);
@@ -522,7 +522,7 @@ int main(int argc, const char **argv)
 		Header& header = fuzzyMap->getHeader();
 		for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 		{
-			header.set(string("IMAGE")+itos(p+1,3), stripPath(imagesFilenames[p]));
+			header.set(string("IMAGE")+toString(p+1,3), stripPath(imagesFilenames[p]));
 		}
 
 		header.set("CVERSION", version, "SPoCA Version");
@@ -533,11 +533,11 @@ int main(int argc, const char **argv)
 		header.set("CPRECIS", precision, "Classifier Precision");
 		header.set("CMAXITER", maxNumberIteration, "Max Number Iteration");
 		header.set("CFUZFIER", fuzzifier, "Classifier Fuzzifier");
-		header.set("CHANNELS", vtos(F->getChannels()), "Classification Channels");
+		header.set("CHANNELS", toString(F->getChannels()), "Classification Channels");
 	
 		B = F->getB();
 		for (unsigned i = 0; i < numberClasses; ++i)
-			header.set("CLSCTR"+itos(i,2), B[i].toString(4), "Classification class center " + itos(i,2));
+			header.set("CLSCTR"+toString(i,2), B[i].toString(4), "Classification class center " + toString(i,2));
 	
 		if(classifierIsPossibilistic)
 		{
@@ -561,7 +561,7 @@ int main(int argc, const char **argv)
 			// We write down the maps
 			if(getMaps)
 			{
-				FitsFile file(filenamePrefix + "FuzzyMap." + itos(i+1) + ".fits", FitsFile::overwrite);
+				FitsFile file(filenamePrefix + "FuzzyMap." + toString(i+1) + ".fits", FitsFile::overwrite);
 				fuzzyMap->writeFits(file, uncompressedMaps ? 0 : FitsFile::compress, "FuzzyMap");
 			}
 		}
@@ -576,7 +576,7 @@ int main(int argc, const char **argv)
 		Header& header = segmentedMap->getHeader();
 		for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 		{
-			header.set(string("IMAGE")+itos(p+1,3), stripPath(imagesFilenames[p]));
+			header.set(string("IMAGE")+toString(p+1,3), stripPath(imagesFilenames[p]));
 		}
 
 		header.set("CVERSION", version, "SPoCA Version");
@@ -597,11 +597,11 @@ int main(int argc, const char **argv)
 			header.set("SFIXCH", coronalHole);
 		if(! threshold.empty())
 			header.set("STRSHLD", threshold);
-		header.set("CHANNELS", vtos(F->getChannels()), "Classification Channels");
+		header.set("CHANNELS", toString(F->getChannels()), "Classification Channels");
 	
 		B = F->getB();
 		for (unsigned i = 0; i < numberClasses; ++i)
-			header.set("CLSCTR"+itos(i,2), B[i].toString(4), "Classification class center " + itos(i,2));
+			header.set("CLSCTR"+toString(i,2), B[i].toString(4), "Classification class center " + toString(i,2));
 	
 		if(classifierIsPossibilistic)
 		{

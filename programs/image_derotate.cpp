@@ -42,7 +42,7 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This Program use differential derotation to project a Sun Image in time.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
+	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
 	#endif
@@ -90,7 +90,7 @@ int main(int argc, const char **argv)
 		else
 		{
 			image->rotate(delta_t);
-			image->writeFits(stripSuffix(stripPath(imagesFilenames[p])) + "_rotatedby_" + itos(delta_t) +"s.fits");
+			image->writeFits(stripSuffix(stripPath(imagesFilenames[p])) + "_rotatedby_" + toString(delta_t) +"s.fits");
 		}
 		delete image;
 

@@ -38,7 +38,7 @@ class HistogramPCM2Classifier :  public PCM2Classifier, public HistogramPCMClass
 		HistogramPCM2Classifier(ParameterSection& parameters);
 
 		//! Classification function
-		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
+		void classification();
 		
 		//! Function to do attribution (Fix center classification)
 		void attribution();

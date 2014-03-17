@@ -26,7 +26,7 @@ int main(int argc, const char **argv)
 	programDescription+="Author: Benjamin Mampaey, benjamin.mampaey@sidc.be\n";
 	
 	programDescription+="Compiled on "  __DATE__  " with options :";
-	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
+	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
 	#endif

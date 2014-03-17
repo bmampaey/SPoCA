@@ -71,7 +71,7 @@ class PFCMClassifier : public virtual PCMClassifier
 		PFCMClassifier(ParameterSection& parameters);
 
 		//! Function to do the classification
-		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
+		void classification();
 
 		//! Function to fill a fits header with classification information
 		void fillHeader(Header& header);

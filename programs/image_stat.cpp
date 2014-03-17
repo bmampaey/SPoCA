@@ -99,7 +99,7 @@ int main(int argc, const char **argv)
 	double radiusRatio = 1.31;
 
 		
-	// Option for the size of the neighboorhood
+	// Option for the size of the neighborhood
 	unsigned localRadius = 1;
 
 	string programDescription = "This Program generates local stats fits files.\n";
@@ -145,16 +145,16 @@ int main(int argc, const char **argv)
 		filenamePrefix = stripSuffix(imagesFilenames[p]) + ".";
 		
 		stat.localMean(image, localRadius);
-		stat.writeFits(filenamePrefix + "N" + itos(localRadius) + ".localMean.fits");
+		stat.writeFits(filenamePrefix + "N" + toString(localRadius) + ".localMean.fits");
 		
 		stat.localVariance(image, localRadius);
-		stat.writeFits(filenamePrefix + "N" + itos(localRadius) + ".localVariance.fits");
+		stat.writeFits(filenamePrefix + "N" + toString(localRadius) + ".localVariance.fits");
 		
 		stat.localSkewness(image, localRadius);
-		stat.writeFits(filenamePrefix + "N" + itos(localRadius) + ".localSkewness.fits");
+		stat.writeFits(filenamePrefix + "N" + toString(localRadius) + ".localSkewness.fits");
 		
 		stat.localKurtosis(image, localRadius);
-		stat.writeFits(filenamePrefix + "N" + itos(localRadius) + ".localKurtosis.fits");
+		stat.writeFits(filenamePrefix + "N" + toString(localRadius) + ".localKurtosis.fits");
 		
 		stat.sobel(image);
 		stat.writeFits(filenamePrefix + "sobel.fits");

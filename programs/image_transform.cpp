@@ -48,7 +48,7 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This program operates a transformation on a image, such as translation, scaling and rotation.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
+	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
 	#endif

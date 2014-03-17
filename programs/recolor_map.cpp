@@ -75,7 +75,7 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This Program recolor a map using a color LUT.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
+	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
 	#endif

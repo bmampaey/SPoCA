@@ -41,7 +41,7 @@ class HistogramFCMClassifier : public virtual FCMClassifier, public HistogramCla
 		virtual void addImages(std::vector<EUVImage*> images);
 		
 		//! Classification function
-		void classification(Real precision = 1., unsigned maxNumberIteration = 100);
+		void classification();
 		
 		//! Function to do attribution (Fix center classification).
 		void attribution();

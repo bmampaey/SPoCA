@@ -9,6 +9,8 @@
 #include <map>
 #include <ctime>
 #include <cstring>
+#include <stdexcept> 
+
 
 
 class Header
@@ -43,6 +45,9 @@ class Header
 		template<class T>
 		void set(const std::string& key, const T& value, const std::string& comment = "");
 		
+		//! Expand the text repacing all keywords between {} by their value in the header, and \n by newline
+		std::string expand(const std::string& text);
+		
 		//! Iterator
 		typedef std::map<std::string,std::string>::iterator iterator;
 		//! Const Iterator
@@ -61,9 +66,7 @@ T Header::get(const std::string& key) const
 	std::map<std::string,std::string>::const_iterator it = keywords.find(key);
 	if(it == keywords.end())
 	{
-		#if defined VERBOSE
-		cerr<<"Warning : No such key in keywords "<<key<<endl;
-		#endif
+		throw std::runtime_error("No keywords " + key + " in header");
 	}
 	else
 	{

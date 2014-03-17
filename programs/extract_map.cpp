@@ -43,14 +43,14 @@ vector<pair<string, double> > get_preprocesing_steps(const string& preprocessing
 		}
 		if (name_value[0] == "erode" || name_value[0] == "dilate")
 		{
-			preprocessing.push_back(pair<string, double>(name_value[0], stod(name_value[1])));
+			preprocessing.push_back(pair<string, double>(name_value[0], toDouble(name_value[1])));
 		}
 		else if (name_value[0] == "NAR")
 		{
 			if (name_value.size() < 2)
 				preprocessing.push_back(pair<string, double>(name_value[0], 1));
 			else
-				preprocessing.push_back(pair<string, double>(name_value[0], stod(name_value[1])));
+				preprocessing.push_back(pair<string, double>(name_value[0], toDouble(name_value[1])));
 		}
 		else if (name_value[0] != "none" && !name_value[0].empty())
 		{
@@ -131,7 +131,7 @@ int main(int argc, const char **argv)
 
 	string programDescription = "This Program extract a binary map from a segmentation map.\n";
 	programDescription+="Compiled with options :";
-	programDescription+="\nNUMBERCHANNELS: " + itos(NUMBERCHANNELS);
+	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
 	#endif
@@ -270,7 +270,7 @@ int main(int argc, const char **argv)
 			map->colorizeConnectedComponents(1);
 		
 		// We write the map
-		map->writeFits(outputDirectory+"/"+stripPath(stripSuffix(imagesFilenames[p]))+ ".map" + itos(color) + ".fits");
+		map->writeFits(outputDirectory+"/"+stripPath(stripSuffix(imagesFilenames[p]))+ ".map" + toString(color) + ".fits");
 	}
 	return EXIT_SUCCESS;
 }

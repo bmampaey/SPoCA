@@ -172,7 +172,7 @@ int main(int argc, const char **argv)
 		regions.push_back(tmp_regions);
 	}
 	
-	filenamePrefix = images.size() > 0 ? time2string(images[0]->ObservationTime()) + "." : "nofiles.";
+	filenamePrefix = images.size() > 0 ? toString(images[0]->ObservationTime()) + "." : "nofiles.";
 	#if defined DEBUG
 	// We output the regions found
 	ouputRegions(regions, filenamePrefix+"regions_premodification.txt");

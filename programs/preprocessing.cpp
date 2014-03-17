@@ -181,7 +181,7 @@ int main(int argc, const char **argv)
 	// We set the name of output files prefix
 	if(!preprocessingSteps.empty())
 	{
-		filenamePrefix = "R" + dtos(radiusRatio);
+		filenamePrefix = "R" + toString(radiusRatio);
 		string preprocessingStepsCopy(preprocessingSteps);
 		vector<string> steps;
 		preprocessingStepsCopy>>steps;

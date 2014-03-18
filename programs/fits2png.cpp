@@ -46,26 +46,19 @@ See @ref Compilation_Options for constants and parameters at compilation time.
 */
 
 
-#include <math.h>
 #include <vector>
 #include <iostream>
-#include <fstream>
-#include <cstdlib>
 #include <string>
-#include <fenv.h>
-#include <iomanip>
-#include <map>
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
 #include "../classes/mainutilities.h"
-#include "../classes/ArgumentHelper.h"
+#include "../classes/ArgParser.h"
 
 #include "../classes/EUVImage.h"
 #include "../classes/MagickImage.h"
 
 using namespace std;
-using namespace dsr;
 
 using Magick::Color;
 using Magick::ColorGray;
@@ -74,37 +67,15 @@ using Magick::Quantum;
 
 string filenamePrefix;
 
-
-
 int main(int argc, const char **argv)
 {
-
-	// The name of the fits file to convert
-	string fitsFileName;
+	// We declare our program description
+	string programDescription = "This program convert a fits image to a png image, applying some contrast enhancement.\n";
+	programDescription+="\nVersion: 3.0";
+	programDescription+="\nAuthor: Benjamin Mampaey, benjamin.mampaey@sidc.be";
 	
-	// Options for the preprocessing of images
-	string preprocessingSteps = "";
-	
-	// Options for the colorisation
-	bool color = false;
-	string colorTableName;
-	
-	// Options for the labeling
-	bool label = false;
-	
-	// Option for the output size
-	string size;
-	
-	// Options for the transformation
-	bool straightenUp = false;
-	string recenter;
-	double scaling = 1;
-	
-	// Option for the output file/directory
-	string output = ".";
-	
-	string programDescription = "This program transform a fits image in a png image, applying some contrast enhancement.\n";
-	programDescription+="Compiled with options :";
+	programDescription+="\nCompiled on "  __DATE__  " with options :";
+	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
 	#endif
@@ -115,141 +86,164 @@ int main(int argc, const char **argv)
 	programDescription+="\nVERBOSE: ON";
 	#endif
 	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
+	programDescription+="\nReal: " + string(typeid(Real).name());
 
-	ArgumentHelper arguments;
-	arguments.new_flag('l', "label", "\n\tSet this flag if you want a label on the outputImage.\n\t", label);
-	arguments.new_flag('c', "color", "\n\tSet this flag if you want the outputImage to be colorized.\n\t", color);
-	arguments.new_flag('u', "straightenUp", "\n\tSet this flag if you want to have the solar north up.\n\t", straightenUp);
-	arguments.new_named_string('r', "recenter", "2 positive real separated by a comma (no spaces)", "\n\tThe position of the new center\n\t", recenter);
-	arguments.new_named_double('s', "scaling", "positive real", "\n\tThe scaling factor.\n\t", scaling);
-	arguments.new_named_string('C', "colorTable", "image name", "\n\tImage to use as a color table if you want to colorize the image.\n\t" , colorTableName);
-	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
-	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
-	arguments.new_named_string('O', "output","file/directory name", "\n\tThe name for the output file/directory.\n\t", output);
-	arguments.new_string("fitsFileName", "\n\tThe name of the fits files to convert.\n\t", fitsFileName);
-	arguments.set_description(programDescription.c_str());
-	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
-	arguments.set_build_date(__DATE__);
-	arguments.set_version("1.0");
-	arguments.process(argc, argv);
+	// We define our program parameters
+	ArgParser args(programDescription);
 	
-	// We check if the output is a directory or a file
-	string outputDirectory, outputFileName;
-	if (isDir(output))
+	args["config"] = ArgParser::ConfigurationFile('C');
+	args["help"] = ArgParser::Help('h');
+	
+	args["type"] = ArgParser::Parameter("png", 'T', "The type of image to write.");
+	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images. Can be any combination of the following: NAR=zz.z (Nullify pixels above zz.z*radius); ALC (Annulus Limb Correction); DivMedian (Division by the median); TakeSqrt (Take the square root); TakeLog (Take the log); DivMode (Division by the mode); DivExpTime (Division by the Exposure Time); ThrMin=zz.z (Threshold intensities to minimum zz.z); ThrMax=zz.z (Threshold intensities to maximum zz.z); ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile); ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile); Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["label"] = ArgParser::Parameter('l', "The label to write on the upper left corner. If set but no value is passed, a default label will be written.");
+	args["color"] = ArgParser::Parameter('c', "Set if you want the output images to be colorized.");
+	args["straightenUp"] = ArgParser::Parameter('u', "Set if you want to rotate the image so the solar north is up.");
+	args["recenter"] = ArgParser::Parameter('r', "Set to the position of the new sun center ifyou want to translate the image");
+	args["scaling"] = ArgParser::Parameter('s', "Set to the scaling factor if you want to rescale the image.");
+	args["colorTable"] = ArgParser::Parameter('C', "Set to an image to use as a color table if you want to colorize the image. If not set the default color table for the instrument/wavelength will be used.");
+	args["size"] = ArgParser::Parameter("100%x100%", 'S', "The size of the image written. i.e. \"1024x1024\"See ImageMagick Image Geometry for specification. If not set the output image will have the same dimension as the input image.");
+	args["output"] = ArgParser::Parameter(".", 'O', "The path of the the output directory.");
+	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file to be converted", 1);
+	
+	// We parse the arguments
+	try
 	{
-		outputDirectory = output;
-		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(fitsFileName)) + ".";
-		outputFileName = filenamePrefix + "png";
+		args.parse(argc, argv);
 	}
-	else
+	catch ( const invalid_argument& error)
 	{
-		outputDirectory = getPath(output);
-		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(fitsFileName)) + ".";
-		outputFileName = output;
-		// We check if the outputDirectory exists
-		if (! isDir(outputDirectory))
-		{
-			cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
-			return EXIT_FAILURE;
-		}
+		cerr<<"Error : "<<error.what()<<endl;
+		cerr<<args.help_message(argv[0])<<endl;
+		return EXIT_FAILURE;
+	}
+	
+	if (! isDir(args["output"]))
+	{
+		cerr<<"Error : "<<args["output"]<<" is not a directory!"<<endl;
+		return EXIT_FAILURE;
 	}
 	
 	// We parse the size option
-	Magick::Geometry size_geometry(size);
-	if(! size.empty() && !size_geometry.isValid())
+	Magick::Geometry size_geometry(args["size"].as<string>());
+	if(!size_geometry.isValid())
 	{
-		cerr << "Error parsing size argument: "<<size<<" is not a valid specification."<< endl;
-		return 2;
+		cerr << "Error: Size parameter "<<args["size"]<<" is not a valid specification."<< endl;
+		return EXIT_FAILURE;
 	}
 	
 	// We create the colorTable
 	MagickImage colorTable;
-	if(color && !colorTableName.empty())
+	if(args["color"] && args["colorTable"].is_set())
 	{
-		if(!isFile(colorTableName))
+		if(!isFile(args["colorTable"]))
 		{
-			cerr<<"Error : "<<colorTableName<<" is not a file!"<<endl;
+			cerr<<"Error : Cannot find color table image "<<args["colorTable"]<<endl;
 			return EXIT_FAILURE;
 		}
 		else
 		{
-			colorTable = MagickImage(colorTableName);
+			colorTable = MagickImage(args["colorTable"].as<string>());
 		}
 	}
 	
-	EUVImage* inputImage = getImageFromFile("UNKNOWN", fitsFileName);
-	
-	// We improve the contrast
-	if(! preprocessingSteps.empty())
+	// We convert the images
+	deque<string> imagesFilenames = args.RemainingPositionalArguments();
+	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		inputImage->preprocessing(preprocessingSteps);
-	}
-	else 
-	{
-		inputImage->enhance_contrast();
-	}
-	
-	#if defined DEBUG
-	inputImage->writeFits(filenamePrefix + "preprocessed.fits");
-	#endif
-	
-	// We transform the image
-	if(straightenUp or !recenter.empty() or scaling != 1.)
-	{
-		// We correct for the roll
-		Real rotationAngle = 0;
-		if (straightenUp)
-		{
-			rotationAngle = - inputImage->Crota2();
-		}
+		filenamePrefix = makePath(args["output"], stripPath(stripSuffix(imagesFilenames[p]))) + ".";
 		
-		// We recenter the image
-		RealPixLoc newCenter = inputImage->SunCenter();
-		if(!recenter.empty() and !readCoordinate(newCenter, recenter))
+		EUVImage* inputImage = getImageFromFile("Unknown", imagesFilenames[p]);
+		
+		// We improve the contrast
+		if(args["imagePreprocessing"].is_set())
 		{
-			return EXIT_FAILURE;
+			inputImage->preprocessing(args["imagePreprocessing"]);
 		}
-		inputImage->transform(rotationAngle, RealPixLoc(newCenter.x - inputImage->SunCenter().x, newCenter.y - inputImage->SunCenter().y), scaling);
+		else 
+		{
+			inputImage->enhance_contrast();
+		}
+	
 		#if defined DEBUG
-		inputImage->writeFits(filenamePrefix + "transformed.fits");
+		inputImage->writeFits(filenamePrefix + "preprocessed.fits");
 		#endif
+	
+		// We transform the image
+		if(args["straightenUp"] || args["recenter"].is_set() || args["scaling"].is_set())
+		{
+			// We correct for the roll
+			Real rotationAngle = 0;
+			if (args["straightenUp"])
+			{
+				rotationAngle = - inputImage->Crota2();
+			}
 		
-	}
-	
-	MagickImage outputImage = inputImage->magick();
-	if(color)
-	{
-		if(!colorTableName.empty())
-		{
-			MagickCore::ClutImage(outputImage.image(), colorTable.image());
-		}
-		else
-		{
-			vector<char> intrumentColorTable = inputImage->color_table();
-			colorTable = MagickImage(&(intrumentColorTable[0]), 1, intrumentColorTable.size()/3, "RGB");
+			// We recenter the image
+			RealPixLoc newCenter = inputImage->SunCenter();
+			if(args["recenter"].is_set() && !readCoordinate(newCenter, args["recenter"]))
+			{
+				cerr<<"Error : Cannot convert "<<args["recenter"]<<" to coordinates"<<endl;
+				return EXIT_FAILURE;
+			}
+		
+			// We scale the image
+			Real scaling = 1.;
+			if(args["scaling"].is_set())
+				scaling = args["scaling"];
+		
+			inputImage->transform(rotationAngle, RealPixLoc(newCenter.x - inputImage->SunCenter().x, newCenter.y - inputImage->SunCenter().y), scaling);
+		
 			#if defined DEBUG
-			colorTable.write(filenamePrefix + "colortable.png");
+			inputImage->writeFits(filenamePrefix + "transformed.fits");
 			#endif
-			MagickCore::ClutImage(outputImage.image(), colorTable.image());
 		}
-	}
-	
-	if(label)
-	{
-		string text = inputImage->Label();
-		size_t text_size = inputImage->Xaxes()/40;
-		outputImage.fillColor("white");
-		outputImage.fontPointsize(text_size);
-		outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
-		outputImage.label(text);
-	}
-	
-	delete inputImage;
-	
-	if(size_geometry.isValid())
+		
+		MagickImage outputImage = inputImage->magick();
+		
+		// We color the image
+		if(args["color"])
+		{
+			if(args["colorTable"].is_set())
+			{
+				// We use the color table from the parameters
+				MagickCore::ClutImage(outputImage.image(), colorTable.image());
+			}
+			else
+			{
+				vector<char> intrumentColorTable = inputImage->color_table();
+				colorTable = MagickImage(&(intrumentColorTable[0]), 1, intrumentColorTable.size()/3, "RGB");
+				#if defined DEBUG
+				colorTable.write(filenamePrefix + "colortable.png");
+				#endif
+				MagickCore::ClutImage(outputImage.image(), colorTable.image());
+			}
+		}
+		
+		// We label the image
+		if(args["label"].is_set())
+		{
+			string text = args["label"];
+			if(text.empty())
+				text = inputImage->Label();
+			else
+				text = inputImage->getHeader().expand(text);
+			
+			size_t text_size = inputImage->Xaxes()/40;
+			outputImage.fillColor("white");
+			outputImage.fontPointsize(text_size);
+			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
+			outputImage.label(text);
+		}
+		
+		delete inputImage;
+		
+		// We resize the image
 		outputImage.scale(size_geometry);
-	
-	outputImage.write(outputFileName);
+		
+		// We write down the image
+		outputImage.write(filenamePrefix + args["type"]);
+	}
 	
 	return EXIT_SUCCESS;
 }

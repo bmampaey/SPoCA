@@ -84,9 +84,14 @@ class ArgParser
 				operator T() const;
 				
 				template<class T>
+				T as() const;
+				
+				template<class T>
 				bool operator ==(const T& v) const;
 				
 				bool operator ==(const char* v) const;
+				
+				std::string operator +(const std::string s) const;
 				
 				bool is_set() const;
 				
@@ -199,11 +204,19 @@ template<>
 ArgParser::Parameter::operator std::string() const;
 
 template<typename T>
+T ArgParser::Parameter::as() const
+{
+	return this->operator T();
+}
+
+template<typename T>
 bool ArgParser::Parameter::operator ==(const T& v) const
 {
 	T v2 = this->operator T();
 	return v2 == v;
 }
+
+std::string operator +(const std::string & s, const ArgParser::Parameter& p);
 
 typedef std::map<std::string, ArgParser::Parameter> ParameterSection;
 

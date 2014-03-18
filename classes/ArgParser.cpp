@@ -143,6 +143,16 @@ bool ArgParser::Parameter::operator ==(const char* v) const
 	return v2 == v;
 }
 
+string ArgParser::Parameter::operator +(const string s) const
+{
+	return this->operator string() + s;
+}
+
+string operator +(const string & s, const ArgParser::Parameter& p)
+{
+	return s + p.as<std::string>();
+}
+
 ostream& operator<<(ostream& os, const ArgParser::Parameter& parameter)
 {
 	string value = parameter;

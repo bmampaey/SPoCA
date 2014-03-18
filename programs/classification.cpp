@@ -202,11 +202,6 @@ int main(int argc, const char **argv)
 	args["statsPreprocessing"] = ArgParser::Parameter("NAR=0.95", 'p', "The steps of preprocessing to apply to the sun images before computing stats. Can be any combination of the following: NAR=zz.z (Nullify pixels above zz.z*radius); ALC (Annulus Limb Correction); DivMedian (Division by the median); TakeSqrt (Take the square root); TakeLog (Take the log); DivMode (Division by the mode); DivExpTime (Division by the Exposure Time); ThrMin=zz.z (Threshold intensities to minimum zz.z); ThrMax=zz.z (Threshold intensities to maximum zz.z); ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile); ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile); Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["output"] = ArgParser::Parameter(".", 'O', "The name for the output file or of a directory.");
 	args["uncompressed"] = ArgParser::Parameter(false, 'u', "Set this flag if you want results maps to be uncompressed.");
-/*
-	args["chaincodeMinPoints"] = ArgParser::Parameter(4, 'x', "The minimal number of points in a chaincode.");
-	args["chaincodeMaxPoints"] = ArgParser::Parameter(0, 'X', "The maximal number of points in a chaincode.");
-	args["chaincodeMaxDeviation"] = ArgParser::Parameter(0, 'd', "The maximal deviation of the chaincode curve between 2 points, in arcsec.");
-*/
 	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file", NUMBERCHANNELS, NUMBERCHANNELS);
 	
 	// We parse the arguments

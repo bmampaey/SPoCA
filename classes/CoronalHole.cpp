@@ -137,9 +137,8 @@ ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection)
 	return aggregated;
 }
 
-Header getCHMapHeader()
+void fillHeaderCH(Header& header)
 {
-	Header map_header;
 	string projection;
 	switch(CH_PROJECTION)
 	{
@@ -163,16 +162,15 @@ Header getCHMapHeader()
 			projection = "None";
 	}
 	
-	map_header.set("CLEANING", CH_CLEANING, "Cleaning factor in arcsec");
-	map_header.set("AGGREGAT", CH_AGGREGATION, "Aggregation factor in arcsec");
-	map_header.set("PROJECTN", projection, "Projection used for the aggregation");
-	map_header.set("MINSIZE", MIN_CH_SIZE, "Min size of regions in arcsec²");
-	map_header.set("THRAWAR", CH_TRA, "Min size threshold on raw area");
-	map_header.set("FRAGGMTD", CH_FRAGMENTED, "Regions are fragmented");
-	return map_header;
+	header.set("CLEANING", CH_CLEANING, "Cleaning factor in arcsec");
+	header.set("AGGREGAT", CH_AGGREGATION, "Aggregation factor in arcsec");
+	header.set("PROJECTN", projection, "Projection used for the aggregation");
+	header.set("MINSIZE", MIN_CH_SIZE, "Min size of regions in arcsec²");
+	header.set("THRAWAR", CH_TRA, "Min size threshold on raw area");
+	header.set("FRAGGMTD", CH_FRAGMENTED, "Regions are fragmented");
 }
 
-void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsigned chaincodeMinPoints, unsigned chaincodeMaxPoints, Real chaincodeMaxDeviation, EUVImage* image)
+void writeCHMap(ColorMap*& CHMap, const string& filename, vector<EUVImage*> images, bool compressed, unsigned chaincodeMinPoints, unsigned chaincodeMaxPoints, Real chaincodeMaxDeviation)
 {
 	/*! Clean everything above the radius */
 	CHMap->nullifyAboveRadius(1.);
@@ -216,8 +214,9 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 	CHMap->writeFits(file, compressed ? FitsFile::compress : 0, "CoronalHoleMap");
 	
 	/*! We write some info about the CHMap creation */ 
-	Header CHMapHeader = getCHMapHeader();
-	file.writeHeader(CHMapHeader);
+	Header header = CHMap->getHeader();
+	fillHeaderCH(header);
+	file.writeHeader(header);
 	
 	/*! We get the regions */
 	vector<Region*> regions = getRegions(CHMap);
@@ -252,8 +251,10 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 	}
 	
 	/*! We write intensities statistics relative to image */
-	if(image)
+	for(unsigned i = 0; i < images.size(); ++i)
 	{
+		EUVImage* image = images[i];
+		
 		/*! We get the stats of the CH */
 		vector<RegionStats*> regions_stats =  getRegionStats(CHMap, image, regions);
 	
@@ -263,7 +264,8 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 		
 		/*! We write some info bout the image in the header of the table */
 		Header tableHeader;
-		tableHeader.set("WAVELNTH", image->Wavelength(), "Wavelength of the intensity image.");
+		if(dynamic_cast<EUVImage*>(image))
+			tableHeader.set("WAVELNTH", dynamic_cast<EUVImage*>(image)->Wavelength(), "Wavelength of the intensity image.");
 		
 		const Header& imageHeader = image->getHeader();
 		if(imageHeader.has("LVL_NUM"))
@@ -276,14 +278,14 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, bool compressed, unsig
 		file.writeHeader(tableHeader);
 		
 		#if defined VERBOSE
-		cerr<<"CoronalHoleStats Table"<<endl;
+		cout<<"CoronalHoleStats Table"<<endl;
 		if(regions_stats.size() > 0)
-			cerr<<regions_stats[0]->toString("|", true)<<endl;
+			cout<<regions_stats[0]->toString("|", true)<<endl;
 		else
-			cerr<<"Empty"<<endl;
+			cout<<"Empty"<<endl;
 		for (unsigned r = 0; r < regions_stats.size(); ++r)
 		{
-			cerr<<regions_stats[r]->toString("|")<<endl;
+			cout<<regions_stats[r]->toString("|")<<endl;
 		}
 		#endif
 		for (unsigned r = 0; r < regions_stats.size(); ++r)

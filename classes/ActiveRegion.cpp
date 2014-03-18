@@ -3,24 +3,6 @@
 using namespace std;
 extern std::string filenamePrefix;
 
-/*! Return the indice of the biggest class center */
-unsigned ARclass(const vector<RealFeature>& B)
-{
-	// The Active Regions class has the biggest center
-	unsigned ARclass = 0;
-	RealFeature maxB = 0;
-	
-	for (unsigned i = 0; i < B.size(); ++i)
-	{
-		if (maxB < B[i])
-		{
-			maxB = B[i];
-			ARclass = i + 1;
-		}
-	}
-	return ARclass;
-}
-
 ColorMap* getAggregatedARMap(const ColorMap* ARMap, const int projection)
 {
 
@@ -137,9 +119,8 @@ ColorMap* getAggregatedARMap(const ColorMap* ARMap, const int projection)
 	return aggregated;
 }
 
-Header getARMapHeader()
+void fillHeaderAR(Header& header)
 {
-	Header map_header;
 	string projection;
 	switch(AR_PROJECTION)
 	{
@@ -163,16 +144,15 @@ Header getARMapHeader()
 			projection = "None";
 	}
 	
-	map_header.set("CLEANING", AR_CLEANING, "Cleaning factor in arcsec");
-	map_header.set("AGGREGAT", AR_AGGREGATION, "Aggregation factor in arcsec");
-	map_header.set("PROJECTN", projection, "Projection used for the aggregation");
-	map_header.set("MINSIZE", MIN_AR_SIZE, "Min size of regions in arcsec²");
-	map_header.set("THRAWAR", AR_TRA, "Min size threshold on raw area");
-	map_header.set("FRAGGMTD", AR_FRAGMENTED, "Regions are fragmented");
-	return map_header;
+	header.set("CLEANING", AR_CLEANING, "Cleaning factor in arcsec");
+	header.set("AGGREGAT", AR_AGGREGATION, "Aggregation factor in arcsec");
+	header.set("PROJECTN", projection, "Projection used for the aggregation");
+	header.set("MINSIZE", MIN_AR_SIZE, "Min size of regions in arcsec²");
+	header.set("THRAWAR", AR_TRA, "Min size threshold on raw area");
+	header.set("FRAGGMTD", AR_FRAGMENTED, "Regions are fragmented");
 }
 
-void writeARMap(ColorMap*& ARMap, const string& filename, bool compressed, unsigned chaincodeMinPoints, unsigned chaincodeMaxPoints, Real chaincodeMaxDeviation, EUVImage* image)
+void writeARMap(ColorMap*& ARMap, const string& filename, vector<EUVImage*> images, bool compressed, unsigned chaincodeMinPoints, unsigned chaincodeMaxPoints, Real chaincodeMaxDeviation)
 {
 	/*! Clean everything above the radius */
 	ARMap->nullifyAboveRadius(1.);
@@ -215,9 +195,10 @@ void writeARMap(ColorMap*& ARMap, const string& filename, bool compressed, unsig
 	FitsFile file(filename, FitsFile::overwrite);
 	ARMap->writeFits(file, compressed ? FitsFile::compress : 0, "ActiveRegionMap");
 	
-	/*! We write some info about the ARMap creation */ 
-	Header ARMapHeader = getARMapHeader();
-	file.writeHeader(ARMapHeader);
+	/*! We write some info about the ARMap creation */
+	Header header = ARMap->getHeader();
+	fillHeaderAR(header);
+	file.writeHeader(header);
 	
 	/*! We get the regions */
 	vector<Region*> regions = getRegions(ARMap);
@@ -252,8 +233,9 @@ void writeARMap(ColorMap*& ARMap, const string& filename, bool compressed, unsig
 	}
 	
 	/*! We write intensities statistics relative to image */
-	if(image)
+	for(unsigned i = 0; i < images.size(); ++i)
 	{
+		EUVImage* image = images[i];
 		/*! We get the stats of the AR */
 		vector<RegionStats*> regions_stats =  getRegionStats(ARMap, image, regions);
 	
@@ -263,7 +245,8 @@ void writeARMap(ColorMap*& ARMap, const string& filename, bool compressed, unsig
 		
 		/*! We write some info bout the image in the header of the table */
 		Header tableHeader;
-		tableHeader.set("WAVELNTH", image->Wavelength(), "Wavelength of the intensity image.");
+		if(dynamic_cast<EUVImage*>(image))
+			tableHeader.set("WAVELNTH", dynamic_cast<EUVImage*>(image)->Wavelength(), "Wavelength of the intensity image.");
 		
 		const Header& imageHeader = image->getHeader();
 		if(imageHeader.has("LVL_NUM"))
@@ -276,14 +259,14 @@ void writeARMap(ColorMap*& ARMap, const string& filename, bool compressed, unsig
 		file.writeHeader(tableHeader);
 		
 		#if defined VERBOSE
-		cerr<<"ActiveRegionStats Table"<<endl;
+		cout<<"ActiveRegionStats Table"<<endl;
 		if(regions_stats.size() > 0)
-			cerr<<regions_stats[0]->toString("|", true)<<endl;
+			cout<<regions_stats[0]->toString("|", true)<<endl;
 		else
-			cerr<<"Empty"<<endl;
+			cout<<"Empty"<<endl;
 		for (unsigned r = 0; r < regions_stats.size(); ++r)
 		{
-			cerr<<regions_stats[r]->toString("|")<<endl;
+			cout<<regions_stats[r]->toString("|")<<endl;
 		}
 		#endif
 		for (unsigned r = 0; r < regions_stats.size(); ++r)

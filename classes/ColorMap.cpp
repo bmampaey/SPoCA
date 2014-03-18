@@ -181,7 +181,13 @@ void ColorMap::thresholdRegionsByRawArea(const double minSize)
 				areas[*j] += pixelarea;
 		}
 	}
-	
+	#if defined VERBOSE
+	cout<<"Found following sizes for regions:"<<endl;
+	for(map<ColorType,double>::iterator a = areas.begin(); a != areas.end(); ++a)
+	{
+		cout<<"color: "<<a->first<<"\tsize:"<<a->second<<(a->second < minSize ? " To small" : " OK")<<endl;
+	}
+	#endif
 	//Now we nullify those that are too small
 	for (ColorType* j = pixels; j < pixels + numberPixels; ++j)
 	{
@@ -215,6 +221,14 @@ void ColorMap::thresholdRegionsByRealArea(double minSize)
 			}
 		}
 	}
+	
+	#if defined VERBOSE
+	cout<<"Found following sizes for regions:"<<endl;
+	for(map<ColorType,Real>::iterator a = areas.begin(); a != areas.end(); ++a)
+	{
+		cout<<"color: "<<a->first<<"\tsize:"<<a->second<<(a->second < minSize ? " To small" : " OK")<<endl;
+	}
+	#endif
 	
 	//Now we nullify those that are too small
 	for (ColorType* j = pixels; j < pixels + numberPixels; ++j)

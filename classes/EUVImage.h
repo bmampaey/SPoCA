@@ -25,14 +25,6 @@ class EUVImage : public SunImage<EUVPixelType>
 
 		//! wavelength of the EUV image in Angstrom
 		Real wavelength;
-		//! median of the EUV image
-		Real median;
-		//! mode of the EUV image
-		Real mode;
-		//! percentile of the EUV image
-		Real datap01;
-		//! percentile of the EUV image
-		Real datap99;
 		//! exposure time of the EUV image
 		Real exposureTime;
 		
@@ -42,7 +34,7 @@ class EUVImage : public SunImage<EUVPixelType>
 		//! Routine to return the min radius of the disc not corrected by the ALC
 		virtual Real MINRADIUS()
 		{ return ALCParameters[0]; }
-		//! Routine to return the max radius of the disc not corrected by the ALC
+		//! Routine to return the max radius of the disc corrected by the ALC
 		virtual Real MAXRADIUS()
 		{ return ALCParameters[3]; }
 
@@ -82,12 +74,6 @@ class EUVImage : public SunImage<EUVPixelType>
 		
 		//! Accessor to retrieve the Wavelength in Angstrom
 		Real Wavelength() const;
-		
-		//! Accessor to retrieve the median value
-		Real Median() const;
-		
-		//! Accessor to retrieve the mode
-		Real Mode() const;
 		
 		//! Accessor to retrieve the exposure time in seconds
 		Real ExposureTime() const;

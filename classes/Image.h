@@ -154,6 +154,12 @@ class Image
 		//! Routine to threshold the image betwenn min and max
 		void threshold(const T min, const T max);
 		
+		//! Routine to take the log of an image
+		void takeLog();
+		
+		//! Routine to take the sqrt of an image
+		void takeSqrt();
+		
 		//! Routine that set all pixels to 1 if the corresponding pixel has a value of setValue
 		Image<T>* bitmap(T setValue = 1);
 		
@@ -168,8 +174,10 @@ class Image
 		
 		//! Computes the variance value of the Image
 		Real variance() const;
+		
 		//! Computes the skewness of the Image
 		Real skewness() const;
+		
 		//! Computes the kurtosis of the Image
 		Real kurtosis() const;
 		
@@ -184,15 +192,18 @@ class Image
 		T percentiles(const Real& p) const;
 		
 		//! Computes the mode of the Image
-		/*! If the binSize is not provided, it will be taken as NUMBER_BINS (See @ref Compilation_Options) in 2 times the variance of the image */
+		/*! If the binSize is not provided, it will be taken as NUMBER_BINS (See @ref Compilation_Options) in 2 times the standard deviation of the image */
 		Real mode(Real binSize = 0) const;
 		
 		//! Routine that Replace each pixel by the mean of its neighboors (in circle of radius Nradius)
 		void localMean(const Image<T>* image, int Nradius);
+		
 		//! Routine that Replace each pixel by the variance of its neighboors (in circle of radius Nradius)
 		void localVariance(const Image<T>* image, int Nradius);
+		
 		//! Routine that Replace each pixel by the skewness of its neighboors (in circle of radius Nradius)
 		void localSkewness(const Image<T>* image, int Nradius);
+		
 		//! Routine that Replace each pixel by the kurtosis of its neighboors (in circle of radius Nradius)
 		void localKurtosis(const Image<T>* image, int Nradius);
 		

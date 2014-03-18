@@ -176,21 +176,8 @@ class FeatureVector
 			}
 			return false;
 		}
-		
-		virtual std::string toString(const unsigned& precision = 0) const
-		{
-			std::ostringstream out;
-			if (precision != 0)
-				out<<std::fixed<<std::setprecision(precision)<<"("<<v[0];
-			else
-				out<<std::fixed<<std::noshowpoint<<"("<<v[0];
-			for (unsigned p = 1; p < N; ++p)
-				out<<","<<v[p];
-			out<<")";
-			return out.str();
-		}
-
 };
+
 
 //! Square of the Euclidian distance between 2 feature vectors  
 template<class T, unsigned N>
@@ -215,6 +202,10 @@ std::ostream& operator<<(std::ostream& out, const FeatureVector<T, N>& fv);
 //! Input of a FeatureVector
 template<class T, unsigned N>
 std::istream& operator>>(std::istream& in, FeatureVector<T, N>& fv);
+
+//! Convert a featur vector to string
+template<class T, unsigned N>
+std::string toString(const FeatureVector<T, N>& fv, const unsigned& precision = 0);
 
 //! Type of the FeatureVector
 typedef FeatureVector<Real, NUMBERCHANNELS> RealFeature;

@@ -152,7 +152,6 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 #include "../classes/HistogramPCMClassifier.h"
 
 #include "../classes/FeatureVector.h"
-#include "../classes/RegionStats.h"
 #include "../classes/SegmentationStats.h"
 #include "../classes/FitsFile.h"
 
@@ -460,7 +459,7 @@ int main(int argc, const char **argv)
 				image->preprocessing(args["statsPreprocessing"]);
 				if(args["registerImages"])
 				{
-					images[p]->align(segmentedMap);
+					image->align(segmentedMap);
 				}
 				
 				// We get the RegionStats

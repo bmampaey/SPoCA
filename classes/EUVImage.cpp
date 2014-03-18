@@ -17,22 +17,22 @@ EUVImage::~EUVImage()
 
 
 EUVImage::EUVImage(const unsigned& xAxes, const unsigned& yAxes)
-:SunImage<EUVPixelType>(xAxes,yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap99(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+:SunImage<EUVPixelType>(xAxes,yAxes),wavelength(NAN), exposureTime(1), ALCParameters(getALCParameters())
 {}
 
 
 EUVImage::EUVImage(const unsigned& xAxes, const unsigned& yAxes, const RealPixLoc& suncenter, const Real& radius)
-:SunImage<EUVPixelType>(xAxes,yAxes,suncenter,radius),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap99(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+:SunImage<EUVPixelType>(xAxes,yAxes,suncenter,radius),wavelength(NAN), exposureTime(1), ALCParameters(getALCParameters())
 {}
 
 
 EUVImage::EUVImage(const Header& header, const unsigned& xAxes, const unsigned& yAxes)
-:SunImage<EUVPixelType>(header, xAxes, yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap99(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+:SunImage<EUVPixelType>(header, xAxes, yAxes),wavelength(NAN), exposureTime(1), ALCParameters(getALCParameters())
 {}
 
 
 EUVImage::EUVImage(const WCS& wcs, const unsigned& xAxes, const unsigned& yAxes)
-:SunImage<EUVPixelType>(wcs, xAxes, yAxes),wavelength(NAN),median(nullpixelvalue),mode(nullpixelvalue),datap01(nullpixelvalue), datap99(nullpixelvalue), exposureTime(1), ALCParameters(getALCParameters())
+:SunImage<EUVPixelType>(wcs, xAxes, yAxes),wavelength(NAN), exposureTime(1), ALCParameters(getALCParameters())
 {}
 
 
@@ -40,10 +40,6 @@ EUVImage::EUVImage(const EUVImage& i)
 :SunImage<EUVPixelType>(i)
 {
 	wavelength = i.wavelength;
-	median = i.median;
-	mode = i.mode;
-	datap01 = i.datap01;
-	datap99 = i.datap99;
 	exposureTime = i.exposureTime;
 	ALCParameters = i.ALCParameters;
 }
@@ -53,10 +49,6 @@ EUVImage::EUVImage(const EUVImage* i)
 :SunImage<EUVPixelType>(i)
 {
 	wavelength = i->wavelength;
-	median = i->median;
-	mode = i->mode;
-	datap01 = i->datap01;
-	datap99 = i->datap99;
 	exposureTime = i->exposureTime;
 	ALCParameters = i->ALCParameters;
 }
@@ -97,12 +89,6 @@ void EUVImage::parseHeader()
 	
 	if (header.has("WAVELNTH"))
 		wavelength = header.get<Real>("WAVELNTH");
-	if (header.has("DATAMEDN"))
-		median = header.get<Real>("DATAMEDN");
-	if (header.has("DATAP01"))
-		datap01 = header.get<EUVPixelType>("DATAP01");
-	if (header.has("DATAP99"))
-		datap99 = header.get<EUVPixelType>("DATAP99");
 	
 	if (header.has("EXPTIME"))
 		exposureTime = header.get<Real>("EXPTIME");
@@ -114,10 +100,6 @@ void EUVImage::parseHeader()
 void EUVImage::fillHeader()
 {
 	SunImage<EUVPixelType>::fillHeader();
-	header.set<Real>("EXPTIME", exposureTime);
-	header.set<Real>("DATAMEDN", median);
-	header.set<EUVPixelType>("DATAP01",datap01);
-	header.set<EUVPixelType>("DATAP99", datap99);
 }
 
 inline string EUVImage::Channel() const
@@ -127,7 +109,7 @@ inline string EUVImage::Channel() const
 
 inline string EUVImage::Label() const
 {
-		return Instrument() + " " + toString(int(Wavelength())) + "Å " + ObservationDate();
+	return Instrument() + " " + toString(int(Wavelength())) + "Å " + ObservationDate();
 }
 
 inline Real EUVImage::Wavelength() const
@@ -135,27 +117,10 @@ inline Real EUVImage::Wavelength() const
 	return wavelength;
 }
 
-inline Real EUVImage::Median() const
-{
-	if (median != nullpixelvalue)
-		return median;
-	else
-		return percentiles(0.5);
-}
-
-inline Real EUVImage::Mode() const
-{
-	if (mode != nullpixelvalue)
-		return mode;
-	else
-		return static_cast<const Image<EUVPixelType>*>(this)->mode();
-}
-
 inline Real EUVImage::ExposureTime() const
 {
 	return exposureTime;
 }
-
 
 void EUVImage::preprocessing(string preprocessingList)
 {
@@ -165,6 +130,15 @@ void EUVImage::preprocessing(string preprocessingList)
 	{
 		vector<string> stepParameters = split(preprocessingSteps[s], '=');
 		string stepType = trimWhites(stepParameters[0]);
+		
+		#if defined VERBOSE
+		cout<<"Applying image preprocessing step "<<stepType;
+		if(stepParameters.size() > 1)
+			cout<<" with parameter "<<stepParameters[1]<<endl;
+		else
+			cout<<endl;
+		#endif
+		
 		if(stepType == "NAR")
 		{
 			if(stepParameters.size() > 1)
@@ -186,134 +160,64 @@ void EUVImage::preprocessing(string preprocessingList)
 		{
 			annulusLimbCorrection(maxRadius, MINRADIUS());
 		}
-		else if(stepType.find("Div") == 0)
+		else if(stepType == "DivMedian")
 		{
-			double denominator = 1.;
-			while(true)
-			{
-				if(stepType == "DivMedian")
-					denominator *= Median();
-				else if(stepType == "DivMode")
-					denominator *= Mode();
-				else if(stepType == "DivExpTime")
-					denominator *= exposureTime;
-				else
-				{
-					cerr<<"Error : Unknown preprocessing step "<<stepType<<endl;
-					exit(EXIT_FAILURE);
-				}
-				if(s + 1 < preprocessingSteps.size() && preprocessingSteps[s+1].find("Div") == 0)
-				{
-					++s;
-					stepParameters = split(preprocessingSteps[s], '=');
-					stepType = trimWhites(stepParameters[0]);
-				}
-			}
-			if(denominator == 0)
-			{
-				cerr<<"Error: In preprocessing step "<<preprocessingSteps[s]<<". Division by 0."<<endl;
-				exit(EXIT_FAILURE);
-			}
-			else if(denominator != 1.)
-			{
-				for (unsigned j=0; j < numberPixels; ++j)
-				{
-					if (pixels[j] != nullpixelvalue)
-						pixels[j] = pixels[j] / denominator;
-				}
-				median /= denominator;
-				datap01 /= denominator;
-				datap99 /= denominator;
-				mode /= denominator;
-			}
+			div(median());
+		}
+		else if(stepType == "DivMode")
+		{
+			div(mode());
+		}
+		else if(stepType == "DivExpTime")
+		{
+			div(exposureTime);
 		}
 		else if(stepType == "TakeSqrt")
 		{
-			for (unsigned j=0; j < numberPixels; ++j)
-			{
-				if (pixels[j] != nullpixelvalue)
-					pixels[j] = pixels[j] >= 0 ? sqrt(pixels[j]) : nullpixelvalue;
-			}
-			median = sqrt(median);
-			mode = nullpixelvalue;
-			datap01 = sqrt(datap01);
-			datap99 = sqrt(datap99);
-		}	
+			takeSqrt();
+		}
 		else if(stepType == "TakeLog")
 		{
-			for (unsigned j=0; j < numberPixels; ++j)
-			{
-				if (pixels[j] != nullpixelvalue)
-					pixels[j] = pixels[j] > 0 ? log(pixels[j]) : nullpixelvalue;
-			}
-			median = log(median);
-			mode = nullpixelvalue;
-			datap01 = log(datap01);
-			datap99 = log(datap99);
-			
+			takeLog();
 		}
-		else if(stepType.find("Thr") == 0)
+		else if(stepType == "ThrMin")
 		{
-			double upperPercentile = 100, lowerPercentile = 0;
-			double upperValue = std::numeric_limits<double>::max(), lowerValue = std::numeric_limits<double>::min();
-			while(true)
+			if(stepParameters.size() < 2)
 			{
-				if(stepParameters.size() < 2)
-				{
-					cerr<<"Error: No value specified for threshold preprocessing step"<<preprocessingSteps[s]<<endl;
-					exit(EXIT_FAILURE);
-				}
-				if(stepType == "ThrMinPer")
-				{
-					lowerPercentile = max(toDouble(stepParameters[1]), lowerPercentile);
-				}
-				else if(stepType == "ThrMaxPer")
-				{
-					upperPercentile = min(toDouble(stepParameters[1]), upperPercentile);
-				}
-				else if(stepType == "ThrMin")
-				{
-					lowerValue = max(toDouble(stepParameters[1]), lowerValue);
-				}
-				else if(stepType == "ThrMax")
-				{
-					upperValue = min(toDouble(stepParameters[1]), upperValue);
-				}
-				else
-				{
-					cerr<<"Error: Unknown preprocessing step "<<preprocessingSteps[s]<<endl;
-					exit(EXIT_FAILURE);
-				}
-				if(s + 1 < preprocessingSteps.size() && preprocessingSteps[s+1].find("Thr") == 0)
-				{
-					++s;
-					stepParameters = split(preprocessingSteps[s], '=');
-					stepType = trimWhites(stepParameters[0]);
-				}
+				cerr<<"Error: No value specified for threshold preprocessing step"<<preprocessingSteps[s]<<endl;
+				exit(EXIT_FAILURE);
 			}
-			
-			vector<Real> percents;
-			if(lowerPercentile > 0)
-				percents.push_back(lowerPercentile/100.);
-			if(upperPercentile < 100)
-				percents.push_back(upperPercentile/100.);
-				
-			if(percents.size() > 0)
+			double upperValue = std::numeric_limits<double>::max(), lowerValue = toDouble(stepParameters[1]);
+			threshold(lowerValue, upperValue);
+		}
+		else if(stepType == "ThrMax")
+		{
+			if(stepParameters.size() < 2)
 			{
-				vector<EUVPixelType> limits = percentiles(percents);
-				
-				if(upperPercentile < 100)
-				{
-					upperValue = min(double(limits.back()), upperValue);
-					limits.pop_back();
-				}
-				
-				if(lowerPercentile > 0)
-				{
-					lowerValue = max(double(limits.back()), lowerValue);
-					limits.pop_back();
-				}
+				cerr<<"Error: No value specified for threshold preprocessing step"<<preprocessingSteps[s]<<endl;
+				exit(EXIT_FAILURE);
 			}
+			double upperValue = toDouble(stepParameters[1]), lowerValue = std::numeric_limits<double>::min();
+			threshold(lowerValue, upperValue);
+		}
+		else if(stepType == "ThrMinPer")
+		{
+			if(stepParameters.size() < 2)
+			{
+				cerr<<"Error: No value specified for threshold preprocessing step"<<preprocessingSteps[s]<<endl;
+				exit(EXIT_FAILURE);
+			}
+			double upperValue = std::numeric_limits<double>::max(), lowerValue = percentiles(toDouble(stepParameters[1]));
+			threshold(lowerValue, upperValue);
+		}
+		else if(stepType == "ThrMaxPer")
+		{
+			if(stepParameters.size() < 2)
+			{
+				cerr<<"Error: No value specified for threshold preprocessing step"<<preprocessingSteps[s]<<endl;
+				exit(EXIT_FAILURE);
+			}
+			double upperValue = percentiles(toDouble(stepParameters[1])), lowerValue = std::numeric_limits<double>::min();
 			threshold(lowerValue, upperValue);
 		}
 		else if(stepType == "Smooth")
@@ -323,6 +227,7 @@ void EUVImage::preprocessing(string preprocessingList)
 		else
 		{
 			cerr<<"Error: Unknown preprocessing step "<<preprocessingSteps[s]<<endl;
+			exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -336,7 +241,6 @@ progressive correction following the descending phase of the sine between r3 and
 
 inline Real EUVImage::percentCorrection(const Real r)const
 {
-
 	const Real r1 = ALCParameters[0];
 	const Real r2 = ALCParameters[1];
 	const Real r3 = ALCParameters[2];
@@ -402,10 +306,10 @@ void EUVImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 			++pixelValue;
 		}
 	}
-
-	median = quickselect(onDiscList);
+	
+	EUVPixelType median = quickselect(onDiscList);
 	#if defined VERBOSE
-	cout<<"Image preprocessing found median: "<<median<<endl;
+	cout<<"ALC median of internal disc of radius "<<minLimbRadius<<" is "<<median<<endl;
 	#endif
 
 
@@ -442,15 +346,10 @@ void EUVImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 
 void EUVImage::enhance_contrast()
 {
-	if (datap01 == nullpixelvalue || datap99 == nullpixelvalue)
-	{
-		vector<Real> values(2, 0.01);
-		values[1] = 0.99;
-		vector<EUVPixelType> p = percentiles(values);
-		datap01 = p[0];
-		datap99 = p[1];
-	}
-	threshold(datap01, datap99);
+	vector<Real> values(2, 0.01);
+	values[1] = 0.99;
+	vector<EUVPixelType> p = percentiles(values);
+	threshold(p[0], p[1]);
 }
 
 vector<char> EUVImage::color_table() const
@@ -458,6 +357,7 @@ vector<char> EUVImage::color_table() const
 	char colorTable[][3] = CT_BLUE_RED;
 	return vector<char>(colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 }
+
 
 #ifdef MAGICK
 MagickImage EUVImage::magick()

@@ -68,12 +68,6 @@ class HistogramFeatureVector : public FeatureVector<T, N>
 			}
 			return false;
 		}
-		
-		std::string toString(const unsigned& precision = 0) const
-		{
-			return FeatureVector<T, N>::toString(precision) + "x" + toString(c);
-		}
-
 };
 
 //! Type of the HistogramFeatureVector
@@ -83,7 +77,7 @@ typedef HistogramFeatureVector<Real, NUMBERCHANNELS> HistoRealFeature;
 template<class T, unsigned N>
 inline std::ostream& operator<<(std::ostream& out, const HistogramFeatureVector<T, N>& fv)
 {
-	out<<fv.toString(out.precision());
+	out<<toString(fv, out.precision());
 	return out;
 }
 
@@ -97,6 +91,12 @@ inline std::istream& operator>>(std::istream& in, HistogramFeatureVector<T, N>& 
 		in>>separator>>fv.v[p];
 	in>>separator>>separator>>fv.c;
 	return in;
+}
+
+template<class T, unsigned N>
+std::string toString(const HistogramFeatureVector<T, N>& fv, const unsigned& precision = 0)
+{
+	return toString(FeatureVector<T, N>(fv), precision) + "x" + toString(fv.c);
 }
 
 /*! Compare the feature vectors element by element */

@@ -323,6 +323,11 @@ inline ColorMap* getColorMapFromFile(const string imageFilename)
 		cerr<<imageFilename<<" is not a fits file! (must end in .fits or .fts)"<<endl;
 	}
 	#endif
+	if(!isFile(imageFilename))
+	{
+		cerr<<"Error: Cannot find file "<<imageFilename<<endl;
+		exit(EXIT_FAILURE);
+	}
 	ColorMap* image = new ColorMap();
 	FitsFile file(imageFilename);
 	image->readFits(file);

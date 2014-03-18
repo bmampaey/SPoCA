@@ -22,10 +22,10 @@ unsigned CHclass(const std::vector<RealFeature>& B);
 //! Return a map of aggregated CH 
 ColorMap* getAggregatedCHMap(const ColorMap* CHMap, const int projection = SunImage<ColorType>::no_projection);
 
-//! Return a header with all the information about creating CH map
-Header getCHMapHeader();
+//! Fill a header with all the information about CH map creation
+void fillHeaderCH(Header& header);
 
 //! Method to write a CH map to a fits file
-void writeCHMap(ColorMap*& CHMap, const std::string& filename, bool compressed = true, unsigned chaincodeMinPoints = 3, unsigned chaincodeMaxPoints = 0, Real chaincodeMaxDeviation = 0., EUVImage* image = NULL);
+void writeCHMap(ColorMap*& CHMap, const std::string& filename, std::vector<EUVImage*> images, bool compressed = true, unsigned chaincodeMinPoints = 3, unsigned chaincodeMaxPoints = 0, Real chaincodeMaxDeviation = 0.);
 #endif
 

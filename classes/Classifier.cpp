@@ -182,6 +182,7 @@ ColorMap* Classifier::getSegmentedMap(ParameterSection& parameters, ColorMap* se
 
 void Classifier::fillHeader(Header& header)
 {
+	header.set("INSTRUME", "SPoCA", "This map was computed with SPoCA");
 	header.set("CNBRCLAS", numberClasses, "Number Classes");
 	header.set("CPRECIS", precision, "Classifier Precision");
 	header.set("CMAXITER", maxNumberIteration, "Maximum Number of Iteration");
@@ -190,7 +191,7 @@ void Classifier::fillHeader(Header& header)
 	
 	B = getB();
 	for (unsigned i = 0; i < numberClasses; ++i)
-		header.set("CLSCTR"+toString(i+1,2), B[i].toString(4), "Classification class center " + toString(i+1,2));
+		header.set("CLSCTR"+toString(i+1,2), toString(B[i], 4), "Classification class center " + toString(i+1,2));
 }
 
 ColorMap* Classifier::segmentedMap_maxUij(ColorMap* segmentedMap)
@@ -601,13 +602,16 @@ void Classifier::stepout(const unsigned iteration, const Real precisionReached, 
 	
 	#if defined DEBUG || defined WRITE_MEMBERSHIP_FILES
 	// We write the fits file of Uij
-	Image<EUVPixelType> image(Xaxes,Yaxes);
-	for (unsigned i = 0; i < numberClasses; ++i)
+	if(U.size() == numberFeatureVectors * numberClasses)
 	{
-		image.zero();
-		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
-			image.pixel(coordinates[j]) = U[j*numberClasses + i];
-		image.writeFits(filenamePrefix + "membership.iteration_" + toString(iteration) + ".class_" + toString(i) + ".fits");
+		Image<EUVPixelType> image(Xaxes,Yaxes);
+		for (unsigned i = 0; i < numberClasses; ++i)
+		{
+			image.zero();
+			for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
+				image.pixel(coordinates[j]) = U[j*numberClasses + i];
+			image.writeFits(filenamePrefix + "membership.iteration_" + toString(iteration) + ".class_" + toString(i) + ".fits");
+		}
 	}
 	#endif
 }

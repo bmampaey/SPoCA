@@ -58,7 +58,7 @@ inline Real norm(const FeatureVector<T, N>& fv)
 template<class T, unsigned N>
 ostream& operator<<(ostream& out, const FeatureVector<T, N>& fv)
 {
-	out<<fv.toString(out.precision());
+	out<<toString(fv, out.precision());
 	return out;
 }
 
@@ -96,6 +96,19 @@ istream& operator>>(istream& in, FeatureVector<T, N>& fv)
 	return in;
 }
 
+template<class T, unsigned N>
+string toString(const FeatureVector<T, N>& fv, const unsigned& precision = 0)
+{
+	ostringstream out;
+	if (precision != 0)
+		out<<fixed<<std::setprecision(precision)<<"("<<fv.v[0];
+	else
+		out<<fixed<<noshowpoint<<"("<<fv.v[0];
+	for (unsigned p = 1; p < N; ++p)
+		out<<","<<fv.v[p];
+	out<<")";
+	return out.str();
+}
 
 template<class T, unsigned N>
 inline FeatureVector<Real, N> sqrt(const FeatureVector<T, N>& fv)
@@ -116,4 +129,5 @@ template Real distance<Real, NUMBERCHANNELS>(const FeatureVector<Real, NUMBERCHA
 template Real norm<Real, NUMBERCHANNELS>(const FeatureVector<Real, NUMBERCHANNELS>& fv);
 template ostream& operator<< <Real, NUMBERCHANNELS>(ostream& out, const FeatureVector<Real, NUMBERCHANNELS>& fv);
 template istream& operator>> <Real, NUMBERCHANNELS>(istream& in, FeatureVector<Real, NUMBERCHANNELS>& fv);
+template string toString(const FeatureVector<Real, NUMBERCHANNELS>& fv, const unsigned& precision = 0);
 template FeatureVector<Real, NUMBERCHANNELS> sqrt<Real, NUMBERCHANNELS>(const FeatureVector<Real, NUMBERCHANNELS>& fv);

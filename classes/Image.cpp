@@ -233,6 +233,7 @@ void Image<T>::div(const T value)
 	if (value == 0 )
 	{
 		cerr<<"Error: Trying to divide pixels by 0"<<endl;
+		exit(EXIT_FAILURE);
 	}
 	else
 	{
@@ -268,7 +269,25 @@ void Image<T>::threshold(const T min, const T max = numeric_limits<T>::max())
 	}
 }
 
+template<class T>
+void Image<T>::takeLog()
+{
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if (pixels[j] != nullpixelvalue)
+			pixels[j] = pixels[j] > 0 ? log(pixels[j]) : pixels[j] < 0 ? -log(-pixels[j]) : nullpixelvalue;
+	}
+}
 
+template<class T>
+void Image<T>::takeSqrt()
+{
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if (pixels[j] != nullpixelvalue)
+			pixels[j] = pixels[j] >= 0 ? sqrt(pixels[j]) : -sqrt(-pixels[j]);
+	}
+}
 
 template<class T>
 Image<T>* Image<T>::bitmap(T setValue)
@@ -442,11 +461,14 @@ T Image<T>::percentiles(const Real& p) const
 template<class T>
 Real Image<T>::mode(Real binSize) const
 {
-	// If the binSize was not given or wrong, we compute by taking NUMBER_BINS in 2 times the variance
+	// If the binSize was not given or wrong, we compute by taking NUMBER_BINS in 2 times the standard deviation
 	if (binSize <= 0)
 	{
-		binSize = 2. * variance() / NUMBER_BINS;
+		binSize = (2. * sqrt(variance())) / NUMBER_BINS;
 	}
+	#if defined VERBOSE
+	cout<<"Computing mode with a bin size of "<<binSize<<endl;
+	#endif
 	// We build an histogram
 	deque<unsigned> histo(2 * NUMBER_BINS, 0);
 	T* pixelValue = pixels;
@@ -475,6 +497,11 @@ Real Image<T>::mode(Real binSize) const
 		}
 	}
 	mode = mode * binSize + (binSize / 2);
+	
+	#if defined VERBOSE
+	cout<<"Found image mode "<<mode<<endl;
+	#endif
+	
 	return mode;
 }
 
@@ -482,7 +509,7 @@ template<class T>
 Real Image<T>::mean() const
 {
 	Real sum = 0;
-	Real card = 0;
+	unsigned card = 0;
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
 		if(pixels[j] != nullpixelvalue)
@@ -491,11 +518,16 @@ Real Image<T>::mean() const
 			++card;
 		}
 	}
-	if(card == 0)
-		return 0;
+	if(card > 0)
+		sum /= Real(card);
 	else
-		return sum / card;
-
+		sum = 0;
+	
+	#if defined VERBOSE
+	cout<<"Found image mean "<<sum<<endl;
+	#endif
+	
+	return sum;
 }
 
 
@@ -503,7 +535,7 @@ template<class T>
 Real Image<T>::variance() const
 {
 	Real m2 = 0, temp = 0;
-	Real card = 0;
+	unsigned card = 0;
 	Real meanValue = mean();
 	for (unsigned j = 0; j < numberPixels; ++j)
 		if(pixels[j] != nullpixelvalue)
@@ -512,11 +544,17 @@ Real Image<T>::variance() const
 		m2 += temp * temp;
 		++card;
 	}
-	if(card == 0)
-		return 0;
+	
+	if(card > 0)
+		m2 /= Real(card);
 	else
-		return m2 / card;
-
+		m2 = 0;
+	
+	#if defined VERBOSE
+	cout<<"Found image variance "<<m2<<endl;
+	#endif
+	
+	return m2;
 }
 
 
@@ -528,14 +566,14 @@ Real Image<T>::skewness() const
 	Real meanValue = mean(), temp;
 	for (unsigned j = 0; j < numberPixels; ++j)
 		if(pixels[j] != nullpixelvalue)
-	{
-		temp = (pixels[j] - meanValue);
-		temp *= temp;
-		m2 += temp;
-		temp *= (pixels[j] - meanValue);
-		m3 += temp;
-		++card;
-	}
+		{
+			temp = (pixels[j] - meanValue);
+			temp *= temp;
+			m2 += temp;
+			temp *= (pixels[j] - meanValue);
+			m3 += temp;
+			++card;
+		}
 
 	if(card == 0)
 		return 0;

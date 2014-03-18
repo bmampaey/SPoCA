@@ -40,13 +40,6 @@ void HMIImage::parseHeader()
 	// For HMI IC the wavelength is 6173 (according to L. Dolla)
 	wavelength = 6173;
 	
-	if (header.has("DATAMEDN"))
-		median = header.get<Real>("DATAMEDN");
-	if (header.has("DATAP01"))
-		datap01 = header.get<EUVPixelType>("DATAP01");
-	if (header.has("DATAP99"))
-		datap99 = header.get<EUVPixelType>("DATAP99");
-	
 	if (header.has("EXPTIME"))
 		exposureTime = header.get<Real>("EXPTIME");
 	else

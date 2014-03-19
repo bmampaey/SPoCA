@@ -60,11 +60,12 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 #include <cstdlib>
 #include <string>
 #include <iomanip>
+#include <string>
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
 #include "../classes/mainutilities.h"
-#include "../classes/ArgumentHelper.h"
+#include "../classes/ArgParser.h"
 
 #include "../classes/ColorMap.h"
 #include "../classes/EUVImage.h"
@@ -74,41 +75,19 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 #include "../classes/Coordinate.h"
 #include "../classes/FeatureVector.h"
 
-
 using namespace std;
-using namespace dsr;
 
+//! Prefix name for outputing intermediate result files
 string filenamePrefix;
-
-
 
 int main(int argc, const char **argv)
 {
-	cout<<setiosflags(ios::fixed);
+	// We declare our program description
+	string programDescription = "This Program computes STAFF stats for EUV images.";
+	programDescription+="\nVersion: 3.0";
+	programDescription+="\nAuthor: Benjamin Mampaey, benjamin.mampaey@sidc.be";
 	
-	// Program version
-	string version = "2.0";
-	
-	// The list of names of the sun images to process
-	string imageType = "UNKNOWN";
-	vector<string> imagesFilenames;
-
-	// Options for the preprocessing of images
-	double intensitiesStatsRadiusRatio = 3;
-	string intensitiesStatsPreprocessing = "NAR";
-
-	// The Segmented Maps and corresponding classes color
-	string CHSegmentedMap, ARSegmentedMap;
-	ColorType CHClass, ARClass;
-	
-	// Option for the output
-	string separator = "\t";
-	
-	// Option for the output file/directory
-	string output = ".";
-	
-	string programDescription = "This Programm output regions info and statistics.\n";
-	programDescription+="Compiled with options :";
+	programDescription+="\nCompiled on "  __DATE__  " with options :";
 	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
@@ -121,45 +100,60 @@ int main(int argc, const char **argv)
 	#endif
 	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
+	
+	// We define our program parameters
+	ArgParser args(programDescription);
+	
+	args["config"] = ArgParser::ConfigurationFile('C');
+	args["help"] = ArgParser::Help('h');
+	
+	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images.\nPossible values are : EIT, EUVI, AIA, SWAP");
+	args["statsPreprocessing"] = ArgParser::Parameter("NAR=3", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["separator"] = ArgParser::Parameter(',', 's', "The separator to put between columns in the csv file.");
+	args["CHClass"] = ArgParser::Parameter('c', "The color corresponding to the CH class in the CHSegmentedMap.");
+	args["ARClass"] = ArgParser::Parameter('a', "The color corresponding to the AR class in the ARSegmentedMap.");
+	args["output"] = ArgParser::Parameter(".", 'O', "The name for the output file or of a directory.");
+	args["CHSegmentedMap"] = ArgParser::PositionalParameter("Path to the segmentation map for the Coronal Hole class.");
+	args["ARSegmentedMap"] = ArgParser::PositionalParameter("Path to the segmentation map for the Active Region class.");
+	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file for computing stats", 1);
 
-	ArgumentHelper arguments;
-	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP, HMI\n\t", imageType);
-	arguments.new_named_double('R', "intensitiesStatsRadiusRatio", "positive real", "\n\tThe ratio of the radius of the sun that will be used for the region stats.\n\t",intensitiesStatsRadiusRatio);
-	arguments.new_named_string('G', "intensitiesStatsPreprocessing", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t",intensitiesStatsPreprocessing);
-	arguments.new_named_string('s', "separator", "string", "\n\tThe separator to put between columns.\n\t", separator);
-	arguments.new_named_unsigned_int('c', "CHClass", "unsigned integer", "\n\tThe color corresponding to the CH class in the CHSegmentedMap.\n\t", CHClass);
-	arguments.new_named_string('C', "CHSegmentedMap", "string", "\n\tA segmented map for the Coronal Hole class.\n\t", CHSegmentedMap);
-	arguments.new_named_unsigned_int('a', "ARClass", "unsigned integer", "\n\tThe color corresponding to the AR class in the ARSegmentedMap.\n\t", ARClass);
-	arguments.new_named_string('A', "ARSegmentedMap", "string", "\n\tA segmented map for the Active Region class.\n\t", ARSegmentedMap);
-	arguments.new_named_string('O', "output","file/directory name", "\n\tThe name for the output file/directory.\n\t", output);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "The name of the fits files containing the images of the sun.", imagesFilenames);
-
-	arguments.set_description(programDescription.c_str());
-	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
-	arguments.set_build_date(__DATE__);
-	arguments.set_version(version.c_str());
-	arguments.process(argc, argv);
-
-	if(imagesFilenames.size() < 1)
+	// We parse the arguments
+	try
 	{
-		cerr<<"No fits image file given as parameter!"<<endl;
+		args.parse(argc, argv);
+	}
+	catch ( const invalid_argument& error)
+	{
+		cerr<<"Error : "<<error.what()<<endl;
+		cerr<<args.help_message(argv[0])<<endl;
 		return EXIT_FAILURE;
 	}
 	
+	// We check the arguments
+	if(! args["CHClass"].is_set())
+	{
+		cerr<<"Error: You need to specify the Coronal Hole class!"<<endl;
+		return EXIT_FAILURE;
+	}
+	
+	if(! args["ARClass"].is_set())
+	{
+		cerr<<"Error: You need to specify the Active Region class!"<<endl;
+		return EXIT_FAILURE;
+	}
 	
 	// We check if the output is a directory
-	string outputDirectory, outputFileName;
-	if (isDir(output))
+	string outputDirectory = args["output"], outputFileName;
+	if (isDir(outputDirectory))
 	{
-		outputDirectory = output;
-		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(CHSegmentedMap)) + "_and_" + stripSuffix(stripPath(ARSegmentedMap)) + ".";
-		outputFileName = outputDirectory + "/" + stripSuffix(stripPath(CHSegmentedMap)) + "_and_" + stripSuffix(stripPath(ARSegmentedMap)) + "_on_";
+		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(args["CHSegmentedMap"])) + "_and_" + stripSuffix(stripPath(args["ARSegmentedMap"])) + ".";
+		outputFileName = outputDirectory + "/" + stripSuffix(stripPath(args["CHSegmentedMap"])) + "_and_" + stripSuffix(stripPath(args["ARSegmentedMap"])) + "_on_";
 	}
 	else
 	{
-		outputDirectory = getPath(output);
-		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(CHSegmentedMap)) + "_and_" + stripSuffix(stripPath(ARSegmentedMap)) + ".";
-		outputFileName = output + "_on_";
+		outputDirectory = getPath(args["output"]);
+		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(args["CHSegmentedMap"])) + "_and_" + stripSuffix(stripPath(args["ARSegmentedMap"])) + ".";
+		outputFileName = args["output"] + "_on_";
 		
 		// We check if the outputDirectory exists
 		if (! isDir(outputDirectory))
@@ -170,23 +164,14 @@ int main(int argc, const char **argv)
 	}
 	
 	// We read the CHSegmentedMap
-	ColorMap* CHMap_ondisk = getImageFromFile(CHSegmentedMap);
-	
-	// We will align all files on the suncenter of the CHSegmentedMap
-	RealPixLoc sunCenter = CHMap_ondisk->SunCenter();
+	ColorMap* CHMap_ondisk = getColorMapFromFile(args["CHSegmentedMap"]);
 	
 	// If the ARSegmentedMap is different from the CHSegmentedMap, we read it and check if they are similar
 	ColorMap* ARMap_ondisk = CHMap_ondisk;
-	if(CHSegmentedMap != ARSegmentedMap)
+	if(args["CHSegmentedMap"].as<string>() != args["ARSegmentedMap"].as<string>())
 	{
-		ARMap_ondisk = getImageFromFile(ARSegmentedMap);
-		ARMap_ondisk->recenter(sunCenter);
-		
-		string dissimilarity = checkSimilar(CHMap_ondisk, ARMap_ondisk);
-		if(! dissimilarity.empty())
-		{
-			cerr<<"Warning: "<<CHSegmentedMap<<" and "<<ARSegmentedMap<<" are not similar: "<<dissimilarity<<endl;
-		}
+		ARMap_ondisk = getColorMapFromFile(args["ARSegmentedMap"]);
+		ARMap_ondisk->align(CHMap_ondisk);
 	}
 
 	// We construct a total (on-disk + off-disk) copy of ARMap_ondisk
@@ -197,9 +182,9 @@ int main(int argc, const char **argv)
 	CHMap_ondisk->nullifyAboveRadius();
 	
 	#if defined DEBUG
-	CHMap_ondisk->writeFits(filenamePrefix + "ondisk." +  stripPath(CHSegmentedMap), FitsFile::compress);
-	if(CHSegmentedMap != ARSegmentedMap)
-		ARMap_ondisk->writeFits(filenamePrefix + "ondisk." +  stripPath(ARSegmentedMap), FitsFile::compress);
+	CHMap_ondisk->writeFits(filenamePrefix + "ondisk." +  stripPath(args["CHSegmentedMap"]), FitsFile::compress);
+	if(args["CHSegmentedMap"].as<string>() != args["ARSegmentedMap"].as<string>())
+		ARMap_ondisk->writeFits(filenamePrefix + "ondisk." +  stripPath(args["ARSegmentedMap"]), FitsFile::compress);
 	#endif
 	
 	// We construct a CHmap limited to 15 deg longitude
@@ -207,46 +192,49 @@ int main(int argc, const char **argv)
 	CHMap_limited->nullifyAboveLongLat(15);
 	
 	#if defined DEBUG
-	CHMap_limited->writeFits(filenamePrefix + "limited." +  stripPath(CHSegmentedMap), FitsFile::compress);
+	CHMap_limited->writeFits(filenamePrefix + "limited." +  stripPath(args["CHSegmentedMap"]), FitsFile::compress);
 	#endif
 	
+	string separator = args["separator"];
+	
+	deque<string> imagesFilenames = args.RemainingPositionalArguments();
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 		// We read the sun image 
-		string imageFilename = expand(imagesFilenames[p], CHMap_ondisk->getHeader());
+		string imageFilename = CHMap_ondisk->getHeader().expand(imagesFilenames[p]);
 		if(! isFile(imageFilename))
 		{
-			cerr<<"Error : "<<imageFilename<<" is not a regular file!"<<endl;
+			cerr<<"Error : Could not find "<<imageFilename<<"!"<<endl;
 			continue;
 		}
-		EUVImage* image = getImageFromFile(imageType, imageFilename);
+		EUVImage* image = getImageFromFile(args["imageType"], imageFilename);
 		
 		// We align it with the Segmented maps and check if they are similar
-		image->recenter(sunCenter);
+		image->align(CHMap_ondisk);
 		string dissimilarity = checkSimilar(CHMap_ondisk, image);
 		if(! dissimilarity.empty())
 		{
-			cerr<<"Warning: image "<<imageFilename<<" and the CHSegmentedMap "<<CHSegmentedMap<<" are not similar: "<<dissimilarity<<endl;
+			cerr<<"Warning: image "<<imageFilename<<" and the CHSegmentedMap "<<args["CHSegmentedMap"]<<" are not similar: "<<dissimilarity<<endl;
 		}
 		
 		// We apply the intensities preprocessing
-		image->preprocessing(intensitiesStatsPreprocessing, intensitiesStatsRadiusRatio);
+		image->preprocessing(args["statsPreprocessing"]);
 
 		// We open the output file
 		ofstream outputFile((outputFileName + stripSuffix(stripPath(imageFilename)) + ".csv").c_str(), ios_base::trunc);
 		outputFile<<setiosflags(ios::fixed);
 		
 		// We extract the AR STAFF stats on the whole image
-		STAFFStats AR_staff_stats = getSTAFFStats(ARMap_total, ARClass, image);
+		STAFFStats AR_staff_stats = getSTAFFStats(ARMap_total, args["ARClass"], image);
 		outputFile<<"Channel"<<separator<<"Type"<<separator<<AR_staff_stats.toString(separator, true)<<endl;
 		outputFile<<image->Channel()<<separator<<"AR_all"<<separator<<AR_staff_stats.toString(separator)<<endl;
 		
 		// We extract the CH STAFF stats on the limited image
-		STAFFStats CH_staff_stats = getSTAFFStats(CHMap_limited, CHClass, image);
+		STAFFStats CH_staff_stats = getSTAFFStats(CHMap_limited, args["CHClass"], image);
 		outputFile<<image->Channel()<<separator<<"CH_central_meridian"<<separator<<CH_staff_stats.toString(separator)<<endl;
 		
 		// We extract the STAFF stats on the disc
-		vector<STAFFStats> staff_stats = getSTAFFStats(CHMap_ondisk, CHClass, ARMap_ondisk, ARClass, image);
+		vector<STAFFStats> staff_stats = getSTAFFStats(CHMap_ondisk, args["CHClass"], ARMap_ondisk, args["ARClass"], image);
 		outputFile<<image->Channel()<<separator<<"CH_ondisc"<<separator<<staff_stats[0].toString(separator)<<endl;
 		outputFile<<image->Channel()<<separator<<"AR_ondisc"<<separator<<staff_stats[1].toString(separator)<<endl;
 		outputFile<<image->Channel()<<separator<<"QS_ondisc"<<separator<<staff_stats[2].toString(separator)<<endl;
@@ -259,7 +247,7 @@ int main(int argc, const char **argv)
 		delete ARMap_ondisk;
 	delete CHMap_ondisk;
 	delete ARMap_total;
-
+	delete CHMap_limited;
 	return EXIT_SUCCESS;
 }
 

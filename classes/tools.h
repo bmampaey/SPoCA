@@ -95,9 +95,19 @@ std::istream& operator>>(std::istream& in, std::vector<std::string>& v);
 template<class T>
 std::string toString(const std::vector<T>& v)
 {
-	std::ostringstream Z;
-	Z << v;
-	return Z.str();
+	std::ostringstream tmp;
+	tmp << v;
+	return tmp.str();
+}
+
+//! Convert a string to a vector
+template<class T>
+std::vector<T> toVector(const std::string& s)
+{
+	std::vector<T> tmp;
+	std::istringstream tmp2(s);
+	tmp2 >> tmp;
+	return tmp;
 }
 
 //! Convert a deque to a string

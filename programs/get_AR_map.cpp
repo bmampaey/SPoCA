@@ -47,9 +47,9 @@ int main(int argc, const char **argv)
 	args["config"] = ArgParser::ConfigurationFile('C');
 	args["help"] = ArgParser::Help('h');
 	
-	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images. Possible values are : EIT, EUVI, AIA, SWAP");
-	args["registerImages"] = ArgParser::Parameter(false, 'r', "Set to register/align the images when running multi channel classification.");
-	args["statsPreprocessing"] = ArgParser::Parameter("NAR=0.95", 'p', "The steps of preprocessing to apply to the sun images before computing stats. Can be any combination of the following: NAR=zz.z (Nullify pixels above zz.z*radius); ALC (Annulus Limb Correction); DivMedian (Division by the median); TakeSqrt (Take the square root); TakeLog (Take the log); DivMode (Division by the mode); DivExpTime (Division by the Exposure Time); ThrMin=zz.z (Threshold intensities to minimum zz.z); ThrMax=zz.z (Threshold intensities to maximum zz.z); ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile); ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile); Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images.\nPossible values are : EIT, EUVI, AIA, SWAP");
+	args["registerImages"] = ArgParser::Parameter(false, 'r', "Set to register/align the images to the map.");
+	args["statsPreprocessing"] = ArgParser::Parameter("NAR=0.95", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["output"] = ArgParser::Parameter(".", 'O', "The name for the output file or of a directory.");
 	args["uncompressed"] = ArgParser::Parameter(false, 'u', "Set this flag if you want results maps to be uncompressed.");
 	args["chaincodeMinPoints"] = ArgParser::Parameter(4, 'x', "The minimal number of points in a chaincode.");

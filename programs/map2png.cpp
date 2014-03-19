@@ -39,6 +39,7 @@ See @ref Compilation_Options for constants and parameters at compilation time.
 #include <vector>
 #include <iostream>
 #include <string>
+#include <set>
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
@@ -60,7 +61,7 @@ string filenamePrefix;
 int main(int argc, const char **argv)
 {
 	// We declare our program description
-	string programDescription = "This program convert a color map to a png image\n";
+	string programDescription = "This program convert a color map to a png image.";
 	programDescription+="\nVersion: 3.0";
 	programDescription+="\nAuthor: Benjamin Mampaey, benjamin.mampaey@sidc.be";
 	
@@ -85,14 +86,16 @@ int main(int argc, const char **argv)
 	args["help"] = ArgParser::Help('h');
 	
 	args["type"] = ArgParser::Parameter("png", 'T', "The type of image to write.");
-	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images. Can be any combination of the following: NAR=zz.z (Nullify pixels above zz.z*radius); ALC (Annulus Limb Correction); DivMedian (Division by the median); TakeSqrt (Take the square root); TakeLog (Take the log); DivMode (Division by the mode); DivExpTime (Division by the Exposure Time); ThrMin=zz.z (Threshold intensities to minimum zz.z); ThrMax=zz.z (Threshold intensities to maximum zz.z); ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile); ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile); Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["label"] = ArgParser::Parameter('l', "The label to write on the upper left corner. If set but no value is passed, a default label will be written.");
-	args["transparent"] = ArgParser::Parameter('t', "If you want the null values to be transparent.");
-	args["Label"] = ArgParser::Parameter('L', "The label to write on the lower left corner. You can use keywords from the color map fits file by specifying them between {}");
-	args["straightenUp"] = ArgParser::Parameter('u', "Set if you want to rotate the image so the solar north is up.");
-	args["recenter"] = ArgParser::Parameter('r', "Set to the position of the new sun center ifyou want to translate the image");
-	args["scaling"] = ArgParser::Parameter('s', "Set to the scaling factor if you want to rescale the image.");
-	args["size"] = ArgParser::Parameter("100%x100%", 'S', "The size of the image written. i.e. \"1024x1024\"See ImageMagick Image Geometry for specification. If not set the output image will have the same dimension as the input image.");
+	args["Label"] = ArgParser::Parameter("{CLASTYPE} {CPREPROC}", 'L', "The label to write on the lower left corner. You can use keywords from the color map fits file by specifying them between {}");
+	args["fill"] = ArgParser::Parameter(false, 'f', "Set this flag if you want to fill holes in the regions before ploting.");
+	args["colors"] = ArgParser::Parameter("", 'C', "The list of color of the regions to plot separated by commas. All regions will be selected if ommited.");
+	args["uniqueColor"] = ArgParser::Parameter(7, 'U', "Set to a color if you want all regions to be plotted in that color.\nSee gradient image for the color number.");
+	args["transparent"] = ArgParser::Parameter(false, 't', "If you want the null values to be transparent.");
+	args["straightenUp"] = ArgParser::Parameter(false, 'u', "Set if you want to rotate the image so the solar north is up.");
+	args["recenter"] = ArgParser::Parameter("", 'R', "Set to the position of the new sun center if you want to translate the image");
+	args["scaling"] = ArgParser::Parameter(1, 's', "Set to the scaling factor if you want to rescale the image.");
+	args["size"] = ArgParser::Parameter("100%x100%", 'S', "The size of the image written. i.e. \"1024x1024\". See ImageMagick Image Geometry for specification.\nIf not set the output image will have the same dimension as the input image.");
 	args["output"] = ArgParser::Parameter(".", 'O', "The path of the the output directory.");
 	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file to be converted", 1);
 	
@@ -101,14 +104,14 @@ int main(int argc, const char **argv)
 	{
 		args.parse(argc, argv);
 	}
-	catch ( const invalid_argument& error)
+	catch(const invalid_argument& error)
 	{
 		cerr<<"Error : "<<error.what()<<endl;
 		cerr<<args.help_message(argv[0])<<endl;
 		return EXIT_FAILURE;
 	}
 	
-	if (! isDir(args["output"]))
+	if(!isDir(args["output"]))
 	{
 		cerr<<"Error : "<<args["output"]<<" is not a directory!"<<endl;
 		return EXIT_FAILURE;
@@ -133,13 +136,77 @@ int main(int argc, const char **argv)
 		backgroundColor.alpha(0);
 	}
 	
+	// We parse the colors of the regions to plot
+	set<ColorType> colors;
+	if(args["colors"].is_set())
+	{
+		vector<ColorType> tmp = toVector<ColorType>(args["colors"]);
+		colors.insert(tmp.begin(),tmp.end());
+	}
+	
 	// We convert the images
 	deque<string> imagesFilenames = args.RemainingPositionalArguments();
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 		filenamePrefix = makePath(args["output"], stripPath(stripSuffix(imagesFilenames[p]))) + ".";
 		ColorMap* inputImage = getColorMapFromFile(imagesFilenames[p]);
+		
+		// We fill holes if requested
+		if(args["fill"])
+		{
+			inputImage->removeHoles();
 	
+			#if defined DEBUG
+			inputImage->writeFits(filenamePrefix + "filled.fits");
+			#endif
+		}
+	
+		// We erase any colors that is not to be kept
+		if(colors.size() > 0 && args["uniqueColor"].is_set())
+		{
+			ColorType uniqueColor = args["uniqueColor"];
+			for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+			{
+				if(inputImage->pixel(j) != inputImage->null())
+				{
+					if(colors.count(inputImage->pixel(j)) == 0)
+					{
+						inputImage->pixel(j) = inputImage->null();
+					}
+					else
+					{
+						inputImage->pixel(j) = uniqueColor;
+					}
+				}
+			}
+		}
+		else if(args["uniqueColor"].is_set())
+		{
+			ColorType uniqueColor = args["uniqueColor"];
+			for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+			{
+				if(inputImage->pixel(j) != inputImage->null())
+				{
+					inputImage->pixel(j) = uniqueColor;
+				}
+			}
+		}
+		else if(colors.size() > 0)
+		{
+			for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+			{
+				if(inputImage->pixel(j) != inputImage->null() && colors.count(inputImage->pixel(j)) == 0)
+				{
+					inputImage->pixel(j) = inputImage->null();
+				}
+			}
+		}
+	
+		#if defined DEBUG
+		if(colors.size() > 0 || args["uniqueColor"].is_set())
+			inputImage->writeFits(filenamePrefix + "recolored.fits");
+		#endif
+		
 		// We transform the image
 		if(args["straightenUp"] || args["recenter"].is_set() || args["scaling"].is_set())
 		{
@@ -192,11 +259,11 @@ int main(int argc, const char **argv)
 		// We label the image
 		if(args["Label"].is_set())
 		{
-			string text = inputImage->getHeader().expand(args["label"]);
+			string text = inputImage->getHeader().expand(args["Label"]);
 			size_t text_size = inputImage->Xaxes()/40;
 			outputImage.fillColor("white");
 			outputImage.fontPointsize(text_size);
-			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
+			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
 			outputImage.label(text);
 		}
 		

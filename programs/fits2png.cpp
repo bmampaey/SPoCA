@@ -95,14 +95,14 @@ int main(int argc, const char **argv)
 	args["help"] = ArgParser::Help('h');
 	
 	args["type"] = ArgParser::Parameter("png", 'T', "The type of image to write.");
-	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images. Can be any combination of the following: NAR=zz.z (Nullify pixels above zz.z*radius); ALC (Annulus Limb Correction); DivMedian (Division by the median); TakeSqrt (Take the square root); TakeLog (Take the log); DivMode (Division by the mode); DivExpTime (Division by the Exposure Time); ThrMin=zz.z (Threshold intensities to minimum zz.z); ThrMax=zz.z (Threshold intensities to maximum zz.z); ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile); ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile); Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["label"] = ArgParser::Parameter('l', "The label to write on the upper left corner. If set but no value is passed, a default label will be written.");
-	args["color"] = ArgParser::Parameter('c', "Set if you want the output images to be colorized.");
-	args["straightenUp"] = ArgParser::Parameter('u', "Set if you want to rotate the image so the solar north is up.");
-	args["recenter"] = ArgParser::Parameter('r', "Set to the position of the new sun center ifyou want to translate the image");
-	args["scaling"] = ArgParser::Parameter('s', "Set to the scaling factor if you want to rescale the image.");
-	args["colorTable"] = ArgParser::Parameter('C', "Set to an image to use as a color table if you want to colorize the image. If not set the default color table for the instrument/wavelength will be used.");
-	args["size"] = ArgParser::Parameter("100%x100%", 'S', "The size of the image written. i.e. \"1024x1024\"See ImageMagick Image Geometry for specification. If not set the output image will have the same dimension as the input image.");
+	args["color"] = ArgParser::Parameter(false, 'c', "Set if you want the output images to be colorized.");
+	args["straightenUp"] = ArgParser::Parameter(false, 'u', "Set if you want to rotate the image so the solar north is up.");
+	args["recenter"] = ArgParser::Parameter("", 'R', "Set to the position of the new sun center ifyou want to translate the image");
+	args["scaling"] = ArgParser::Parameter(1, 's', "Set to the scaling factor if you want to rescale the image.");
+	args["colorTable"] = ArgParser::Parameter("", 'C', "Set to an image to use as a color table if you want to colorize the image.\nIf not set the default color table for the instrument/wavelength will be used.");
+	args["size"] = ArgParser::Parameter("100%x100%", 'S', "The size of the image written. i.e. \"1024x1024\". See ImageMagick Image Geometry for specification.\nIf not set the output image will have the same dimension as the input image.");
 	args["output"] = ArgParser::Parameter(".", 'O', "The path of the the output directory.");
 	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file to be converted", 1);
 	
@@ -214,7 +214,7 @@ int main(int argc, const char **argv)
 				vector<char> intrumentColorTable = inputImage->color_table();
 				colorTable = MagickImage(&(intrumentColorTable[0]), 1, intrumentColorTable.size()/3, "RGB");
 				#if defined DEBUG
-				colorTable.write(filenamePrefix + "colortable.png");
+				colorTable.write(filenamePrefix + "colortable." + args["type"]);
 				#endif
 				MagickCore::ClutImage(outputImage.image(), colorTable.image());
 			}

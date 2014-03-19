@@ -161,7 +161,7 @@ void fillHeaderCH(Header& header)
 		default:
 			projection = "None";
 	}
-	
+	header.set("INSTRUME", "Coronal Hole Map", "SPoCA coronal hole map");
 	header.set("CLEANING", CH_CLEANING, "Cleaning factor in arcsec");
 	header.set("AGGREGAT", CH_AGGREGATION, "Aggregation factor in arcsec");
 	header.set("PROJECTN", projection, "Projection used for the aggregation");
@@ -262,11 +262,12 @@ void writeCHMap(ColorMap*& CHMap, const string& filename, vector<EUVImage*> imag
 		file.writeTable(image->Channel()+"_CoronalHoleStats");
 		writeRegions(file, regions_stats);
 		
-		/*! We write some info bout the image in the header of the table */
+		/*! We write some info about the image in the header of the table */
 		Header tableHeader;
-		if(dynamic_cast<EUVImage*>(image))
-			tableHeader.set("WAVELNTH", dynamic_cast<EUVImage*>(image)->Wavelength(), "Wavelength of the intensity image.");
-		
+		tableHeader.set("CHANNEL", image->Channel(), "Channel of the intensity image.");
+		tableHeader.set("WAVELNTH", image->Wavelength(), "Wavelength of the intensity image.");
+		tableHeader.set("DATE-OBS", image->ObservationDate(), "Observation Date of the intensity image.");
+		tableHeader.set("INSTRUME", image->Instrument(), "Instrument of the intensity image.");
 		const Header& imageHeader = image->getHeader();
 		if(imageHeader.has("LVL_NUM"))
 			tableHeader.set("LVL_NUM", imageHeader.get<float>("LVL_NUM"), "Level number of the intensity image.");

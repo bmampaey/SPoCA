@@ -15,9 +15,9 @@
  
  Calling the programs with -h will provide you with help 
  
- <tt> overlay.x [-option optionvalue, ...] fitsFileName1 fitsFileName2 </tt>
+ <tt> overlay.x [-option optionvalue, ...] imageFilename1 imageFilename2 </tt>
  
-@param colorizedMap	The name of a colorized Map of regions (i.e. each one must have a different color).
+@param inputImage	The name of a colorized Map of regions (i.e. each one must have a different color).
  
 @param width	The width of the contour in pixels.
 <BR>If not specified an optimal value will be chosen. 
@@ -70,29 +70,24 @@ See @ref Compilation_Options for constants and parameters at compilation time.
 */
 
 
-
 #include <vector>
 #include <iostream>
-#include <fstream>
-#include <cstdlib>
 #include <string>
-#include <fenv.h>
-#include <iomanip>
 #include <set>
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
 #include "../classes/mainutilities.h"
-#include "../classes/ArgumentHelper.h"
+#include "../classes/ArgParser.h"
 
 #include "../classes/ColorMap.h"
-#include "../classes/EUVImage.h"
 #include "../classes/MagickImage.h"
+#include "../classes/EUVImage.h"
+
 
 
 
 using namespace std;
-using namespace dsr;
 
 using Magick::Color;
 using Magick::ColorGray;
@@ -101,56 +96,15 @@ using Magick::Quantum;
 
 string filenamePrefix;
 
-
 int main(int argc, const char **argv)
 {
-
-	// Options for the contours
-	// The map of colored regions
-	string colorizedMapFileName;
-
-	// Options for the contours
-	unsigned width = 0;
-	bool external = false;
-	bool internal = false;
+	// We declare our program description
+	string programDescription = "This program plots a map regions contours overlayed on a background image.";
+	programDescription+="\nVersion: 3.0";
+	programDescription+="\nAuthor: Benjamin Mampaey, benjamin.mampaey@sidc.be";
 	
-	// Option for the preprocessing of contours
-	bool mastic = false;
-	
-	// Options for the labeling
-	string Label = "{CLASTYPE} {CPREPROC}\ncleaning: {CLEANING} arcsec\naggregation: {AGGREGAT} arcsec\nprojection: sinusoidal\nmin size: {MINSIZE} arcsec²";
-	
-	// Options for the background
-	// The list of names of the sun images to process
-	string imageType = "UNKNOWN";
-	vector<string> fitsFileNames;
-	
-	// Options for the preprocessing of images
-	string preprocessingSteps = "";
-	
-	// Options for the labeling
-	bool label = false;
-	
-	// Option for the output size
-	string size;
-	
-	// Options for the colors to overlay
-	string colorsString;
-	string colorsFilename;
-	bool sameColors = false;
-	
-	// Options for the transformation
-	bool straightenUp = false;
-	string recenter;
-	double scaling = 1;
-	
-	
-	// Option for the output file/directory
-	string output = ".";
-
-	
-	string programDescription = "This program plots region contours overlayed on a background image.\n";
-	programDescription+="Compiled with options :";
+	programDescription+="\nCompiled on "  __DATE__  " with options :";
+	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
 	#endif
@@ -160,231 +114,264 @@ int main(int argc, const char **argv)
 	#if defined VERBOSE
 	programDescription+="\nVERBOSE: ON";
 	#endif
-	programDescription+="\nColorType: " + string(typeid(ColorType).name());
 	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
+	programDescription+="\nReal: " + string(typeid(Real).name());
 
-	ArgumentHelper arguments;
-	arguments.new_named_unsigned_int('w', "width", "positive integer", "\n\tThe width of the contour.\n\t", width);
-	arguments.new_flag('i', "internal", "\n\tSet this flag if you want the contours inside the regions.\n\t", internal);
-	arguments.new_flag('e', "external", "\n\tSet this flag if you want the contours outside the regions.\n\t", external);
-	arguments.new_flag('m', "mastic", "\n\tSet this flag if you want to fill holes before taking the contours.\n\t", mastic);
-	arguments.new_named_string('L', "Label", "string", "\n\tThe label for the contours.\n\tYou can use keywords from the color map fits file by specifying them between {}\n\t", Label);
-
-	arguments.new_named_string('M',"colorizedMap","file name", "\n\tA colorized Map of regions (i.e. each one must have a different color).\n\t", colorizedMapFileName);
-	arguments.new_flag('l', "label", "\n\tSet this flag if you want a label on the background.\n\t", label);
-	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
-
-	arguments.new_named_string('S', "size", "string", "\n\tThe size of the image written. i.e. \"1024x1024\"\n\tSee ImageMagick Image Geometry for specification.\n\t", size);
+	// We define our program parameters
+	ArgParser args(programDescription);
 	
-	arguments.new_named_string('c', "colors", "string", "\n\tThe list of colors to select separated by commas (no spaces)\n\tAll colors will be selected if ommited.\n\t", colorsString);
-	arguments.new_flag('U', "sameColors", "\n\tSet this flag if want all colors to be the same.\n\t", sameColors);
-	arguments.new_named_string('C', "colorsFilename", "string", "\n\tA file containing a list of colors to select separated by commas\n\tAll colors will be selected if ommited.\n\t", colorsFilename);
-
-	arguments.new_flag('u', "straightenUp", "\n\tSet this flag if you want to have the solar north up.\n\t", straightenUp);
-	arguments.new_named_string('r', "recenter", "2 positive real separated by a comma (no spaces)", "\n\tThe position of the new center\n\t", recenter);
-	arguments.new_named_double('s', "scaling", "positive real", "\n\tThe scaling factor.\n\t", scaling);
-
-	arguments.new_named_string('O', "output","file/directory name", "\n\tThe name for the output file/directory.\n\t", output);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "The name of the fits files containing the images of the sun.", fitsFileNames);
-	arguments.set_description(programDescription.c_str());
-	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
-	arguments.set_build_date(__DATE__);
-	arguments.set_version("1.0");
-	arguments.process(argc, argv);
-
-	// We check if the output is a directory
-	string outputDirectory, outputFileName;
-	if (isDir(output))
+	args["config"] = ArgParser::ConfigurationFile('C');
+	args["help"] = ArgParser::Help('h');
+	
+	args["type"] = ArgParser::Parameter("png", 'T', "The type of image to write.");
+	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["label"] = ArgParser::Parameter('l', "The label to write on the upper left corner. If set but no value is passed, a default label will be written.");
+	args["Label"] = ArgParser::Parameter("{CLASTYPE} {CPREPROC}", 'L', "The label to write on the lower left corner. You can use keywords from the color map fits file by specifying them between {}");
+	args["width"] = ArgParser::Parameter(1, 'w', "The width of the contour in pixels.");
+	args["internal"] = ArgParser::Parameter(false, 'i', "Set this flag if you want the contours inside the regions.\nWill be outside otherwise.");
+	args["fill"] = ArgParser::Parameter(false, 'f', "Set this flag if you want to fill holes in the regions before ploting the contours.");
+	args["colors"] = ArgParser::Parameter("", 'C', "The list of color of the regions to plot separated by commas. All regions will be selected if ommited.");
+	args["uniqueColor"] = ArgParser::Parameter(7, 'U', "Set to a color if you want all contours to be plotted in that color.\nSee gradient image for the color number.");
+	args["registerImages"] = ArgParser::Parameter(false, 'r', "Set to register/align the images to the map.");
+	args["straightenUp"] = ArgParser::Parameter(false, 'u', "Set if you want to rotate the image so the solar north is up.");
+	args["recenter"] = ArgParser::Parameter("", 'R', "Set to the position of the new sun center if you want to translate the image");
+	args["scaling"] = ArgParser::Parameter(1, 's', "Set to the scaling factor if you want to rescale the image.");
+	args["size"] = ArgParser::Parameter("100%x100%", 'S', "The size of the image written. i.e. \"1024x1024\". See ImageMagick Image Geometry for specification.\nIf not set the output image will have the same dimension as the input image.");
+	args["output"] = ArgParser::Parameter(".", 'O', "The path of the the output directory.");
+	args["mapFile"] = ArgParser::PositionalParameter("Path to the map");
+	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file to be converted", 1);
+	
+	// We parse the arguments
+	try
 	{
-		outputDirectory = output;
-		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + ".";
-		outputFileName = outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + "_on_";
+		args.parse(argc, argv);
 	}
-	else
+	catch(const invalid_argument& error)
 	{
-		outputDirectory = getPath(output);
-		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + ".";
-		outputFileName = output + "_on_";
-		
-		// We check if the outputDirectory exists
-		if (! isDir(outputDirectory))
-		{
-			cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
-			return EXIT_FAILURE;
-		}
+		cerr<<"Error : "<<error.what()<<endl;
+		cerr<<args.help_message(argv[0])<<endl;
+		return EXIT_FAILURE;
 	}
 	
+	if(!isDir(args["output"]))
+	{
+		cerr<<"Error : "<<args["output"]<<" is not a directory!"<<endl;
+		return EXIT_FAILURE;
+	}
+	
+	filenamePrefix = makePath(args["output"], stripPath(stripSuffix(args["mapFile"]))) + ".";
 	
 	// We parse the size option
-	Magick::Geometry size_geometry(size);
-	if(! size.empty() && !size_geometry.isValid())
+	Magick::Geometry size_geometry(args["size"].as<string>());
+	if(!size_geometry.isValid())
 	{
-		cerr << "Error parsing size argument: "<<size<<" is not a valid specification."<< endl;
-		return 2;
-	}
-	
-	set<ColorType> colors;
-	// We parse the colors to overlay
-	if(! colorsFilename.empty())
-	{
-		ifstream colorsFile(colorsFilename.c_str());
-		if(colorsFile.good())
-		{
-			vector<ColorType> tmp;
-			colorsFile>>tmp;
-			colors.insert(tmp.begin(),tmp.end());
-		}
-		else
-		{
-			cerr << "Error reading list of colors to overlay from file: "<<colorsFilename<<endl;
-			return 2;
-		}
-	}
-	if(! colorsString.empty())
-	{
-		vector<ColorType> tmp;
-		istringstream ss(colorsString);
-		ss>>tmp;
-		colors.insert(tmp.begin(),tmp.end());
+		cerr << "Error: Size parameter "<<args["size"]<<" is not a valid specification."<< endl;
+		return EXIT_FAILURE;
 	}
 	
 	// We create the contour image
-	ColorMap* colorizedMap = getImageFromFile(colorizedMapFileName);
+	ColorMap* inputImage = getColorMapFromFile(args["mapFile"]);
+	
+	// We fill holes if requested
+	if(args["fill"])
+	{
+		inputImage->removeHoles();
+	
+		#if defined DEBUG
+		inputImage->writeFits(filenamePrefix + "filled.fits");
+		#endif
+	}
+	
+	// We parse the colors of the regions to plot
+	set<ColorType> colors;
+	if(args["colors"].is_set())
+	{
+		vector<ColorType> tmp = toVector<ColorType>(args["colors"]);
+		colors.insert(tmp.begin(),tmp.end());
+	}
 	
 	// We erase any colors that is not to be kept
-	if(colors.size() > 0)
+	if(colors.size() > 0 && args["uniqueColor"].is_set())
 	{
-		for(unsigned j = 0; j < colorizedMap->NumberPixels(); ++j) {
-			if(!sameColors) {
-				if (colors.count(colorizedMap->pixel(j)) == 0)
-					colorizedMap->pixel(j) = colorizedMap->null();
-			} else {
-				if(colorizedMap->pixel(j) != colorizedMap->null())
-					colorizedMap->pixel(j) = *colors.begin();
+		ColorType uniqueColor = args["uniqueColor"];
+		for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+		{
+			if(inputImage->pixel(j) != inputImage->null())
+			{
+				if(colors.count(inputImage->pixel(j)) == 0)
+				{
+					inputImage->pixel(j) = inputImage->null();
+				}
+				else
+				{
+					inputImage->pixel(j) = uniqueColor;
+				}
+			}
+		}
+	}
+	else if(args["uniqueColor"].is_set())
+	{
+		ColorType uniqueColor = args["uniqueColor"];
+		for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+		{
+			if(inputImage->pixel(j) != inputImage->null())
+			{
+				inputImage->pixel(j) = uniqueColor;
+			}
+		}
+	}
+	else if(colors.size() > 0)
+	{
+		for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+		{
+			if(inputImage->pixel(j) != inputImage->null() && colors.count(inputImage->pixel(j)) == 0)
+			{
+				inputImage->pixel(j) = inputImage->null();
 			}
 		}
 	}
 	
-	// We fill holes if requested
-	if(mastic)
-		colorizedMap->removeHoles();
-	
-	if(width == 0)
-	{
-		width = colorizedMap->Xaxes()/256;
-	}
-	
-	if(internal)
-		colorizedMap->drawInternContours(width, 0);
-	else if(external)
-		colorizedMap->drawExternContours(width, 0);
-	else
-		colorizedMap->drawContours(width, 0);
-	
 	#if defined DEBUG
-	colorizedMap->writeFits(filenamePrefix + "contours.fits");
+	if(colors.size() > 0 || args["uniqueColor"].is_set())
+		inputImage->writeFits(filenamePrefix + "recolored.fits");
 	#endif
 	
 	// We transform the image
-	if(straightenUp or !recenter.empty() or scaling != 1.)
+	if(args["straightenUp"] || args["recenter"].is_set() || args["scaling"].is_set())
 	{
 		// We correct for the roll
 		Real rotationAngle = 0;
-		if (straightenUp)
+		if (args["straightenUp"])
 		{
-			rotationAngle = - colorizedMap->Crota2();
+			rotationAngle = - inputImage->Crota2();
 		}
-		
+	
 		// We recenter the image
-		RealPixLoc newCenter = colorizedMap->SunCenter();
-		if(!recenter.empty() and !readCoordinate(newCenter, recenter))
+		RealPixLoc newCenter = inputImage->SunCenter();
+		if(args["recenter"].is_set() && !readCoordinate(newCenter, args["recenter"]))
 		{
+			cerr<<"Error : Cannot convert "<<args["recenter"]<<" to coordinates"<<endl;
 			return EXIT_FAILURE;
 		}
-		colorizedMap->transform(rotationAngle, RealPixLoc(newCenter.x - colorizedMap->SunCenter().x, newCenter.y - colorizedMap->SunCenter().y), scaling);
+	
+		// We scale the image
+		Real scaling = 1.;
+		if(args["scaling"].is_set())
+			scaling = args["scaling"];
+	
+		inputImage->transform(rotationAngle, RealPixLoc(newCenter.x - inputImage->SunCenter().x, newCenter.y - inputImage->SunCenter().y), scaling);
+	
 		#if defined DEBUG
-		colorizedMap->writeFits(filenamePrefix + "transformed.fits");
+		inputImage->writeFits(filenamePrefix + "transformed.fits");
 		#endif
-		
 	}
 	
+	// We plot the contours
+	unsigned width = inputImage->Xaxes()/256;
+	if(args["width"].is_set())
+	{
+		width = toUnsigned(args["width"]);
+	}
+	
+	if(args["internal"])
+		inputImage->drawInternContours(width, 0);
+	else
+		inputImage->drawExternContours(width, 0);
+	
+	#if defined DEBUG
+	inputImage->writeFits(filenamePrefix + "contours.fits");
+	#endif
 	
 	// We make the png contours and label it if necessary
-	MagickImage contours = colorizedMap->magick();
-	if(!Label.empty())
+	MagickImage contours = inputImage->magick();
+	if(args["Label"].is_set())
 	{
-		string text = expand(Label, colorizedMap->getHeader());
-		size_t text_size = colorizedMap->Xaxes()/40;
+		string text = inputImage->getHeader().expand(args["Label"]);
+		size_t text_size = inputImage->Xaxes()/40;
 		contours.fillColor("white");
 		contours.fontPointsize(text_size);
 		contours.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
 		contours.label(text);
 	}
+	
 	#if defined DEBUG
-	contours.write(outputDirectory + "/" + stripSuffix(stripPath(colorizedMapFileName)) + ".contours.png");
+	contours.write(filenamePrefix + "contours." + args["type"]);
 	#endif
 	
-	RealPixLoc referenceSunCenter = colorizedMap->SunCenter();
-	Real referenceCrota2 = colorizedMap->Crota2();
-	Real referenceSunRadius = colorizedMap->SunRadius();
-	for (unsigned p = 0; p < fitsFileNames.size(); ++p)
+	// We convert the images
+	deque<string> imagesFilenames = args.RemainingPositionalArguments();
+	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		// We expand the name of the background fits image with the header of the colorizedMap
-		string fitsFileName = expand(fitsFileNames[p], colorizedMap->getHeader());
-		filenamePrefix = outputDirectory + "/" + stripSuffix(stripPath(fitsFileName)) + ".";
+		// We expand the name of the background fits image with the header of the inputImage
+		string imageFilename = inputImage->getHeader().expand(imagesFilenames[p]);
+		string outputFilename = makePath(args["output"], stripPath(stripSuffix(imageFilename))) + ".";
 		
-		if(! isFile(fitsFileName))
+		if(!isFile(imageFilename))
 		{
-			cerr<<"Error : "<<fitsFileName<<" is not a regular file!"<<endl;
+			cerr<<"Error : "<<imageFilename<<" is not a regular file!"<<endl;
 			continue;
 		}
 		
 		// We read the sun image for the background
-		EUVImage* image = getImageFromFile(imageType, fitsFileName);
+		EUVImage* image = getImageFromFile("Unknown", imageFilename);
 		
 		// We improve the contrast
-		if(! preprocessingSteps.empty())
+		if(args["imagePreprocessing"].is_set())
 		{
-			image->preprocessing(preprocessingSteps);
+			image->preprocessing(args["imagePreprocessing"]);
 		}
-		else 
+		else
 		{
 			image->enhance_contrast();
 		}
 		
 		#if defined DEBUG
-		image->writeFits(filenamePrefix + "preprocessed.fits");
+		image->writeFits(outputFilename + "preprocessed.fits");
 		#endif
 		
-		// We transform the image to align it with the colorizedMap
-		image->transform(referenceCrota2 - image->Crota2(), RealPixLoc(referenceSunCenter.x - image->SunCenter().x, referenceSunCenter.y - image->SunCenter().y), referenceSunRadius/image->SunRadius());
-		#if defined DEBUG
-		image->writeFits(filenamePrefix + "transformed.fits");
-		#endif
+		// We transform the image to align it with the inputImage
+		if(args["registerImages"])
+		{
+			image->align(inputImage);
+			#if defined DEBUG
+			image->writeFits(outputFilename + "registered.fits");
+			#endif
+		}
+
 		
 		// We make the png background and label it if necessary
-		MagickImage background = image->magick();
-		if(label)
+		MagickImage outputImage = image->magick();
+		if(args["label"].is_set())
 		{
-			string text = image->Label();
+			string text = args["label"];
+			if(text.empty())
+				text = image->Label();
+			else
+				text = image->getHeader().expand(text);
+			
 			size_t text_size = image->Xaxes()/40;
-			background.fillColor("white");
-			background.fontPointsize(text_size);
-			background.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
-			background.label(text);
+			outputImage.fillColor("white");
+			outputImage.fontPointsize(text_size);
+			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
+			outputImage.label(text);
 		}
 		#if defined DEBUG
-		background.write(filenamePrefix + "background.png");
+		outputImage.write(outputFilename + "background." + args["type"]);
 		#endif
 		
-		// We overlay the 2 images , rescale, and write it to file
-		background.composite(contours, Magick::CenterGravity, Magick::OverCompositeOp);
+		delete image;
 		
-		if(size_geometry.isValid())
-			background.scale(size_geometry);
+		// We overlay the 2 images
+		outputImage.composite(contours, Magick::CenterGravity, Magick::OverCompositeOp);
 		
-		background.write(outputFileName + stripSuffix(stripPath(fitsFileName)) + ".png");
+		// We resize the image
+		outputImage.scale(size_geometry);
+		
+		// We write down the image
+		outputImage.write(filenamePrefix + "_on_." + stripSuffix(stripPath(imageFilename)) + "." + args["type"]);
 	}
+	
+	delete inputImage;
 	return EXIT_SUCCESS;
 }
 

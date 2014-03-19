@@ -162,6 +162,7 @@ ColorMap* Classifier::getSegmentedMap(ParameterSection& parameters, ColorMap* se
 	fillHeader(header);
 	
 	//We add information about the segmentation to the header of the segmented map
+	header.set("INSTRUME", "Segmentation Map", "SPoCA segmentation map");
 	header.set("SEGMTYPE", parameters["type"], "Segmentation type");
 	if (parameters["type"] == "fix")
 	{
@@ -182,7 +183,7 @@ ColorMap* Classifier::getSegmentedMap(ParameterSection& parameters, ColorMap* se
 
 void Classifier::fillHeader(Header& header)
 {
-	header.set("INSTRUME", "SPoCA", "This map was computed with SPoCA");
+	header.set("TELESCOP", "SPoCA", "This map was computed with SPoCA");
 	header.set("CNBRCLAS", numberClasses, "Number Classes");
 	header.set("CPRECIS", precision, "Classifier Precision");
 	header.set("CMAXITER", maxNumberIteration, "Maximum Number of Iteration");
@@ -647,8 +648,8 @@ ParameterSection Classifier::classificationParameters()
 	parameters["FCMweight"] = ArgParser::Parameter(2, "The FCM weight for PFCM classification.");
 	parameters["PCMweight"] = ArgParser::Parameter(2, "The PCM  weight for PFCM classification.");
 	parameters["numberClasses"] = ArgParser::Parameter(4, 'C', "The number of classes to classify the sun images into.");
-	parameters["neighborhoodRadius"] = ArgParser::Parameter(1, 'N', "Only for spatial classifiers like SPoCA. The neighborhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.");
-	parameters["binSize"] = ArgParser::Parameter(RealFeature(1), 'z', "The size of the bins of the histogram. NB : Be carreful that the histogram is built after the image preprocessing.");
+	parameters["neighborhoodRadius"] = ArgParser::Parameter(1, 'N', "Only for spatial classifiers like SPoCA. The neighborhoodRadius is half the size of the square of neighboors.\nFor example with a value of 1, the square has a size of 3x3.");
+	parameters["binSize"] = ArgParser::Parameter(RealFeature(1), 'z', "The size of the bins of the histogram.\nNB : Be carreful that the histogram is built after the image preprocessing.");
 	return parameters;
 }
 
@@ -660,6 +661,6 @@ ParameterSection Classifier::segmentationParameters()
 	parameters["CH"] = ArgParser::Parameter('c', "Only for fix segmentation. The classes of the Coronal Hole.");
 	parameters["AR"] = ArgParser::Parameter('a', "Only for fix segmentation. The classes of the Active Region.");
 	parameters["QS"] = ArgParser::Parameter('q', "Only for fix segmentation. The classes of the Quiet Sun.");
-	parameters["thresholds"] = ArgParser::Parameter('t', "Only for threshold segmentation. The parameter of the threshold segmentation. Must be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership");
+	parameters["thresholds"] = ArgParser::Parameter('t', "Only for threshold segmentation. The parameter of the threshold segmentation.\nMust be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership");
 	return parameters;
 }

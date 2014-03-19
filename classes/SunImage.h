@@ -226,12 +226,10 @@ class SunImage : public Image<T>
 		{
 			this->transform(Crota2() - image->Crota2(), RealPixLoc(SunCenter() - image->SunCenter()), PixelWidth() / image->PixelWidth());
 		}
-		
 		//! Routine that applies transformation to a SunImage: rotation, translation and scaling.
 		/*	@param rotationAngle The angle of rotation in degrees. Rotation is done in the trigonometric direction i.e. counter clockwise.
 			@param translation The translation to apply to the image in the x and y direction.
 			@param scaling The scaling factor.
-			@param missingValue The value for the pixel for which the value is unknown.
 			@param image The image to use for the origin
 		*/
 		void transform(const Real rotationAngle = 0., const RealPixLoc translation = RealPixLoc(0, 0), const Real scaling = 1, const Image<T> * image = NULL);

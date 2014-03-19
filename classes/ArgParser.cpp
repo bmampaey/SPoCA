@@ -8,6 +8,31 @@
 #include "ArgParser.h"
 
 using namespace std;
+
+bool trim(string& s)
+{
+	size_t pos = s.find_first_not_of(" \t");
+	if(pos != string::npos)
+		s.erase(0, pos);
+	else
+		s.clear();
+	return true;
+}
+
+string replace(const string& str, const string& from, const string& to)
+{
+	if(from.empty())
+		return str;
+	string result = str;
+	size_t start_pos = 0;
+	while((start_pos = result.find(from, start_pos)) != string::npos)
+	{
+		result.replace(start_pos, from.length(), to);
+		start_pos += to.length();
+	}
+	return result;
+}
+
 ArgParser::Parameter::Parameter(const char short_name, const string& description)
 :short_name(short_name), description(description), set(false), default_value_set(false), position(0), config_file(false), help(false), remaining_parameters(false), remaining_parameter_min(-1), remaining_parameter_max(-1)
 {}
@@ -59,7 +84,7 @@ string ArgParser::Parameter::help_message(const string& long_name, string sectio
 	if(config_file)
 	{
 		if(!description.empty())
-			message = "# " + description + "\n";
+			message = "# " + replace(description, "\n", "\n# ") + "\n";
 		if(default_value_set)
 		{
 			message += "#" + long_name + " = " + default_value;
@@ -74,7 +99,7 @@ string ArgParser::Parameter::help_message(const string& long_name, string sectio
 	{
 		message = "@param " + long_name;
 		if(!description.empty())
-			message += "\t" + description;
+			message += "\t" + replace(description, "\n", "\n<BR>");
 	}
 	else if(is_positional() || is_remaining_parameters())
 	{
@@ -93,7 +118,7 @@ string ArgParser::Parameter::help_message(const string& long_name, string sectio
 		if(default_value_set)
 			message += "\tdefault: " + default_value;
 		if(!description.empty())
-			message += "\n\t" + description;
+			message += "\n\t" + replace(description, "\n", "\n\t");
 	}
 	return message;
 }
@@ -123,13 +148,17 @@ ArgParser::Parameter::operator bool() const
 template<>
 ArgParser::Parameter::operator string() const
 {
-	if(set)
+	if(set && !value.empty())
 	{
 		return value;
 	}
 	else if(default_value_set)
 	{
 		return default_value;
+	}
+	else if (set)
+	{
+		return value;
 	}
 	else
 	{
@@ -163,17 +192,6 @@ ostream& operator<<(ostream& os, const ArgParser::Parameter& parameter)
 bool compare_parameter_position(const ArgParser::Parameter* c1, const ArgParser::Parameter* c2 )
 {
 	return c1->position < c2->position;
-}
-
-
-bool trim(string& s)
-{
-	size_t pos = s.find_first_not_of(" \t");
-	if(pos != string::npos)
-		s.erase(0, pos);
-	else
-		s.clear();
-	return true;
 }
 
 ArgParser::ArgParser(string description)
@@ -982,7 +1000,7 @@ ArgParser::Parameter ArgParser::ConfigurationFile(const char short_name, const s
 
 ArgParser::Parameter ArgParser::Help(const char short_name)
 {
-	Parameter parameter(short_name, "Print a help message and exit. If you pass the value doxygen, the help message will follow the doxygen convention. If you pass the value config, the help message will write a configuration file template.");
+	Parameter parameter(short_name, "Print a help message and exit.\nIf you pass the value doxygen, the help message will follow the doxygen convention.\nIf you pass the value config, the help message will write a configuration file template.");
 	parameter.help = true;
 	return parameter;
 }

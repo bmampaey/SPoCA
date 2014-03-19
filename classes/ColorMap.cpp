@@ -209,7 +209,7 @@ void ColorMap::thresholdRegionsByRealArea(double minSize)
 	
 	for (PixLoc j(0,0); j.y < yAxes; ++j.y)
 	{
-		for (; j.x < xAxes; ++j.x)
+		for (j.x = 0; j.x < xAxes; ++j.x)
 		{
 			const ColorType& color = pixel(j);
 			if(color != nullpixelvalue)

@@ -1,47 +1,53 @@
-//! Program that does attribution (fix classification) and extract the ring stats
+//! Program that does attribution and segmentation of EUV sun images
 /*!
-@page get_ring_stats get_ring_stats.x
+@page attribution attribution.x
 
- This program takes a tuple of EUV sun images in fits format, does the requested attribution and extract the ring statistics.
+ This program takes a tuple of EUV sun images in fits format, does the requested attribution and segmentation.
  
- A tuple of images is a list of images that have different channels / wavelengths but are similar.
+ A tuple of images is a list of images that have different channels / wavelength but are similar.
  
- It outputs the statistics of the ring nalysis for SOLID
+ It outputs the maps and statistics of the Active %Region (AR) and Coronal Holes (CH) 
+ 
+ It can also output the map and statistics about the 3 classes AR, CH and Quiet Sun (QS) in general.
  
  @section usage Usage
  
- <tt> get_ring_stats.x -h </tt>
+ <tt> attribution.x -h </tt>
  
  Calling the programs with -h will provide you with help 
  
- <tt> get_ring_stats.x [-option optionvalue, ...] fitsFileName1 fitsFileName2 </tt>
+ <tt> attribution.x [-option optionvalue, ...] fitsFileName1 fitsFileName2 </tt>
  
  You must provide exactly one fits file per channel.
  The order of the fits files is important, as the first one will be used for the statistics of the regions.
  
  
-@param classifierType	The type of classifier to use for the classification.
+@param classifierType	The type of classifier to use for the attribution.
 <BR> Possible values are : 
  - FCM
+ - PFCM
  - PCM
  - PCM2
  - SPOCA
  - SPOCA2
+ - HFCM(Histogram FCM)
+ - HPFCM(Histogram PFCM)
+ - HPCM(Histogram PCM)
+ - HPCM2(Histogram PCM2)
 
-@param maxNumberIteration	The maximal number of iteration for the classification.
+@param maxNumberIteration	The maximal number of iteration for the attribution.
  
-@param precision	The precision to be reached to stop the classification.
+@param precision	The precision to be reached to stop the attribution.
 
 @param fuzzifier	The fuzzifier (m).
 
 @param numberClasses	The number of classes to classify the sun images into.
 
 @param centersFile	The name of the file containing the centers.
- It is mandatory for attribution
+ If it it not provided the centers will be initialized randomly.
 
-@param etaFile	The name of the file containing eta
-<BR>N.B. Be carefull that the order of the eta must be the same than the order of the centers in the centersFile!
-<BR>If it it not provided the eta will be computed with a FCM (then it is not a real attribution).
+@param numberPreviousCenters	The number of previous saved centers to take into account for the final attribution.
+<BR> If you are running in continuous mode, this option allow to store n centers in the centers files. It is the median value of those n centers + the last found one that will to be used for the last attribution.
 
 @param imageType	The type of the images.
 <BR>Possible values are : 
@@ -60,13 +66,28 @@
  - DivMode (Division by the mode)
  - DivExpTime (Division by the Exposure Time)
  - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
- - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile)
+ - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
  - Smoothzz.z Binomial smoothing of zz.z arcsec
- 
+
 @param radiusratio	The ratio of the radius of the sun that will be processed.
 
+@param maps	The kind of maps to generate.
+<BR>Possible values :
+ - A (Active %Region)
+ - C (Coronal Hole)
+ - S (Segmented)
+
+@param intensitiesStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
+
+@param intensitiesStatsPreprocessing	The steps of preprocessing to apply to the sun images (see preprocessingSteps for possible values).
 
 @param neighborhoodRadius	The neighborhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3. <BR>Only for spatial classifiers like SPoCA.
+
+
+@param histogramFile	The name of a file containing an histogram.
+
+@param binSize	The size of the bins of the histogram.
+<BR>N.B. Be carreful that the histogram is built after the preprocessing.
 
 @param segmentation	The segmentation type.
 <BR>Possible values :
@@ -87,8 +108,13 @@
 
 @param tr	The parameter of the threshold segmentation.
 Must be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership <BR>Only for threshold segmentation.
- 
+
 @param uncompressedMaps	Set this flag if you want results maps to be uncompressed.
+
+@param chaincodeMaxPoints The maximal number of points in a chaincode.
+
+@param chaincodeMaxDeviation The maximal deviation of the chaincode curve between 2 points, in arcsec.
+
 
 @param outputDirectory	The name for the output directory.
 
@@ -97,45 +123,40 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 */
 
 
-
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include <cstdlib>
 #include <string>
 #include <iomanip>
 
 #include "../classes/tools.h"
 #include "../classes/constants.h"
 #include "../classes/mainutilities.h"
-#include "../classes/ArgumentHelper.h"
+#include "../classes/ArgParser.h"
 
-#include "../classes/EUVImage.h"
 #include "../classes/ColorMap.h"
+#include "../classes/EUVImage.h"
 
 #include "../classes/Classifier.h"
 #include "../classes/FCMClassifier.h"
 #include "../classes/PCMClassifier.h"
+#include "../classes/PFCMClassifier.h"
 #include "../classes/PCM2Classifier.h"
 #include "../classes/SPoCAClassifier.h"
 #include "../classes/SPoCA2Classifier.h"
 
-
-#include "../classes/FeatureVector.h"
-#include "../classes/RegionStats.h"
-#include "../classes/SegmentationStats.h"
-#include "../classes/ActiveRegion.h"
-#include "../classes/CoronalHole.h"
 #include "../classes/FitsFile.h"
 
+
 using std::string; using std::cout; using std::cerr; using std::endl;
-using std::vector; 
+using std::vector; using std::deque;
 using std::ofstream; using std::ostringstream;
 using std::ios; using std::ios_base;
-using namespace dsr;
 
+//! Prefix name for outputing intermediate result files
 string filenamePrefix;
 
+// The rings
 float rings[] = {0.07, 0.16, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 1.05, 1.15, 1.25, 1.35};
 unsigned number_rings = sizeof rings / sizeof rings[0];
 
@@ -251,64 +272,12 @@ void write_ring_stats(const string& filename, const vector< vector<float> >& sta
 
 int main(int argc, const char **argv)
 {
-
-	cout<<setiosflags(ios::fixed);
-
-	// Program version
-	string version = "2.0";
-
-	// The list of names of the sun images to process
-	string imageType = "UNKNOWN";
-	vector<string> imagesFilenames;
-
-	// Options for the preprocessing of images
-	string preprocessingSteps = "NAR";
-	double radiusRatio = 1.31;
-
-	// The number of classes to classify into
-	unsigned numberClasses = 0;
+	// We declare our program description
+	string programDescription = "This Program does attribution and computes SOLID stats (aka. ring analysis).";
+	programDescription+="\nVersion: 3.0";
+	programDescription+="\nAuthor: Benjamin Mampaey, benjamin.mampaey@sidc.be";
 	
-	// Option to pass a class center file
-	string centersFileName;
-	
-	// Options for the classification
-	string classifierType = "FCM";
-	unsigned maxNumberIteration = 100;
-	double precision = 0.0015;
-	double fuzzifier = 2;
-		
-	// Option for the possibilisctic Classifiers
-	string etaFileName;
-		
-	// Option for the Spacial Classifiers (SPoCA)
-	unsigned neighborhoodRadius = 1;
-	
-	// Options for the segmentation
-	string segmentation = "max";
-	
-	// Options for the limit segmentation
-	string maxLimitsFileName;
-	
-	// Options for the fix segmentation
-	string coronalHole;
-	string quietSun;
-	string activeRegion;
-	
-	// Options for the threshold segmentation
-	string threshold;
-
-	// option for the output directory
-	string outputDirectory = ".";
-	
-	// Options for the desired maps
-	bool getMaps = false;
-	bool uncompressedMaps = false;
-	bool getFuzzyStats = false;
-	
-	// We parse the arguments
-
-	string programDescription = "This Programm does attribution (or fix classification) and segmentation.\n";
-	programDescription+="Compiled with options :";
+	programDescription+="\nCompiled on "  __DATE__  " with options :";
 	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
@@ -321,60 +290,50 @@ int main(int argc, const char **argv)
 	#endif
 	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
-
-	ArgumentHelper arguments;
-	arguments.new_named_string('T',"classifierType", "string", "\n\tThe type of classifier to use for the classification.\n\tPossible values are : FCM, PCM, PCM2, SPOCA, SPOCA2\n\t", classifierType);
-	arguments.new_named_unsigned_int('i', "maxNumberIteration", "positive integer", "\n\tThe maximal number of iteration for the classification.\n\t", maxNumberIteration);
-	arguments.new_named_double('p',"precision", "positive real", "\n\tThe precision to be reached to stop the classification.\n\t",precision);
-	arguments.new_named_double('f',"fuzzifier", "positive real", "\n\tThe fuzzifier (m).\n\t",fuzzifier);
-	arguments.new_named_unsigned_int('C', "numberClasses", "positive integer", "\n\tThe number of classes to classify the sun images into.\n\t", numberClasses);
-	arguments.new_named_string('B',"centersFile","file name", "\n\tThe name of the file containing the centers.\n\tMandatory for attribution!\n\t", centersFileName);
-	arguments.new_named_string('I', "imageType","string", "\n\tThe type of the images.\n\tPossible values are : EIT, EUVI, AIA, SWAP\n\t", imageType);
-	arguments.new_named_string('P', "preprocessingSteps", "comma separated list of string (no spaces)", "\n\tThe steps of preprocessing to apply to the sun images.\n\tPossible values :\n\t\tNAR (Nullify above radius)\n\t\tALC (Annulus Limb Correction)\n\t\tDivMedian (Division by the median)\n\t\tTakeSqrt (Take the square root)\n\t\tTakeLog (Take the log)\n\t\tDivMode (Division by the mode)\n\t\tDivExpTime (Division by the Exposure Time)\n\t", preprocessingSteps);
-	arguments.new_named_double('r', "radiusratio", "positive real", "\n\tThe ratio of the radius of the sun that will be processed.\n\t",radiusRatio);
-	arguments.new_named_string('E',"etaFile","file name", "\n\tThe name of the file containing eta.\n\tBe carefull that the order of the eta must be the same than the order of the centers in the centersFile!\n\tIf it it not provided the eta will be computed with a FCM (then it is not a real attribution).\n\t", etaFileName);
-	arguments.new_named_unsigned_int('N', "neighborhoodRadius", "positive integer", "\n\tOnly for spatial classifiers like SPoCA.\n\tThe neighborhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3.\n\t", neighborhoodRadius);
-	arguments.new_named_string('S', "segmentation", "string", "\n\tThe segmentation type.\n\tPossible values :\n\t\tmax (Maximum of Uij)\n\t\tclosest (Closest center)\n\t\tthreshold (Threshold on Uij)\n\t\tlimits (Merge on centers value limits)\n\t\tfix (Merge on fix CH QS AR)\n\t", segmentation);
-	arguments.new_named_string('L',"maxLimitsFile","file", "\n\tOnly for limit segmentation.\n\tThe name of the file containing the max limits.\n\t", maxLimitsFileName);
-	arguments.new_named_string('c',"ch","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Coronal Hole.\n\t", coronalHole);
-	arguments.new_named_string('q',"qs","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Quiet Sun.\n\t", quietSun);
-	arguments.new_named_string('a',"ar","coma separated list of positive integer (no spaces)", "\n\tOnly for fix segmentation.\n\tThe classes of the Active Region.\n\t", activeRegion);
-	arguments.new_named_string('t',"tr","coma separated list of positive integer (no spaces)", "\n\tOnly for threshold segmentation.\n\tThe parameter of the threshold segmentation.\n\tMust be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership\n\t", threshold);
-	arguments.new_flag('F', "getFuzzyStats", "\n\tSet this flag if you want fuzzy ring stats.\n\t", getFuzzyStats);
-	arguments.new_flag('m', "getMaps", "\n\tSet this flag if you want the segmentation maps to be written.\n\t", getMaps);
-	arguments.new_flag('u', "uncompressedMaps", "\n\tSet this flag if you want results maps to be uncompressed.\n\t", uncompressedMaps);
-	arguments.new_named_string('O', "outputDirectory","directory name", "\n\tThe name for the output directory.\n\t", outputDirectory);
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the images of the sun.\n\t", imagesFilenames);
-	arguments.set_description(programDescription.c_str());
-	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
-	arguments.set_build_date(__DATE__);
-	arguments.set_version(version.c_str());
-	arguments.process(argc, argv);
-
 	
-	// General variables
-	vector<RealFeature> B;
-	vector<string> channels;
-	Classifier* F;
-	vector<Real> eta;
-
-	bool classifierIsPossibilistic = false;
-
-	// We process the arguments
-
-	// We assert that the number of sun images provided is correct
-	if(imagesFilenames.size() != NUMBERCHANNELS)
+	// We define our program parameters
+	ArgParser args(programDescription);
+	
+	args("segmentation") = Classifier::segmentationParameters();
+	args("classification") = Classifier::classificationParameters();
+	
+	args["config"] = ArgParser::ConfigurationFile('C');
+	args["help"] = ArgParser::Help('h');
+	
+	args["type"] = ArgParser::Parameter("SPoCA2", 'T', "The type of classifier to use for the attribution.\nPossible values are : FCM, PFCM, PCM, PCM2, SPoCA, SPoCA2");
+	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images.\nPossible values are : EIT, EUVI, AIA, SWAP");
+	args["imagePreprocessing"] = ArgParser::Parameter("ALC", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["registerImages"] = ArgParser::Parameter(false, 'r', "Set to register/align the images when running multi channel attribution.");
+	args["centersFile"] = ArgParser::Parameter('c', "The name of the file containing the centers. If it it not provided the centers will be initialized randomly.");
+	args["computeEta"] = ArgParser::Parameter(false, 'e', "If the enters file do not contain the values for Eta or if you want to force Eta to be recomputed (slow!).");
+	args["map"] = ArgParser::Parameter(true, 'M', "Set to false if you don't want to write the segmentation map.");
+	args["output"] = ArgParser::Parameter(".", 'O', "The name for the output file or of a directory.");
+	args["uncompressed"] = ArgParser::Parameter(false, 'u', "Set this flag if you want results maps to be uncompressed.");
+	args["fuzzyStats"] = ArgParser::Parameter(false, 'F', "Set this flag if you want fuzzy ring stats.");
+	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file", NUMBERCHANNELS, NUMBERCHANNELS);
+	
+	// We parse the arguments
+	try
 	{
-		cerr<<"Error : "<<imagesFilenames.size()<<" fits image file given as parameter, "<<NUMBERCHANNELS<<" must be given!"<<endl;
+		args.parse(argc, argv);
+	}
+	catch(const std::invalid_argument& error)
+	{
+		cerr<<"Error : "<<error.what()<<endl;
+		cerr<<args.help_message(argv[0])<<endl;
 		return EXIT_FAILURE;
 	}
-
-
-	// We check if the outputDirectory is a directory 
-	if (! isDir(outputDirectory))
+	
+	// We setup the output directory
+	string outputDirectory;
+	string outputFile = args["output"];
+	if (isDir(outputFile))
 	{
-		filenamePrefix = outputDirectory+".";
-		outputDirectory = getPath(outputDirectory);
+		outputDirectory = outputFile;
+	}
+	else
+	{
+		outputDirectory = getPath(outputFile);
 		if (! isDir(outputDirectory))
 		{
 			cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
@@ -382,171 +341,204 @@ int main(int argc, const char **argv)
 		}
 	}
 	
-	// We read the channels and the initial centers from the centers file
-	if(readCentersFromFile(B, channels, centersFileName))
+	// We read and preprocess the sun images
+	deque<string> imagesFilenames = args.RemainingPositionalArguments();
+	vector<EUVImage*> images;
+	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		if(B.size() == 0)
-		{
-			cerr<<"Error : For attribution you must provide the centers."<<endl;
+		EUVImage* image = getImageFromFile(args["imageType"], imagesFilenames[p]);
+		image->preprocessing(args["imagePreprocessing"]);
 		
-		}
-		if(B.size() != numberClasses)
+		#if defined DEBUG
+			image->getHeader().set("IPREPROC", args["imagePreprocessing"], "Image Preprocessing");
+			image->writeFits(outputDirectory + "/" + stripPath(stripSuffix(imagesFilenames[p])) + ".preprocessed.fits");
+		#endif
+		images.push_back(image);
+	}
+	
+	// We verify the images are aligned and we register them
+	for(unsigned p = 1; p < images.size(); ++p)
+	{
+		string dissimilarity = checkSimilar(images[0], images[p]);
+		if(! dissimilarity.empty())
 		{
-			cerr<<"Error : The number of classes is different than the number of centers read in the center file."<<endl;
-			numberClasses = B.size();
-			cerr<<"The number of classes will be set to "<<numberClasses<<endl;
-			
+			if(args["registerImages"])
+			{
+				#if defined VERBOSE
+				cout<<"Image "<<imagesFilenames[p]<<" will be registered to image "<<imagesFilenames[0]<<endl;
+				#endif
+				images[p]->align(images[0]);
+				#if defined DEBUG
+				images[p]->writeFits(outputDirectory + "/" + stripPath(stripSuffix(imagesFilenames[p])) + ".registered.fits");
+				#endif
+			}
+			else
+			{
+				#if defined EXTRA_SAFE
+				cerr<<"Error: image "<<imagesFilenames[p]<<" and "<<imagesFilenames[0]<<" are not similar: "<<dissimilarity<<endl;
+				return EXIT_FAILURE;
+				#else
+				cerr<<"Warning: image "<<imagesFilenames[p]<<" and "<<imagesFilenames[0]<<" are not similar: "<<dissimilarity<<endl;
+				#endif
+			}
 		}
 	}
 	
-	// We save the centers
-	writeCentersToFile(B, channels, filenamePrefix + "centers.txt");
+	// We setup the filename prefix
+	if (isDir(outputFile))
+	{
+		// We set the name of the output files prefix to the outputDirectory + the classification type + image channel and date_obs
+		filenamePrefix = makePath(outputDirectory, args["type"]);
+		for(unsigned p = 0; p < images.size(); ++p)
+			filenamePrefix += "." + images[p]->Channel() + "." + toString(images[p]->ObservationTime());
+		filenamePrefix += ".";
+		outputFile = filenamePrefix + "SegmentedMap.fits";
+	}
+	else
+	{
+		filenamePrefix = stripSuffix(outputFile);
+	}
 	
+	// We initialise the Classifier
+	Classifier* F;
+	bool classifierIsPossibilistic = false;
 	
-	// We declare the type of Classifier we want
-	if (classifierType == "FCM")
+	if (args["type"] == "FCM")
 	{
-		F = new FCMClassifier(fuzzifier);
+		F = new FCMClassifier(args("classification"));
 	}
-	else if (classifierType == "PCM")
+	else if (args["type"] == "PCM")
 	{
-		F = new PCMClassifier(fuzzifier);
+		F = new PCMClassifier(args("classification"));
 		classifierIsPossibilistic = true;
 	}
-	else if (classifierType == "PCM2")
+	else if (args["type"] == "PFCM")
 	{
-		F = new PCM2Classifier(fuzzifier);
+		F = new PFCMClassifier(args("classification"));
 		classifierIsPossibilistic = true;
 	}
-	else if (classifierType == "SPoCA")
+	else if (args["type"] == "PCM2")
 	{
-		F = new SPoCAClassifier(neighborhoodRadius, fuzzifier);
+		F = new PCM2Classifier(args("classification"));
 		classifierIsPossibilistic = true;
 	}
-	else if (classifierType == "SPoCA2")
+	else if (args["type"] == "SPoCA")
 	{
-		F = new SPoCA2Classifier(neighborhoodRadius, fuzzifier);
+		F = new SPoCAClassifier(args("classification"));
+		classifierIsPossibilistic = true;
+	}
+	else if (args["type"] == "SPoCA2")
+	{
+		F = new SPoCA2Classifier(args("classification"));
 		classifierIsPossibilistic = true;
 	}
 	else 
 	{
-		cerr<<"Error : "<<classifierType<<" is not a known classifier!"<<endl;
+		cerr<<"Error : "<<args["type"]<<" is not an accepted classifier!"<<endl;
 		return EXIT_FAILURE;
 	}
 	
-		
-	// We read and preprocess the sun images
-	vector<EUVImage*> images = getImagesFromFiles(imageType, imagesFilenames, true);
-	for (unsigned p = 0; p < images.size(); ++p)
+	// We read the channels and the initial class centers from the centers file
+	vector<RealFeature> B;
+	vector<Real> Eta;
+	vector<string> channels;
+	if(args["centersFile"].is_set() && isFile(args["centersFile"]) && !emptyFile(args["centersFile"]))
 	{
-		images[p]->preprocessing(preprocessingSteps, radiusRatio);
-		#if DEBUG >= 2
-		images[p]->writeFits(outputDirectory + "/" + stripPath(stripSuffix(imagesFilenames[p])) + ".preprocessed.fits");
-		#endif
-		
-		// We check if the images are similars
-		string dissimilarity = checkSimilar(images[0], images[p]);
-		if(! dissimilarity.empty())
+		if(classifierIsPossibilistic)
 		{
-			cerr<<"Warning: image "<<imagesFilenames[p]<<" and "<<imagesFilenames[0]<<" are not similar: "<<dissimilarity<<endl;
-		}
-	}
-
-	// We set the name of the output files prefix
-	// to the outputDirectory + the date_obs of the first image in the form YYYYMMDD_HHMMSS
-	if(filenamePrefix.empty())
-		filenamePrefix = outputDirectory + "/" + toString(images[0]->ObservationTime()) + ".";
-
-	// We add the images to the classifier
-	F->addImages(images);
-		
-	// We save the WCS of the first image
-	WCS wcs = images[0]->getWCS();
-	
-	// We delete all images to gain memory space
-	for (unsigned p = 0; p < images.size(); ++p)
-	{
-		delete images[p];
-	}
-	images.clear();
-		
-		
-	// We initialize the Classifier with the centers from the centers file
-	F->initB(B, channels);
-
-	if(classifierIsPossibilistic)
-	{
-		// We read the eta from the eta file
-		if(readEtaFromFile(eta, etaFileName))
-		{
-			if(B.size() != eta.size())
+			if(args["computeEta"])
 			{
-				cerr<<"Error : The number of centers read in the center file is different than the number of eta read in the eta file."<<endl;
-				return EXIT_FAILURE;
+				if(! readCentersFromFile(args["centersFile"], channels, B))
+				{
+					cerr<<"Error: could not read centers from file!"<<endl;
+					return EXIT_FAILURE;
+				}
+				else if(!reorderImages(images, channels))
+				{
+					cerr<<"Error : The images channels do not correspond to centers channels."<<endl;
+					return EXIT_FAILURE;
+				}
+				else
+				{
+					// We initialise the classifier with the centers read from the file
+					F->initB(channels, B);
+					// We add the images to the classifier
+					F->addImages(images);
+					// We compute the Eta
+					dynamic_cast<PCMClassifier*>(F)->FCMinit();
+				}
+			}
+			else
+			{
+				if(! readCentersEtasFromFile(args["centersFile"], channels, B, Eta) || Eta.empty())
+				{
+						cerr<<"Error: could not read centers and/or eta from file!"<<endl;
+						return EXIT_FAILURE;
+				}
+				else if(!reorderImages(images, channels))
+				{
+					cerr<<"Error : The images channels do not correspond to centers channels."<<endl;
+					return EXIT_FAILURE;
+				}
+				else
+				{
+					// We initialise the classifier with the centers and eta read from the file
+					dynamic_cast<PCMClassifier*>(F)->initBEta(channels, B, Eta);
+					// We add the images to the classifier
+					F->addImages(images);
+				}
 			}
 		}
-		
-		if(eta.size() != 0 )
-		{
-			dynamic_cast<PCMClassifier*>(F)->initEta(eta);
-		}
 		else
-		{	// We probably shouldn't come here
-			dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
-			F->initB(B, channels);
+		{
+			if(! readCentersFromFile(args["centersFile"], channels, B))
+			{
+				cerr<<"Error: could not read centers from file!"<<endl;
+				return EXIT_FAILURE;
+			}
+			else if(!reorderImages(images, channels))
+			{
+				cerr<<"Error : The images channels do not correspond to centers channels."<<endl;
+				return EXIT_FAILURE;
+			}
+			else
+			{
+				// We initialise the classifier with the centers read from the file
+				F->initB(channels, B);
+				// We add the images to the classifier
+				F->addImages(images);
+			}
 		}
-		
-		// We save the eta
-		dynamic_cast<PCMClassifier*>(F)->saveEta(filenamePrefix + "eta.txt");
-	}	
-	
-	#if DEBUG >= 3
-	cout<<"The centers have been initialized to B :"<<F->getB()<<endl;
-	if(classifierIsPossibilistic)
-	{
-		cout<<"The eta have been initialized to :"<<dynamic_cast<PCMClassifier*>(F)->getEta()<<endl;
 	}
-	#endif
-
-	// We have all the information we need, we can do the attribution
+	else
+	{
+		cerr<<"Error : For attribution you must provide the centers."<<endl;
+		return EXIT_FAILURE;
+	}
+	
+	// We do the attribution
 	F->attribution();
 	
-	// We compute the stats and output the maps
+	// We compute the stats
 	vector< vector<float> > stats;
-	if (getFuzzyStats)
+	unsigned numberClasses = B.size();
+	if(args["fuzzyStats"])
 	{
 		// We declare the fuzzyMap with the WCS of the first image
-		EUVImage* fuzzyMap = new EUVImage(wcs);
+		EUVImage* fuzzyMap = new EUVImage(images[0]->getWCS());
 		
 		// We add information about the attribution to the header
 		Header& header = fuzzyMap->getHeader();
+		F->fillHeader(header);
 		for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 		{
 			header.set(string("IMAGE")+toString(p+1,3), stripPath(imagesFilenames[p]));
 		}
-
-		header.set("CVERSION", version, "SPoCA Version");
-		header.set("CPREPROC", preprocessingSteps, "Preprocessing Steps");
-		header.set("CRADRATI", radiusRatio, "Radius Ratio");
-		header.set("CLASTYPE", classifierType, "Classifier Type");
-		header.set("CNBRCLAS", numberClasses, "Number Classes");
-		header.set("CPRECIS", precision, "Classifier Precision");
-		header.set("CMAXITER", maxNumberIteration, "Max Number Iteration");
-		header.set("CFUZFIER", fuzzifier, "Classifier Fuzzifier");
-		header.set("CHANNELS", toString(F->getChannels()), "Classification Channels");
-	
-		B = F->getB();
-		for (unsigned i = 0; i < numberClasses; ++i)
-			header.set("CLSCTR"+toString(i,2), B[i].toString(4), "Classification class center " + toString(i,2));
-	
-		if(classifierIsPossibilistic)
-		{
-			ostringstream ss;
-			ss<<dynamic_cast<PCMClassifier*>(F)->getEta();
-			header.set("CETA", ss.str(), "Classification eta");
-		}
+		header.set("CPREPROC", args["imagePreprocessing"], "Classification Image preprocessing");
+		header.set("CLASTYPE", args["type"], "Classifier Type");
 		
 		stats.push_back(vector<float>(number_rings + 2, 0));
+		
 		// We get the fuzzy map for each class
 		for (unsigned i = 0; i < numberClasses; ++i)
 		{
@@ -559,126 +551,55 @@ int main(int argc, const char **argv)
 			stats.push_back(get_fuzzy_ring_stats(fuzzyMap));
 			
 			// We write down the maps
-			if(getMaps)
+			if(args["map"])
 			{
 				FitsFile file(filenamePrefix + "FuzzyMap." + toString(i+1) + ".fits", FitsFile::overwrite);
-				fuzzyMap->writeFits(file, uncompressedMaps ? 0 : FitsFile::compress, "FuzzyMap");
+				fuzzyMap->writeFits(file, args["uncompressed"] ? 0 : FitsFile::compress, "FuzzyMap");
 			}
 		}
+		
 		delete fuzzyMap;
 	}
 	else
 	{
 		// We declare the segmented map with the WCS of the first image
-		ColorMap* segmentedMap = new ColorMap(wcs);
+		ColorMap* segmentedMap = new ColorMap(images[0]->getWCS());
 		
-		// We add information about the attribution to the header
+		// We get the segmentation map
+		F->getSegmentedMap(args("segmentation"), segmentedMap);
+		
+		//We add information about the classification to the header of the segmented map
 		Header& header = segmentedMap->getHeader();
 		for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 		{
 			header.set(string("IMAGE")+toString(p+1,3), stripPath(imagesFilenames[p]));
 		}
-
-		header.set("CVERSION", version, "SPoCA Version");
-		header.set("CPREPROC", preprocessingSteps, "Preprocessing Steps");
-		header.set("CRADRATI", radiusRatio, "Radius Ratio");
-		header.set("CLASTYPE", classifierType, "Classifier Type");
-		header.set("CNBRCLAS", numberClasses, "Number Classes");
-		header.set("CPRECIS", precision, "Classifier Precision");
-		header.set("CMAXITER", maxNumberIteration, "Max Number Iteration");
-		header.set("CFUZFIER", fuzzifier, "Classifier Fuzzifier");
-
-		header.set("SEGMTYPE", segmentation, "Segmentation type");
-		if(! activeRegion.empty())
-			header.set("SFIXAR", activeRegion);
-		if(! quietSun.empty())
-			header.set("SFIXQS", quietSun);
-		if(! coronalHole.empty())
-			header.set("SFIXCH", coronalHole);
-		if(! threshold.empty())
-			header.set("STRSHLD", threshold);
-		header.set("CHANNELS", toString(F->getChannels()), "Classification Channels");
-	
-		B = F->getB();
-		for (unsigned i = 0; i < numberClasses; ++i)
-			header.set("CLSCTR"+toString(i,2), B[i].toString(4), "Classification class center " + toString(i,2));
-	
-		if(classifierIsPossibilistic)
-		{
-			ostringstream ss;
-			ss<<dynamic_cast<PCMClassifier*>(F)->getEta();
-			header.set("CETA", ss.str(), "Classification eta");
-		}
-	
-		// We do the segmentation
-		if (segmentation == "max")
-		{
-			F->segmentedMap_maxUij(segmentedMap);
-		}
-		else if (segmentation == "closest")
-		{
-			F->segmentedMap_closestCenter(segmentedMap);
-		}
-		else if (segmentation == "threshold")
-		{
-			char delimitor;
-			unsigned class_number;
-			Real lowerIntensity_minMembership, higherIntensity_minMembership;
-			threshold>>class_number>>delimitor>>lowerIntensity_minMembership>>delimitor>>higherIntensity_minMembership;
-			F->segmentedMap_classThreshold(class_number, lowerIntensity_minMembership, higherIntensity_minMembership, segmentedMap);
-		}
-		else if (segmentation == "limits")
-		{
-			vector<RealFeature> maxLimits;
-			if(maxLimitsFileName.empty())
-			{
-				cerr<<"Error : For limits segmentation the maxLimitsFile is mandatory."<<endl;
-				return EXIT_FAILURE;
-			}
-			else
-			{
-				readMaxLimitsFromFile(maxLimits, maxLimitsFileName);
-			}
-			F->segmentedMap_limits(maxLimits, segmentedMap);
-		}
-		else if (segmentation == "fix")
-		{
-			vector<unsigned> ch, qs, ar;
-			if(!coronalHole.empty())
-			{
-				coronalHole>>ch;
-			}
-			if(!quietSun.empty())
-			{
-				quietSun>>qs;
-			}
-			if(!activeRegion.empty())
-			{
-				activeRegion>>ar;
-			}
-			F->segmentedMap_fixed(ch, qs, ar, segmentedMap);
-		}
-		else 
-		{
-			cerr<<"Error : "<<segmentation<<" is not a known segmentation!"<<endl;
-			return EXIT_FAILURE;
-		}
+		header.set("CPREPROC", args["imagePreprocessing"], "Classification Image preprocessing");
+		header.set("CLASTYPE", args["type"], "Classifier Type");
 		
 		// We compute the ring analysis
 		stats = get_segmented_ring_stats(segmentedMap, numberClasses);
 		
 		// We write down the map
-		if(getMaps)
+		if(args["map"])
 		{
 			FitsFile file(filenamePrefix + "SegmentedMap.fits", FitsFile::overwrite);
-			segmentedMap->writeFits(file, uncompressedMaps ? 0 : FitsFile::compress, "SegmentedMap");
+			segmentedMap->writeFits(file, args["uncompressed"] ? 0 : FitsFile::compress, "SegmentedMap");
 		}
-	
+		
 		delete segmentedMap;
 	}
 	
 	// We output the ring stats to file
-	write_ring_stats(filenamePrefix + "ring_stats.csv", stats, wcs.date_obs);
+	write_ring_stats(filenamePrefix + "ring_stats.csv", stats, images[0]->ObservationDate());
+	
+	// We cleanup
 	delete F;
+	for (unsigned p = 0; p < images.size(); ++p)
+	{
+		delete images[p];
+	}
+	images.clear();
+	
 	return EXIT_SUCCESS;
 }

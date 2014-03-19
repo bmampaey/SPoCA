@@ -191,17 +191,17 @@ int main(int argc, const char **argv)
 	args["config"] = ArgParser::ConfigurationFile('C');
 	args["help"] = ArgParser::Help('h');
 	
-	args["type"] = ArgParser::Parameter("SPoCA2", 'T', "The type of classifier to use for the classification. Possible values are : FCM, PFCM, PCM, PCM2, SPoCA, SPoCA2, HFCM(Histogram FCM), HPFCM(Histogram PFCM), HPCM(Histogram PCM), HPCM2(Histogram PCM2)");
-	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images. Possible values are : EIT, EUVI, AIA, SWAP");
-	args["imagePreprocessing"] = ArgParser::Parameter("ALC", 'P', "The steps of preprocessing to apply to the sun images before classification. Can be any combination of the following: NAR=zz.z (Nullify pixels above zz.z*radius); ALC (Annulus Limb Correction); DivMedian (Division by the median); TakeSqrt (Take the square root); TakeLog (Take the log); DivMode (Division by the mode); DivExpTime (Division by the Exposure Time); ThrMin=zz.z (Threshold intensities to minimum zz.z); ThrMax=zz.z (Threshold intensities to maximum zz.z); ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile); ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile); Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["type"] = ArgParser::Parameter("SPoCA2", 'T', "The type of classifier to use for the classification.\nPossible values are : FCM, PFCM, PCM, PCM2, SPoCA, SPoCA2, HFCM(Histogram FCM), HPFCM(Histogram PFCM), HPCM(Histogram PCM), HPCM2(Histogram PCM2)");
+	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images.\nPossible values are : EIT, EUVI, AIA, SWAP");
+	args["imagePreprocessing"] = ArgParser::Parameter("ALC", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["registerImages"] = ArgParser::Parameter(false, 'r', "Set to register/align the images when running multi channel classification.");
 	args["centersFile"] = ArgParser::Parameter('c', "The name of the file containing the centers. If it it not provided the centers will be initialized randomly.");
 	args["numberPreviousCenters"] = ArgParser::Parameter(0, 'n', "The number of previous centers to take into account for the median computation of final centers.");
 	args["map"] = ArgParser::Parameter(true, 'M', "Set to false if you don't want to write the segmentation map.");
 	args["stats"] = ArgParser::Parameter(false, 's', "Set to compute stats about the generated maps.");
-	args["statsPreprocessing"] = ArgParser::Parameter("NAR=0.95", 'p', "The steps of preprocessing to apply to the sun images before computing stats. Can be any combination of the following: NAR=zz.z (Nullify pixels above zz.z*radius); ALC (Annulus Limb Correction); DivMedian (Division by the median); TakeSqrt (Take the square root); TakeLog (Take the log); DivMode (Division by the mode); DivExpTime (Division by the Exposure Time); ThrMin=zz.z (Threshold intensities to minimum zz.z); ThrMax=zz.z (Threshold intensities to maximum zz.z); ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile); ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile); Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["statsPreprocessing"] = ArgParser::Parameter("NAR=0.95", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["output"] = ArgParser::Parameter(".", 'O', "The name for the output file or of a directory.");
-	args["uncompressed"] = ArgParser::Parameter(false, 'u', "Set this flag if you want results maps to be uncompressed.");
+	args["uncompressed"] = ArgParser::Parameter(false, 'u', "Set this to true if you want results maps to be uncompressed.");
 	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file", NUMBERCHANNELS, NUMBERCHANNELS);
 	
 	// We parse the arguments
@@ -441,6 +441,17 @@ int main(int argc, const char **argv)
 		// We declare the segmented map with the WCS of the first image, and get the segmentation map
 		ColorMap* segmentedMap = new ColorMap(images[0]->getWCS());
 		F->getSegmentedMap(args("segmentation"), segmentedMap);
+		
+		//We add information about the classification to the header of the segmented map
+		Header& header = segmentedMap->getHeader();
+		for (unsigned p = 0; p < imagesFilenames.size(); ++p)
+		{
+			header.set(string("IMAGE")+toString(p+1,3), stripPath(imagesFilenames[p]));
+		}
+		header.set("CPREPROC", args["imagePreprocessing"], "Classification Image preprocessing");
+		header.set("CLASTYPE", args["type"], "Classifier Type");
+		if(args["stats"])
+			header.set("SPREPROC", args["statsPreprocessing"], "Segmentation stats Image preprocessing");
 		
 		// We write the segmentedMap to a fits file
 		FitsFile file(outputFile, FitsFile::overwrite);

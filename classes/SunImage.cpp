@@ -123,7 +123,10 @@ inline string SunImage<T>::Instrument() const
 template<class T>
 inline string SunImage<T>::Label() const
 {
-	return Instrument() + " " + ObservationDate();
+	if(header.has("TELESCOP"))
+		return header.get<string>("TELESCOP") + " " + Instrument() + " " + ObservationDate();
+	else
+		return Instrument() + " " + ObservationDate();
 }
 
 template<class T>

@@ -18,11 +18,11 @@
  
 @param newColor	The first color to give to a region
 
-@param max_delta_t	The maximal delta time between 2 tracked regions
+@param maxDeltaT	The maximal delta time between 2 tracked regions
 
 @param overlap	The number of images that overlap between 2 tracking run
 
-@param recolorImages	Set this flag if you want all images to be colored and written to disk.
+@param args["recolorImages"]	Set this flag if you want all images to be colored and written to disk.
 Otherwise only the region table is updated.
 
 @param derotate	Set this flag if you want images to be derotated before comparison.
@@ -47,7 +47,7 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 #include "../classes/tools.h"
 #include "../classes/constants.h"
 #include "../classes/mainutilities.h"
-#include "../classes/ArgumentHelper.h"
+#include "../classes/ArgParser.h"
 
 #include "../classes/ColorMap.h"
 #include "../classes/Region.h"
@@ -58,33 +58,20 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 
 
 using namespace std;
-using namespace dsr;
 
 string filenamePrefix;
 
 int main(int argc, const char **argv)
 {
 	cout<<setiosflags(ios::fixed);
-
-	// Program version
-	string version = "2.0";
-
-	// Options for the tracking
-	unsigned newColorArg = 0;
-	unsigned max_delta_t = 3600;
-	unsigned overlap = 1;
-	bool recolorImages = false;
-	bool derotate = false;
-	string regionTableHdu = "Regions";
 	
-	// Options for the desired outputs 
-	bool uncompressed_results = false;
+	// We declare our program description
+	string programDescription = "This Program tracks regions between color maps.";
+	programDescription+="\nVersion: 3.0";
+	programDescription+="\nAuthor: Benjamin Mampaey, benjamin.mampaey@sidc.be";
 	
-	// The list of names of the sun images to process
-	vector<string> imagesFilenames;
-
-	string programDescription = "This Programm will track regions from color maps.\n";
-	programDescription+="Compiled with options :";
+	programDescription+="\nCompiled on "  __DATE__  " with options :";
+	programDescription+="\nNUMBERCHANNELS: " + toString(NUMBERCHANNELS);
 	#if defined DEBUG
 	programDescription+="\nDEBUG: ON";
 	#endif
@@ -96,24 +83,37 @@ int main(int argc, const char **argv)
 	#endif
 	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());
-
-	ArgumentHelper arguments;
-	arguments.set_string_vector("fitsFileName1 fitsFileName2 ...", "\n\tThe name of the fits files containing the maps of the regions to track.\n\t", imagesFilenames);
-	arguments.new_named_unsigned_int('n',"newColor","positive integer","\n\tThe first color to attribute to a region\n\t",newColorArg);
-	arguments.new_named_unsigned_int('d',"max_delta_t","positive integer","\n\tThe maximal delta time between 2 tracked regions\n\t",max_delta_t);
-	arguments.new_named_unsigned_int('o',"overlap","positive integer","\n\tThe number of images that overlap between 2 tracking run\n\t",overlap);
-	arguments.new_flag('A', "recolorImages", "\n\tSet this flag if you want all images to be colored and written to disk.\n\tOtherwise only the region table is updated.\n\t", recolorImages);
-	arguments.new_flag('D', "derotate", "\n\tSet this flag if you want images to be derotated before comparison.\n\t", derotate);
-	arguments.new_named_string('H',"regionTableHdu","string","\n\tThe name of the region table Hdu\n\t",regionTableHdu);
-	arguments.new_flag('u', "uncompressed_results", "\n\tSet this flag if you want results maps to be uncompressed.\n\t", uncompressed_results);
-	arguments.set_description(programDescription.c_str());
-	arguments.set_author("Benjamin Mampaey, benjamin.mampaey@sidc.be");
-	arguments.set_build_date(__DATE__);
-	arguments.set_version(version.c_str());
-	arguments.process(argc, argv);
-
-	newColor = newColorArg;
-
+	
+	// We define our program parameters
+	ArgParser args(programDescription);
+	
+	args["config"] = ArgParser::ConfigurationFile('C');
+	args["help"] = ArgParser::Help('h');
+	
+	args["newColor"] = ArgParser::Parameter(0, 'n', "The first color to attribute to a new untracked region");
+	args["maxDeltaT"] = ArgParser::Parameter(3600, 'd',"The maximal number of seconds between 2 tracked regions");
+	args["overlap"] = ArgParser::Parameter(1, 'o',"The number of images that overlap between 2 tracking run");
+	args["recolorImages"] = ArgParser::Parameter(false, 'A', "Set this flag if you want all images to be colored and written to disk.Otherwise only the region table is updated.");
+	args["derotate"] = ArgParser::Parameter(true, 'D', "Set this to false if you dont want images to be derotated before comparison.");
+	args["regionTableName"] = ArgParser::Parameter("Regions", 'H',"The name of the region table Hdu");
+	args["uncompressed"] = ArgParser::Parameter(false, 'u', "Set this flag if you want results maps to be uncompressed.");
+	
+	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path of a fits files containing a maps of regions to track.");
+	
+	// We parse the arguments
+	try
+	{
+		args.parse(argc, argv);
+	}
+	catch ( const invalid_argument& error)
+	{
+		cerr<<"Error : "<<error.what()<<endl;
+		cerr<<args.help_message(argv[0])<<endl;
+		return EXIT_FAILURE;
+	}
+	
+	newColor = args["newColor"];
+	
 	#ifdef HEK
 		unsigned previous_last_hek_map = 0;
 	#endif
@@ -121,6 +121,7 @@ int main(int argc, const char **argv)
 	// We get the maps, regions and colors from the fits files
 	vector<vector<Region*> > regions;
 	vector<ColorMap*> images;
+	deque<string> imagesFilenames = args.RemainingPositionalArguments();
 	for (unsigned s = 0; s < imagesFilenames.size(); ++s)
 	{
 		FitsFile file(imagesFilenames[s]);
@@ -136,9 +137,9 @@ int main(int argc, const char **argv)
 		vector<Region* > tmp_regions;
 		
 		// If there is a table of regions, we use it to extract the regions
-		if(file.has(regionTableHdu))
+		if(file.has(args["regionTableName"]))
 		{
-			file.moveTo(regionTableHdu);
+			file.moveTo(args["regionTableName"].as<string>());
 			readRegions(file, tmp_regions, true);
 			Header tracking_info;
 			file.readHeader(tracking_info);
@@ -196,7 +197,7 @@ int main(int argc, const char **argv)
 	// if their time difference is smaller than some value and
 	// if they overlay and
 	// if there is not already a path between them
-
+	unsigned maxDeltaT = args["maxDeltaT"];
 	for (unsigned d = 1; d < indices.size(); ++d)
 	{	
 		for (unsigned i = 0; d + i < indices.size(); ++i)
@@ -205,13 +206,13 @@ int main(int argc, const char **argv)
 			unsigned s2 = indices[i + d];
 			//If the time difference between the 2 images is too big, we don't need to continue
 			unsigned delta_t = unsigned(difftime(images[s2]->ObservationTime(),images[s1]->ObservationTime()));
-			if (delta_t > max_delta_t)
+			if (delta_t > maxDeltaT)
 			{
 				continue;
 			}	
 			
 			#if defined DEBUG
-			if(derotate)
+			if(args["derotate"])
 			{
 				SunImage<ColorType>* rotated = images[s1]->shifted_like(images[s2]);
 				rotated->writeFits("rotated_"+ stripSuffix(stripPath(imagesFilenames[s1])) + "_to_" + stripSuffix(stripPath(imagesFilenames[s2]))+".fits");
@@ -225,7 +226,7 @@ int main(int argc, const char **argv)
 					if(!tracking_graph.get_node(regions[s1][r1])->path(tracking_graph.get_node(regions[s2][r2])))
 					{		
 						unsigned intersectPixels = 0;
-						if(derotate)
+						if(args["derotate"])
 						{
 							intersectPixels = overlay_derotate(images[s1], regions[s1][r1], images[s2], regions[s2][r2]);
 						}
@@ -246,7 +247,7 @@ int main(int argc, const char **argv)
 
 
 	// To gain some memory space we can delete all images except if we need to recolor them
-	if(!recolorImages)
+	if(!args["recolorImages"])
 	{
 		for (unsigned s = 0; s < images.size(); ++s)
 			delete images[s];
@@ -273,14 +274,14 @@ int main(int argc, const char **argv)
 	#endif
 
 	// We set whether we should not compress the maps
-	const int compressed_fits = uncompressed_results ? 0 : FitsFile::compress;
+	const int compressed_fits = args["uncompressed"] ? 0 : FitsFile::compress;
 
 	// We update the fits files with the new colors
 	for (unsigned s = 0; s < images.size(); ++s)
 	{
 		FitsFile file(imagesFilenames[s], FitsFile::update);
 		
-		if(recolorImages) 
+		if(args["recolorImages"]) 
 		{
 			// We color the image and overwrite them in the fitsfile
 			recolorFromRegions(images[s], regions[s]);
@@ -289,14 +290,14 @@ int main(int argc, const char **argv)
 			delete images[s];
 		}
 		
-		file.moveTo(regionTableHdu);
+		file.moveTo(args["regionTableName"].as<string>());
 		
 		// We write a nice header with info on the tracking
 		Header tracking_info;
 		tracking_info.set("TNEWCOLR", newColor, "Tracking latest color");
-		tracking_info.set("TMAXDELT", max_delta_t, "Tracking max_delta_t");
-		tracking_info.set("TOVERLAP", overlap, "Tracking overlap");
-		tracking_info.set("TDEROT", derotate, "Tracking derotate");
+		tracking_info.set("TMAXDELT", maxDeltaT, "Tracking maxDeltaT");
+		tracking_info.set("TOVERLAP", args["overlap"], "Tracking overlap");
+		tracking_info.set("TDEROT", args["derotate"], "Tracking derotate");
 		tracking_info.set("TNBRIMG", unsigned(imagesFilenames.size()), "Tracking number images");
 		tracking_info.set("TRACKED", true, "Regions have been tracked");
 		file.writeHeader(tracking_info);
@@ -318,7 +319,7 @@ int main(int argc, const char **argv)
 		file.writeColumn("FIRST_DATE_OBS", first_observation_dates, FitsFile::overwrite);
 		
 		//If we recolor the images we update the color column
-		if(recolorImages) 
+		if(args["recolorImages"]) 
 			file.writeColumn("COLOR", tracked_colors, FitsFile::overwrite);
 	}
 

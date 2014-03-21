@@ -2,16 +2,6 @@
 
 using namespace std;
 
-#ifndef NAN
-#define NAN (numeric_limits<Real>::quiet_NaN())
-#endif
-
-#ifndef INF
-#define INF (numeric_limits<Real>::infinity())
-#endif
-
-
-
 SegmentationStats::SegmentationStats(const time_t& observationTime, const unsigned id)
 :id(id),observationTime(observationTime), numberPixels(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0), area_AtDiskCenter(0), fillingFactor(0)
 {}
@@ -252,13 +242,12 @@ string SegmentationStats::toString(const string& separator, bool header) const
 }
 
 
-vector<SegmentationStats*> getSegmentationStats(const ColorMap* coloredMap, const EUVImage* image, const vector<ColorType>& classes)
+vector<SegmentationStats*> getSegmentationStats(const ColorMap* coloredMap, const EUVImage* image, const set<ColorType>& classes)
 {
 	map<ColorType,SegmentationStats*> segmentation_stats;
-	for(unsigned r = 0; r < classes.size(); ++r)
+	for(set<ColorType>::iterator c=classes.begin(); c!=classes.end(); ++c)
 	{
-		if (segmentation_stats.count(classes[r]) == 0)
-			segmentation_stats[classes[r]] = new SegmentationStats(classes[r]);
+		segmentation_stats[*c] = new SegmentationStats(*c);
 	}
 	
 	RealPixLoc sunCenter = image->SunCenter();

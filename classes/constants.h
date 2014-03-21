@@ -103,35 +103,14 @@ See constants.h for the actual values.
 /*!
 @page Compilation_Options
 
-@subsection sursegmentation_options Sursegmentation
-See Classifier::merge and Classifier::sursegmentation
-@param MERGE_TYPE Type of merge function to use
-<BR> Possible values are:
- -# MERGEMAX	The 2 centers are merged by taking the mean value of the pixels belonging to those classes (i.e. their membership is maximal for that class)
- <BR>		The membership are updated by using the formula to compute the membership of the corresponding Classifier
- -# MERGECIS	The membership is updated by taking the maximal membership of the 2 classes
- <BR>		The 2 centers are merged by using the formula to compute the centers of the corresponding Classifier
-
-*/
-#if ! defined(MERGE_TYPE)
-#define MERGE_TYPE MERGECIS
-#endif
-/*!
-@page Compilation_Options
-@param MERGEVINCENT_ALPHA alpha value of Vincent's merge function
-*/
-#define MERGEVINCENT_ALPHA 20./255.
-
-
-/*!
-@page Compilation_Options
-
 @subsection various_options Various
 @param DEBUG Enables debugging, a lot of debug files will be written to disk
 @param VERBOSE Enables verbose output, a lot of information will be printed to screen. This can be disruptive to script parsing the output of the programs.
 @param EXTRA_SAFE Enables some additional checks during program execution. Can make the program slower.
 @param WRITE_LIMITED_MAP Will write the maps with the limit applied in program get_region_stats
-@param WRITE_MEMBERSHIP_FILES Will write the membership values to fits files during classification.
+@param WRITE_MEMBERSHIP_FILES Will write the membership values to fits files during classification or attribution.
+@param WRITE_CENTERS_FILE Will write the class centers values to a text file after classification.
+
 */
 
 /*!
@@ -142,123 +121,6 @@ See Classifier::merge and Classifier::sursegmentation
 */
 #ifndef STRICTFITS
 #define STRICTFITS
-#endif
-
-
-/*!
-@page Compilation_Options
-
-@section region_extraction Extraction of Coronal Hole (CH) and Active Region (AR)
-See ActiveRegion.h and CoronalHole.h for information about how these parameters are used.
-
-@param MIN_AR_SIZE The minimal size for an AR in (arc/sec)² (otherwise it is a bright point)
-*/
-#if ! defined(MIN_AR_SIZE)
-#define MIN_AR_SIZE 1500
-#endif
-
-/*!
-@page Compilation_Options
-@param MIN_CH_SIZE The minimal size for an CH in (arc/sec)² (otherwise it is a dark point)
-*/
-#if ! defined(MIN_CH_SIZE)
-#define MIN_CH_SIZE 3000
-#endif
-
-/*!
-@page Compilation_Options
-@param AR_AGGREGATION The aggregation factor for AR in (arc/sec)
-*/
-#if ! defined(AR_AGGREGATION)
-#define AR_AGGREGATION 32. // Equivalent to 12 EIT pixels
-#endif
-
-/*!
-@page Compilation_Options
-@param CH_AGGREGATION The aggregation factor for CH in (arc/sec)
-*/
-#if ! defined(CH_AGGREGATION)
-#define CH_AGGREGATION 32. // Equivalent to 12 EIT pixels
-#endif
-
-/*!
-@page Compilation_Options
-@param AR_PROJECTION The projection to improve the aggregation. (By changing the projection it is possible to improve tha aggragation nar the limb.)
-<BR> Possible values are:
- -# NO_PROJECTION	No projection will be made
- -# EQUIRECTANGULAR_PROJECTION	
- -# LAMBERT_CYLINDRICAL_PROJECTION
- -# SINUSOIDAL_PROJECTION
- -# DISTANCE_TRANSFORM	This is not a projection per se, but the exact disance along the sphere will be used in the morphological transformations
-*/
-#if ! defined(AR_PROJECTION)
-#define AR_PROJECTION SINUSOIDAL_PROJECTION
-#endif
-
-/*!
-@page Compilation_Options
-@param CH_PROJECTION The projection to improve the aggregation. (By changing the projection it is possible to improve tha aggragation nar the limb.)
-<BR> Possible values are:
- -# NO_PROJECTION	No projection will be made
- -# EQUIRECTANGULAR_PROJECTION	
- -# LAMBERT_CYLINDRICAL_PROJECTION
- -# SINUSOIDAL_PROJECTION
- -# DISTANCE_TRANSFORM	This is not a projection per se, but the exact disance along the sphere will be used in the morphological transformations
-*/
-#if ! defined(CH_PROJECTION)
-#define CH_PROJECTION SINUSOIDAL_PROJECTION
-#endif
-
-
-/*!
-@page Compilation_Options
-@param AR_FRAGMENTED If want the map of AR to be fragmented set to true, if you want it to be single blobs set to false
-*/
-
-#if ! defined(AR_FRAGMENTED)
-#define AR_FRAGMENTED true
-#endif
-
-/*!
-@page Compilation_Options
-@param CH_FRAGMENTED If want the map of CH to be fragmented set to true, if you want it to be single blobs set to false
-*/
-
-#if ! defined(CH_FRAGMENTED)
-#define CH_FRAGMENTED true
-#endif
-
-/*!
-@page Compilation_Options
-@param AR_TRA If set to true, the threshold for removing small AR will be computed on the Raw Area, otherwise on the arae At Disk Center
-*/
-#if ! defined(AR_TRA)
-#define AR_TRA false
-#endif
-
-/*!
-@page Compilation_Options
-@param CH_TRA If set to true, the threshold for removing small CH will be computed on the Raw Area, otherwise on the arae At Disk Center
-*/
-#if ! defined(CH_TRA)
-#define CH_TRA false
-#endif
-
-
-/*!
-@page Compilation_Options
-@param AR_CLEANING The cleaning factor for AR in (arc/sec)
-*/
-#if ! defined(AR_CLEANING)
-#define AR_CLEANING 6. // Equivalent to 2 EIT pixels
-#endif
-
-/*!
-@page Compilation_Options
-@param CH_CLEANING The cleaning factor for CH in (arc/sec)
-*/
-#if ! defined(CH_CLEANING)
-#define CH_CLEANING 6. // Equivalent to 2 EIT pixels
 #endif
 
 
@@ -313,20 +175,6 @@ See @ref ALC.
 
 #define EUV_ALC_PARAMETERS {70, 95, 108, 112} 
 
-/*!
-@page Compilation_Options
-
-@section HEK
-
-@param MIN_QUOTIENT_FACTOR The minimum quotient factor 
-*/
-#define MIN_QUOTIENT_FACTOR 5
-
-/*!
-@page Compilation_Options
-@param MAX_QUOTIENT_FACTOR The maximum quotient factor 
-*/
-#define MAX_QUOTIENT_FACTOR 10
 
 /*!
 @page Compilation_Options
@@ -375,7 +223,7 @@ See @ref ALC.
 
 /*!
 @page Compilation_Options
-
+@section mathematical_constants Mathematical Constants
 @param PI Value of PI
 @param MIPI Value of PI/2
 @param BIPI Value of PI*2
@@ -386,7 +234,6 @@ See @ref ALC.
 
 /*!
 @page Compilation_Options
-@section universal_constants Universal Constants
 @param RADIAN2ARCSEC Conversion between radians and arcsec
 */
 
@@ -394,7 +241,6 @@ See @ref ALC.
 
 /*!
 @page Compilation_Options
-@section universal_constants Universal Constants
 @param ARCSEC2RADIAN Conversion between arcsec and radians
 */
 
@@ -402,14 +248,12 @@ See @ref ALC.
 
 /*!
 @page Compilation_Options
-
 @param RADIAN2DEGREE Conversion between radians and degrees
 */
 #define RADIAN2DEGREE (180./PI)
 
 /*!
 @page Compilation_Options
-
 @param DEGREE2RADIAN Conversion between degrees and radians 
 */
 #define DEGREE2RADIAN (PI/180.)
@@ -435,14 +279,16 @@ See @ref ALC.
 #define ColorType short unsigned 
 #endif
 
-#define MERGEMAX 1
-#define MERGECIS 2
-#define MERGESUM 3
-#define MERGEVINCENT 4
-#define NO_PROJECTION 0 
-#define EQUIRECTANGULAR_PROJECTION 1
-#define LAMBERT_CYLINDRICAL_PROJECTION 2
-#define SINUSOIDAL_PROJECTION 3
-#define DISTANCE_TRANSFORM 4
+#ifndef NAN
+#define NAN (numeric_limits<Real>::quiet_NaN())
+#endif
+
+#ifndef INF
+#define INF (numeric_limits<Real>::infinity())
+#endif
+
+#ifndef RealMAX
+#define RealMAX (numeric_limits<EUVPixelType>::max())
+#endif
 
 #endif //end of Constants_H

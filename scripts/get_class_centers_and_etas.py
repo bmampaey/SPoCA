@@ -39,8 +39,14 @@ def parse_map(filename):
 						else:
 							break
 				
-				if 'CETA' in hdu.header:
-					etas = find_numbers.findall(hdu.header['CETA'])
+				if 'CETA00' in hdu.header:
+					etas = list()
+					for i in range(100):
+						eta = 'CLSCTR' + ('%02d' % i)
+						if eta in hdu.header:
+							etas.extend(find_numbers.findall(hdu.header[center]))
+						else:
+							break
 		
 		hdulist.close()
 	
@@ -86,24 +92,6 @@ find_filename_time = re.compile(r'(?P<time>\d\d\d\d\d\d\d\d_\d\d\d\d\d\d)')
 def parse_class_centers_file(filename):
 	channels = None
 	class_centers = None
-	time = None
-	file_time = find_filename_time.search(filename)
-	if file_time:
-		time = datetime.strptime(file_time.group('time'), '%Y%m%d_%H%M%S')
-	else:
-		logging.critical("Error getting time from file " + filename)
-	try:
-		with open (filename, 'r') as centers_file:
-			channels_centers = centers_file.readline()
-		
-		channels, class_centers = channels_centers.split("\t", 1)
-		channels = find_channels.findall(channels)
-		class_centers = find_numbers.findall(class_centers)
-	except Exception, why:
-		logging.critical("Error getting class_centers from file " + filename + ": "+ str(why))
-	return time, class_centers, channels
-
-def parse_etas_file(filename):
 	etas = None
 	time = None
 	file_time = find_filename_time.search(filename)
@@ -112,13 +100,17 @@ def parse_etas_file(filename):
 	else:
 		logging.critical("Error getting time from file " + filename)
 	try:
-		with open (filename, 'r') as etas_file:
-			etas = etas_file.readline()
+		with open (filename, 'r') as centers_file:
+			line = centers_file.readline()
 		
-		etas = find_numbers.findall(etas)
+		fields = line.split("\t", 1)
+		channels = find_channels.findall(fields[0])
+		class_centers = find_numbers.findall(fields[1])
+		if len(fields) > 2:
+			etas = find_numbers.findall(fields[2])
 	except Exception, why:
-		logging.critical("Error getting etas from file " + filename + ": "+ str(why))
-	return time, etas
+		logging.critical("Error getting class_centers from file " + filename + ": "+ str(why))
+	return time, class_centers, etas, channels
 
 def get_class_centers_and_etas(filenames):
 	'''Function that parses files to extract the class centers and etas'''
@@ -137,16 +129,10 @@ def get_class_centers_and_etas(filenames):
 		elif extension.lower() == ".fits":
 			time, class_centers, etas, channels = parse_map(filename)
 		
+		elif extension.lower() == ".txt":
+			time, class_centers, etas, channels = parse_class_centers_file(filename)
+		
 		else:
-			trash, filetype = os.path.splitext(fileprefix)
-			
-			if extension.lower() == ".txt" and filetype.lower() == ".centers":
-				time, class_centers, channels = parse_class_centers_file(filename)
-		
-			elif extension.lower() == ".txt" and filetype.lower() == ".eta":
-				time, etas = parse_etas_file(filename)
-		
-			else:
 				logging.error("Skipping file %s, unknown file type", str(filename))
 				continue
 		

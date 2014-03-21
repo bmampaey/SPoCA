@@ -1,35 +1,37 @@
-//! Program that does tracking of regions on the sun 
+//! This Program tracks regions between color maps.
 /*!
 @page tracking tracking.x
 
- This program takes several colorized map of sun regions, and will recolor them so that their color remains constant trough time.
- 
- The method for the tracking has been described by Cis Verbeeck in "Tracking Active Regions detected by SPoCA"
- 
- @section usage Usage
- 
- <tt> tracking.x -h </tt>
- 
- Calling the programs with -h will provide you with help 
- 
- <tt> tracking.x [-option optionvalue, ...] colorizeMap1 colorizeMap2 </tt>
- 
- You must provide at least one colorized map.
- 
-@param newColor	The first color to give to a region
+Version: 3.0
 
-@param maxDeltaT	The maximal delta time between 2 tracked regions
+Author: Benjamin Mampaey, benjamin.mampaey@sidc.be
+
+@section usage Usage
+<tt> bin/tracking.x [-option optionvalue ...]  [ fitsFile ... ] </tt>
+
+@param fitsFile	Path of a fits files containing a maps of regions to track.
+
+global parameters:
+
+@param help	Print a help message and exit.
+<BR>If you pass the value doxygen, the help message will follow the doxygen convention.
+<BR>If you pass the value config, the help message will write a configuration file template.
+
+@param config	Program option configuration file.
+
+@param derotate	Set this to false if you dont want images to be derotated before comparison.
+
+@param maxDeltaT	The maximal number of seconds between 2 tracked regions
+
+@param newColor	The first color to attribute to a new untracked region
 
 @param overlap	The number of images that overlap between 2 tracking run
 
-@param args["recolorImages"]	Set this flag if you want all images to be colored and written to disk.
-Otherwise only the region table is updated.
+@param recolorImages	Set this flag if you want all images to be colored and written to disk.Otherwise only the region table is updated.
 
-@param derotate	Set this flag if you want images to be derotated before comparison.
+@param regionTableName	The name of the region table Hdu
 
-@param regionTableHdu	The name of the region table Hdu
-
-@param uncompressed_results	Set this flag if you want results maps to be uncompressed.
+@param uncompressed	Set this flag if you want results maps to be uncompressed.
 
 See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
 

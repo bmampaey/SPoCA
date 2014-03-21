@@ -1,36 +1,49 @@
-//! Program that converts a color map in fits format to a png image.
+//! This program convert a color map to a png image.
 /*!
-@page fits2png fits2png.x
+@page map2png map2png.x
 
- This program takes a color map image in fits format and creates an image file suitable for viewing.
- By default the fits file will be converted to a png image named like the input fits file (with the png suffix).
- 
- @section usage Usage
- 
- <tt> map2png.x -h </tt>
- 
- Calling the programs with -h will provide you with help 
- 
- <tt> map2png.x [-option optionvalue, ...] fitsFileName </tt>
- 
+Version: 3.0
+
+Author: Benjamin Mampaey, benjamin.mampaey@sidc.be
+
+@section usage Usage
+<tt> bin/map2png.x [-option optionvalue ...]  fitsFile [ fitsFile ... ] </tt>
+
+@param fitsFile	Path to a fits file to be converted
+
+global parameters:
+
+@param help	Print a help message and exit.
+<BR>If you pass the value doxygen, the help message will follow the doxygen convention.
+<BR>If you pass the value config, the help message will write a configuration file template.
+
+@param config	Program option configuration file.
+
+@param Label	The label to write on the lower left corner. You can use keywords from the color map fits file by specifying them between {}
+
+@param colors	The list of color of the regions to plot separated by commas. All regions will be selected if ommited.
+
+@param fill	Set this flag if you want to fill holes in the regions before ploting.
+
+@param label	The label to write on the upper left corner. If set but no value is passed, a default label will be written.
+
+@param output	The path of the the output directory.
+
+@param recenter	Set to the position of the new sun center if you want to translate the image
+
+@param scaling	Set to the scaling factor if you want to rescale the image.
+
+@param size	The size of the image written. i.e. "1024x1024". See ImageMagick Image Geometry for specification.
+<BR>If not set the output image will have the same dimension as the input image.
+
+@param straightenUp	Set if you want to rotate the image so the solar north is up.
+
 @param transparent	If you want the null values to be transparent.
 
-@param Label	The label to write in the lower left corner.
-<BR>You can use keywords from the fits file of the color map by specifying them between {}. e.g. Wavelength: {WAVELNTH}
+@param type	The type of image to write.
 
-@param size The size of the image written. i.e. "1024x1024" See <a href="http://www.imagemagick.org/script/command-line-processing.php#geometry" target="_blank">ImageMagick Image Geometry</a>  for specification.
-
-@param straightenUp	Set this flag if you want to have the solar north up.
-
-@param recenter	Recenter the sun on the specified position
-
-@param scaling	Scaling factor to resize the image
-
-@param output	The name for the output file/directory.
-
-<BR>N.B.: In the color maps, because there is no colors in fits files, they are represented as a number.
- When creating the png image, a mapping is done from a number to a color.
- That mapping is consistent between images and calls so that a region that has been tracked keep the same color in the successive images. 
+@param uniqueColor	Set to a color if you want all regions to be plotted in that color.
+<BR>See gradient image for the color number.
 
 See @ref Compilation_Options for constants and parameters at compilation time.
 

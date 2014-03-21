@@ -4,12 +4,12 @@
 
 #include <vector>
 #include <string>
-#include "FeatureVector.h"
 #include "EUVImage.h"
 #include "ColorMap.h"
 #include "Region.h"
 #include "RegionStats.h"
 #include "FitsFile.h"
+#include "ArgParser.h"
 
 /*!
 @file ActiveRegion.h
@@ -17,13 +17,16 @@ List of function to transform the results of the segmentation into a map of Acti
 */
 
 //! Return a map of aggregated AR 
-ColorMap* getAggregatedARMap(const ColorMap* ARMap, const int projection = SunImage<ColorType>::no_projection);
+ColorMap* getAggregatedARMap(const ColorMap* map, Real cleaningFactor, Real aggregationFactor, const std::string& projection = "none");
 
 //! Fill a header with all the information about AR map creation
-void fillHeaderAR(Header& header);
+void fillHeaderAR(Header& header, ParameterSection& parameters);
 
 //! Method to write a AR map to a fits file
-void writeARMap(ColorMap*& ARMap, const std::string& filename, std::vector<EUVImage*> images, bool compressed = true, unsigned chaincodeMinPoints = 3, unsigned chaincodeMaxPoints = 0, Real chaincodeMaxDeviation = 0.);
+void writeARMap(ColorMap*& map, const std::string& filename, const std::vector<EUVImage*>& images, ParameterSection& parameters, bool compressed = true);
+
+//! Parameters for the extraction of AR maps
+ParameterSection ARMapParameters();
 
 #endif
 

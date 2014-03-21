@@ -11,7 +11,7 @@ import threading
 from glob import glob
 
 # Parameters to transform fits to png
-bin = '/pool/bem/SOLID2/SPoCA/bin/fits2png.x'
+bin = 'fits2png.x'
 
 def run_cmd(cmd):
 	
@@ -32,27 +32,12 @@ def run_cmd(cmd):
 		return True
 
 
-def fits2images(fits_files, output_directory = '.', size = None, recenter = None, label = None, color = None, straighten_up = False, scale = False, preprocessing_steps = None, force = False):
+def fits2images(fits_files, output_directory = '.', config_file = None, force = False):
 	
 	# We make up the fits2png command 
 	cmd = [bin, '-O', output_directory]
-	if size:
-		cmd.extend(['-S', str(size)])
-	if recenter:
-		cmd.extend(['-r', str(recenter)])
-	if label:
-		if label is True:
-			cmd.extend(['-l'])
-		else:
-			cmd.extend(['-L', label])
-	if color:
-		cmd.extend(['-c'])
-	if straighten_up:
-		cmd.extend(['-u'])
-	if scale and scale != 1:
-		cmd.extend(['-s', str(scale)])
-	if preprocessing_steps:
-		cmd.extend(['-P', str(preprocessing_steps)])
+	if config_file:
+		cmd.extend(['-C', config_file])
 	
 	for fits_file in fits_files:
 		if not force:
@@ -100,13 +85,7 @@ if __name__ == "__main__":
 	parser.add_argument('--debug', '-d', default=False, action='store_true', help='Set the logging level to debug')
 	parser.add_argument('--quiet', '-q', default=False, action='store_true', help='Do not display any error message.')
 	parser.add_argument('--output_directory', '-o', default='.', help='The directory in which the video frame will be created')
-	parser.add_argument('--size', '-s', default=None, help='The size of the video frames. Must be specified like widthxheight in pixels')
-	parser.add_argument('--recenter', '-r', default=False, help='Specify to recenter the sun in the frame. Must be specified in pixels as centerX,centerY')
-	parser.add_argument('--label', '-l', nargs = '?', default=False, const=True, help='To write a label on the image')
-	parser.add_argument('--color', '-c', default=False, action='store_true', help='To output the frame in color')
-	parser.add_argument('--straighten_up', '-u', default=False, action='store_true', help='To align the solar north upward')
-	parser.add_argument('--zoom', '-z', default=1.0, type=float, help='The scaling factor')
-	parser.add_argument('--preprocessing_steps', '-p', default=None, help='A list of preprocessing steps to overpass the default ones. See fits2png documentation')
+	parser.add_argument('--config', '-c', help='A configuration file for fits2png')
 	parser.add_argument('--threads', '-t', default=1, type=int, help='The number of threads to use.')
 	parser.add_argument('--force', '-f', default=False, action='store_true', help='Overwrite video frame if it exists already')
 	parser.add_argument('fits_files', nargs='+', help='The paths of the fits files')
@@ -138,9 +117,9 @@ if __name__ == "__main__":
 	delta_pos = int(len(fits_files) / number_threads)
 	while start_pos + delta_pos < len(fits_files):
 		logging.debug("Starting thread for fits files %d to %d", start_pos, start_pos + delta_pos)
-		thread = threading.Thread(group=None, name='fits2images', target=fits2images, args=(fits_files[start_pos:start_pos+delta_pos], args.output_directory, args.size, args.recenter, args.label, args.color, args.straighten_up, args.zoom, args.preprocessing_steps, args.force))
+		thread = threading.Thread(group=None, name='fits2images', target=fits2images, args=(fits_files[start_pos:start_pos+delta_pos], args.output_directory, args.config, args.force))
 		thread.start()
 		start_pos += delta_pos
 	
 	if start_pos < len(fits_files):
-		fits2images(fits_files[start_pos:], args.output_directory, args.size, args.recenter, args.label, args.color, args.straighten_up, args.zoom, args.preprocessing_steps, args.force)
+		fits2images(fits_files[start_pos:], args.output_directory, args.config, args.force)

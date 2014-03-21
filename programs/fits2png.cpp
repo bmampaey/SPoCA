@@ -1,46 +1,58 @@
-//! Program that convert an EUV fits file into a png image suitable for viewing.
+//! This program convert a fits image to a png image, applying some contrast enhancement.
 /*!
-@page outputImage outputImage.x
+@page fits2png png.x
 
- This program takes a EUV image in fits format and creates an image file suitable for viewing.
- By default the fits file will be converted to a png image named like the input fits file (with the png suffix).
-  
- @section usage Usage
- 
- <tt> outputImage.x -h </tt>
- 
- Calling the programs with -h will provide you with help 
- 
- <tt> outputImage.x [-option optionvalue, ...] fitsFileName</tt>
+Version: 3.0
 
-@param label	Set this flag if you want a label on the image.
-<BR> The label will state the instrument of observation, wavelength and date of observation of the EUV image.
+Author: Benjamin Mampaey, benjamin.mampaey@sidc.be
 
-@param colorTable	Image to use as a color table if you want to colorize the image
+@section usage Usage
+<tt> bin/fits2png.x [-option optionvalue ...]  fitsFile [ fitsFile ... ] </tt>
 
-@param preprocessingSteps	The steps of preprocessing to apply to the sun images.
-<BR>Possible values :
- - NAR (Nullify above radius)
- - ALC (Annulus Limb Correction)
- - DivMedian (Division by the median)
- - TakeSqrt (Take the square root)
- - TakeLog (Take the log)
- - DivMode (Division by the mode)
- - DivExpTime (Division by the Exposure Time)
- - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
- - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile)
- - Smoothzz.z Binomial smoothing of zz.z arcsec
+@param fitsFile	Path to a fits file to be converted
 
-@param size The size of the image written. i.e. "1024x1024" See <a href="http://www.imagemagick.org/script/command-line-processing.php#geometry" target="_blank">ImageMagick Image Geometry</a>  for specification.
+global parameters:
 
-@param straightenUp	Set this flag if you want to have the solar north up.
+@param help	Print a help message and exit.
+<BR>If you pass the value doxygen, the help message will follow the doxygen convention.
+<BR>If you pass the value config, the help message will write a configuration file template.
 
-@param recenter	Recenter the sun on the specified position
+@param config	Program option configuration file.
 
-@param scaling	Scaling factor to resize the image
+@param color	Set if you want the output images to be colorized.
 
-@param output	The name for the output file/directory.
+@param colorTable	Set to an image to use as a color table if you want to colorize the image.
+<BR>If not set the default color table for the instrument/wavelength will be used.
 
+@param imagePreprocessing	The steps of preprocessing to apply to the sun images.
+<BR>Can be any combination of the following:
+<BR> NAR=zz.z (Nullify pixels above zz.z*radius)
+<BR> ALC (Annulus Limb Correction)
+<BR> DivMedian (Division by the median)
+<BR> TakeSqrt (Take the square root)
+<BR> TakeLog (Take the log)
+<BR> DivMode (Division by the mode)
+<BR> DivExpTime (Division by the Exposure Time)
+<BR> ThrMin=zz.z (Threshold intensities to minimum zz.z)
+<BR> ThrMax=zz.z (Threshold intensities to maximum zz.z)
+<BR> ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)
+<BR> ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)
+<BR> Smooth=zz.z (Binomial smoothing of zz.z arcsec)
+
+@param label	The label to write on the upper left corner. If set but no value is passed, a default label will be written.
+
+@param output	The path of the output directory.
+
+@param recenter	Set to the position of the new sun center ifyou want to translate the image
+
+@param scaling	Set to the scaling factor if you want to rescale the image.
+
+@param size	The size of the image written. i.e. "1024x1024". See ImageMagick Image Geometry for specification.
+<BR>If not set the output image will have the same dimension as the input image.
+
+@param straightenUp	Set if you want to rotate the image so the solar north is up.
+
+@param type	The type of image to write.
 See @ref Compilation_Options for constants and parameters at compilation time.
 
 */
@@ -103,7 +115,7 @@ int main(int argc, const char **argv)
 	args["scaling"] = ArgParser::Parameter(1, 's', "Set to the scaling factor if you want to rescale the image.");
 	args["colorTable"] = ArgParser::Parameter("", 'C', "Set to an image to use as a color table if you want to colorize the image.\nIf not set the default color table for the instrument/wavelength will be used.");
 	args["size"] = ArgParser::Parameter("100%x100%", 'S', "The size of the image written. i.e. \"1024x1024\". See ImageMagick Image Geometry for specification.\nIf not set the output image will have the same dimension as the input image.");
-	args["output"] = ArgParser::Parameter(".", 'O', "The path of the the output directory.");
+	args["output"] = ArgParser::Parameter(".", 'O', "The path of the output directory.");
 	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file to be converted", 1);
 	
 	// We parse the arguments

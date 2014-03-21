@@ -1,69 +1,70 @@
-//! Program that generates a png to visualize the results of segmentation.
+//! This program plots a map regions contours overlayed on a background image.
 /*!
 @page overlay overlay.x
 
- This program takes one color map in fits format and extract the contours.
- Then for each sun image given it will generate a background image and overlay the contours on top of it.
- 
- <BR>N.B.: In the color maps, because there is no colors in fits files, they are represented as a number.
- When creating the png image, a mapping is done from a number to a color.
- That mapping is consistent between images and calls so that a region that has been tracked keep the same color in the successive images.
- 
- @section usage Usage
- 
- <tt> overlay.x -h </tt>
- 
- Calling the programs with -h will provide you with help 
- 
- <tt> overlay.x [-option optionvalue, ...] imageFilename1 imageFilename2 </tt>
- 
-@param inputImage	The name of a colorized Map of regions (i.e. each one must have a different color).
- 
-@param width	The width of the contour in pixels.
-<BR>If not specified an optimal value will be chosen. 
+Version: 3.0
+
+Author: Benjamin Mampaey, benjamin.mampaey@sidc.be
+
+@section usage Usage
+<tt> bin/overlay.x [-option optionvalue ...]  mapFile fitsFile [ fitsFile ... ] </tt>
+
+@param mapFile	Path to the map
+@param fitsFile	Path to a fits file to be converted
+
+global parameters:
+
+@param help	Print a help message and exit.
+<BR>If you pass the value doxygen, the help message will follow the doxygen convention.
+<BR>If you pass the value config, the help message will write a configuration file template.
+
+@param config	Program option configuration file.
+
+@param Label	The label to write on the lower left corner. You can use keywords from the color map fits file by specifying them between {}
+
+@param colors	The list of color of the regions to plot separated by commas. All regions will be selected if ommited.
+
+@param fill	Set this flag if you want to fill holes in the regions before ploting the contours.
+
+@param imagePreprocessing	The steps of preprocessing to apply to the sun images.
+<BR>Can be any combination of the following:
+<BR> NAR=zz.z (Nullify pixels above zz.z*radius)
+<BR> ALC (Annulus Limb Correction)
+<BR> DivMedian (Division by the median)
+<BR> TakeSqrt (Take the square root)
+<BR> TakeLog (Take the log)
+<BR> DivMode (Division by the mode)
+<BR> DivExpTime (Division by the Exposure Time)
+<BR> ThrMin=zz.z (Threshold intensities to minimum zz.z)
+<BR> ThrMax=zz.z (Threshold intensities to maximum zz.z)
+<BR> ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)
+<BR> ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)
+<BR> Smooth=zz.z (Binomial smoothing of zz.z arcsec)
 
 @param internal	Set this flag if you want the contours inside the regions.
-<BR>Choose this for example if the regions may touch each other.
- 
-@param external	Set this flag if you want the contours outside the regions.
-<BR> Choose this if you want to see exactly wich pixels are part of the region.
+<BR>Will be outside otherwise.
 
-@param mastic	Set this flag if you want to fill holes in the connected components before tracing the contours.
+@param label	The label to write on the upper left corner. If set but no value is passed, a default label will be written.
 
-@param Label	The label to write in the lower left corner.
-<BR>You can use keywords from the fits file of the color map by specifying them between {}. e.g. Wavelength: {WAVELNTH}
+@param output	The path of the the output directory.
 
-@param label	Set this flag if you want a label on the image.
-<BR> The label will state the instrument of observation, wavelength and date of observation of the EUV image.
+@param recenter	Set to the position of the new sun center if you want to translate the image
 
-@param preprocessingSteps	The steps of preprocessing to apply to the sun images.
-<BR>Possible values :
- - NAR (Nullify above radius)
- - ALC (Annulus Limb Correction)
- - DivMedian (Division by the median)
- - TakeSqrt (Take the square root)
- - TakeLog (Take the log)
- - DivMode (Division by the mode)
- - DivExpTime (Division by the Exposure Time)
- - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
- - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile)
- - Smoothzz.z Binomial smoothing of zz.z arcsec
- 
-@param size The size of the image written. i.e. "1024x1024" See <a href="http://www.imagemagick.org/script/command-line-processing.php#geometry" target="_blank">ImageMagick Image Geometry</a>  for specification.
+@param registerImages	Set to register/align the images to the map.
 
-@param colors The list of colors to select separated by commas (no spaces)
-<BR>All colors will be selected if ommited.
+@param scaling	Set to the scaling factor if you want to rescale the image.
 
-@param colorsFilename A file containing a list of colors to select separated by commas
-<BR>All colors will be selected if ommited.
+@param size	The size of the image written. i.e. "1024x1024". See ImageMagick Image Geometry for specification.
+<BR>If not set the output image will have the same dimension as the input image.
 
-@param straightenUp	Set this flag if you want to have the solar north up.
+@param straightenUp	Set if you want to rotate the image so the solar north is up.
 
-@param recenter	Recenter the sun on the specified position
+@param type	The type of image to write.
 
-@param scaling	Scaling factor to resize the image
+@param uniqueColor	Set to a color if you want all contours to be plotted in that color.
+<BR>See gradient image for the color number.
 
-@param output	The name for the output file/directory.
+@param width	The width of the contour in pixels.
 
 See @ref Compilation_Options for constants and parameters at compilation time.
 

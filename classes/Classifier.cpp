@@ -95,6 +95,17 @@ void Classifier::attribution()
 {
 	sortB();
 	computeU();
+	#if defined DEBUG || defined WRITE_MEMBERSHIP_FILES
+	// We write the fits file of Uij
+	Image<EUVPixelType> image(Xaxes,Yaxes);
+	for (unsigned i = 0; i < numberClasses; ++i)
+	{
+		image.zero();
+		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
+			image.pixel(coordinates[j]) = U[j*numberClasses + i];
+		image.writeFits(filenamePrefix + "membership.final.class_" + toString(i) + ".fits");
+	}
+	#endif
 }
 
 ColorMap* Classifier::getSegmentedMap(ParameterSection& parameters, ColorMap* segmentedMap)

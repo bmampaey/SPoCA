@@ -2,7 +2,7 @@
 
 @mainpage SPoCA
 
-@version 0.7
+@version 3.0
 
 @authors
 Benjamin Mampaey benjamin.mampaey@oma.be
@@ -37,25 +37,20 @@ It received several improvements, with the help of Cis Verbeeck and Veronique De
 The following is only for Automatic documentation generation.
 /*!
 @page programs Programs
-List of executables to run SPoCA.
+List of programs and utilities included in SPoCA.
 <BR>@subpage classification
 <BR>@subpage attribution
-<BR>@subpage cumulative_classification
-<BR>@subpage get_regions_stats
+<BR>@subpage get_AR_map
+<BR>@subpage get_CH_map
 <BR>@subpage tracking
-<BR>@subpage get_STAFF_stats
+<BR>@subpage get_regions_stats
 <BR>@subpage get_segmentation_stats
+<BR>@subpage get_STAFF_stats
+<BR>@subpage get_SOLID_stats
+<BR>@subpage fits2png
+<BR>@subpage map2png
+<BR>@subpage overlay
 
-@page utilities Utilities
-List of utilities executable to help visualising the results of SPoCA, or to test and use spoca.
- <BR>@subpage contours
- <BR>@subpage overlay
- <BR>@subpage background
- <BR>@subpage fits2png
- <BR>@subpage histogram
- <BR>@subpage preprocessing_x
- <BR>@subpage image_stat
- <BR>@subpage RGBcomposite
 */
 
 

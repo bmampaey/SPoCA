@@ -1,3 +1,73 @@
+//! This Program extract an Coronal Hole map from a segmentation map.
+/*!
+@page get_CH_map get_CH_map.x
+
+Version: 3.0
+
+Author: Benjamin Mampaey, benjamin.mampaey@sidc.be
+
+@section usage Usage
+<tt> bin/get_CH_map.x [-option optionvalue ...]  mapFile [ fitsFile ... ] </tt>
+
+@param mapFile	Path to the segmentation map
+@param fitsFile	Path to a fits file for computing stats
+
+global parameters:
+
+@param help	Print a help message and exit.
+<BR>If you pass the value doxygen, the help message will follow the doxygen convention.
+<BR>If you pass the value config, the help message will write a configuration file template.
+
+@param config	Program option configuration file.
+
+@param color	The value of the pixels in the segmentation map corresponding to Coronal Hole.
+
+@param imageType	The type of the images.
+<BR>Possible values are : EIT, EUVI, AIA, SWAP
+
+@param output	The name for the output file or of a directory.
+
+@param registerImages	Set to register/align the images to the map.
+
+@param statsPreprocessing	The steps of preprocessing to apply to the sun images.
+<BR>Can be any combination of the following:
+<BR> NAR=zz.z (Nullify pixels above zz.z*radius)
+<BR> ALC (Annulus Limb Correction)
+<BR> DivMedian (Division by the median)
+<BR> TakeSqrt (Take the square root)
+<BR> TakeLog (Take the log)
+<BR> DivMode (Division by the mode)
+<BR> DivExpTime (Division by the Exposure Time)
+<BR> ThrMin=zz.z (Threshold intensities to minimum zz.z)
+<BR> ThrMax=zz.z (Threshold intensities to maximum zz.z)
+<BR> ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)
+<BR> ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)
+<BR> Smooth=zz.z (Binomial smoothing of zz.z arcsec)
+
+@param uncompressed	Set this flag if you want results maps to be uncompressed.
+
+mapPreprocessing parameters:
+
+@param aggregated	Aggregate regions so that one region correspond to only one connected component
+
+@param aggregation	Aggregation factor in arcsec.
+
+@param chaincodeMaxDeviation	The maximal deviation of the chaincode curve between 2 points, in arcsec.
+
+@param chaincodeMaxPoints	The maximal number of points in a chaincode.
+
+@param chaincodeMinPoints	The minimal number of points in a chaincode.
+
+@param cleaning	Cleaning factor in arcsec.
+
+@param minimalSize	Minal size of regions in arcsec². Smaller regions will be discarded
+
+@param projection	Projection used for the aggregation.
+
+@param useRawArea	When discarding small regions, use raw area instead of real area.
+See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
+
+*/
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -47,14 +117,12 @@ int main(int argc, const char **argv)
 	args["config"] = ArgParser::ConfigurationFile('C');
 	args["help"] = ArgParser::Help('h');
 	
+	args("mapPreprocessing") = CHMapParameters();
 	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images.\nPossible values are : EIT, EUVI, AIA, SWAP");
 	args["registerImages"] = ArgParser::Parameter(false, 'r', "Set to register/align the images to the map.");
 	args["statsPreprocessing"] = ArgParser::Parameter("NAR=0.95", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["output"] = ArgParser::Parameter(".", 'O', "The name for the output file or of a directory.");
 	args["uncompressed"] = ArgParser::Parameter(false, 'u', "Set this flag if you want results maps to be uncompressed.");
-	args["chaincodeMinPoints"] = ArgParser::Parameter(4, 'x', "The minimal number of points in a chaincode.");
-	args["chaincodeMaxPoints"] = ArgParser::Parameter(0, 'X', "The maximal number of points in a chaincode.");
-	args["chaincodeMaxDeviation"] = ArgParser::Parameter(0, 'd', "The maximal deviation of the chaincode curve between 2 points, in arcsec.");
 	args["color"] = ArgParser::Parameter('c', "The value of the pixels in the segmentation map corresponding to Coronal Hole.");
 	args["mapFile"] = ArgParser::PositionalParameter("Path to the segmentation map");
 	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file for computing stats");
@@ -107,19 +175,34 @@ int main(int argc, const char **argv)
 	vector<EUVImage*> images;
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		EUVImage* image = getImageFromFile(args["imageType"], imagesFilenames[p]);
+		// We expand the name of the background fits image with the header of the inputImage
+		string imageFilename = segmentedMap->getHeader().expand(imagesFilenames[p]);
+		
+		if(! isFile(imageFilename))
+		{
+			cerr<<"Error : "<<imageFilename<<" is not a regular file!"<<endl;
+			continue;
+		}
+		
+		EUVImage* image = getImageFromFile(args["imageType"], imageFilename);
+		
+		// We apply the preprocessing
 		image->preprocessing(args["statsPreprocessing"]);
+		#if defined DEBUG
+		image->writeFits(makePath(outputDirectory, stripPath(stripSuffix(imageFilename)) + "preprocessed.fits"));
+		#endif
+		
+		// We transform the image to align it with the segmentedMap
 		if(args["registerImages"])
 		{
 			image->align(segmentedMap);
 		}
 		#if defined DEBUG
 			image->getHeader().set("IPREPROC", args["statsPreprocessing"], "Image Preprocessing");
-			image->writeFits(outputDirectory + "/" + stripPath(stripSuffix(imagesFilenames[p])) + ".preprocessed.fits");
+			image->writeFits(makePath(outputDirectory, stripPath(stripSuffix(imageFilename)) + "registered.fits"));
 		#endif
 		images.push_back(image);
-	}
-	
+	}	
 	// We transform the segmented map into a binary map
 	if (args["color"].is_set())
 	{
@@ -134,7 +217,8 @@ int main(int argc, const char **argv)
 	#endif
 	
 	// And we write the map of CH
-	writeCHMap(segmentedMap, outputFile, images, !args["uncompressed"], args["chaincodeMinPoints"], args["chaincodeMaxPoints"], args["chaincodeMaxDeviation"]);
+	filenamePrefix += "CHmap.";
+	writeCHMap(segmentedMap, outputFile, images, args("mapPreprocessing"), !args["uncompressed"]);
 	
 	// We cleanup
 	delete segmentedMap;

@@ -103,8 +103,8 @@ class ColorMap : public SunImage<ColorType>
 		//! Routine that tries to remove holes in connected components
 		ColorMap* removeHoles(ColorType unusedColor = std::numeric_limits<ColorType>::max() - 1);
 		
-		//! Method to aggregates pixels into blobs by perfoming a closing
-		void aggregateBlobs(const Real& aggregationFactor, const int& projection = SunImage<ColorType>::no_projection);
+		//! Routine to preprocess an image
+		void preprocessing(const std::string& preprocessingList);
 		
 		//! Method to compute the area per latitude
 		void computeButterflyStats(std::vector<float>& totalNumberOfPixels, std::vector<float>& regionNumberOfPixels, std::vector<float>& correctedTotalNumberOfPixels, std::vector<float>& correctedRegionNumberOfPixels);

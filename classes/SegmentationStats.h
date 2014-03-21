@@ -5,6 +5,7 @@
 #include <limits>
 #include <cmath>
 #include <deque>
+#include <set>
 
 #include "constants.h"
 #include "tools.h"
@@ -90,7 +91,7 @@ class SegmentationStats
 		
 		// We must make the getSTAFFStats functions as friends so they can correct the filling factor
 		friend std::vector<SegmentationStats*> getSegmentationStats(const ColorMap*, const EUVImage*);
-		friend std::vector<SegmentationStats*> getSegmentationStats(const ColorMap*, const EUVImage*, const std::vector<ColorType>&);
+		friend std::vector<SegmentationStats*> getSegmentationStats(const ColorMap*, const EUVImage*, const std::set<ColorType>&);
 };
 
 //! Compute all statistics of an image using a ColorMap as a cache
@@ -106,7 +107,7 @@ std::vector<SegmentationStats*> getSegmentationStats(const ColorMap* coloredMap,
 @param image The image to compute the intensities statistics.
 @param classes The classes for wich to compute the stats
 */
-std::vector<SegmentationStats*> getSegmentationStats(const ColorMap* coloredMap, const EUVImage* image, const std::vector<ColorType>& classes);
+std::vector<SegmentationStats*> getSegmentationStats(const ColorMap* coloredMap, const EUVImage* image, const std::set<ColorType>& classes);
 
 //! Write the classes into a fits file as column into the current table 
 FitsFile& writeRegions(FitsFile& file, const std::vector<SegmentationStats*>& segmentation_stats);

@@ -10,37 +10,7 @@ FitsFile::FitsFile()
 FitsFile::FitsFile(const string& filename, const int mode)
 :filename(filename),fptr(NULL),status(0)
 {
-	int exists;
-	if(fits_file_exists(filename.c_str(), &exists, &status))
-	{
-		cerr<<"Error : testing file "<<filename<<" :"<< status <<endl;			
-		fits_report_error(stderr, status);
-		exists = 0;
-	}
-	bool overwrite_ = mode & overwrite;
-	if(overwrite_ || exists <= 0)
-	{
-		remove(filename.c_str());
-		if (fits_create_file(&fptr, filename.c_str(), &status))
-		{
-			cerr<<"Error : opening file "<<filename<<" :"<< status <<endl;			
-			fits_report_error(stderr, status);
-			
-			fptr = NULL;
-		}
-
-	}
-	else
-	{
-		int iomode = mode & update ? READWRITE : READONLY;
-		if (fits_open_image(&fptr, filename.c_str(), iomode, &status))
-		{
-			cerr<<"Error : opening file "<<filename<<" :"<< status <<endl;			
-			fits_report_error(stderr, status);
-			fptr = NULL;
-		}
-	}
-
+	open(filename, mode);
 }
 
 FitsFile::~FitsFile()
@@ -51,6 +21,47 @@ FitsFile::~FitsFile()
 		cerr<<"Destructor for FitsFile called (filename = "<<filename<<")"<<endl;
 	#endif
 }
+
+void FitsFile::open(const string& filename, const int mode)
+{
+	if(!isClosed())
+	{
+		throw runtime_error("File is already opened, close first");
+	}
+	else
+	{
+		this->filename = filename;
+		int exists;
+		char error_message[FLEN_ERRMSG];
+		if(fits_file_exists(filename.c_str(), &exists, &status))
+		{
+			fits_get_errstatus(status, error_message);
+			throw runtime_error("Error checking if file " + filename + " exists: " + string(error_message));
+		}
+		bool overwrite_ = mode & overwrite;
+		if(overwrite_ || exists <= 0)
+		{
+			remove(filename.c_str());
+			if (fits_create_file(&fptr, filename.c_str(), &status))
+			{
+				fits_get_errstatus(status, error_message);
+				fptr = NULL;
+				throw runtime_error("Error opening file " + filename + " : " + string(error_message));
+			}
+		}
+		else
+		{
+			int iomode = mode & update ? READWRITE : READONLY;
+			if (fits_open_image(&fptr, filename.c_str(), iomode, &status))
+			{
+				fits_get_errstatus(status, error_message);
+				fptr = NULL;
+				throw runtime_error("Error opening file " + filename + " : " + string(error_message));
+			}
+		}
+	}
+}
+
 
 void FitsFile::close()
 {

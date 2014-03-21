@@ -2,15 +2,6 @@
 
 using namespace std;
 
-#ifndef NAN
-#define NAN (numeric_limits<Real>::quiet_NaN())
-#endif
-
-#ifndef INF
-#define INF (numeric_limits<Real>::infinity())
-#endif
-
-
 STAFFStats::STAFFStats(const time_t& observationTime, const unsigned id)
 :id(id),observationTime(observationTime), numberPixels(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), area_Raw(0), area_AtDiskCenter(0), fillingFactor(0)
 {}

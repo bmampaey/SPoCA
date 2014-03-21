@@ -4,14 +4,6 @@
 
 using namespace std;
 
-#ifndef NAN
-#define NAN (numeric_limits<EUVPixelType>.quiet_NaN())
-#endif
-#ifndef RealMAX
-#define RealMAX (numeric_limits<EUVPixelType>::max())
-#endif
-
-
 EUVImage::~EUVImage()
 {}
 
@@ -122,7 +114,7 @@ inline Real EUVImage::ExposureTime() const
 	return exposureTime;
 }
 
-void EUVImage::preprocessing(string preprocessingList)
+void EUVImage::preprocessing(const string& preprocessingList)
 {
 	double maxRadius = MAXRADIUS();
 	vector<string> preprocessingSteps = split(preprocessingList);

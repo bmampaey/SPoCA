@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <deque>
 #include <math.h>
-#include <stdexcept>
+#include <algorithm>
 
 extern std::string filenamePrefix;
 
@@ -772,102 +772,64 @@ ColorMap* ColorMap::removeHoles(ColorType unusedColor)
 	return this;
 }
 
-
-
-//! Method to aggregates pixels into blobs by perfoming a closing
-void ColorMap::aggregateBlobs(const Real& aggregationFactor, const int& projection)
+void ColorMap::preprocessing(const string& preprocessingList)
 {
-	ColorMap* projeted = NULL;
+	double maxRadius = INF, maxLong = INF, maxLat = INF;
 	
-	// We do the dilation
-	switch(projection)
+	vector<string> preprocessingSteps = split(preprocessingList);
+	for(unsigned s = 0; s < preprocessingSteps.size(); ++s)
 	{
-		case(SunImage<ColorType>::equirectangular):
-			projeted = new ColorMap(getWCS(), Xaxes(), Yaxes());
-			projeted->equirectangular_projection(this, false);
-			#if defined DEBUG
-			projeted->writeFits(filenamePrefix + "equirectangular_projection.fits");
-			#endif
-			projeted->dilateCircular((2./3.)*aggregationFactor, null());
-			#if defined DEBUG
-			projeted->writeFits(filenamePrefix + "dilated.fits");
-			#endif
-		break;
+		vector<string> stepParameters = split(preprocessingSteps[s], '=');
+		string stepType = trimWhites(stepParameters[0]);
 		
-		case(SunImage<ColorType>::Lambert_cylindrical):
-			projeted = new ColorMap(getWCS(), Xaxes(), Yaxes());
-			projeted->Lambert_cylindrical_projection(this, false);
-			#if defined DEBUG
-			projeted->writeFits(filenamePrefix + "Lambert_cylindrical_projection.fits");
-			#endif
-			projeted->dilateCircular((2./3.)*aggregationFactor, null());
-			#if defined DEBUG
-			projeted->writeFits(filenamePrefix + "dilated.fits");
-			#endif
-		break;
+		#if defined VERBOSE
+		cout<<"Applying image preprocessing step "<<stepType;
+		if(stepParameters.size() > 1)
+			cout<<" with parameter "<<stepParameters[1]<<endl;
+		else
+			cout<<endl;
+		#endif
 		
-		case(SunImage<ColorType>::sinusoidal):
-			projeted = new ColorMap(getWCS(), Xaxes(), Yaxes());
-			projeted->sinusoidal_projection(this, false);
-			#if defined DEBUG
-			projeted->writeFits(filenamePrefix + "sinusoidal_projection.fits");
-			#endif
-			projeted->dilateCircular((2./3.)*aggregationFactor, null());
-			#if defined DEBUG
-			projeted->writeFits(filenamePrefix + "dilated.fits");
-			#endif
-		break;
-		
-		case(SunImage<ColorType>::distance_transform):
-			cerr<<"Distance transform is not yet implemented"<<endl;
-			
-		case(SunImage<ColorType>::no_projection):
-			dilateCircular(aggregationFactor, null());
-			#if defined DEBUG
-			writeFits(filenamePrefix + "dilated.fits");
-			#endif
-		break;
-		
-		default:
-		cerr<<"Unknown projection type for blob aggregation"<<endl;
-		return;
-		
+		if(stepType == "NAR")
+		{
+			maxRadius = stepParameters.size() > 1 ? min(maxRadius, toDouble(stepParameters[1])) : min(maxRadius, 1.);
+		}
+		else if(stepType == "Long")
+		{
+			if(stepParameters.size() < 2)
+			{
+				cerr<<"Error: No value specified for max Longitude preprocessing"<<preprocessingSteps[s]<<endl;
+				exit(EXIT_FAILURE);
+			}
+			else
+			{
+				maxLong = min(maxLong, toDouble(stepParameters[1]));
+			}
+		}
+		else if(stepType == "Lat")
+		{
+			if(stepParameters.size() < 2)
+			{
+				cerr<<"Error: No value specified for max Latitude preprocessing"<<preprocessingSteps[s]<<endl;
+				exit(EXIT_FAILURE);
+			}
+			else
+			{
+				maxLat = min(maxLat, toDouble(stepParameters[1]));
+			}
+		}
+		else
+		{
+			cerr<<"Error: Unknown preprocessing step "<<preprocessingSteps[s]<<endl;
+			exit(EXIT_FAILURE);
+		}
 	}
-	
-
-	
-	// We do the erosion
-	switch(projection)
-	{
-		case(SunImage<ColorType>::equirectangular):
-			projeted->erodeCircular((2./3.)*aggregationFactor, null());
-			this->equirectangular_deprojection(projeted, false);
-		break;
-		
-		case(SunImage<ColorType>::Lambert_cylindrical):
-			projeted->erodeCircular((2./3.)*aggregationFactor, null());
-			this->Lambert_cylindrical_deprojection(projeted, false);
-		break;
-		
-		case(SunImage<ColorType>::sinusoidal):
-			projeted->erodeCircular((2./3.)*aggregationFactor, null());
-			this->sinusoidal_deprojection(projeted, false);
-		break;
-		
-		case(SunImage<ColorType>::distance_transform):
-			cerr<<"Distance transform is not yet implemented"<<endl;
-			
-		case(SunImage<ColorType>::no_projection):
-			erodeCircular(aggregationFactor, null());
-		break;
-		
-		default:
-		cerr<<"Unknown projection type for blob aggregation"<<endl;
-		return;
-		
-	}
-	delete projeted;
+	if(maxRadius < INF)
+		nullifyAboveRadius(maxRadius);
+	if(maxLong < 180 || maxLat < 180)
+		nullifyAboveLongLat(maxLong, maxLat);
 }
+
 
 void ColorMap::computeButterflyStats(vector<float>& totalNumberOfPixels, vector<float>& regionNumberOfPixels, vector<float>& correctedTotalNumberOfPixels, vector<float>& correctedRegionNumberOfPixels)
 {

@@ -1,53 +1,51 @@
-//! Program that computes the STAFF statistics of maps
+//! This Program computes STAFF stats for EUV images.
 /*!
 @page get_STAFF_stats get_STAFF_stats.x
 
- This program takes a colorized map in fits format as a mask of regions, and computes different statistics on the sun images provided
- 
- The sun images should be similar to the colorized map.
- 
- @section usage Usage
- 
- <tt> get_STAFF_stats.x -h </tt>
- 
- Calling the programs with -h will provide you with help 
- 
- <tt> get_STAFF_stats.x [-option optionvalue, ...] -M colorizeMap fitsFileName1 fitsFileName2 </tt>
- 
- You must provide exactly one colorized map.
- But you can provide as many sun images as desired.
- 
+Version: 3.0
+
+Author: Benjamin Mampaey, benjamin.mampaey@sidc.be
+
+@section usage Usage
+<tt> bin/get_STAFF_stats.x [-option optionvalue ...]  CHSegmentedMap ARSegmentedMap fitsFile [ fitsFile ... ] </tt>
+
+@param CHSegmentedMap	Path to the segmentation map for the Coronal Hole class.
+@param ARSegmentedMap	Path to the segmentation map for the Active Region class.
+@param fitsFile	Path to a fits file for computing stats
+
+global parameters:
+
+@param help	Print a help message and exit.
+<BR>If you pass the value doxygen, the help message will follow the doxygen convention.
+<BR>If you pass the value config, the help message will write a configuration file template.
+
+@param config	Program option configuration file.
+
+@param ARClass	The color corresponding to the AR class in the ARSegmentedMap.
+
+@param CHClass	The color corresponding to the CH class in the CHSegmentedMap.
 
 @param imageType	The type of the images.
-<BR>Possible values are : 
- - EIT
- - EUVI
- - AIA
- - SWAP
- - HMI
+<BR>Possible values are : EIT, EUVI, AIA, SWAP
 
-@param CHSegmentedMap	A segmented map for the Coronal Hole class.
-@param CHClass The color corresponding to the CH class in the CHSegmentedMap.
+@param output	The name for the output file or of a directory.
 
-@param ARSegmentedMap	A segmented map for the Active Region class.
-@param ARClass The color corresponding to the AR class in the ARSegmentedMap.
+@param separator	The separator to put between columns in the csv file.
 
-@param separator	The separator to put between columns.
-
-@param intensitiesStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
-
-@param intensitiesStatsPreprocessing	The steps of preprocessing to apply to the sun images
-<BR>Possible values :
- - NAR (Nullify above radius)
- - ALC (Annulus Limb Correction)
- - DivMedian (Division by the median)
- - TakeSqrt (Take the square root)
- - TakeLog (Take the log)
- - DivMode (Division by the mode)
- - DivExpTime (Division by the Exposure Time)
- - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
- - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile)
- - Smoothzz.z Binomial smoothing of zz.z arcsec
+@param statsPreprocessing	The steps of preprocessing to apply to the sun images.
+<BR>Can be any combination of the following:
+<BR> NAR=zz.z (Nullify pixels above zz.z*radius)
+<BR> ALC (Annulus Limb Correction)
+<BR> DivMedian (Division by the median)
+<BR> TakeSqrt (Take the square root)
+<BR> TakeLog (Take the log)
+<BR> DivMode (Division by the mode)
+<BR> DivExpTime (Division by the Exposure Time)
+<BR> ThrMin=zz.z (Threshold intensities to minimum zz.z)
+<BR> ThrMax=zz.z (Threshold intensities to maximum zz.z)
+<BR> ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)
+<BR> ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)
+<BR> Smooth=zz.z (Binomial smoothing of zz.z arcsec)
 
 See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
 

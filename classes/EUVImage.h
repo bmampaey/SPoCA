@@ -85,7 +85,7 @@ class EUVImage : public SunImage<EUVPixelType>
 		virtual void setALCParameters(std::vector<Real> ALCParameters);
 
 		//! Routine to do image preprocessing
-		void preprocessing(std::string preprocessingList);
+		void preprocessing(const std::string& preprocessingList);
 		
 		//! Routine to do Annulus Limb Correction (ALC)
 		void annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius);

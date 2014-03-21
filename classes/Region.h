@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <ctime>
 #include <string>
+#include <set>
 
 #include "constants.h"
 #include "tools.h"
@@ -113,6 +114,13 @@ class Region
 @param map A map of the region, each one must have a different color
 */
 std::vector<Region*> getRegions(const ColorMap* coloredMap);
+
+//! Extraction of the regions from a ColorMap
+/* 
+@param map A map of the region, each one must have a different color
+@param colors The regions color for which to compute the stats
+*/
+std::vector<Region*> getRegions(const ColorMap* coloredMap, const std::set<ColorType>& colors);
 
 //! Write the regions into a fits file as column into the current table 
 FitsFile& writeRegions(FitsFile& file, const std::vector<Region*>& regions);

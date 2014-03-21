@@ -127,6 +127,9 @@ class SunImage : public Image<T>
 		//! Routine that transform a coordinate to the referenciel of img 
 		RealPixLoc shift_like(const RealPixLoc c, const SunImage* img) const;
 		
+		//! Routine that transform a heliographic coordinate to the referenciel of img 
+		HGS shift_like(HGS hgs, const SunImage* img) const;
+		
 		//! Routine that converts the pixel location to Helioprojective cartesian coordinate
 		HPC toHPC(const RealPixLoc& c) const;
 		
@@ -233,20 +236,6 @@ class SunImage : public Image<T>
 			@param image The image to use for the origin
 		*/
 		void transform(const Real rotationAngle = 0., const RealPixLoc translation = RealPixLoc(0, 0), const Real scaling = 1, const Image<T> * image = NULL);
-		
-
-		
-	public:
-		//! Constant for no projection
-		static const int no_projection = NO_PROJECTION;
-		//! Constant for projection equirectangular
-		static const int equirectangular = EQUIRECTANGULAR_PROJECTION;
-		//! Constant for projection Lambert_cylindrical
-		static const int Lambert_cylindrical = LAMBERT_CYLINDRICAL_PROJECTION;
-		//! Constant for projection sinusoidal
-		static const int sinusoidal = SINUSOIDAL_PROJECTION;
-		//! Constant for distance transform
-		static const int distance_transform = DISTANCE_TRANSFORM;
 };
 
 //! Routine to check if the SunImage have similar parameters

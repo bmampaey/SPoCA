@@ -183,6 +183,35 @@ vector<Region*> getRegions(const ColorMap* coloredMap)
 	return values(regions);
 }
 
+vector<Region*> getRegions(const ColorMap* coloredMap, const set<ColorType>& colors)
+{
+	unsigned id = 0;
+	
+	map<ColorType, Region*> regions;
+	
+	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
+	{
+		for (unsigned x = 0; x < coloredMap->Xaxes(); ++x)
+		{
+			if(coloredMap->pixel(x,y) != coloredMap->null())
+			{
+				const ColorType& color = coloredMap->pixel(x,y);
+				if(colors.count(color) > 1)
+				{
+					// If no region of that color exist we create it
+					if(regions.count(color) == 0)
+					{
+						regions[color] = new Region(coloredMap->ObservationTime(),id, color);
+						++id;
+					}
+					// We add the pixel to the region
+					regions[color]->add(PixLoc(x,y));
+				}
+			}
+		}
+	}
+	return values(regions);
+}
 
 FitsFile& writeRegions(FitsFile& file, const vector<Region*>& regions)
 {

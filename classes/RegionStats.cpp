@@ -2,16 +2,6 @@
 
 using namespace std;
 
-#ifndef NAN
-#define NAN (numeric_limits<Real>::quiet_NaN())
-#endif
-
-#ifndef INF
-#define INF (numeric_limits<Real>::infinity())
-#endif
-
-
-
 RegionStats::RegionStats(const time_t& observationTime, const unsigned id)
 :id(id),observationTime(observationTime), numberPixels(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), center(0,0), barycenter(0,0), clipped_spatial(false)
 {}
@@ -296,11 +286,21 @@ string RegionStats::toString(const string& separator, bool header) const
 
 vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image, const vector<Region*>& regions)
 {
-	map<ColorType,RegionStats*> regions_stats;
+	set<ColorType> regionsColors;
 	for(unsigned r = 0; r < regions.size(); ++r)
 	{
-		if (regions_stats.count(regions[r]->Color()) == 0)
-			regions_stats[regions[r]->Color()] = new RegionStats(image->ObservationTime(), regions[r]->Id());
+			regionsColors.insert(regions[r]->Color());
+	}
+	
+	return getRegionStats(coloredMap, image, regionsColors);
+}
+
+vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image, const set<ColorType>& regions)
+{
+	map<ColorType,RegionStats*> regions_stats;
+	for(set<ColorType>::iterator c=regions.begin(); c!=regions.end(); ++c)
+	{
+			regions_stats[*c] = new RegionStats(image->ObservationTime(), *c);
 	}
 	
 	RealPixLoc sunCenter = image->SunCenter();
@@ -329,6 +329,7 @@ vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* 
 	
 	return values(regions_stats);
 }
+
 
 vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image)
 {

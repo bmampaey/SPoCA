@@ -330,11 +330,9 @@ string ArgParser::help_message(const string& executable, bool config_file, bool 
 			}
 		}
 		
-		if (!description.empty())
-			message = description + "\n";
-		
 		if(doxygen)
 		{
+			message = replace(description, "\n", "\n<BR>") + "\n";
 			message += "@section usage Usage\n<tt> " + executable + " [-option optionvalue ...]" + positional_args;
 			message += " </tt>";
 			message += "\n" + positionals;
@@ -342,6 +340,7 @@ string ArgParser::help_message(const string& executable, bool config_file, bool 
 		}
 		else
 		{
+			message = description + "\n";
 			message += "Usage: " + executable + " [-option optionvalue ...]" + positional_args;
 			message += "\nwhere:" + positionals;
 			message += "\n\n" + nominals;

@@ -5,6 +5,7 @@
 #include <limits>
 #include <cmath>
 #include <deque>
+#include <set>
 
 #include "constants.h"
 #include "tools.h"
@@ -117,6 +118,14 @@ std::vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVIm
 @param regions The regions for wich to compute the stats
 */
 std::vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image, const std::vector<Region*>& regions);
+
+//! Compute the statistics of the regions using a ColorMap as a cache
+/* 
+@param map A map of the region, each one must have a different color
+@param image The image to compute the intensities statistics.
+@param regions The regions color for wich to compute the stats
+*/
+std::vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image, const std::set<ColorType>& regions);
 
 //! Compute the statistics of all the regions taken together using a ColorMap as a cache
 /* 

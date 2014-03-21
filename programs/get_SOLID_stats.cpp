@@ -1,122 +1,97 @@
-//! Program that does attribution and segmentation of EUV sun images
+//! This Program does attribution and computes SOLID stats (aka. ring analysis).
 /*!
-@page attribution attribution.x
+@page get_SOLID_stats get_SOLID_stats.x
 
- This program takes a tuple of EUV sun images in fits format, does the requested attribution and segmentation.
- 
- A tuple of images is a list of images that have different channels / wavelength but are similar.
- 
- It outputs the maps and statistics of the Active %Region (AR) and Coronal Holes (CH) 
- 
- It can also output the map and statistics about the 3 classes AR, CH and Quiet Sun (QS) in general.
- 
- @section usage Usage
- 
- <tt> attribution.x -h </tt>
- 
- Calling the programs with -h will provide you with help 
- 
- <tt> attribution.x [-option optionvalue, ...] fitsFileName1 fitsFileName2 </tt>
- 
- You must provide exactly one fits file per channel.
- The order of the fits files is important, as the first one will be used for the statistics of the regions.
- 
- 
-@param classifierType	The type of classifier to use for the attribution.
-<BR> Possible values are : 
- - FCM
- - PFCM
- - PCM
- - PCM2
- - SPOCA
- - SPOCA2
- - HFCM(Histogram FCM)
- - HPFCM(Histogram PFCM)
- - HPCM(Histogram PCM)
- - HPCM2(Histogram PCM2)
+Version: 3.0
 
-@param maxNumberIteration	The maximal number of iteration for the attribution.
- 
-@param precision	The precision to be reached to stop the attribution.
+Author: Benjamin Mampaey, benjamin.mampaey@sidc.be
 
-@param fuzzifier	The fuzzifier (m).
+@section usage Usage
+<tt> bin/get_SOLID_stats.x [-option optionvalue ...]  fitsFile fitsFile </tt>
+
+@param fitsFile	Path to a fits file
+
+global parameters:
+
+@param help	Print a help message and exit.
+<BR>If you pass the value doxygen, the help message will follow the doxygen convention.
+<BR>If you pass the value config, the help message will write a configuration file template.
+
+@param config	Program option configuration file.
+
+@param centersFile	The name of the file containing the centers. If it it not provided the centers will be initialized randomly.
+
+@param computeEta	If the enters file do not contain the values for Eta or if you want to force Eta to be recomputed (slow!).
+
+@param fuzzyStats	Set this flag if you want fuzzy ring stats.
+
+@param imagePreprocessing	The steps of preprocessing to apply to the sun images.
+<BR>Can be any combination of the following:
+<BR> NAR=zz.z (Nullify pixels above zz.z*radius)
+<BR> ALC (Annulus Limb Correction)
+<BR> DivMedian (Division by the median)
+<BR> TakeSqrt (Take the square root)
+<BR> TakeLog (Take the log)
+<BR> DivMode (Division by the mode)
+<BR> DivExpTime (Division by the Exposure Time)
+<BR> ThrMin=zz.z (Threshold intensities to minimum zz.z)
+<BR> ThrMax=zz.z (Threshold intensities to maximum zz.z)
+<BR> ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)
+<BR> ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)
+<BR> Smooth=zz.z (Binomial smoothing of zz.z arcsec)
+
+@param imageType	The type of the images.
+<BR>Possible values: EIT, EUVI, AIA, SWAP
+
+@param map	Set to false if you don't want to write the segmentation map.
+
+@param output	The name for the output file or of a directory.
+
+@param registerImages	Set to register/align the images when running multi channel attribution.
+
+@param type	The type of classifier to use for the attribution.
+<BR>Possible values: FCM, PFCM, PCM, PCM2, SPoCA, SPoCA2
+
+@param uncompressed	Set this flag if you want results maps to be uncompressed.
+
+classification parameters:
+
+@param FCMfuzzifier	The FCM fuzzifier value. Set if you want to override the global fuzzifier value for FCM.
+
+@param FCMweight	The FCM weight for PFCM classification.
+
+@param PCMfuzzifier	The PCM fuzzifier value. Set if you want to override the global fuzzifier value for PCM.
+
+@param PCMweight	The PCM  weight for PFCM classification.
+
+@param binSize	The size of the bins of the histogram.
+<BR>NB : Be carreful that the histogram is built after the image preprocessing.
+
+@param fuzzifier	The fuzzifier value
+
+@param maxNumberIteration	The maximal number of iteration for the classification.
+
+@param neighborhoodRadius	Only for spatial classifiers like SPoCA. The neighborhoodRadius is half the size of the square of neighboors.
+<BR>For example with a value of 1, the square has a size of 3x3.
 
 @param numberClasses	The number of classes to classify the sun images into.
 
-@param centersFile	The name of the file containing the centers.
- If it it not provided the centers will be initialized randomly.
+@param precision	The precision to be reached to stop the classification.
 
-@param numberPreviousCenters	The number of previous saved centers to take into account for the final attribution.
-<BR> If you are running in continuous mode, this option allow to store n centers in the centers files. It is the median value of those n centers + the last found one that will to be used for the last attribution.
+segmentation parameters:
 
-@param imageType	The type of the images.
-<BR>Possible values are : 
- - EIT
- - EUVI
- - AIA
- - SWAP
+@param AR	Only for fix segmentation. The classes of the Active Region.
 
-@param preprocessingSteps	The steps of preprocessing to apply to the sun images.
-<BR>Possible values :
- - NAR (Nullify above radius)
- - ALC (Annulus Limb Correction)
- - DivMedian (Division by the median)
- - TakeSqrt (Take the square root)
- - TakeLog (Take the log)
- - DivMode (Division by the mode)
- - DivExpTime (Division by the Exposure Time)
- - ThrMinzz.z (Threshold intensities to minimum the zz.z percentile) 
- - ThrMaxzz.z (Threshold intensities to maximum the zz.z percentile) 
- - Smoothzz.z Binomial smoothing of zz.z arcsec
+@param CH	Only for fix segmentation. The classes of the Coronal Hole.
 
-@param radiusratio	The ratio of the radius of the sun that will be processed.
+@param QS	Only for fix segmentation. The classes of the Quiet Sun.
 
-@param maps	The kind of maps to generate.
-<BR>Possible values :
- - A (Active %Region)
- - C (Coronal Hole)
- - S (Segmented)
+@param limits	Only for limit segmentation. A vector of feature vectors to group class centers.
 
-@param intensitiesStatsRadiusRatio	The ratio of the radius of the sun that will be used for the region stats.
+@param thresholds	Only for threshold segmentation. The parameter of the threshold segmentation.
+<BR>Must be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership
 
-@param intensitiesStatsPreprocessing	The steps of preprocessing to apply to the sun images (see preprocessingSteps for possible values).
-
-@param neighborhoodRadius	The neighborhoodRadius is half the size of the square of neighboors, for example with a value of 1, the square has a size of 3x3. <BR>Only for spatial classifiers like SPoCA.
-
-
-@param histogramFile	The name of a file containing an histogram.
-
-@param binSize	The size of the bins of the histogram.
-<BR>N.B. Be carreful that the histogram is built after the preprocessing.
-
-@param segmentation	The segmentation type.
-<BR>Possible values :
- - max (Maximum of Uij)
- - closest (Closest center)
- - threshold (Threshold on Uij)
- - limits (Merge on centers value limits)
- - fix (Merge on fix CH QS AR)
-
-@param maxLimitsFile	The name of the file containing the max limits. Only for limit segmentation.
- 
-
-@param ch	The classes of the Coronal Hole. <BR>Only for fix segmentation.
-
-@param qs	The classes of the Quiet Sun. <BR>Only for fix segmentation.
-
-@param ar	The classes of the Active %Region. <BR>Only for fix segmentation.
-
-@param tr	The parameter of the threshold segmentation.
-Must be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership <BR>Only for threshold segmentation.
-
-@param uncompressedMaps	Set this flag if you want results maps to be uncompressed.
-
-@param chaincodeMaxPoints The maximal number of points in a chaincode.
-
-@param chaincodeMaxDeviation The maximal deviation of the chaincode curve between 2 points, in arcsec.
-
-
-@param outputDirectory	The name for the output directory.
+@param type	The type of segmentation. Possible values are : max, closest, threshold, limits, fix
 
 See @ref Compilation_Options for constants and parameters for SPoCA at compilation time.
 
@@ -300,8 +275,8 @@ int main(int argc, const char **argv)
 	args["config"] = ArgParser::ConfigurationFile('C');
 	args["help"] = ArgParser::Help('h');
 	
-	args["type"] = ArgParser::Parameter("SPoCA2", 'T', "The type of classifier to use for the attribution.\nPossible values are : FCM, PFCM, PCM, PCM2, SPoCA, SPoCA2");
-	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images.\nPossible values are : EIT, EUVI, AIA, SWAP");
+	args["type"] = ArgParser::Parameter("SPoCA2", 'T', "The type of classifier to use for the attribution.\nPossible values: FCM, PFCM, PCM, PCM2, SPoCA, SPoCA2");
+	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images.\nPossible values: EIT, EUVI, AIA, SWAP");
 	args["imagePreprocessing"] = ArgParser::Parameter("ALC", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["registerImages"] = ArgParser::Parameter(false, 'r', "Set to register/align the images when running multi channel attribution.");
 	args["centersFile"] = ArgParser::Parameter('c', "The name of the file containing the centers. If it it not provided the centers will be initialized randomly.");
@@ -392,7 +367,7 @@ int main(int argc, const char **argv)
 		for(unsigned p = 0; p < images.size(); ++p)
 			filenamePrefix += "." + images[p]->Channel() + "." + toString(images[p]->ObservationTime());
 		filenamePrefix += ".";
-		outputFile = filenamePrefix + "SegmentedMap.fits";
+		outputFile = filenamePrefix + "csv";
 	}
 	else
 	{
@@ -591,7 +566,7 @@ int main(int argc, const char **argv)
 	}
 	
 	// We output the ring stats to file
-	write_ring_stats(filenamePrefix + "ring_stats.csv", stats, images[0]->ObservationDate());
+	write_ring_stats(outputFile, stats, images[0]->ObservationDate());
 	
 	// We cleanup
 	delete F;

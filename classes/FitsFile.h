@@ -7,9 +7,11 @@
 #include <typeinfo>
 #include <vector>
 #include <ctime>
+#include <stdexcept>
 
-#include "fitsio.h"
-#include "longnam.h"
+#include <fitsio.h>
+#include <longnam.h>
+
 #include "tools.h"
 #include "constants.h"
 #include "Header.h"
@@ -56,10 +58,19 @@ class FitsFile
 		//! Destructor
 		~FitsFile();
 		
+		//! Routine to open a fits file
+		/*! @param mode The mode specifies how to open the file.
+				Possible values are FitsFile::overwrite or FitsFile::update
+				If not specified, and the file exist it will be opened read only.
+		*/
+		void open(const std::string& filename, const int mode = 0);
+		
 		//! Routine to close the fits file
 		void close();
+		
 		//! Routine to test the status of the fits file
 		bool isClosed();
+		
 		//! Routine to test the status of the fits file
 		bool isGood();
 		

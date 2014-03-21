@@ -1,4 +1,3 @@
-
 /*!
 
 @page Installation Installation
@@ -7,41 +6,41 @@
 
 The programs have been developed to run on linux and have not been tested on any other platform.
 
-To compile all programs for both single channel and dual channel, first generate the Makefile using "bash makemake.sh > Makefile".
-Do not edit the Makefile by hand, edit makemake.sh if you want to change the compiler flags, and regenerate the Makefile after you made changes.
+The programs rely on the cfitsio library. So make sure that the path to the library and header are correctly set in your environement variable (for example LIBRARY_PATH and C_INCLUDE_PATH)
+
+To compile all programs for both single channel and dual channel, change to your SPoCA directory and generate the Makefile using the command <tt>"bash makemake.sh > Makefile"</tt>.
+
+Then still in the SPoCA directory, run the command <tt>make</tt> to compile the programs.
+
+N.B. Do not edit the Makefile by hand, edit makemake.sh if you want to change the compiler flags, and regenerate the Makefile after you made changes.
 Also regenerate the Makefile if you change which source files include which headers, or add/remove source files.
 
-You can always get help for a program or a script by calling it with the -h option 
  
 @section organistaion_sec Organisation of the software directory tree
 
 The directories are organized as follow :
 
-- spoca			: repository for spoca
-- spoca/programs	: repository for the main c++ files of programs
-- spoca/classes		: repository for the classes .h and .cpp files (classifiers, images, ...) written specifically for SPoCA, these are made into shared libraries libSPoCA1.so and libSPoCA2.so
-- spoca/bin1		: repository for executables that operate on 1 channel (compiled with -DNUMBERCHANNELS=1 and linked with libSPoCA1.so)
-- spoca/bin2		: repository for executables that operate on 2 channels (compiled with -DNUMBERCHANNELS=2 and linked with libSPoCA2.so)
-- spoca/lib		: repository for shared library files libSPoCA1.so (one channel, compiled with -DNUMBERCHANNELS=1) and libSPoCA2.so (two channels, compiled with -DNUMBERCHANNELS=2), 
+- SPoCA				: repository for SPoCA
+- SPoCA/programs	: repository for the main c++ files of programs
+- SPoCA/classes	: repository for the classes .h and .cpp files (classifiers, images, ...) written specifically for SPoCA, these are made into shared libraries libSPoCA1.so and libSPoCA2.so
+- SPoCA/bin1		: repository for executables that operate on 1 channel (compiled with -DNUMBERCHANNELS=1 and linked with libSPoCA1.so)
+- SPoCA/bin2		: repository for executables that operate on 2 channels (compiled with -DNUMBERCHANNELS=2 and linked with libSPoCA2.so)
+- SPoCA/lib			: repository for shared library files libSPoCA1.so (one channel, compiled with -DNUMBERCHANNELS=1) and libSPoCA2.so (two channels, compiled with -DNUMBERCHANNELS=2), 
 you need to include the full path to this directory in the environment variable LD_LIBRARY_PATH so the executables can find these libraries.
 Either on the command line when you call a program, for example:
 
-$ LD_LIBRARY_PATH="/path/to/spoca/lib:$LD_LIBRARY_PATH" /path/to/spoca/bin1/classification.x <...>
+<tt>$ LD_LIBRARY_PATH="/path/to/SPoCA/lib:$LD_LIBRARY_PATH" /path/to/SPoCA/bin1/classification.x <...></tt>
 
 Or by setting the variable and exporting it, after which it is available to all commands you run in this shell:
 
-$ export LD_LIBRARY_PATH="/path/to/spoca/lib:$LD_LIBRARY_PATH"
-$ /path/to/spoca/bin1/classification.x <...>
+<tt>$ export LD_LIBRARY_PATH="/path/to/SPoCA/lib:$LD_LIBRARY_PATH"<BR>
+$ /path/to/SPoCA/bin1/classification.x <...></tt>
 
 If you place the export line in your .bash_profile the variable will automatically be set everytime you open a new shell.
 
-- spoca/script		: repository of scripts (mainly in perl) to help in running spoca and manipulating output (creation of movies, ...)
-- spoca/utilities	: repository for some utilities program
-- spoca/documentation	: repository for the documentation
-
-There is also 1 directory for your convenience :
-
-- spoca/results
+- SPoCA/script		: repository of scripts (mainly in python) to help in running SPoCA and manipulating output (creation of movies, ...)
+- SPoCA/configs	: repository of configuration files examples to run SPoCA
+- SPoCA/documentation	: repository for the documentation
 
 @section reqandlib_sec Requisites and librairies
 
@@ -51,11 +50,12 @@ There is also 1 directory for your convenience :
 
 @subsection lib_sec Librairies
 - cfitsio version 3.26
-- ImageMagick Magick++ version 6.6 (only for certain progams)
-- perl (only for the scripts)
-- perl modules such as fits, etc 
-- python 2.6 for some scripts
-- condor for some scripts
+- ImageMagick Magick++ version 6.6 (only for visualisation progams)
+
+@subsection optional Optional
+- python 2.6 and python modules such as pyfits, matplotlib, numpy, ... for the scripts
+- doxygen for generating the documentation
+- graphviz for generating graphs
 
 @section compilation_sec Compilation options
 
@@ -63,9 +63,9 @@ See @ref Compilation_Options for constants and parameters for SPoCA at compilati
 
 @section documentation_seq Generating the documentation
 
-The documentation of SPoCA is automatically genereted by Doxygen. The Doxygen configuration file is located in spoca/documentation/Doxyfile.cfg.
-You can regenerate it by changing to the spoca directory and running doxygen like so "doxygen documentation/Doxyfile.cfg"
-
+The documentation of SPoCA can be automatically genereted by Doxygen. The Doxygen configuration file is located at documentation/Doxyfile.cfg.
+You can regenerate it by changing to the SPoCA directory and running doxygen like so "doxygen documentation/Doxyfile.cfg"
+In the folder documentation/html you will then find a file index.html that you can open with your favorite browser.
 */
 
 

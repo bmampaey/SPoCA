@@ -473,7 +473,11 @@ void ArgParser::parse(const int argc, const char **argv, bool warn_duplicate, bo
 		{
 			if(warn_duplicate)
 			{ 
-				cerr<<"WARN: Argument "<<i->at(0)<<"."<<i->at(1)<<" was set more than once"<<endl;
+				cerr<<"WARN: Argument "<<i->at(0)<<"."<<i->at(1)<<" was set more than once";
+				if(i->size() >= 3 && overwrite)
+					cerr<<", final value is "<<i->at(2)<<endl;
+				else
+					cerr<<", final value is "<<sections[i->at(0)][i->at(1)]<<endl;
 			}
 			if(! overwrite)
 			{
@@ -645,7 +649,11 @@ void ArgParser::parse_file(const string& filename, bool warn_duplicate, bool ove
 		{
 			if(warn_duplicate)
 			{ 
-				cerr<<"WARN: Argument "<<i->at(0)<<"."<<i->at(1)<<" was set more than once"<<endl;
+				cerr<<"WARN: Argument "<<i->at(0)<<"."<<i->at(1)<<" was set more than once";
+				if(i->size() >= 3 && overwrite)
+					cerr<<", final value is "<<i->at(2)<<endl;
+				else
+					cerr<<", final value is "<<sections[i->at(0)][i->at(1)]<<endl;
 			}
 			if(! overwrite)
 			{

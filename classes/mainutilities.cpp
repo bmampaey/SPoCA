@@ -108,7 +108,7 @@ bool writeCentersToFile(const string& filename, const vector<string>& channels, 
 	ofstream file(filename.c_str(), ios_base::trunc);
 	if(file)
 	{
-		for(unsigned i = 0; i < max && file.good() && i < Bs.size(); ++i)
+		for(unsigned i = 0; i < max+1 && file.good() && i < Bs.size(); ++i)
 		{
 			file<<setiosflags(ios::fixed)<<channels<<"\t"<<Bs[i]<<endl;
 			if(! file)
@@ -231,7 +231,7 @@ bool writeCentersEtasToFile(const string& filename, const vector<string>& channe
 	ofstream file(filename.c_str(), ios_base::trunc);
 	if(file)
 	{
-		for(unsigned i = 0; i < max && file.good() && i < Bs.size() && i < Etas.size(); ++i)
+		for(unsigned i = 0; i < max + 1 && file.good() && i < Bs.size() && i < Etas.size(); ++i)
 		{
 			file<<setiosflags(ios::fixed)<<channels<<"\t"<<Bs[i]<<"\t"<<Etas[i]<<endl;
 			if(! file)

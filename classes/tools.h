@@ -81,7 +81,6 @@ std::istream& operator>>(std::istream& in, std::vector<T>& v)
 			v.push_back(value);
 			in>>trash>>value;
 		}
-		in>>trash;
 		v.push_back(value);
 	}
 	return in;

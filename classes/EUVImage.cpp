@@ -119,7 +119,7 @@ inline Real EUVImage::ExposureTime() const
 
 void EUVImage::preprocessing(const string& preprocessingList)
 {
-	double maxRadius = MAXRADIUS();
+	Real maxRadius = INF;
 	vector<string> preprocessingSteps = split(preprocessingList);
 	for(unsigned s = 0; s < preprocessingSteps.size(); ++s)
 	{
@@ -153,7 +153,7 @@ void EUVImage::preprocessing(const string& preprocessingList)
 		}
 		else if(stepType == "ALC")
 		{
-			annulusLimbCorrection(maxRadius, MINRADIUS());
+			annulusLimbCorrection(min(MAXRADIUS(),maxRadius), MINRADIUS());
 		}
 		else if(stepType == "DivMedian")
 		{

@@ -134,7 +134,7 @@ ColorMap* Classifier::getSegmentedMap(ParameterSection& parameters, ColorMap* se
 	}
 	else if (parameters["type"] == "limits")
 	{
-		if(!parameters["maxLimits"].is_set())
+		if(!parameters["limits"].is_set())
 		{
 			cerr<<"Error : For limits segmentation the limits parameter is mandatory."<<endl;
 			exit(EXIT_FAILURE);
@@ -668,10 +668,10 @@ ParameterSection Classifier::segmentationParameters()
 {
 	ParameterSection parameters;
 	parameters["type"] = ArgParser::Parameter("max", 'T', "The type of segmentation. Possible values are : max, closest, threshold, limits, fix");
-	parameters["limits"] = ArgParser::Parameter('L', "Only for limit segmentation. A vector of feature vectors to group class centers.");
-	parameters["CH"] = ArgParser::Parameter('c', "Only for fix segmentation. The classes of the Coronal Hole.");
-	parameters["AR"] = ArgParser::Parameter('a', "Only for fix segmentation. The classes of the Active Region.");
-	parameters["QS"] = ArgParser::Parameter('q', "Only for fix segmentation. The classes of the Quiet Sun.");
-	parameters["thresholds"] = ArgParser::Parameter('t', "Only for threshold segmentation. The parameter of the threshold segmentation.\nMust be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership");
+	parameters["limits"] = ArgParser::Parameter("",'L', "Only for limit segmentation. A vector of feature vectors to group class centers.");
+	parameters["CH"] = ArgParser::Parameter("",'c', "Only for fix segmentation. The classes of the Coronal Hole.");
+	parameters["AR"] = ArgParser::Parameter("",'a', "Only for fix segmentation. The classes of the Active Region.");
+	parameters["QS"] = ArgParser::Parameter("",'q', "Only for fix segmentation. The classes of the Quiet Sun.");
+	parameters["thresholds"] = ArgParser::Parameter("",'t', "Only for threshold segmentation. The parameter of the threshold segmentation.\nMust be of the form class_number,lowerIntensity_minMembership,higherIntensity_minMembership");
 	return parameters;
 }

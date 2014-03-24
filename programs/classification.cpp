@@ -187,7 +187,7 @@ int main(int argc, const char **argv)
 	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images.\nPossible values: EIT, EUVI, AIA, SWAP");
 	args["imagePreprocessing"] = ArgParser::Parameter("ALC", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n TakeAbs (Take the absolute value)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["registerImages"] = ArgParser::Parameter(false, 'r', "Set to register/align the images when running multi channel classification.");
-	args["centersFile"] = ArgParser::Parameter('c', "The name of the file containing the centers. If it it not provided the centers will be initialized randomly.");
+	args["centersFile"] = ArgParser::Parameter("", 'c', "The name of the file containing the centers. If it it not provided the centers will be initialized randomly.");
 	args["numberPreviousCenters"] = ArgParser::Parameter(0, 'n', "The number of previous centers to take into account for the median computation of final centers.");
 	args["map"] = ArgParser::Parameter(true, 'M', "Set to false if you don't want to write the segmentation map.");
 	args["stats"] = ArgParser::Parameter(false, 's', "Set to compute stats about the generated maps.");

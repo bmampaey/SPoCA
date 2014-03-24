@@ -39,6 +39,7 @@ global parameters:
 <BR> DivMedian (Division by the median)
 <BR> TakeSqrt (Take the square root)
 <BR> TakeLog (Take the log)
+<BR> TakeAbs (Take the absolute value)
 <BR> DivMode (Division by the mode)
 <BR> DivExpTime (Division by the Exposure Time)
 <BR> ThrMin=zz.z (Threshold intensities to minimum zz.z)
@@ -106,7 +107,7 @@ int main(int argc, const char **argv)
 	args["help"] = ArgParser::Help('h');
 	
 	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images.\nPossible values are : EIT, EUVI, AIA, SWAP");
-	args["statsPreprocessing"] = ArgParser::Parameter("NAR=3", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["statsPreprocessing"] = ArgParser::Parameter("NAR=3", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n TakeAbs (Take the absolute value)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["separator"] = ArgParser::Parameter(',', 's', "The separator to put between columns in the csv file.");
 	args["CHClass"] = ArgParser::Parameter('c', "The color corresponding to the CH class in the CHSegmentedMap.");
 	args["ARClass"] = ArgParser::Parameter('a', "The color corresponding to the AR class in the ARSegmentedMap.");

@@ -160,6 +160,9 @@ class Image
 		//! Routine to take the sqrt of an image
 		void takeSqrt();
 		
+		//! Routine to take the absolute value of an image
+		void takeAbs();
+		
 		//! Routine that set all pixels to 1 if the corresponding pixel has a value of setValue
 		Image<T>* bitmap(T setValue = 1);
 		

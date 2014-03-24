@@ -290,6 +290,16 @@ void Image<T>::takeSqrt()
 }
 
 template<class T>
+void Image<T>::takeAbs()
+{
+	for (unsigned j = 0; j < numberPixels; ++j)
+	{
+		if (pixels[j] != nullpixelvalue)
+			pixels[j] = pixels[j] < 0 ? -pixels[j] : pixels[j];
+	}
+}
+
+template<class T>
 Image<T>* Image<T>::bitmap(T setValue)
 {
 	for (unsigned j = 0; j < numberPixels; ++j)

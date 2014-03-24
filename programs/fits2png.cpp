@@ -31,6 +31,7 @@ global parameters:
 <BR> DivMedian (Division by the median)
 <BR> TakeSqrt (Take the square root)
 <BR> TakeLog (Take the log)
+<BR> TakeAbs (Take the absolute value)
 <BR> DivMode (Division by the mode)
 <BR> DivExpTime (Division by the Exposure Time)
 <BR> ThrMin=zz.z (Threshold intensities to minimum zz.z)
@@ -39,7 +40,9 @@ global parameters:
 <BR> ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)
 <BR> Smooth=zz.z (Binomial smoothing of zz.z arcsec)
 
-@param label	The label to write on the upper left corner. If set but no value is passed, a default label will be written.
+@param upperLabel	The label to write on the upper left corner.
+<BR>If set but no value is passed, a default label will be written.
+<BR>You can use keywords from the color map fits file by specifying them between {}
 
 @param output	The path of the output directory.
 
@@ -107,8 +110,8 @@ int main(int argc, const char **argv)
 	args["help"] = ArgParser::Help('h');
 	
 	args["type"] = ArgParser::Parameter("png", 'T', "The type of image to write.");
-	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
-	args["label"] = ArgParser::Parameter('l', "The label to write on the upper left corner. If set but no value is passed, a default label will be written.");
+	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n TakeAbs (Take the absolute value)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["upperLabel"] = ArgParser::Parameter("", 'L', "The label to write on the upper left corner.\nIf set but no value is passed, a default label will be written.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["color"] = ArgParser::Parameter(false, 'c', "Set if you want the output images to be colorized.");
 	args["straightenUp"] = ArgParser::Parameter(false, 'u', "Set if you want to rotate the image so the solar north is up.");
 	args["recenter"] = ArgParser::Parameter("", 'R', "Set to the position of the new sun center ifyou want to translate the image");
@@ -233,9 +236,9 @@ int main(int argc, const char **argv)
 		}
 		
 		// We label the image
-		if(args["label"].is_set())
+		if(args["upperLabel"].is_set())
 		{
-			string text = args["label"];
+			string text = args["upperLabel"];
 			if(text.empty())
 				text = inputImage->Label();
 			else
@@ -245,7 +248,6 @@ int main(int argc, const char **argv)
 			outputImage.fillColor("white");
 			outputImage.fontPointsize(text_size);
 			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
-			outputImage.label(text);
 		}
 		
 		delete inputImage;

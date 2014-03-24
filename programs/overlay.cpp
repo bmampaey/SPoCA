@@ -20,8 +20,6 @@ global parameters:
 
 @param config	Program option configuration file.
 
-@param Label	The label to write on the lower left corner. You can use keywords from the color map fits file by specifying them between {}
-
 @param colors	The list of color of the regions to plot separated by commas. All regions will be selected if ommited.
 
 @param fill	Set this flag if you want to fill holes in the regions before ploting the contours.
@@ -33,6 +31,7 @@ global parameters:
 <BR> DivMedian (Division by the median)
 <BR> TakeSqrt (Take the square root)
 <BR> TakeLog (Take the log)
+<BR> TakeAbs (Take the absolute value)
 <BR> DivMode (Division by the mode)
 <BR> DivExpTime (Division by the Exposure Time)
 <BR> ThrMin=zz.z (Threshold intensities to minimum zz.z)
@@ -44,7 +43,12 @@ global parameters:
 @param internal	Set this flag if you want the contours inside the regions.
 <BR>Will be outside otherwise.
 
-@param label	The label to write on the upper left corner. If set but no value is passed, a default label will be written.
+@param upperLabel	The label to write on the upper left corner.
+<BR>If set but no value is passed, a default label will be written.
+<BR>You can use keywords from the color map fits file by specifying them between {}
+
+@param lowerLabel	The label to write on the lower left corner.
+<BR>You can use keywords from the color map fits file by specifying them between {}
 
 @param output	The path of the the output directory.
 
@@ -125,9 +129,9 @@ int main(int argc, const char **argv)
 	args["help"] = ArgParser::Help('h');
 	
 	args["type"] = ArgParser::Parameter("png", 'T', "The type of image to write.");
-	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
-	args["label"] = ArgParser::Parameter('l', "The label to write on the upper left corner. If set but no value is passed, a default label will be written.");
-	args["Label"] = ArgParser::Parameter("{CLASTYPE} {CPREPROC}", 'L', "The label to write on the lower left corner. You can use keywords from the color map fits file by specifying them between {}");
+	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n TakeAbs (Take the absolute value)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["upperLabel"] = ArgParser::Parameter("", 'L', "The label to write on the upper left corner.\nIf set but no value is passed, a default label will be written.\nYou can use keywords from the color map fits file by specifying them between {}");
+	args["lowerLabel"] = ArgParser::Parameter("{CLASTYPE} {CPREPROC}", 'l', "The label to write on the lower left corner.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["width"] = ArgParser::Parameter(1, 'w', "The width of the contour in pixels.");
 	args["internal"] = ArgParser::Parameter(false, 'i', "Set this flag if you want the contours inside the regions.\nWill be outside otherwise.");
 	args["fill"] = ArgParser::Parameter(false, 'f', "Set this flag if you want to fill holes in the regions before ploting the contours.");
@@ -285,14 +289,13 @@ int main(int argc, const char **argv)
 	
 	// We make the png contours and label it if necessary
 	MagickImage contours = inputImage->magick();
-	if(args["Label"].is_set())
+	if(args["lowerLabel"].is_set())
 	{
-		string text = inputImage->getHeader().expand(args["Label"]);
+		string text = inputImage->getHeader().expand(args["lowerLabel"]);
 		size_t text_size = inputImage->Xaxes()/40;
 		contours.fillColor("white");
 		contours.fontPointsize(text_size);
 		contours.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
-		contours.label(text);
 	}
 	
 	#if defined DEBUG
@@ -342,9 +345,9 @@ int main(int argc, const char **argv)
 		
 		// We make the png background and label it if necessary
 		MagickImage outputImage = image->magick();
-		if(args["label"].is_set())
+		if(args["upperLabel"].is_set())
 		{
-			string text = args["label"];
+			string text = args["upperLabel"];
 			if(text.empty())
 				text = image->Label();
 			else
@@ -354,7 +357,6 @@ int main(int argc, const char **argv)
 			outputImage.fillColor("white");
 			outputImage.fontPointsize(text_size);
 			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
-			outputImage.label(text);
 		}
 		#if defined DEBUG
 		outputImage.write(outputFilename + "background." + args["type"]);

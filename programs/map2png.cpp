@@ -19,13 +19,16 @@ global parameters:
 
 @param config	Program option configuration file.
 
-@param Label	The label to write on the lower left corner. You can use keywords from the color map fits file by specifying them between {}
-
 @param colors	The list of color of the regions to plot separated by commas. All regions will be selected if ommited.
 
 @param fill	Set this flag if you want to fill holes in the regions before ploting.
 
-@param label	The label to write on the upper left corner. If set but no value is passed, a default label will be written.
+@param upperLabel	The label to write on the upper left corner.
+<BR>If set but no value is passed, a default label will be written.
+<BR>You can use keywords from the color map fits file by specifying them between {}
+
+@param lowerLabel	The label to write on the lower left corner.
+<BR>You can use keywords from the color map fits file by specifying them between {}
 
 @param output	The path of the the output directory.
 
@@ -99,8 +102,8 @@ int main(int argc, const char **argv)
 	args["help"] = ArgParser::Help('h');
 	
 	args["type"] = ArgParser::Parameter("png", 'T', "The type of image to write.");
-	args["label"] = ArgParser::Parameter('l', "The label to write on the upper left corner. If set but no value is passed, a default label will be written.");
-	args["Label"] = ArgParser::Parameter("{CLASTYPE} {CPREPROC}", 'L', "The label to write on the lower left corner. You can use keywords from the color map fits file by specifying them between {}");
+	args["upperLabel"] = ArgParser::Parameter("", 'L', "The label to write on the upper left corner.\nIf set but no value is passed, a default label will be written.\nYou can use keywords from the color map fits file by specifying them between {}");
+	args["lowerLabel"] = ArgParser::Parameter("{CLASTYPE} {CPREPROC}", 'l', "The label to write on the lower left corner.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["fill"] = ArgParser::Parameter(false, 'f', "Set this flag if you want to fill holes in the regions before ploting.");
 	args["colors"] = ArgParser::Parameter("", 'C', "The list of color of the regions to plot separated by commas. All regions will be selected if ommited.");
 	args["uniqueColor"] = ArgParser::Parameter(7, 'U', "Set to a color if you want all regions to be plotted in that color.\nSee gradient image for the color number.");
@@ -254,9 +257,9 @@ int main(int argc, const char **argv)
 		MagickImage outputImage = inputImage->magick(backgroundColor);
 		
 		// We label the image
-		if(args["label"].is_set())
+		if(args["upperLabel"].is_set())
 		{
-			string text = args["label"];
+			string text = args["upperLabel"];
 			if(text.empty())
 				text = inputImage->Label();
 			else
@@ -266,18 +269,16 @@ int main(int argc, const char **argv)
 			outputImage.fillColor("white");
 			outputImage.fontPointsize(text_size);
 			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
-			outputImage.label(text);
 		}
 		
 		// We label the image
-		if(args["Label"].is_set())
+		if(args["lowerLabel"].is_set())
 		{
-			string text = inputImage->getHeader().expand(args["Label"]);
+			string text = inputImage->getHeader().expand(args["lowerLabel"]);
 			size_t text_size = inputImage->Xaxes()/40;
 			outputImage.fillColor("white");
 			outputImage.fontPointsize(text_size);
 			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
-			outputImage.label(text);
 		}
 		
 		delete inputImage;

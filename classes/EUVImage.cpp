@@ -101,7 +101,10 @@ inline string EUVImage::Channel() const
 
 inline string EUVImage::Label() const
 {
-	return Instrument() + " " + toString(int(Wavelength())) + "Å " + ObservationDate();
+	if(header.has("TELESCOP"))
+		return header.get<string>("TELESCOP") + " " + Instrument() + " " + toString(int(Wavelength())) + "Å " + ObservationDate();
+	else
+		return Instrument() + " " + toString(int(Wavelength())) + "Å " + ObservationDate();
 }
 
 inline Real EUVImage::Wavelength() const
@@ -171,6 +174,10 @@ void EUVImage::preprocessing(const string& preprocessingList)
 		else if(stepType == "TakeLog")
 		{
 			takeLog();
+		}
+		else if(stepType == "TakeAbs")
+		{
+			takeAbs();
 		}
 		else if(stepType == "ThrMin")
 		{

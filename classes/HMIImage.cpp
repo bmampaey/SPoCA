@@ -148,7 +148,10 @@ inline string HMIImage::Channel() const
 
 inline string HMIImage::Label() const
 {
-	return Instrument() + " " + ObservationDate();
+	if(header.has("TELESCOP"))
+		return header.get<string>("TELESCOP") + " " + Instrument() + " " + ObservationDate();
+	else
+		return Instrument() + " " + ObservationDate();
 }
 
 inline string HMIImage::Instrument() const

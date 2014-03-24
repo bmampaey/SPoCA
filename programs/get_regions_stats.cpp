@@ -43,6 +43,7 @@ global parameters:
 <BR> DivMedian (Division by the median)
 <BR> TakeSqrt (Take the square root)
 <BR> TakeLog (Take the log)
+<BR> TakeAbs (Take the absolute value)
 <BR> DivMode (Division by the mode)
 <BR> DivExpTime (Division by the Exposure Time)
 <BR> ThrMin=zz.z (Threshold intensities to minimum zz.z)
@@ -109,7 +110,7 @@ int main(int argc, const char **argv)
 	args["help"] = ArgParser::Help('h');
 	
 	args["getRegionsInfo"] = ArgParser::Parameter(false, 'r', "Set if you want also to get region information.");
-	args["statsPreprocessing"] = ArgParser::Parameter("NAR=0.95", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["statsPreprocessing"] = ArgParser::Parameter("NAR=0.95", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n TakeAbs (Take the absolute value)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["registerImages"] = ArgParser::Parameter(false, 'r', "Set to register/align the images to the map.");
 	args["areaLimit"] = ArgParser::Parameter("none", 'L', "The type of the limit of the area of the map taken into account the computation of stats. Possible values:\nNAR=zz.z (pixels below zz.z*radius)\nLong=zz.z (pixels between -zz.z and zz.z degrees of longitude)\tLat=zz.z (pixels between -zz.z and zz.z degrees of latitude)");
 	args["append"] = ArgParser::Parameter(false, 'a', "Set this flag if you want append a new table to the map with the region stats.");

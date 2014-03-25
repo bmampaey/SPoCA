@@ -57,6 +57,7 @@ sub strip
 sub parse_arguments
 {
 	use Getopt::Long;
+	Getopt::Long::Configure("no_ignore_case");
 	GetOptions(
             "m:s"=>\$main,
             "o:s"=>\$makefile,
@@ -92,7 +93,12 @@ sub parse_arguments
 	{
 		$DFLAGS .= $defines;
 	}
-	print $debug . "\n";
+	if($debug)
+	{
+		$DFLAGS .= " -DDEBUG";
+		print "Debug turned on\n";
+	}
+	
 	if (! $debug)
 	{
 		$CFLAGS .= ' -O3';

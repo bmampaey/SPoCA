@@ -222,7 +222,7 @@ int main(int argc, const char **argv)
 	// Options for the desired maps 
 	bool uncompressedMaps = false; 
 	string desiredMaps;
-	bool getARStats = false, getCHStats = false, getSegmentedStats = false;
+	bool getARStats = true, getCHStats = true, getSegmentedStats = true;
 	
 	// Options for the region stats
 	double intensitiesStatsRadiusRatio = 0.95;
@@ -490,9 +490,8 @@ int main(int argc, const char **argv)
 	if(classifierIsPossibilistic)
 	{
 		dynamic_cast<PCMClassifier*>(F)->FCMinit(precision, maxNumberIteration);
-		#if defined DEBUG
-		// We save the centers we found
-		F->saveB(filenamePrefix + "FCM.centers.txt");
+		#if defined VERBOSE
+		cout<<"FCMinit found centers "<<F->getB()<<endl;
 		#endif
 	}	
 	

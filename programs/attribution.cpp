@@ -344,6 +344,8 @@ int main(int argc, const char **argv)
 					F->addImages(images);
 					// We compute the Eta
 					dynamic_cast<PCMClassifier*>(F)->FCMinit();
+					// And force back the centers
+					F->initB(channels, B);
 				}
 			}
 			else

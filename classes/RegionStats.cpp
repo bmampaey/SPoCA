@@ -286,21 +286,11 @@ string RegionStats::toString(const string& separator, bool header) const
 
 vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image, const vector<Region*>& regions)
 {
-	set<ColorType> regionsColors;
+	map<ColorType,RegionStats*> regions_stats;
 	for(unsigned r = 0; r < regions.size(); ++r)
 	{
-			regionsColors.insert(regions[r]->Color());
-	}
-	
-	return getRegionStats(coloredMap, image, regionsColors);
-}
-
-vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image, const set<ColorType>& regions)
-{
-	map<ColorType,RegionStats*> regions_stats;
-	for(set<ColorType>::iterator c=regions.begin(); c!=regions.end(); ++c)
-	{
-			regions_stats[*c] = new RegionStats(image->ObservationTime(), *c);
+		if (regions_stats.count(regions[r]->Color()) == 0)
+			regions_stats[regions[r]->Color()] = new RegionStats(image->ObservationTime(), regions[r]->Id());
 	}
 	
 	RealPixLoc sunCenter = image->SunCenter();

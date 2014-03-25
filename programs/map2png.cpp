@@ -105,7 +105,7 @@ int main(int argc, const char **argv)
 	args["upperLabel"] = ArgParser::Parameter("", 'L', "The label to write on the upper left corner.\nIf set but no value is passed, a default label will be written.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["lowerLabel"] = ArgParser::Parameter("{CLASTYPE} {CPREPROC}", 'l', "The label to write on the lower left corner.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["fill"] = ArgParser::Parameter(false, 'f', "Set this flag if you want to fill holes in the regions before ploting.");
-	args["colors"] = ArgParser::Parameter("", 'C', "The list of color of the regions to plot separated by commas. All regions will be selected if ommited.");
+	args["colors"] = ArgParser::Parameter("", 'c', "The list of color of the regions to plot separated by commas. All regions will be selected if ommited.");
 	args["uniqueColor"] = ArgParser::Parameter(7, 'U', "Set to a color if you want all regions to be plotted in that color.\nSee gradient image for the color number.");
 	args["transparent"] = ArgParser::Parameter(false, 't', "If you want the null values to be transparent.");
 	args["straightenUp"] = ArgParser::Parameter(false, 'u', "Set if you want to rotate the image so the solar north is up.");
@@ -165,15 +165,15 @@ int main(int argc, const char **argv)
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 		filenamePrefix = makePath(args["output"], stripPath(stripSuffix(imagesFilenames[p]))) + ".";
-		ColorMap* inputImage = getColorMapFromFile(imagesFilenames[p]);
+		ColorMap* map = getColorMapFromFile(imagesFilenames[p]);
 		
 		// We fill holes if requested
 		if(args["fill"])
 		{
-			inputImage->removeHoles();
+			map->removeHoles();
 	
 			#if defined DEBUG
-			inputImage->writeFits(filenamePrefix + "filled.fits");
+			map->writeFits(filenamePrefix + "filled.fits");
 			#endif
 		}
 	
@@ -181,17 +181,17 @@ int main(int argc, const char **argv)
 		if(colors.size() > 0 && args["uniqueColor"].is_set())
 		{
 			ColorType uniqueColor = args["uniqueColor"];
-			for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+			for(unsigned j = 0; j < map->NumberPixels(); ++j)
 			{
-				if(inputImage->pixel(j) != inputImage->null())
+				if(map->pixel(j) != map->null())
 				{
-					if(colors.count(inputImage->pixel(j)) == 0)
+					if(colors.count(map->pixel(j)) == 0)
 					{
-						inputImage->pixel(j) = inputImage->null();
+						map->pixel(j) = map->null();
 					}
 					else
 					{
-						inputImage->pixel(j) = uniqueColor;
+						map->pixel(j) = uniqueColor;
 					}
 				}
 			}
@@ -199,28 +199,28 @@ int main(int argc, const char **argv)
 		else if(args["uniqueColor"].is_set())
 		{
 			ColorType uniqueColor = args["uniqueColor"];
-			for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+			for(unsigned j = 0; j < map->NumberPixels(); ++j)
 			{
-				if(inputImage->pixel(j) != inputImage->null())
+				if(map->pixel(j) != map->null())
 				{
-					inputImage->pixel(j) = uniqueColor;
+					map->pixel(j) = uniqueColor;
 				}
 			}
 		}
 		else if(colors.size() > 0)
 		{
-			for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+			for(unsigned j = 0; j < map->NumberPixels(); ++j)
 			{
-				if(inputImage->pixel(j) != inputImage->null() && colors.count(inputImage->pixel(j)) == 0)
+				if(map->pixel(j) != map->null() && colors.count(map->pixel(j)) == 0)
 				{
-					inputImage->pixel(j) = inputImage->null();
+					map->pixel(j) = map->null();
 				}
 			}
 		}
 	
 		#if defined DEBUG
 		if(colors.size() > 0 || args["uniqueColor"].is_set())
-			inputImage->writeFits(filenamePrefix + "recolored.fits");
+			map->writeFits(filenamePrefix + "recolored.fits");
 		#endif
 		
 		// We transform the image
@@ -230,11 +230,11 @@ int main(int argc, const char **argv)
 			Real rotationAngle = 0;
 			if (args["straightenUp"])
 			{
-				rotationAngle = - inputImage->Crota2();
+				rotationAngle = - map->Crota2();
 			}
 		
 			// We recenter the image
-			RealPixLoc newCenter = inputImage->SunCenter();
+			RealPixLoc newCenter = map->SunCenter();
 			if(args["recenter"].is_set() && !readCoordinate(newCenter, args["recenter"]))
 			{
 				cerr<<"Error : Cannot convert "<<args["recenter"]<<" to coordinates"<<endl;
@@ -246,26 +246,26 @@ int main(int argc, const char **argv)
 			if(args["scaling"].is_set())
 				scaling = args["scaling"];
 		
-			inputImage->transform(rotationAngle, RealPixLoc(newCenter.x - inputImage->SunCenter().x, newCenter.y - inputImage->SunCenter().y), scaling);
+			map->transform(rotationAngle, RealPixLoc(newCenter.x - map->SunCenter().x, newCenter.y - map->SunCenter().y), scaling);
 		
 			#if defined DEBUG
-			inputImage->writeFits(filenamePrefix + "transformed.fits");
+			map->writeFits(filenamePrefix + "transformed.fits");
 			#endif
 		}
 		
 		// We make the png
-		MagickImage outputImage = inputImage->magick(backgroundColor);
+		MagickImage outputImage = map->magick(backgroundColor);
 		
 		// We label the image
 		if(args["upperLabel"].is_set())
 		{
 			string text = args["upperLabel"];
 			if(text.empty())
-				text = inputImage->Label();
+				text = map->Label();
 			else
-				text = inputImage->getHeader().expand(text);
+				text = map->getHeader().expand(text);
 			
-			size_t text_size = inputImage->Xaxes()/40;
+			size_t text_size = map->Xaxes()/40;
 			outputImage.fillColor("white");
 			outputImage.fontPointsize(text_size);
 			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
@@ -274,14 +274,14 @@ int main(int argc, const char **argv)
 		// We label the image
 		if(args["lowerLabel"].is_set())
 		{
-			string text = inputImage->getHeader().expand(args["lowerLabel"]);
-			size_t text_size = inputImage->Xaxes()/40;
+			string text = map->getHeader().expand(args["lowerLabel"]);
+			size_t text_size = map->Xaxes()/40;
 			outputImage.fillColor("white");
 			outputImage.fontPointsize(text_size);
 			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
 		}
 		
-		delete inputImage;
+		delete map;
 		
 		// We resize the image
 		outputImage.scale(size_geometry);

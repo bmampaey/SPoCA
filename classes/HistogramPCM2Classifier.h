@@ -50,6 +50,7 @@ class HistogramPCM2Classifier :  public PCM2Classifier, public HistogramPCMClass
 		using PCM2Classifier::initEta;
 
 		//Utilities functions for outputing results
+		using HistogramPCMClassifier::fillHeader;
 		using HistogramFCMClassifier::classAverage;
 
 };

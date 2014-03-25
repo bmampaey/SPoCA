@@ -298,5 +298,10 @@ void HistogramPCMClassifier::FCMinit()
 	#endif
 }
 
-
+void HistogramPCMClassifier::fillHeader(Header& header)
+{
+	PCMClassifier::fillHeader(header);
+	header.set("CBINSIZE", binSize, "Histogram bin size");
+	header.set("CNBRBINS", numberBins, "Histogram number of bin");
+}
 

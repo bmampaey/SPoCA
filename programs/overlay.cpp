@@ -135,7 +135,7 @@ int main(int argc, const char **argv)
 	args["width"] = ArgParser::Parameter(1, 'w', "The width of the contour in pixels.");
 	args["internal"] = ArgParser::Parameter(false, 'i', "Set this flag if you want the contours inside the regions.\nWill be outside otherwise.");
 	args["fill"] = ArgParser::Parameter(false, 'f', "Set this flag if you want to fill holes in the regions before ploting the contours.");
-	args["colors"] = ArgParser::Parameter("", 'C', "The list of color of the regions to plot separated by commas. All regions will be selected if ommited.");
+	args["colors"] = ArgParser::Parameter("", 'c', "The list of color of the regions to plot separated by commas. All regions will be selected if ommited.");
 	args["uniqueColor"] = ArgParser::Parameter(7, 'U', "Set to a color if you want all contours to be plotted in that color.\nSee gradient image for the color number.");
 	args["registerImages"] = ArgParser::Parameter(false, 'r', "Set to register/align the images to the map.");
 	args["straightenUp"] = ArgParser::Parameter(false, 'u', "Set if you want to rotate the image so the solar north is up.");
@@ -175,15 +175,15 @@ int main(int argc, const char **argv)
 	}
 	
 	// We create the contour image
-	ColorMap* inputImage = getColorMapFromFile(args["mapFile"]);
+	ColorMap* map = getColorMapFromFile(args["mapFile"]);
 	
 	// We fill holes if requested
 	if(args["fill"])
 	{
-		inputImage->removeHoles();
+		map->removeHoles();
 	
 		#if defined DEBUG
-		inputImage->writeFits(filenamePrefix + "filled.fits");
+		map->writeFits(filenamePrefix + "filled.fits");
 		#endif
 	}
 	
@@ -199,17 +199,17 @@ int main(int argc, const char **argv)
 	if(colors.size() > 0 && args["uniqueColor"].is_set())
 	{
 		ColorType uniqueColor = args["uniqueColor"];
-		for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+		for(unsigned j = 0; j < map->NumberPixels(); ++j)
 		{
-			if(inputImage->pixel(j) != inputImage->null())
+			if(map->pixel(j) != map->null())
 			{
-				if(colors.count(inputImage->pixel(j)) == 0)
+				if(colors.count(map->pixel(j)) == 0)
 				{
-					inputImage->pixel(j) = inputImage->null();
+					map->pixel(j) = map->null();
 				}
 				else
 				{
-					inputImage->pixel(j) = uniqueColor;
+					map->pixel(j) = uniqueColor;
 				}
 			}
 		}
@@ -217,28 +217,28 @@ int main(int argc, const char **argv)
 	else if(args["uniqueColor"].is_set())
 	{
 		ColorType uniqueColor = args["uniqueColor"];
-		for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+		for(unsigned j = 0; j < map->NumberPixels(); ++j)
 		{
-			if(inputImage->pixel(j) != inputImage->null())
+			if(map->pixel(j) != map->null())
 			{
-				inputImage->pixel(j) = uniqueColor;
+				map->pixel(j) = uniqueColor;
 			}
 		}
 	}
 	else if(colors.size() > 0)
 	{
-		for(unsigned j = 0; j < inputImage->NumberPixels(); ++j)
+		for(unsigned j = 0; j < map->NumberPixels(); ++j)
 		{
-			if(inputImage->pixel(j) != inputImage->null() && colors.count(inputImage->pixel(j)) == 0)
+			if(map->pixel(j) != map->null() && colors.count(map->pixel(j)) == 0)
 			{
-				inputImage->pixel(j) = inputImage->null();
+				map->pixel(j) = map->null();
 			}
 		}
 	}
 	
 	#if defined DEBUG
 	if(colors.size() > 0 || args["uniqueColor"].is_set())
-		inputImage->writeFits(filenamePrefix + "recolored.fits");
+		map->writeFits(filenamePrefix + "recolored.fits");
 	#endif
 	
 	// We transform the image
@@ -248,11 +248,11 @@ int main(int argc, const char **argv)
 		Real rotationAngle = 0;
 		if (args["straightenUp"])
 		{
-			rotationAngle = - inputImage->Crota2();
+			rotationAngle = - map->Crota2();
 		}
 	
 		// We recenter the image
-		RealPixLoc newCenter = inputImage->SunCenter();
+		RealPixLoc newCenter = map->SunCenter();
 		if(args["recenter"].is_set() && !readCoordinate(newCenter, args["recenter"]))
 		{
 			cerr<<"Error : Cannot convert "<<args["recenter"]<<" to coordinates"<<endl;
@@ -264,35 +264,35 @@ int main(int argc, const char **argv)
 		if(args["scaling"].is_set())
 			scaling = args["scaling"];
 	
-		inputImage->transform(rotationAngle, RealPixLoc(newCenter.x - inputImage->SunCenter().x, newCenter.y - inputImage->SunCenter().y), scaling);
+		map->transform(rotationAngle, RealPixLoc(newCenter.x - map->SunCenter().x, newCenter.y - map->SunCenter().y), scaling);
 	
 		#if defined DEBUG
-		inputImage->writeFits(filenamePrefix + "transformed.fits");
+		map->writeFits(filenamePrefix + "transformed.fits");
 		#endif
 	}
 	
 	// We plot the contours
-	unsigned width = inputImage->Xaxes()/256;
+	unsigned width = map->Xaxes()/256;
 	if(args["width"].is_set())
 	{
 		width = toUnsigned(args["width"]);
 	}
 	
 	if(args["internal"])
-		inputImage->drawInternContours(width, 0);
+		map->drawInternContours(width, 0);
 	else
-		inputImage->drawExternContours(width, 0);
+		map->drawExternContours(width, 0);
 	
 	#if defined DEBUG
-	inputImage->writeFits(filenamePrefix + "contours.fits");
+	map->writeFits(filenamePrefix + "contours.fits");
 	#endif
 	
 	// We make the png contours and label it if necessary
-	MagickImage contours = inputImage->magick();
+	MagickImage contours = map->magick();
 	if(args["lowerLabel"].is_set())
 	{
-		string text = inputImage->getHeader().expand(args["lowerLabel"]);
-		size_t text_size = inputImage->Xaxes()/40;
+		string text = map->getHeader().expand(args["lowerLabel"]);
+		size_t text_size = map->Xaxes()/40;
 		contours.fillColor("white");
 		contours.fontPointsize(text_size);
 		contours.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
@@ -306,8 +306,8 @@ int main(int argc, const char **argv)
 	deque<string> imagesFilenames = args.RemainingPositionalArguments();
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		// We expand the name of the background fits image with the header of the inputImage
-		string imageFilename = inputImage->getHeader().expand(imagesFilenames[p]);
+		// We expand the name of the background fits image with the header of the map
+		string imageFilename = map->getHeader().expand(imagesFilenames[p]);
 		string outputFilename = makePath(args["output"], stripPath(stripSuffix(imageFilename))) + ".";
 		
 		if(!isFile(imageFilename))
@@ -333,10 +333,13 @@ int main(int argc, const char **argv)
 		image->writeFits(outputFilename + "preprocessed.fits");
 		#endif
 		
-		// We transform the image to align it with the inputImage
+		// We transform the image to align it with the map
 		if(args["registerImages"])
 		{
-			image->align(inputImage);
+			#if defined VERBOSE
+			cout<<"Image "<<imagesFilenames[p]<<" will be registered to image "<<args["mapFile"]<<endl;
+			#endif
+			image->align(map);
 			#if defined DEBUG
 			image->writeFits(outputFilename + "registered.fits");
 			#endif
@@ -374,7 +377,7 @@ int main(int argc, const char **argv)
 		outputImage.write(filenamePrefix + "_on_." + stripSuffix(stripPath(imageFilename)) + "." + args["type"]);
 	}
 	
-	delete inputImage;
+	delete map;
 	return EXIT_SUCCESS;
 }
 

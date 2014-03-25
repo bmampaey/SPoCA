@@ -361,6 +361,5 @@ void PFCMClassifier::fillHeader(Header& header)
 	PCMClassifier::fillHeader(header);
 	header.set("CFCMW8", FCMweight, "PFCM classifier FCM Weight");
 	header.set("CPCMW8", PCMweight, "PFCM classifier PCM Weight");
-
 }
 

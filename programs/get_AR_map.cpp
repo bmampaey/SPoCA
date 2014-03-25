@@ -198,6 +198,9 @@ int main(int argc, const char **argv)
 		// We transform the image to align it with the segmentedMap
 		if(args["registerImages"])
 		{
+			#if defined VERBOSE
+			cout<<"Image "<<imagesFilenames[p]<<" will be registered to image "<<args["mapFile"]<<endl;
+			#endif
 			image->align(segmentedMap);
 		}
 		#if defined DEBUG

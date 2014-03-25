@@ -326,5 +326,11 @@ void HistogramFCMClassifier::randomInitB(unsigned C)
 	FCMClassifier::sortB();
 }
 
+void HistogramFCMClassifier::fillHeader(Header& header)
+{
+	FCMClassifier::fillHeader(header);
+	header.set("CBINSIZE", binSize, "Histogram bin size");
+	header.set("CNBRBINS", numberBins, "Histogram number of bin");
+}
 
 

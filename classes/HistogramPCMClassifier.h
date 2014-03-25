@@ -45,16 +45,18 @@ class HistogramPCMClassifier : public virtual PCMClassifier, public HistogramFCM
 		
 		//! Function to do attribution (Fix center classification)
 		void attribution();
-
+		
 		//Function to initialise the centers
 		using HistogramFCMClassifier::initB;
 		using HistogramFCMClassifier::randomInitB;
 		
 		//! Function to initialise the centers and eta by doing an FCM
 		void FCMinit();
-
+		
 		//Utilities functions for outputing results
 		using HistogramFCMClassifier::classAverage;
-
+		
+		//! Function to fill a fits header with classification information
+		void fillHeader(Header& header);
 };
 #endif

@@ -376,6 +376,9 @@ int main(int argc, const char **argv)
 	if(classifierIsPossibilistic)
 	{
 		dynamic_cast<PCMClassifier*>(F)->FCMinit();
+		#if defined VERBOSE
+		cout<<"FCMinit found centers "<<F->getB()<<endl;
+		#endif
 	}
 	
 	// We do the classification

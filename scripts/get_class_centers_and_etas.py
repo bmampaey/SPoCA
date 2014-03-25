@@ -30,21 +30,21 @@ def parse_map(filename):
 				if 'CHANNELS' in hdu.header:
 					channels = find_channels.findall(hdu.header['CHANNELS'])
 				
-				if 'CLSCTR00' in hdu.header:
+				if 'CLSCTR01' in hdu.header:
 					class_centers = list()
-					for i in range(100):
+					for i in range(1,100):
 						center = 'CLSCTR' + ('%02d' % i)
 						if center in hdu.header:
 							class_centers.extend(find_numbers.findall(hdu.header[center]))
 						else:
 							break
 				
-				if 'CETA00' in hdu.header:
+				if 'CETA01' in hdu.header:
 					etas = list()
-					for i in range(100):
-						eta = 'CLSCTR' + ('%02d' % i)
+					for i in range(1,100):
+						eta = 'CETA' + ('%02d' % i)
 						if eta in hdu.header:
-							etas.extend(find_numbers.findall(hdu.header[center]))
+							etas.extend(find_numbers.findall(hdu.header[eta]))
 						else:
 							break
 		

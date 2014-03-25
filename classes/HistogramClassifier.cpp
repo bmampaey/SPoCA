@@ -176,4 +176,3 @@ void HistogramClassifier::addImages(vector<EUVImage*> images, const unsigned xax
 	numberBins = HistoX.size();
 }
 
-

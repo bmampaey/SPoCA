@@ -227,7 +227,13 @@ class SunImage : public Image<T>
 		template<class U>
 		void align(const SunImage<U>* image)
 		{
-			this->transform(Crota2() - image->Crota2(), RealPixLoc(SunCenter() - image->SunCenter()), PixelWidth() / image->PixelWidth());
+			Real rotationAngle = image->Crota2() - this->Crota2();
+			RealPixLoc translation = RealPixLoc(image->SunCenter()- this->SunCenter());
+			Real scaling = this->PixelWidth() / image->PixelWidth();
+			#if defined VERBOSE
+			std::cout<<"rotation: "<<rotationAngle<<" translation: "<<translation<<" scaling:"<<scaling<<std::endl;
+			#endif
+			this->transform(rotationAngle, translation, scaling);
 		}
 		//! Routine that applies transformation to a SunImage: rotation, translation and scaling.
 		/*	@param rotationAngle The angle of rotation in degrees. Rotation is done in the trigonometric direction i.e. counter clockwise.

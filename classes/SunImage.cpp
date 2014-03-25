@@ -927,7 +927,7 @@ void SunImage<T>::transform(const Real rotationAngle, const RealPixLoc translati
 	// We update the WCS to reflect the transformation
 	wcs.setSunCenter(SunCenter().x + translation.x, SunCenter().y + translation.y);
 	wcs.setSunradius(SunRadius() * fabs(scaling));
-	wcs.setCDelt(PixelLength() * scaling, PixelWidth() * scaling);
+	wcs.setCDelt(PixelLength() / scaling, PixelWidth() / scaling);
 	wcs.setCrota2(wcs.getCrota2() + rotationAngle);
 }
 

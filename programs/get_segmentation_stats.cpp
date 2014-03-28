@@ -160,14 +160,14 @@ int main(int argc, const char **argv)
 	}
 	
 	// We read the map
-	ColorMap* colorizedMap = getColorMapFromFile(args["mapFile"]);
+	ColorMap* segmentedMap = getColorMapFromFile(args["mapFile"]);
 	
 	// We apply the arealimit if any
 	if(args["areaLimit"].is_set())
 	{
-		colorizedMap->preprocessing(args["areaLimit"]);
+		segmentedMap->preprocessing(args["areaLimit"]);
 		#if defined DEBUG || defined WRITE_LIMITED_MAP
-			colorizedMap->writeFits(filenamePrefix + "limited." +  stripPath(args["mapFile"]), FitsFile::compress);
+			segmentedMap->writeFits(filenamePrefix + "limited." +  stripPath(args["mapFile"]), FitsFile::compress);
 		#endif
 	}
 	
@@ -186,7 +186,7 @@ int main(int argc, const char **argv)
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 		// We expand the name of the background fits image with the header of the inputImage
-		string imageFilename = colorizedMap->getHeader().expand(imagesFilenames[p]);
+		string imageFilename = segmentedMap->getHeader().expand(imagesFilenames[p]);
 	
 		if(! isFile(imageFilename))
 		{
@@ -202,13 +202,13 @@ int main(int argc, const char **argv)
 		image->writeFits(makePath(outputDirectory, stripPath(stripSuffix(imageFilename)) + "preprocessed.fits"));
 		#endif
 	
-		// We transform the image to align it with the colorizedMap
+		// We transform the image to align it with the segmentedMap
 		if(args["registerImages"])
 		{
 			#if defined VERBOSE
 			cout<<"Image "<<imagesFilenames[p]<<" will be registered to image "<<args["mapFile"]<<endl;
 			#endif
-			image->align(colorizedMap);
+			image->align(segmentedMap);
 			#if defined DEBUG
 			image->writeFits(makePath(outputDirectory, stripPath(stripSuffix(imageFilename)) + "registered.fits"));
 			#endif
@@ -222,11 +222,11 @@ int main(int argc, const char **argv)
 		vector<SegmentationStats*> segmentation_stats;
 		if(colors.size() > 0)
 		{
-			segmentation_stats = getSegmentationStats(colorizedMap, image, colors);
+			segmentation_stats = getSegmentationStats(segmentedMap, image, colors);
 		}
 		else
 		{
-			segmentation_stats = getSegmentationStats(colorizedMap, image);
+			segmentation_stats = getSegmentationStats(segmentedMap, image);
 		}
 		
 		if(!wroteHeader && segmentation_stats.size() > 0)
@@ -254,7 +254,7 @@ int main(int argc, const char **argv)
 	csvFile.close();
 	if(!fitsFile.isClosed())
 		fitsFile.close();
-	delete colorizedMap;
+	delete segmentedMap;
 	return EXIT_SUCCESS;
 }
 

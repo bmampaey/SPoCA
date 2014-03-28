@@ -175,15 +175,15 @@ int main(int argc, const char **argv)
 	}
 	
 	// We create the contour image
-	ColorMap* map = getColorMapFromFile(args["mapFile"]);
+	ColorMap* colorMap = getColorMapFromFile(args["mapFile"]);
 	
 	// We fill holes if requested
 	if(args["fill"])
 	{
-		map->removeHoles();
+		colorMap->removeHoles();
 	
 		#if defined DEBUG
-		map->writeFits(filenamePrefix + "filled.fits");
+		colorMap->writeFits(filenamePrefix + "filled.fits");
 		#endif
 	}
 	
@@ -199,17 +199,17 @@ int main(int argc, const char **argv)
 	if(colors.size() > 0 && args["uniqueColor"].is_set())
 	{
 		ColorType uniqueColor = args["uniqueColor"];
-		for(unsigned j = 0; j < map->NumberPixels(); ++j)
+		for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
 		{
-			if(map->pixel(j) != map->null())
+			if(colorMap->pixel(j) != colorMap->null())
 			{
-				if(colors.count(map->pixel(j)) == 0)
+				if(colors.count(colorMap->pixel(j)) == 0)
 				{
-					map->pixel(j) = map->null();
+					colorMap->pixel(j) = colorMap->null();
 				}
 				else
 				{
-					map->pixel(j) = uniqueColor;
+					colorMap->pixel(j) = uniqueColor;
 				}
 			}
 		}
@@ -217,28 +217,28 @@ int main(int argc, const char **argv)
 	else if(args["uniqueColor"].is_set())
 	{
 		ColorType uniqueColor = args["uniqueColor"];
-		for(unsigned j = 0; j < map->NumberPixels(); ++j)
+		for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
 		{
-			if(map->pixel(j) != map->null())
+			if(colorMap->pixel(j) != colorMap->null())
 			{
-				map->pixel(j) = uniqueColor;
+				colorMap->pixel(j) = uniqueColor;
 			}
 		}
 	}
 	else if(colors.size() > 0)
 	{
-		for(unsigned j = 0; j < map->NumberPixels(); ++j)
+		for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
 		{
-			if(map->pixel(j) != map->null() && colors.count(map->pixel(j)) == 0)
+			if(colorMap->pixel(j) != colorMap->null() && colors.count(colorMap->pixel(j)) == 0)
 			{
-				map->pixel(j) = map->null();
+				colorMap->pixel(j) = colorMap->null();
 			}
 		}
 	}
 	
 	#if defined DEBUG
 	if(colors.size() > 0 || args["uniqueColor"].is_set())
-		map->writeFits(filenamePrefix + "recolored.fits");
+		colorMap->writeFits(filenamePrefix + "recolored.fits");
 	#endif
 	
 	// We transform the image
@@ -248,11 +248,11 @@ int main(int argc, const char **argv)
 		Real rotationAngle = 0;
 		if (args["straightenUp"])
 		{
-			rotationAngle = - map->Crota2();
+			rotationAngle = - colorMap->Crota2();
 		}
 	
 		// We recenter the image
-		RealPixLoc newCenter = map->SunCenter();
+		RealPixLoc newCenter = colorMap->SunCenter();
 		if(args["recenter"].is_set() && !readCoordinate(newCenter, args["recenter"]))
 		{
 			cerr<<"Error : Cannot convert "<<args["recenter"]<<" to coordinates"<<endl;
@@ -264,35 +264,35 @@ int main(int argc, const char **argv)
 		if(args["scaling"].is_set())
 			scaling = args["scaling"];
 	
-		map->transform(rotationAngle, RealPixLoc(newCenter.x - map->SunCenter().x, newCenter.y - map->SunCenter().y), scaling);
+		colorMap->transform(rotationAngle, RealPixLoc(newCenter.x - colorMap->SunCenter().x, newCenter.y - colorMap->SunCenter().y), scaling);
 	
 		#if defined DEBUG
-		map->writeFits(filenamePrefix + "transformed.fits");
+		colorMap->writeFits(filenamePrefix + "transformed.fits");
 		#endif
 	}
 	
 	// We plot the contours
-	unsigned width = map->Xaxes()/256;
+	unsigned width = colorMap->Xaxes()/256;
 	if(args["width"].is_set())
 	{
 		width = toUnsigned(args["width"]);
 	}
 	
 	if(args["internal"])
-		map->drawInternContours(width, 0);
+		colorMap->drawInternContours(width, 0);
 	else
-		map->drawExternContours(width, 0);
+		colorMap->drawExternContours(width, 0);
 	
 	#if defined DEBUG
-	map->writeFits(filenamePrefix + "contours.fits");
+	colorMap->writeFits(filenamePrefix + "contours.fits");
 	#endif
 	
 	// We make the png contours and label it if necessary
-	MagickImage contours = map->magick();
+	MagickImage contours = colorMap->magick();
 	if(args["lowerLabel"].is_set())
 	{
-		string text = map->getHeader().expand(args["lowerLabel"]);
-		size_t text_size = map->Xaxes()/40;
+		string text = colorMap->getHeader().expand(args["lowerLabel"]);
+		size_t text_size = colorMap->Xaxes()/40;
 		contours.fillColor("white");
 		contours.fontPointsize(text_size);
 		contours.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
@@ -306,8 +306,8 @@ int main(int argc, const char **argv)
 	deque<string> imagesFilenames = args.RemainingPositionalArguments();
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
-		// We expand the name of the background fits image with the header of the map
-		string imageFilename = map->getHeader().expand(imagesFilenames[p]);
+		// We expand the name of the background fits image with the header of the colorMap
+		string imageFilename = colorMap->getHeader().expand(imagesFilenames[p]);
 		string outputFilename = makePath(args["output"], stripPath(stripSuffix(imageFilename))) + ".";
 		
 		if(!isFile(imageFilename))
@@ -333,13 +333,13 @@ int main(int argc, const char **argv)
 		image->writeFits(outputFilename + "preprocessed.fits");
 		#endif
 		
-		// We transform the image to align it with the map
+		// We transform the image to align it with the colorMap
 		if(args["registerImages"])
 		{
 			#if defined VERBOSE
 			cout<<"Image "<<imagesFilenames[p]<<" will be registered to image "<<args["mapFile"]<<endl;
 			#endif
-			image->align(map);
+			image->align(colorMap);
 			#if defined DEBUG
 			image->writeFits(outputFilename + "registered.fits");
 			#endif
@@ -377,7 +377,7 @@ int main(int argc, const char **argv)
 		outputImage.write(filenamePrefix + "_on_." + stripSuffix(stripPath(imageFilename)) + "." + args["type"]);
 	}
 	
-	delete map;
+	delete colorMap;
 	return EXIT_SUCCESS;
 }
 

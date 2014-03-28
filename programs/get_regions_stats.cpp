@@ -162,27 +162,27 @@ int main(int argc, const char **argv)
 	}
 	
 	// We read the map
-	ColorMap* colorizedMap = getColorMapFromFile(args["mapFile"]);
+	ColorMap* regionMap = getColorMapFromFile(args["mapFile"]);
 	
 	// We erase any colors that is not to be kept
 	if(colors.size() > 0)
 	{
-		for(unsigned j = 0; j < colorizedMap->NumberPixels(); ++j)
+		for(unsigned j = 0; j < regionMap->NumberPixels(); ++j)
 		{
-			if (colorizedMap->pixel(j) != colorizedMap->null() && colors.count(colorizedMap->pixel(j)) == 0)
-				colorizedMap->pixel(j) = colorizedMap->null();
+			if (regionMap->pixel(j) != regionMap->null() && colors.count(regionMap->pixel(j)) == 0)
+				regionMap->pixel(j) = regionMap->null();
 		}
 		#if defined DEBUG
-		colorizedMap->writeFits(filenamePrefix + "cleaned." +  stripPath(args["mapFile"]) );
+		regionMap->writeFits(filenamePrefix + "cleaned." +  stripPath(args["mapFile"]) );
 		#endif
 	}
 	
 	// We apply the arealimit if any
 	if(args["areaLimit"].is_set())
 	{
-		colorizedMap->preprocessing(args["areaLimit"]);
+		regionMap->preprocessing(args["areaLimit"]);
 		#if defined DEBUG || defined WRITE_LIMITED_MAP
-			colorizedMap->writeFits(filenamePrefix + "limited." +  stripPath(args["mapFile"]), FitsFile::compress);
+			regionMap->writeFits(filenamePrefix + "limited." +  stripPath(args["mapFile"]), FitsFile::compress);
 		#endif
 	}
 	
@@ -191,7 +191,7 @@ int main(int argc, const char **argv)
 	csvFile<<setiosflags(ios::fixed);
 	
 	// We get the regions
-	vector<Region*> regions = getRegions(colorizedMap);
+	vector<Region*> regions = getRegions(regionMap);
 	
 	if(regions.empty())
 	{
@@ -216,7 +216,7 @@ int main(int argc, const char **argv)
 		for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 		{
 			// We expand the name of the background fits image with the header of the inputImage
-			string imageFilename = colorizedMap->getHeader().expand(imagesFilenames[p]);
+			string imageFilename = regionMap->getHeader().expand(imagesFilenames[p]);
 		
 			if(! isFile(imageFilename))
 			{
@@ -232,13 +232,13 @@ int main(int argc, const char **argv)
 			image->writeFits(makePath(outputDirectory, stripPath(stripSuffix(imageFilename)) + "preprocessed.fits"));
 			#endif
 		
-			// We transform the image to align it with the colorizedMap
+			// We transform the image to align it with the regionMap
 			if(args["registerImages"])
 			{
 				#if defined VERBOSE
 				cout<<"Image "<<imagesFilenames[p]<<" will be registered to image "<<args["mapFile"]<<endl;
 				#endif
-				image->align(colorizedMap);
+				image->align(regionMap);
 				#if defined DEBUG
 				image->writeFits(makePath(outputDirectory, stripPath(stripSuffix(imageFilename)) + "registered.fits"));
 				#endif
@@ -251,7 +251,7 @@ int main(int argc, const char **argv)
 			if(args["totalStats"])
 			{
 				// We get the total regions stats
-				vector<SegmentationStats*> regions_stats = getTotalRegionStats(colorizedMap, image);
+				vector<SegmentationStats*> regions_stats = getTotalRegionStats(regionMap, image);
 				// We write the header
 				if(!wroteHeader && regions_stats.size() > 0)
 				{
@@ -274,7 +274,7 @@ int main(int argc, const char **argv)
 			else
 			{
 				// We get the regions stats
-				vector<RegionStats*> regions_stats = getRegionStats(colorizedMap, image, regions);
+				vector<RegionStats*> regions_stats = getRegionStats(regionMap, image, regions);
 				// We write the header
 				if(!wroteHeader && regions_stats.size() > 0)
 				{
@@ -310,7 +310,7 @@ int main(int argc, const char **argv)
 		delete regions[r];
 	}
 	regions.clear();
-	delete colorizedMap;
+	delete regionMap;
 	return EXIT_SUCCESS;
 }
 

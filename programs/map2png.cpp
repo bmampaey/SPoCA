@@ -165,15 +165,15 @@ int main(int argc, const char **argv)
 	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
 	{
 		filenamePrefix = makePath(args["output"], stripPath(stripSuffix(imagesFilenames[p]))) + ".";
-		ColorMap* map = getColorMapFromFile(imagesFilenames[p]);
+		ColorMap* colorMap = getColorMapFromFile(imagesFilenames[p]);
 		
 		// We fill holes if requested
 		if(args["fill"])
 		{
-			map->removeHoles();
+			colorMap->removeHoles();
 	
 			#if defined DEBUG
-			map->writeFits(filenamePrefix + "filled.fits");
+			colorMap->writeFits(filenamePrefix + "filled.fits");
 			#endif
 		}
 	
@@ -181,17 +181,17 @@ int main(int argc, const char **argv)
 		if(colors.size() > 0 && args["uniqueColor"].is_set())
 		{
 			ColorType uniqueColor = args["uniqueColor"];
-			for(unsigned j = 0; j < map->NumberPixels(); ++j)
+			for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
 			{
-				if(map->pixel(j) != map->null())
+				if(colorMap->pixel(j) != colorMap->null())
 				{
-					if(colors.count(map->pixel(j)) == 0)
+					if(colors.count(colorMap->pixel(j)) == 0)
 					{
-						map->pixel(j) = map->null();
+						colorMap->pixel(j) = colorMap->null();
 					}
 					else
 					{
-						map->pixel(j) = uniqueColor;
+						colorMap->pixel(j) = uniqueColor;
 					}
 				}
 			}
@@ -199,28 +199,28 @@ int main(int argc, const char **argv)
 		else if(args["uniqueColor"].is_set())
 		{
 			ColorType uniqueColor = args["uniqueColor"];
-			for(unsigned j = 0; j < map->NumberPixels(); ++j)
+			for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
 			{
-				if(map->pixel(j) != map->null())
+				if(colorMap->pixel(j) != colorMap->null())
 				{
-					map->pixel(j) = uniqueColor;
+					colorMap->pixel(j) = uniqueColor;
 				}
 			}
 		}
 		else if(colors.size() > 0)
 		{
-			for(unsigned j = 0; j < map->NumberPixels(); ++j)
+			for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
 			{
-				if(map->pixel(j) != map->null() && colors.count(map->pixel(j)) == 0)
+				if(colorMap->pixel(j) != colorMap->null() && colors.count(colorMap->pixel(j)) == 0)
 				{
-					map->pixel(j) = map->null();
+					colorMap->pixel(j) = colorMap->null();
 				}
 			}
 		}
 	
 		#if defined DEBUG
 		if(colors.size() > 0 || args["uniqueColor"].is_set())
-			map->writeFits(filenamePrefix + "recolored.fits");
+			colorMap->writeFits(filenamePrefix + "recolored.fits");
 		#endif
 		
 		// We transform the image
@@ -230,11 +230,11 @@ int main(int argc, const char **argv)
 			Real rotationAngle = 0;
 			if (args["straightenUp"])
 			{
-				rotationAngle = - map->Crota2();
+				rotationAngle = - colorMap->Crota2();
 			}
 		
 			// We recenter the image
-			RealPixLoc newCenter = map->SunCenter();
+			RealPixLoc newCenter = colorMap->SunCenter();
 			if(args["recenter"].is_set() && !readCoordinate(newCenter, args["recenter"]))
 			{
 				cerr<<"Error : Cannot convert "<<args["recenter"]<<" to coordinates"<<endl;
@@ -246,26 +246,26 @@ int main(int argc, const char **argv)
 			if(args["scaling"].is_set())
 				scaling = args["scaling"];
 		
-			map->transform(rotationAngle, RealPixLoc(newCenter.x - map->SunCenter().x, newCenter.y - map->SunCenter().y), scaling);
+			colorMap->transform(rotationAngle, RealPixLoc(newCenter.x - colorMap->SunCenter().x, newCenter.y - colorMap->SunCenter().y), scaling);
 		
 			#if defined DEBUG
-			map->writeFits(filenamePrefix + "transformed.fits");
+			colorMap->writeFits(filenamePrefix + "transformed.fits");
 			#endif
 		}
 		
 		// We make the png
-		MagickImage outputImage = map->magick(backgroundColor);
+		MagickImage outputImage = colorMap->magick(backgroundColor);
 		
 		// We label the image
 		if(args["upperLabel"].is_set())
 		{
 			string text = args["upperLabel"];
 			if(text.empty())
-				text = map->Label();
+				text = colorMap->Label();
 			else
-				text = map->getHeader().expand(text);
+				text = colorMap->getHeader().expand(text);
 			
-			size_t text_size = map->Xaxes()/40;
+			size_t text_size = colorMap->Xaxes()/40;
 			outputImage.fillColor("white");
 			outputImage.fontPointsize(text_size);
 			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
@@ -274,14 +274,14 @@ int main(int argc, const char **argv)
 		// We label the image
 		if(args["lowerLabel"].is_set())
 		{
-			string text = map->getHeader().expand(args["lowerLabel"]);
-			size_t text_size = map->Xaxes()/40;
+			string text = colorMap->getHeader().expand(args["lowerLabel"]);
+			size_t text_size = colorMap->Xaxes()/40;
 			outputImage.fillColor("white");
 			outputImage.fontPointsize(text_size);
 			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
 		}
 		
-		delete map;
+		delete colorMap;
 		
 		// We resize the image
 		outputImage.scale(size_geometry);

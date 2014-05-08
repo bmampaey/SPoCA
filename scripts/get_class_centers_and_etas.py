@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/python
 
 import string
 import os, os.path
@@ -44,7 +44,7 @@ def parse_map(filename):
 					for i in range(1,100):
 						eta = 'CETA' + ('%02d' % i)
 						if eta in hdu.header:
-							etas.extend(find_numbers.findall(hdu.header[eta]))
+							etas.append(hdu.header[eta])
 						else:
 							break
 		
@@ -233,7 +233,7 @@ if __name__ == "__main__":
 				class_centers_and_eta_file.write(time.strftime('%Y-%m-%d %H:%M:%S,'))
 				class_centers_and_eta_file.write(','.join([str(class_centers) for class_centers in class_centers_and_etas[time]['class_centers']]))
 				class_centers_and_eta_file.write(',')
-				class_centers_and_eta_file.write(','.join(class_centers_and_etas[time]['etas']))
+				class_centers_and_eta_file.write(','.join([str(eta) for eta in class_centers_and_etas[time]['etas']]))
 				class_centers_and_eta_file.write("\n")
 	except Exception, why:
 		logging.critical("Could not write class centers ans etas to file %s: %s", str(args.output), str(why))

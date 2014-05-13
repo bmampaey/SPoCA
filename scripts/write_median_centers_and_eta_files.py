@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import pandas
 import argparse
 import re
@@ -15,10 +15,8 @@ if __name__ == "__main__":
 	# We look into the header of the file what are the time_index, the channels and the number of classes
 	channels = list()
 	number_classes = 0
-	time_index = "time"
 	with open(args.filename) as csv_file:
 		headers = csv_file.readline().split(",")
-		time_index = headers[0]
 		for header in headers[1:]:
 			parts = class_center_regex.match(header)
 			if parts:
@@ -28,7 +26,7 @@ if __name__ == "__main__":
 					channels.append(channel)
 	
 	# Parse the csv file
-	csv = pandas.read_csv(args.filename, parse_dates = time_index, index_col = time_index)
+	csv = pandas.read_csv(args.filename, parse_dates = 0, index_col = 0)
 	
 	median_centers = list()
 	for header in csv.columns[0:number_classes*len(channels)]:

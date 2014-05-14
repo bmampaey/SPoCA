@@ -3,6 +3,13 @@
 
 using namespace std;
 
+inline bool read_more(ifstream& file)
+{
+	while(file.good() && isspace(file.peek()))
+		file.get();
+	return file.good();
+}
+
 bool readCentersFromFile(const string& filename, vector<string>& channels, vector<RealFeature>& B)
 {
 	B.clear();
@@ -22,16 +29,16 @@ bool readCentersFromFile(const string& filename, vector<string>& channels, vecto
 		}
 		else if(channels.size() != read_channels.size())
 		{
-			cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+			cerr<<"Error : number of channels mismatch in class centers file "<<filename<<": expected "<<channels.size()<<" channels but read only "<<read_channels.size()<<endl;
 			return false;
 		}
 		else
 		{
-			for(unsigned i = 0; i < channels.size(); ++i)
+			for(unsigned p = 0; p < channels.size(); ++p)
 			{
-				if(channels[i] != read_channels[i])
+				if(channels[p] != read_channels[p])
 				{
-					cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+					cerr<<"Error : channels mismatch in class centers file "<<filename<<": expected channel "<<channels[p]<<" but read "<<read_channels[p]<<endl;
 					return false;
 				}
 			}
@@ -52,7 +59,7 @@ bool readCentersFromFile(const string& filename, vector<string>& channels, deque
 	ifstream file(filename.c_str());
 	if(file)
 	{
-		for(unsigned i = 0; i < max && file.good(); ++i)
+		for(unsigned i = 0; i < max && read_more(file); ++i)
 		{
 			file>>read_channels>>read_B;
 			if(! file)
@@ -66,16 +73,16 @@ bool readCentersFromFile(const string& filename, vector<string>& channels, deque
 			}
 			else if(channels.size() != read_channels.size())
 			{
-				cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+				cerr<<"Error : number of channels mismatch in class centers file "<<filename<<": expected "<<channels.size()<<" channels but read only "<<read_channels.size()<<endl;
 				return false;
 			}
 			else
 			{
-				for(unsigned i = 0; i < channels.size(); ++i)
+				for(unsigned p = 0; p < channels.size(); ++p)
 				{
-					if(channels[i] != read_channels[i])
+					if(channels[p] != read_channels[p])
 					{
-						cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+						cerr<<"Error : channels mismatch in class centers file "<<filename<<": expected channel "<<channels[p]<<" but read "<<read_channels[p]<<endl;
 						return false;
 					}
 				}
@@ -142,16 +149,16 @@ bool readCentersEtasFromFile(const string& filename, vector<string>& channels, v
 		}
 		else if(channels.size() != read_channels.size())
 		{
-			cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+			cerr<<"Error : number of channels mismatch in class centers file "<<filename<<": expected "<<channels.size()<<" channels but read only "<<read_channels.size()<<endl;
 			return false;
 		}
 		else
 		{
-			for(unsigned i = 0; i < channels.size(); ++i)
+			for(unsigned p = 0; p < channels.size(); ++p)
 			{
-				if(channels[i] != read_channels[i])
+				if(channels[p] != read_channels[p])
 				{
-					cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+					cerr<<"Error : channels mismatch in class centers file "<<filename<<": expected channel "<<channels[p]<<" but read "<<read_channels[p]<<endl;
 					return false;
 				}
 			}
@@ -174,7 +181,7 @@ bool readCentersEtasFromFile(const string& filename, vector<string>& channels, d
 	ifstream file(filename.c_str());
 	if(file)
 	{
-		for(unsigned i = 0; i < max && file.good(); ++i)
+		for(unsigned i = 0; i < max && read_more(file); ++i)
 		{
 			file>>read_channels>>read_B>>read_Eta;
 			if(! file)
@@ -188,16 +195,16 @@ bool readCentersEtasFromFile(const string& filename, vector<string>& channels, d
 			}
 			else if(channels.size() != read_channels.size())
 			{
-				cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+				cerr<<"Error : number of channels mismatch in class centers file "<<filename<<": expected "<<channels.size()<<" channels but read only "<<read_channels.size()<<endl;
 				return false;
 			}
 			else
 			{
-				for(unsigned i = 0; i < channels.size(); ++i)
+				for(unsigned p = 0; p < channels.size(); ++p)
 				{
-					if(channels[i] != read_channels[i])
+					if(channels[p] != read_channels[p])
 					{
-						cerr<<"Error : channels mismatch in class centers file "<<filename<<endl;
+						cerr<<"Error : channels mismatch in class centers file "<<filename<<": expected channel "<<channels[p]<<" but read "<<read_channels[p]<<endl;
 						return false;
 					}
 				}

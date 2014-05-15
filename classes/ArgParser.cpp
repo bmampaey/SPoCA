@@ -126,6 +126,7 @@ string ArgParser::Parameter::help_message(const string& long_name, string sectio
 template<>
 ArgParser::Parameter::operator bool() const
 {
+	//cout<<"parsing "<<short_name<<": \""<<description<<"\" default value \""<<default_value<<"\" set value \""<<value<<"\""<<endl;
 	string actual_value = set ? value : default_value;
 	for (string::iterator it = actual_value.begin(); it != actual_value.end(); ++it)
 		*it = static_cast<char>(tolower(static_cast<unsigned char>(*it)));
@@ -141,7 +142,7 @@ ArgParser::Parameter::operator bool() const
 		else if(actual_value == "false" || actual_value == "f" || actual_value == "no" || actual_value == "n")
 			return false;
 		else
-			throw invalid_argument("Cannot convert " + actual_value + " to bool");
+			throw invalid_argument("Cannot convert " + actual_value + " to bool (" + description + ")");
 	}
 }
 

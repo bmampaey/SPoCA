@@ -179,7 +179,7 @@ ArgParser::Parameter::operator T() const
 		std::istringstream in(value);
 		in>>result;
 		if(in.fail())
-			throw std::invalid_argument("Cannot convert value " + value + " to type " + std::string(typeid(T).name()));
+			throw std::invalid_argument("Cannot convert value " + value + " to type " + std::string(typeid(T).name()) + "(" + description + ")");
 		return result;
 	}
 	else if(default_value_set)
@@ -188,12 +188,12 @@ ArgParser::Parameter::operator T() const
 		std::istringstream in(default_value);
 		in>>result;
 		if(in.fail())
-			throw std::invalid_argument("Cannot convert default value " + default_value + " to type " + std::string(typeid(T).name()));
+			throw std::invalid_argument("Cannot convert default value " + default_value + " to type " + std::string(typeid(T).name()) + "(" + description + ")");
 		return result;
 	}
 	else
 	{
-		throw std::invalid_argument("Value is undefined");
+		throw std::invalid_argument("Value is undefined (" + description + ")");
 	}
 }
 

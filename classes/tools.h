@@ -20,7 +20,7 @@
 
 /*!
 @file tools.h
-A collection of little function to make life easier.
+A collection of little functions to make life easier.
 */
 
 //! General vector output

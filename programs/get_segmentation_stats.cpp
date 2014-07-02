@@ -26,7 +26,7 @@ global parameters:
 <BR>NAR=zz.z (pixels below zz.z*radius)
 <BR>Long=zz.z (pixels between -zz.z and zz.z degrees of longitude)	Lat=zz.z (pixels between -zz.z and zz.z degrees of latitude)
 
-@param colors	The list of color of the regions to plot separated by commas. All regions will be selected if ommited.
+@param colors	The list of color of the regions to plot separated by commas or a file containg such a list. All regions will be selected if ommited.
 
 @param output	The name for the output file or of a directory.
 
@@ -114,7 +114,7 @@ int main(int argc, const char **argv)
 	args["append"] = ArgParser::Parameter(false, 'a', "Set this flag if you want append a new table to the map with the region stats.");
 	args["totalStats"] = ArgParser::Parameter(false, 't', "Set this flag if you want to get stats on all regions taken together. This will actually compute segmentation stats.");
 	args["separator"] = ArgParser::Parameter(',', 's', "The separator to put between columns.");
-	args["colors"] = ArgParser::Parameter("", 'C', "The list of color of the regions to plot separated by commas. All regions will be selected if ommited.");
+	args["colors"] = ArgParser::Parameter("", 'c', "The list of color of the regions to plot separated by commas or a file containg such a list. All regions will be selected if ommited.");
 	args["output"] = ArgParser::Parameter(".", 'O', "The name for the output file or of a directory.");
 	args["mapFile"] = ArgParser::PositionalParameter("Path to the map of regions (i.e. each one must have a different color).");
 	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file for computing stats", 1);
@@ -155,8 +155,19 @@ int main(int argc, const char **argv)
 	set<ColorType> colors;
 	if(args["colors"].is_set())
 	{
-		vector<ColorType> tmp = toVector<ColorType>(args["colors"]);
-		colors.insert(tmp.begin(),tmp.end());
+		if(isFile(args["colors"]))
+		{
+			string filename = args["colors"];
+			ifstream file(filename.c_str());
+			vector<ColorType> tmp;
+			file>>tmp;
+			colors.insert(tmp.begin(),tmp.end());
+		}
+		else
+		{
+			vector<ColorType> tmp = toVector<ColorType>(args["colors"]);
+			colors.insert(tmp.begin(),tmp.end());
+		}
 	}
 	
 	// We read the map

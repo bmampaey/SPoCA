@@ -19,7 +19,7 @@ global parameters:
 
 @param config	Program option configuration file.
 
-@param colors	The list of color of the regions to plot separated by commas. All regions will be selected if ommited.
+@param colors	The list of color of the regions to plot separated by commas or a file containg such a list. All regions will be selected if ommited.
 
 @param fill	Set this flag if you want to fill holes in the regions before ploting.
 
@@ -105,7 +105,7 @@ int main(int argc, const char **argv)
 	args["upperLabel"] = ArgParser::Parameter("", 'L', "The label to write on the upper left corner.\nIf set but no value is passed, a default label will be written.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["lowerLabel"] = ArgParser::Parameter("{CLASTYPE} {CPREPROC}", 'l', "The label to write on the lower left corner.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["fill"] = ArgParser::Parameter(false, 'f', "Set this flag if you want to fill holes in the regions before ploting.");
-	args["colors"] = ArgParser::Parameter("", 'c', "The list of color of the regions to plot separated by commas. All regions will be selected if ommited.");
+	args["colors"] = ArgParser::Parameter("", 'c', "The list of color of the regions to plot separated by commas or a file containg such a list. All regions will be selected if ommited.");
 	args["uniqueColor"] = ArgParser::Parameter(7, 'U', "Set to a color if you want all regions to be plotted in that color.\nSee gradient image for the color number.");
 	args["transparent"] = ArgParser::Parameter(false, 't', "If you want the null values to be transparent.");
 	args["straightenUp"] = ArgParser::Parameter(false, 'u', "Set if you want to rotate the image so the solar north is up.");
@@ -156,8 +156,19 @@ int main(int argc, const char **argv)
 	set<ColorType> colors;
 	if(args["colors"].is_set())
 	{
-		vector<ColorType> tmp = toVector<ColorType>(args["colors"]);
-		colors.insert(tmp.begin(),tmp.end());
+		if(isFile(args["colors"]))
+		{
+			string filename = args["colors"];
+			ifstream file(filename.c_str());
+			vector<ColorType> tmp;
+			file>>tmp;
+			colors.insert(tmp.begin(),tmp.end());
+		}
+		else
+		{
+			vector<ColorType> tmp = toVector<ColorType>(args["colors"]);
+			colors.insert(tmp.begin(),tmp.end());
+		}
 	}
 	
 	// We convert the images

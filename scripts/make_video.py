@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
 import sys
 import subprocess, shlex
@@ -10,7 +10,7 @@ import argparse
 import tempfile
 
 # parameters for mencoder
-ffmpeg_bin = '/pool/software/ffmpeg/bin/ffmpeg'
+ffmpeg_bin = '/home/benjmam/pytenv/bin/ffmpeg'
 
 def run_ffmpeg(ffmpeg_cmd, input_filenames = []):
 	

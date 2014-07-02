@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python
 import xml.dom.minidom
 from datetime import datetime, timedelta
 import dateutil.parser

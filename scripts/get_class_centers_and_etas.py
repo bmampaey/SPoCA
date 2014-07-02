@@ -1,5 +1,4 @@
-#!/usr/bin/python
-
+#!/usr/bin/env python
 import string
 import os, os.path
 import logging

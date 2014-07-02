@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python
 import os, os.path, sys
 import logging
 import argparse

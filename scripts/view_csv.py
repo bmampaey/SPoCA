@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import matplotlib.pyplot as plt
 import matplotlib.colorbar as clb
 import pandas as pd

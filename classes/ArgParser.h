@@ -198,6 +198,13 @@ ArgParser::Parameter::operator T() const
 }
 
 template<>
+ArgParser::Parameter::Parameter(const bool& default_value, const char short_name, const std::string& description);
+
+
+template<>
+ArgParser::Parameter::Parameter(const bool& default_value, const std::string& description);
+
+template<>
 ArgParser::Parameter::operator bool() const;
 
 template<>

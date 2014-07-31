@@ -206,7 +206,7 @@ void EUVImage::preprocessing(const string& preprocessingList)
 				cerr<<"Error: No value specified for threshold preprocessing step"<<preprocessingSteps[s]<<endl;
 				exit(EXIT_FAILURE);
 			}
-			double upperValue = std::numeric_limits<double>::max(), lowerValue = percentiles(toDouble(stepParameters[1]));
+			double upperValue = std::numeric_limits<double>::max(), lowerValue = percentiles(toDouble(stepParameters[1])/100.);
 			threshold(lowerValue, upperValue);
 		}
 		else if(stepType == "ThrMaxPer")
@@ -216,7 +216,7 @@ void EUVImage::preprocessing(const string& preprocessingList)
 				cerr<<"Error: No value specified for threshold preprocessing step"<<preprocessingSteps[s]<<endl;
 				exit(EXIT_FAILURE);
 			}
-			double upperValue = percentiles(toDouble(stepParameters[1])), lowerValue = std::numeric_limits<double>::min();
+			double upperValue = percentiles(toDouble(stepParameters[1])/100.), lowerValue = std::numeric_limits<double>::min();
 			threshold(lowerValue, upperValue);
 		}
 		else if(stepType == "Smooth")
@@ -234,7 +234,7 @@ void EUVImage::preprocessing(const string& preprocessingList)
 /* Function that returns the percentage of correction necessary for an annulus, given the percentage of the annulus radius to the radius of the sun */
 
 /*Method proposed by Benjamin
-No correction before r1 and after r2, Full correction between r3 and r4,
+No correction before r1 and after r4, Full correction between r2 and r3,
 progressive correction following the ascending phase of the sine between r1 and r2
 progressive correction following the descending phase of the sine between r3 and r4 */
 

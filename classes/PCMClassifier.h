@@ -70,6 +70,9 @@ class PCMClassifier : public virtual FCMClassifier
 		//! Function to initialise the centers and eta by doing an FCM
 		virtual void FCMinit();
 		
+		//! Function to initialise eta by doing an FCM attribution
+		virtual void FCMinitEta();
+		
 		//! Function to sort the centers
 		virtual void sortB();
 		

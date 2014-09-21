@@ -332,6 +332,30 @@ void PCMClassifier::FCMinit()
 	#endif
 }
 
+void PCMClassifier::FCMinitEta()
+{
+	if(X.size() == 0)
+	{
+		cerr<<"Error : The set of FeatureVector must be initialized before doing a FCM init."<<endl;
+		exit(EXIT_FAILURE);
+	}
+	if(B.size() == 0)
+	{
+		cerr<<"Error : The centers must be initialised before doing a FCM init."<<endl;
+		exit(EXIT_FAILURE);
+	}
+	
+	numberClasses = B.size();
+	Real temp = fuzzifier;
+	fuzzifier = FCMfuzzifier;
+	FCMClassifier::attribution();
+	
+	fuzzifier = temp;
+	//We initialise eta
+	computeEta();
+}
+
+
 void PCMClassifier::stepinit(const string filename)
 {
 	Classifier::stepinit(filename);

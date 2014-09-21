@@ -440,8 +440,8 @@ int main(int argc, const char **argv)
 					F->initB(channels, B);
 					// We add the images to the classifier
 					F->addImages(images);
-					// We compute the Eta
-					dynamic_cast<PCMClassifier*>(F)->FCMinit();
+					// We init the Eta with FCM attribution for the U
+					dynamic_cast<PCMClassifier*>(F)->FCMinitEta();
 				}
 			}
 			else

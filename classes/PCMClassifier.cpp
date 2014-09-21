@@ -348,7 +348,7 @@ void PCMClassifier::FCMinitEta()
 	numberClasses = B.size();
 	Real temp = fuzzifier;
 	fuzzifier = FCMfuzzifier;
-	FCMClassifier::attribution();
+	FCMClassifier::computeU();
 	
 	fuzzifier = temp;
 	//We initialise eta

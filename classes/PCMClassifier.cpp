@@ -332,30 +332,6 @@ void PCMClassifier::FCMinitEta()
 	fuzzifier = temp;
 	//We initialise eta
 	computeEta();
-	
-	//This is just a test
-	//We try to stabilize eta before starting the classification
-	vector<Real> oldEta = eta;
-	Real precisionReached = numeric_limits<Real>::max();
-	for (unsigned iteration = 0; iteration < maxNumberIteration && precisionReached > precision ; ++iteration)
-	{
-		//#if defined VERBOSE
-			cout<<"Eta iteration "<<iteration<<": "<<eta<<endl;
-		//#endif
-		computeU();
-		computeEta();
-
-		for (unsigned i = 0 ; i < numberClasses ; ++i)
-		{
-			precisionReached = abs((eta[i] - oldEta[i])/oldEta[i]);
-			if (precisionReached > precision)
-				break;
-		}
-		oldEta = eta;
-	}
-	//#if defined VERBOSE
-		cout<<"Eta final: "<<eta<<endl;
-	//#endif
 }
 
 

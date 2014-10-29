@@ -1,15 +1,17 @@
-//! This program recolor a map using a color table given by the user.
+//! This program recolors a map fits file. You must provide one and only one of a lookup color table, a list of colors to erase or a list of colors to keep.
+
 /*!
-@page recolor_map recolor_map.x
-
-Version: 3.0
-
-Author: Benjamin Mampaey, benjamin.mampaey@sidc.be
+<BR>Version: 3.0
+<BR>Author: Benjamin Mampaey, benjamin.mampaey@sidc.be
+<BR>Compiled on Oct 29 2014 with options :
+<BR>NUMBERCHANNELS: 2
+<BR>EUVPixelType: f
+<BR>Real: f
 
 @section usage Usage
 <tt> bin/recolor_map.x [-option optionvalue ...]  fitsFile [ fitsFile ... ] </tt>
 
-@param fitsFile	Path to a fits file to be recolored
+@param fitsFile	Path to the map fits file to be recolored
 
 global parameters:
 
@@ -19,34 +21,16 @@ global parameters:
 
 @param config	Program option configuration file.
 
-@param colors	The list of color of the regions to plot separated by commas or a file containg such a list. All regions will be selected if ommited.
+@param color_lookup_table	A file containing a color lookup table
 
-@param fill	Set this flag if you want to fill holes in the regions before ploting.
+@param erase_colors	The list of color to erase separated by commas or a file containg such a list.
 
-@param upperLabel	The label to write on the upper left corner.
-<BR>If set but no value is passed, a default label will be written.
-<BR>You can use keywords from the color map fits file by specifying them between {}
-
-@param lowerLabel	The label to write on the lower left corner.
-<BR>You can use keywords from the color map fits file by specifying them between {}
+@param keep_colors	The list of color to keep separated by commas or a file containg such a list. All other colors will be erased
 
 @param output	The path of the the output directory.
 
-@param recenter	Set to the position of the new sun center if you want to translate the image
 
-@param scaling	Set to the scaling factor if you want to rescale the image.
-
-@param size	The size of the image written. i.e. "1024x1024". See ImageMagick Image Geometry for specification.
-<BR>If not set the output image will have the same dimension as the input image.
-
-@param straightenUp	Set if you want to rotate the image so the solar north is up.
-
-@param transparent	If you want the null values to be transparent.
-
-@param type	The type of image to write.
-
-@param uniqueColor	Set to a color if you want all regions to be plotted in that color.
-<BR>See gradient image for the color number.
+@page recolor_map recolor_map.x
 
 See @ref Compilation_Options for constants and parameters at compilation time.
 
@@ -63,21 +47,17 @@ See @ref Compilation_Options for constants and parameters at compilation time.
 #include "../classes/ArgParser.h"
 
 #include "../classes/ColorMap.h"
-#include "../classes/MagickImage.h"
+#include "../classes/FitsFile.h"
 
 using namespace std;
 
-using Magick::Color;
-using Magick::ColorGray;
-using Magick::Geometry;
-using Magick::Quantum;
 
 string filenamePrefix;
 
 int main(int argc, const char **argv)
 {
 	// We declare our program description
-	string programDescription = "This program recolors a map fits file. You must provide one and only one of a lookup color table, a list of colors to erase or a  list of colors to keep.";
+	string programDescription = "This program recolors a map fits file. You must provide one and only one of a lookup color table, a list of colors to erase or a list of colors to keep.";
 	programDescription+="\nVersion: 3.0";
 	programDescription+="\nAuthor: Benjamin Mampaey, benjamin.mampaey@sidc.be";
 	
@@ -223,7 +203,7 @@ int main(int argc, const char **argv)
 			colorMap->keepColors(keep_colors);
 		}
 
-		colorMap->writeFits(makePath(args["output"], stripPath(imagesFilenames[p])));
+		colorMap->writeFits(makePath(args["output"], stripPath(imagesFilenames[p])), FitsFile::compress);
 		delete colorMap;
 	}
 	

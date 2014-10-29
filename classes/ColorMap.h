@@ -3,6 +3,7 @@
 #define ColorMap_H
 
 #include <map>
+#include <set>
 
 #include "Header.h"
 #include "SunImage.h"
@@ -99,6 +100,12 @@ class ColorMap : public SunImage<ColorType>
 		
 		//! Routine that recolors connected component using a color lookup table
 		void recolorizeConnectedComponents(const std::map<ColorType,ColorType>& LUT);
+		
+		//! Routine that erase the colors provided
+		void eraseColors(const std::set<ColorType>& colors);
+		
+		//! Routine that erase all but the colors provided
+		void keepColors(const std::set<ColorType>& colors);
 		
 		//! Routine that tries to remove holes in connected components
 		ColorMap* removeHoles(ColorType unusedColor = std::numeric_limits<ColorType>::max() - 1);

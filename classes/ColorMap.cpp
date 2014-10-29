@@ -688,6 +688,27 @@ void ColorMap::recolorizeConnectedComponents(const map<ColorType,ColorType>& LUT
 	}
 }
 
+void ColorMap::eraseColors(const set<ColorType>& colors)
+{
+	ColorType* end = pixels + numberPixels;
+	for (ColorType* j = pixels; j < end; ++j)
+	{
+		if (colors.count(*j)!=0)
+			*j = nullpixelvalue;
+	}
+}
+		
+
+void ColorMap::keepColors(const set<ColorType>& colors)
+{
+	ColorType* end = pixels + numberPixels;
+	for (ColorType* j = pixels; j < end; ++j)
+	{
+		if (colors.count(*j)==0)
+			*j = nullpixelvalue;
+	}
+}
+
 unsigned ColorMap::propagateColor(const ColorType color, const PixLoc& firstPixel)
 {
 	return propagateColor(color, firstPixel.x + firstPixel.y * xAxes);

@@ -158,7 +158,7 @@ void AIAImage::enhance_contrast()
 	{
 		case 94:
 			mul(4.99803/exposureTime);
-			threshold(1.5, 50);
+			threshold(1.5 / 1.06, 50.0 / 1.06);
 			for(unsigned j = 0; j < NumberPixels(); ++j)
 			{
 				pixels[j] = sqrt(pixels[j]);
@@ -167,7 +167,7 @@ void AIAImage::enhance_contrast()
 		
 		case 131:
 			mul(6.99685/exposureTime);
-			threshold(7, 1200);
+			threshold(7.0 / 1.49, 1200.0 / 1.49);
 			for(unsigned j = 0; j < NumberPixels(); ++j)
 			{
 				pixels[j] = log10(pixels[j]);
@@ -176,7 +176,7 @@ void AIAImage::enhance_contrast()
 		
 		case 171:
 			mul(4.99803/exposureTime);
-			threshold(10, 6000);
+			threshold(10.0 / 1.49, 6000.0 / 1.49);
 			for(unsigned j = 0; j < NumberPixels(); ++j)
 			{
 				pixels[j] = sqrt(pixels[j]);
@@ -185,7 +185,7 @@ void AIAImage::enhance_contrast()
 		
 		case 193:
 			mul(2.99950/exposureTime);
-			threshold(120, 6000);
+			threshold(120.0 / 1.08, 6000.0 / 1.08);
 			for(unsigned j = 0; j < NumberPixels(); ++j)
 			{
 				pixels[j] = log10(pixels[j]);
@@ -194,7 +194,7 @@ void AIAImage::enhance_contrast()
 		
 		case 211:
 			mul(4.99801/exposureTime);
-			threshold(30, 13000);
+			threshold(30.0 / 1.10, 13000.0 / 1.10);
 			for(unsigned j = 0; j < NumberPixels(); ++j)
 			{
 				pixels[j] = log10(pixels[j]);
@@ -203,7 +203,7 @@ void AIAImage::enhance_contrast()
 
 		case 304:
 			mul(4.99941/exposureTime);
-			threshold(15, 600);
+			threshold(50.0 / 12.11,  2000.0 / 12.11);
 			for(unsigned j = 0; j < NumberPixels(); ++j)
 			{
 				pixels[j] = log10(pixels[j]);
@@ -212,7 +212,7 @@ void AIAImage::enhance_contrast()
 		
 		case 335:
 			mul(6.99734/exposureTime);
-			threshold(3.5, 1000);
+			threshold(3.5 / 2.97, 1000.0 / 2.97);
 			for(unsigned j = 0; j < NumberPixels(); ++j)
 			{
 				pixels[j] = log10(pixels[j]);
@@ -231,7 +231,7 @@ void AIAImage::enhance_contrast()
 
 		case 4500:
 			mul(1.00026/exposureTime);
-			threshold(0, 32000);
+			threshold(0, 26000);
 		break;
 		
 		default:

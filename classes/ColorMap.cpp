@@ -45,21 +45,18 @@ ColorMap::ColorMap(const SunImage<ColorType>* i)
 
 inline ColorType ColorMap::interpolate(float x, float y) const
 {
-	if(x < 0)
-		x = 0;
-	if(y < 0)
-		y = 0;
-	if(x >= xAxes-1.)
-		x = xAxes-1.0001;
-	if(y >= yAxes-1.)
-		y = yAxes-1.0001;
+	x = x < 0.? 0. : min(float(xAxes-1.001), x);
+	y = y < 0.? 0. : min(float(yAxes-1.001), y);
 	
-	unsigned ix = unsigned(x), iy = unsigned(y);
-	
-	Real dx = x - ix, dy = y - iy;
-	Real cdx = 1. - dx, cdy = 1. - dy;
+	unsigned ix = (unsigned) x;
+	unsigned iy = (unsigned) y;
+	Real dx = x - ix;
+	Real dy = y - iy;
+	Real cdx = 1. - dx;
+	Real cdy = 1. - dy;
 	ColorType colors[] = {pixel(ix, iy), pixel(ix+1, iy), pixel(ix, iy+1), pixel(ix+1, iy+1)};
 	float quantity[] = {cdx*cdy, dx*cdy, cdx*dy, dx*dy};
+	
 	for(unsigned i = 0; i < 3; ++i)
 		for(unsigned j = i+1; j < 4; ++j)
 			if(colors[i] == colors[j])
@@ -160,7 +157,7 @@ void ColorMap::fillHeader()
 
 bool isColorMap(const Header& header)
 {
-	return header.has("INSTRUME") && header.get<string>("INSTRUME").find("SPoCA") != string::npos;	
+	return header.has("INSTRUME") && header.get<string>("INSTRUME").find("SPoCA") != string::npos;
 }
 
 
@@ -412,7 +409,7 @@ ColorMap* ColorMap::erodeCircular(const Real size, const ColorType unsetValue)
 	ColorType * j = pixels + offset;
 	ColorType * nj = newPixels + offset;
 	for(unsigned y = 1; y < yAxes - 1; ++y)
-	{		
+	{
 		for(unsigned x = 1; x < xAxes - 1; ++x)
 		{
 			if(*j != unsetValue && (*(j-1) != *j || *(j+1) != *j || *(j-xAxes) != *j || *(j+xAxes) != *j))
@@ -462,7 +459,7 @@ vector<PixLoc> ColorMap::get_shape(PixLoc center, const vector<HCC>& line)
 	{
 		return shape;
 	}
-	// The rotation matrix is such that we need to invert THE latitude 
+	// The rotation matrix is such that we need to invert THE latitude
 	double sin_lat = sin(-hgs.latitude);
 	double cos_lat = cos(-hgs.latitude);
 	double sin_long = sin(hgs.longitude);
@@ -620,7 +617,7 @@ ColorMap* ColorMap::drawContours(const unsigned width, const ColorType unsetValu
 	
 	int j = 0;
 	for(unsigned y = size; y < yAxes - size; ++y)
-	{		
+	{
 		j = y * xAxes + size;
 		for(unsigned x = size; x < xAxes - size; ++x)
 		{
@@ -638,7 +635,7 @@ ColorMap* ColorMap::drawContours(const unsigned width, const ColorType unsetValu
 						{
 							cerr<<"Error : trying to access pixel out of image in drawContours"<<endl;
 							exit(EXIT_FAILURE);
-						}	
+						}
 					#endif
 					newPixels[j + shape[s]] = newPixels[j - shape[s]] = maxColor;
 				}
@@ -919,7 +916,7 @@ MagickImage ColorMap::magick(const Magick::Color background)
 	for (unsigned y = 0; y < yAxes; ++y)
 	{
 		for (unsigned x = 0; x < xAxes; ++x)
-		{	
+		{
 			if(pixel(x, y) != nullpixelvalue)
 			{
 				image.pixelColor(x, yAxes - y - 1, Magick::Color(gradient[pixel(x, y) % gradientMax]));
@@ -934,6 +931,3 @@ MagickImage ColorMap::magick()
 	return magick(Magick::Color(0,0,0,QuantumRange));
 }
 #endif
-
-
-

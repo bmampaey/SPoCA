@@ -257,7 +257,7 @@ void Image<T>::mul(const T value)
 }
 		
 template<class T>
-void Image<T>::threshold(const T min, const T max = numeric_limits<T>::max())
+void Image<T>::threshold(const T min, const T max)
 {
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
@@ -907,7 +907,7 @@ Image<T>* Image<T>::sobel(const Image<T> * img)
 	Image<T> Cy (img->xAxes, img->xAxes);
 	Cx.convolution(img, sobel_kernelx);
 	Cy.convolution(img, sobel_kernely);
-	for (unsigned j= 0; j < numberPixels; ++j) 
+	for (unsigned j= 0; j < numberPixels; ++j)
 	{
 		pixels[j] = T(sqrt(Cx.pixels[j] * Cx.pixels[j] + Cy.pixels[j] * Cy.pixels[j]));
 	}
@@ -919,7 +919,7 @@ Image<T>* Image<T>::horizontal_convolution(const Image<T>* img,  const vector<fl
 {
 
 	const T* ptrrow = img->pixels;
-	const T* ppp;	
+	const T* ppp;
 	T* ptrout;
 	
 	// I can't convolve myself
@@ -1216,4 +1216,3 @@ Instantiation of the template class Image for ColorType
 See @ref Compilation_Options constants.h */
 
 template class Image<ColorType>;
-

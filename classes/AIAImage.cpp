@@ -242,83 +242,83 @@ void AIAImage::enhance_contrast()
 }
 
 
-vector<char> AIAImage::color_table() const
+vector<unsigned char> AIAImage::color_table() const
 {
 	switch (int(wavelength))
 	{
 		case 94:
 		{
-			char colorTable[][3] = CT_AIA_94;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_AIA_94;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 		
 		case 131:
 		{
-			char colorTable[][3] = CT_AIA_131;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_AIA_131;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 		
 		case 171:
 		{
-			char colorTable[][3] = CT_AIA_171;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_AIA_171;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 		
 		case 193:
 		{
-			char colorTable[][3] = CT_AIA_193;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_AIA_193;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 		
 		case 211:
 		{
-			char colorTable[][3] = CT_AIA_211;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_AIA_211;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 
 		case 304:
 		{
-			char colorTable[][3] = CT_AIA_304;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_AIA_304;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 		
 		case 335:
 		{
-			char colorTable[][3] = CT_AIA_335;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_AIA_335;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 		
 		case 1600:
 		{
-			char colorTable[][3] = CT_AIA_1600;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_AIA_1600;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 		
 		case 1700:
 		{
-			char colorTable[][3] = CT_AIA_1700;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_AIA_1700;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 
 		case 4500:
 		{
-			char colorTable[][3] = CT_AIA_4500;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_AIA_4500;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 		
 		default:
 			cerr<<"Unknow wavelength "<<wavelength<<" for AIA"<<endl;
-			return vector<char>(0);
+			return vector<unsigned char>(0);
 		break;
 	}
 }
@@ -327,4 +327,3 @@ bool isAIA(const Header& header)
 {
 	return header.has("INSTRUME") && header.get<string>("INSTRUME").find("AIA") != string::npos;
 }
-

@@ -94,15 +94,15 @@ class EUVImage : public SunImage<EUVPixelType>
 		Real percentCorrection(const Real r) const;
 		
 		//! Routine that improves the contrast for visualization
-		/*! Does a simple thresholding of the pixel intensities on the percentiles 1% and 95% */ 
+		/*! Does a simple thresholding of the pixel intensities on the percentiles 1% and 95% */
 		virtual void enhance_contrast();
 		
 		//! Routine that returns the color table
 		/*! Based on the routine aia_lct.pro from solar soft */
-		virtual std::vector<char> color_table() const;
+		virtual std::vector<unsigned char> color_table() const;
 		
 		#ifdef MAGICK
-		//! Routine that creates and return a grey MagickImage 
+		//! Routine that creates and return a grey MagickImage
 		MagickImage magick();
 		#endif
 

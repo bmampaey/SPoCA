@@ -41,7 +41,7 @@ class AIAImage : public EUVImage
 		void enhance_contrast();
 		
 		//! Routine that returns the color table
-		std::vector<char> color_table() const;
+		std::vector<unsigned char> color_table() const;
 		
 		//! Accessor to retrieve the Instrument
 		std::string Instrument() const;

@@ -97,7 +97,7 @@ istream& operator>>(istream& in, FeatureVector<T, N>& fv)
 }
 
 template<class T, unsigned N>
-string toString(const FeatureVector<T, N>& fv, const unsigned& precision = 0)
+string toString(const FeatureVector<T, N>& fv, const unsigned& precision)
 {
 	ostringstream out;
 	if (precision != 0)

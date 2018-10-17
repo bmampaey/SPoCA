@@ -47,7 +47,7 @@ class Image
 		//! null is the value of a non significatif pixel
 		/*! It is set by default to the max value of a pixel.
 		May be a problem if the picture is saturated */
-		T nullpixelvalue;  
+		T nullpixelvalue;
 		
 		//! Computes the percentil value of the array arr
 		T quickselect(std::vector<T>& arr, Real percentil = 0.5) const;
@@ -152,7 +152,7 @@ class Image
 		void mul(const T value);
 		
 		//! Routine to threshold the image betwenn min and max
-		void threshold(const T min, const T max);
+		void threshold(const T min, const T max = std::numeric_limits<T>::max());
 		
 		//! Routine to take the log of an image
 		void takeLog();

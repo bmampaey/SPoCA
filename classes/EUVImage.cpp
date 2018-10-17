@@ -351,10 +351,10 @@ void EUVImage::enhance_contrast()
 	threshold(p[0], p[1]);
 }
 
-vector<char> EUVImage::color_table() const
+vector<unsigned char> EUVImage::color_table() const
 {
-	char colorTable[][3] = CT_BLUE_RED;
-	return vector<char>(colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+	unsigned char colorTable[][3] = CT_BLUE_RED;
+	return vector<unsigned char>(colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 }
 
 
@@ -375,4 +375,3 @@ MagickImage EUVImage::magick()
 }
 
 #endif
-

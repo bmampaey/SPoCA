@@ -168,6 +168,22 @@ Real RegionStats::Median() const
 		return quickselect(intensities, 0.5);
 }
 
+Real RegionStats::LowerQuartile() const
+{
+	if (intensities.size() == 0)
+		return NAN;
+	else
+		return quickselect(intensities, 0.25);
+}
+
+Real RegionStats::UpperQuartile() const
+{
+	if (intensities.size() == 0)
+		return NAN;
+	else
+		return quickselect(intensities, 0.75);
+}
+
 void RegionStats::computeMoments()
 {
 	Real mean = Mean();
@@ -247,7 +263,7 @@ Real RegionStats::TotalIntensity() const
 Real RegionStats::Area_Raw() const
 {
 	return area_Raw;
-}		
+}
 
 Real RegionStats::Area_RawUncert() const
 {
@@ -257,7 +273,7 @@ Real RegionStats::Area_RawUncert() const
 Real RegionStats::Area_AtDiskCenter() const
 {
 	return area_AtDiskCenter;
-}		
+}
 
 Real RegionStats::Area_AtDiskCenterUncert() const
 {
@@ -273,12 +289,12 @@ string RegionStats::toString(const string& separator, bool header) const
 {
 	if (header)
 	{
-		return "Id"+separator+"ObservationDate"+separator+"NumberPixels"+separator+"Center"+separator+"Barycenter"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"CenterxError"+separator+"CenteryError"+separator+"Area_Raw"+separator+"Area_RawUncert"+separator+"Area_AtDiskCenter"+separator+"Area_AtDiskCenterUncert"+separator+"ClippedSpatial";
+		return "Id"+separator+"ObservationDate"+separator+"NumberPixels"+separator+"Center"+separator+"Barycenter"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"LowerQuartile"+separator+"UpperQuartile"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"CenterxError"+separator+"CenteryError"+separator+"Area_Raw"+separator+"Area_RawUncert"+separator+"Area_AtDiskCenter"+separator+"Area_AtDiskCenterUncert"+separator+"ClippedSpatial";
 	}
 	else
 	{
 		ostringstream out;
-		out<<setiosflags(ios::fixed)<<Id()<<separator<<ObservationDate()<<separator<<NumberPixels()<<separator<<Center()<<separator<<Barycenter()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<CenterxError()<<separator<<CenteryError()<<separator<<Area_Raw()<<separator<<Area_RawUncert()<<separator<<Area_AtDiskCenter()<<separator<<Area_AtDiskCenterUncert()<<separator<<ClippedSpatial();
+		out<<setiosflags(ios::fixed)<<Id()<<separator<<ObservationDate()<<separator<<NumberPixels()<<separator<<Center()<<separator<<Barycenter()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<LowerQuartile()<<separator<<UpperQuartile()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<CenterxError()<<separator<<CenteryError()<<separator<<Area_Raw()<<separator<<Area_RawUncert()<<separator<<Area_AtDiskCenter()<<separator<<Area_AtDiskCenterUncert()<<separator<<ClippedSpatial();
 		return out.str();
 	}
 }
@@ -448,6 +464,20 @@ FitsFile& writeRegions(FitsFile& file, const vector<RegionStats*>& regions_stats
 		for(unsigned r = 0; r < regions_stats.size(); ++r)
 			data[r] = regions_stats[r]->Median();
 		file.writeColumn("MEDIAN_INTENSITY", data);
+	}
+
+	{
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->LowerQuartile();
+		file.writeColumn("LOWERQUARTILE_INTENSITY", data);
+	}
+
+	{
+		vector<Real> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->UpperQuartile();
+		file.writeColumn("UPPERQUARTILE_INTENSITY", data);
 	}
 
 	{

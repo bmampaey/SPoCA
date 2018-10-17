@@ -66,6 +66,10 @@ class RegionStats
 		Real Mean() const;
 		//! Median of the intensities the region
 		Real Median() const;
+		//! Low quartile (25 percentile) of the intensities the region
+		Real LowerQuartile() const;
+		//! High quartile (75 percentile) of the intensities the region
+		Real UpperQuartile() const;
 		//! Variance of the intensities the region
 		Real Variance() const;
 		//! Skewness of the intensities the region
@@ -105,14 +109,14 @@ class RegionStats
 };
 
 //! Compute all statistics of an image using a ColorMap as a cache
-/* 
+/*
 @param map A map of the region, each one must have a different color
 @param image The image to compute the intensities statistics.
 */
 std::vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image);
 
 //! Compute the statistics of the regions using a ColorMap as a cache
-/* 
+/*
 @param map A map of the region, each one must have a different color
 @param image The image to compute the intensities statistics.
 @param regions The regions for wich to compute the stats
@@ -120,14 +124,14 @@ std::vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVIm
 std::vector<RegionStats*> getRegionStats(const ColorMap* coloredMap, const EUVImage* image, const std::vector<Region*>& regions);
 
 //! Compute the statistics of all the regions taken together using a ColorMap as a cache
-/* 
+/*
 @param map A map of the region, each one must have a color > 0
 @param image The image to compute the intensities statistics.
 @return A vector of 2 SegmentationStats, the one with id 1 is the stats of all regions, the one with id 0 is the stats of the complement
 */
 std::vector<SegmentationStats*> getTotalRegionStats(const ColorMap* coloredMap, const EUVImage* image);
 
-//! Write the regions into a fits file as column into the current table 
+//! Write the regions into a fits file as column into the current table
 FitsFile& writeRegions(FitsFile& file, const std::vector<RegionStats*>& regions_stats);
 
 #endif

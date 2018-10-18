@@ -150,15 +150,15 @@ ColorMap* Classifier::getSegmentedMap(ParameterSection& parameters, ColorMap* se
 		vector<unsigned> CH, QS, AR;
 		if(parameters["CH"].is_set())
 		{
-			CH = parameters["CH"].as<vector<unsigned>>();
+			CH = parameters["CH"].as<vector<unsigned> >();
 		}
 		if(parameters["QS"].is_set())
 		{
-			QS = parameters["QS"].as<vector<unsigned>>();
+			QS = parameters["QS"].as<vector<unsigned> >();
 		}
 		if(parameters["AR"].is_set())
 		{
-			AR = parameters["AR"].as<vector<unsigned>>();
+			AR = parameters["AR"].as<vector<unsigned> >();
 		}
 		segmentedMap_fixed(CH, QS, AR, segmentedMap);
 	}

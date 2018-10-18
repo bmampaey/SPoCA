@@ -369,16 +369,16 @@ vector<PixLoc> Region::chainCode(const ColorMap* image, const unsigned min_point
 	unsigned xAxes = image->Xaxes();
 	
 	// We list all the directions
-	int directions[] = {	0 + xAxes, //Norh
-				1 + xAxes, //NE
+	int directions[] = {	0 + int(xAxes), //Norh
+				1 + int(xAxes), //NE
 				1 + 0, //East
-				1 - xAxes, //SE
-				0 - xAxes, //South
-				-1 - xAxes, //SW
+				1 - int(xAxes), //SE
+				0 - int(xAxes), //South
+				-1 - int(xAxes), //SW
 				-1 + 0, //West
-				-1 + xAxes, //NW
-				//We repeat for simplicity 
-				0 + xAxes, 1 + xAxes, 1 + 0, 1 - xAxes, 0 - xAxes, -1 - xAxes, -1 + 0, -1 + xAxes
+				-1 + int(xAxes), //NW
+				//We repeat for simplicity
+				0 + int(xAxes), 1 + int(xAxes), 1 + 0, 1 - int(xAxes), 0 - int(xAxes), -1 - int(xAxes), -1 + 0, -1 + int(xAxes)
 			};
 	
 	// We search the left most pixel on the external border
@@ -390,7 +390,7 @@ vector<PixLoc> Region::chainCode(const ColorMap* image, const unsigned min_point
 			if(firstPixel.x == boxmax.x)
 			{
 				cerr<<"Empty region, no chaincode"<<endl;
-				return vector<PixLoc>(); 
+				return vector<PixLoc>();
 			}
 			else
 			{
@@ -485,7 +485,7 @@ vector<PixLoc> Region::chainCode(const ColorMap* image, const unsigned min_point
 	good_indices.reserve(max_points);
 	good_indices.push_back(0);
 	// The tmp_indices is a list of the indices of some important points in the chain code
-	// The corresponding distances list specify for each tmp_indice the distance to the current reduced chain code 
+	// The corresponding distances list specify for each tmp_indice the distance to the current reduced chain code
 	vector<unsigned> tmp_indices;
 	vector<Real> distances;
 	tmp_indices.reserve(max_points);
@@ -577,4 +577,3 @@ vector<PixLoc> Region::chainCode(const ColorMap* image, const unsigned min_point
 	}
 	return reduced_chain;
 }
-

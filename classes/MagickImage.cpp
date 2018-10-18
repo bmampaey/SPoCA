@@ -58,7 +58,7 @@ MagickImage::MagickImage(const string& filename)
 
 template<class T>
 MagickImage::MagickImage(T* image, const unsigned X, const unsigned Y, const string channel)
-:Magick::Image(X, Y, channel, magickDataType(typeid(T)), image) 
+:Magick::Image(X, Y, channel, magickDataType(typeid(T)), image)
 {
 	MagickCore::SetImageColorspace( this->image(), MagickCore::sRGBColorspace );
 	gamma(1);
@@ -75,9 +75,4 @@ MagickImage::MagickImage(const Color& background, const unsigned X, const unsign
 
 template MagickImage::MagickImage(ColorType* image, const unsigned X, const unsigned Y, const string channel);
 template MagickImage::MagickImage(EUVPixelType* image, const unsigned X, const unsigned Y, const string channel);
-template MagickImage::MagickImage(char* image, const unsigned X, const unsigned Y, const string channel);
-
-
-
-
-
+template MagickImage::MagickImage(unsigned char* image, const unsigned X, const unsigned Y, const string channel);

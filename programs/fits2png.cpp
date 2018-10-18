@@ -175,7 +175,7 @@ int main(int argc, const char **argv)
 		{
 			inputImage->preprocessing(args["imagePreprocessing"]);
 		}
-		else 
+		else
 		{
 			inputImage->enhance_contrast();
 		}
@@ -226,7 +226,7 @@ int main(int argc, const char **argv)
 			}
 			else
 			{
-				vector<char> intrumentColorTable = inputImage->color_table();
+				vector<unsigned char> intrumentColorTable = inputImage->color_table();
 				colorTable = MagickImage(&(intrumentColorTable[0]), 1, intrumentColorTable.size()/3, "RGB");
 				#if defined DEBUG
 				colorTable.write(filenamePrefix + "colortable." + args["type"]);
@@ -261,4 +261,3 @@ int main(int argc, const char **argv)
 	
 	return EXIT_SUCCESS;
 }
-

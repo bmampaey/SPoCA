@@ -3,7 +3,7 @@
 using namespace std;
 
 RegionStats::RegionStats(const time_t& observationTime, const unsigned id)
-:id(id),observationTime(observationTime), numberPixels(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), center(0,0), barycenter(0,0), clipped_spatial(false)
+:id(id),observationTime(observationTime), numberPixels(0), numberGoodPixels(0), m2(NAN), m3(NAN), m4(NAN), minIntensity(NAN), maxIntensity(NAN), totalIntensity(0), centerxError(0), centeryError(0), area_Raw(0), area_RawUncert(0), area_AtDiskCenter(0), area_AtDiskCenterUncert(0), numberContourPixels(0), center(0,0), barycenter(0,0), clipped_spatial(false)
 {}
 
 
@@ -36,6 +36,9 @@ void RegionStats::add(const PixLoc& coordinate, const EUVPixelType& pixelIntensi
 		m2 = NAN;
 		m3 = NAN;
 		m4 = NAN;
+		
+		// Increase the number of good pixels
+		++numberGoodPixels;
 	}
 	
 	Real dx = fabs(coordinate.x - sunCenter.x);
@@ -108,6 +111,11 @@ string RegionStats::ObservationDate() const
 unsigned RegionStats::NumberPixels() const
 {
 	return numberPixels;
+}
+
+unsigned RegionStats::NumberGoodPixels() const
+{
+	return numberGoodPixels;
 }
 
 RealPixLoc RegionStats::Center() const
@@ -289,12 +297,12 @@ string RegionStats::toString(const string& separator, bool header) const
 {
 	if (header)
 	{
-		return "Id"+separator+"ObservationDate"+separator+"NumberPixels"+separator+"Center"+separator+"Barycenter"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"LowerQuartile"+separator+"UpperQuartile"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"CenterxError"+separator+"CenteryError"+separator+"Area_Raw"+separator+"Area_RawUncert"+separator+"Area_AtDiskCenter"+separator+"Area_AtDiskCenterUncert"+separator+"ClippedSpatial";
+		return "Id"+separator+"ObservationDate"+separator+"NumberPixels"+separator+"NumberGoodPixels"+separator+"Center"+separator+"Barycenter"+separator+"MinIntensity"+separator+"MaxIntensity"+separator+"Mean"+separator+"Median"+separator+"LowerQuartile"+separator+"UpperQuartile"+separator+"Variance"+separator+"Skewness"+separator+"Kurtosis"+separator+"TotalIntensity"+separator+"CenterxError"+separator+"CenteryError"+separator+"Area_Raw"+separator+"Area_RawUncert"+separator+"Area_AtDiskCenter"+separator+"Area_AtDiskCenterUncert"+separator+"ClippedSpatial";
 	}
 	else
 	{
 		ostringstream out;
-		out<<setiosflags(ios::fixed)<<Id()<<separator<<ObservationDate()<<separator<<NumberPixels()<<separator<<Center()<<separator<<Barycenter()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<LowerQuartile()<<separator<<UpperQuartile()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<CenterxError()<<separator<<CenteryError()<<separator<<Area_Raw()<<separator<<Area_RawUncert()<<separator<<Area_AtDiskCenter()<<separator<<Area_AtDiskCenterUncert()<<separator<<ClippedSpatial();
+		out<<setiosflags(ios::fixed)<<Id()<<separator<<ObservationDate()<<separator<<NumberPixels()<<separator<<NumberGoodPixels()<<separator<<Center()<<separator<<Barycenter()<<separator<<MinIntensity()<<separator<<MaxIntensity()<<separator<<Mean()<<separator<<Median()<<separator<<LowerQuartile()<<separator<<UpperQuartile()<<separator<<Variance()<<separator<<Skewness()<<separator<<Kurtosis()<<separator<<TotalIntensity()<<separator<<CenterxError()<<separator<<CenteryError()<<separator<<Area_Raw()<<separator<<Area_RawUncert()<<separator<<Area_AtDiskCenter()<<separator<<Area_AtDiskCenterUncert()<<separator<<ClippedSpatial();
 		return out.str();
 	}
 }
@@ -423,7 +431,14 @@ FitsFile& writeRegions(FitsFile& file, const vector<RegionStats*>& regions_stats
 			data[r] = regions_stats[r]->NumberPixels();
 		file.writeColumn("NUMBER_PIXELS", data);
 	}
-	
+
+	{
+		vector<unsigned> data(regions_stats.size());
+		for(unsigned r = 0; r < regions_stats.size(); ++r)
+			data[r] = regions_stats[r]->NumberGoodPixels();
+		file.writeColumn("NUMBER_GOOD_PIXELS", data);
+	}
+
 	{
 		vector<RealPixLoc> data(regions_stats.size());
 		for(unsigned r = 0; r < regions_stats.size(); ++r)

@@ -33,6 +33,9 @@ class RegionStats
 		time_t observationTime;
 		//! Total number of pixels in the region
 		unsigned numberPixels;
+		//! Number of good pixels in the region, i.e. pixels that are not null
+		unsigned numberGoodPixels;
+		
 		// Moments
 		mutable Real m2, m3, m4;
 		Real minIntensity, maxIntensity, totalIntensity, centerxError, centeryError, area_Raw, area_RawUncert, area_AtDiskCenter, area_AtDiskCenterUncert, numberContourPixels;
@@ -62,6 +65,8 @@ class RegionStats
 		
 		//! Accessor to retrieve the number of pixels
 		unsigned NumberPixels() const;
+		//! Accessor to retrieve the number of good pixels
+		unsigned NumberGoodPixels() const;
 		//! Mean of the intensities the region
 		Real Mean() const;
 		//! Median of the intensities the region

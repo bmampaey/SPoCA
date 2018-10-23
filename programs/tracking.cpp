@@ -25,8 +25,6 @@ global parameters:
 
 @param newColor	The first color to attribute to a new untracked region
 
-@param overlap	The number of images that overlap between 2 tracking run
-
 @param recolorImages	Set this flag if you want all images to be colored and written to disk.Otherwise only the region table is updated.
 
 @param regionTableName	The name of the region table Hdu
@@ -94,7 +92,6 @@ int main(int argc, const char **argv)
 	
 	args["newColor"] = ArgParser::Parameter(0, 'n', "The first color to attribute to a new untracked region");
 	args["maxDeltaT"] = ArgParser::Parameter(3600, 'd',"The maximal number of seconds between 2 tracked regions");
-	args["overlap"] = ArgParser::Parameter(1, 'o',"The number of images that overlap between 2 tracking run");
 	args["recolorImages"] = ArgParser::Parameter(false, 'A', "Set this flag if you want all images to be colored and written to disk.Otherwise only the region table is updated.");
 	args["derotate"] = ArgParser::Parameter(true, 'D', "Set this to false if you dont want images to be derotated before comparison.");
 	args["regionTableName"] = ArgParser::Parameter("Regions", 'H',"The name of the region table Hdu");
@@ -201,7 +198,7 @@ int main(int argc, const char **argv)
 	// if there is not already a path between them
 	unsigned maxDeltaT = args["maxDeltaT"];
 	for (unsigned d = 1; d < indices.size(); ++d)
-	{	
+	{
 		for (unsigned i = 0; d + i < indices.size(); ++i)
 		{
 			unsigned s1 = indices[i];
@@ -211,7 +208,7 @@ int main(int argc, const char **argv)
 			if (delta_t > maxDeltaT)
 			{
 				continue;
-			}	
+			}
 			
 			#if defined DEBUG
 			if(args["derotate"])
@@ -224,9 +221,9 @@ int main(int argc, const char **argv)
 			for (unsigned r1 = 0; r1 < regions[s1].size(); ++r1)
 			{
 				for (unsigned r2 = 0; r2 < regions[s2].size(); ++r2)
-				{			
+				{
 					if(!tracking_graph.get_node(regions[s1][r1])->path(tracking_graph.get_node(regions[s2][r2])))
-					{		
+					{
 						unsigned intersectPixels = 0;
 						if(args["derotate"])
 						{
@@ -283,7 +280,7 @@ int main(int argc, const char **argv)
 	{
 		FitsFile file(imagesFilenames[s], FitsFile::update);
 		
-		if(args["recolorImages"]) 
+		if(args["recolorImages"])
 		{
 			// We color the image and overwrite them in the fitsfile
 			recolorFromRegions(images[s], regions[s]);
@@ -298,7 +295,6 @@ int main(int argc, const char **argv)
 		Header tracking_info;
 		tracking_info.set("TNEWCOLR", newColor, "Tracking latest color");
 		tracking_info.set("TMAXDELT", maxDeltaT, "Tracking maxDeltaT");
-		tracking_info.set("TOVERLAP", args["overlap"], "Tracking overlap");
 		tracking_info.set("TDEROT", args["derotate"], "Tracking derotate");
 		tracking_info.set("TNBRIMG", unsigned(imagesFilenames.size()), "Tracking number images");
 		tracking_info.set("TRACKED", true, "Regions have been tracked");
@@ -321,22 +317,22 @@ int main(int argc, const char **argv)
 		file.writeColumn("FIRST_DATE_OBS", first_observation_dates, FitsFile::overwrite);
 		
 		//If we recolor the images we update the color column
-		if(args["recolorImages"]) 
+		if(args["recolorImages"])
 			file.writeColumn("COLOR", tracked_colors, FitsFile::overwrite);
 	}
 
 
 	#ifndef HEK
-	cout<<"Last color assigned: "<<newColor<<endl;	
+	cout<<"Last color assigned: "<<newColor<<endl;
 	#else
 	#error "This code has not been tested yet"
 	
 	/*	For The HEK we need to gives the relations between the hek events (<=> region in our program)
 		The relations are of type follow, split and merge
 		The relations can only concern events that have been witten to the HEK
-		and should ignore any kind of split/merge that occured between regions no written to the HEK 
+		and should ignore any kind of split/merge that occured between regions no written to the HEK
 		This means that we need to find the relations between the AR of the last region map and the ones from the previous last_hek_map
-		(i.e. the map used to write hek events after the previous call to tracking, it is the one that contains the table TrackingRelations) 
+		(i.e. the map used to write hek events after the previous call to tracking, it is the one that contains the table TrackingRelations)
 		
 		map[previous_last_hek_map]
 		map[previous_last_hek_map + 1]	|
@@ -398,7 +394,7 @@ int main(int argc, const char **argv)
 		// Now that I know the list of my ancestors_color, I can create the relations
 		if(ancestors_color.size() == 0)
 		{
-			// I have no ancestors, so I am a new color 
+			// I have no ancestors, so I am a new color
 			relations.push_back(TrackingRelation(0,"new",regions[last][r]->Color()));
 		}
 		else if(ancestors_color.size() == 1 && ancestors_color[0] != regions[last][r]->Color())
@@ -452,7 +448,3 @@ int main(int argc, const char **argv)
 	
 	return EXIT_SUCCESS;
 }
-
-
-
-

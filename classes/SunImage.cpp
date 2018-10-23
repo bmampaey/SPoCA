@@ -189,7 +189,7 @@ inline void SunImage<T>::recenter(const RealPixLoc& newCenter)
 template<class T>
 inline void SunImage<T>::rotate(const int delta_t)
 {
-	// We make a copy of the original image 
+	// We make a copy of the original image
 	Image<T> original(this);
 	
 	//We compute for each pixel in the new image what is the original location
@@ -240,7 +240,7 @@ inline SunImage<T>* SunImage<T>::shifted_like(const SunImage* img) const
 template<class T>
 inline void SunImage<T>::shift_like(const SunImage* img)
 {
-	// We make a copy of the original image 
+	// We make a copy of the original image
 	Image<T> original(this);
 	
 	//We compute for each pixel in the new image what is the original location
@@ -310,7 +310,7 @@ inline HGS SunImage<T>::shift_like(HGS hgs, const SunImage* img) const
 template<class T>
 inline HPC SunImage<T>::toHPC(const RealPixLoc& c) const
 {
-	Real rx = (c.x - wcs.sun_center.x); 
+	Real rx = (c.x - wcs.sun_center.x);
 	Real ry = (c.y - wcs.sun_center.y);
 	return HPC(rx * wcs.cd[0][0] + ry * wcs.cd[0][1], rx * wcs.cd[1][0] + ry * wcs.cd[1][1]);
 }
@@ -350,7 +350,7 @@ inline HCC SunImage<T>::toHCC(const HPC& hpc) const
 	double dist = (q*q) -  (wcs.dsun_obs* wcs.dsun_obs) + (wcs.sunradius_Mm*wcs.sunradius_Mm);
 	if (dist >= 0)
 	{
-		dist = q - sqrt(dist); 
+		dist = q - sqrt(dist);
 		return HCC(dist * cosy * sinx, dist * siny,  wcs.dsun_obs - (dist * cosy * cosx));
 	}
 	else
@@ -543,6 +543,11 @@ void SunImage<T>::parseHeader()
 	else if (header.has("DATE-OBS"))
 		wcs.setDateObs(header.get<string>("DATE-OBS"));
 	
+	if(header.has("CTYPE1") and header.has("CTYPE2"))
+		wcs.setCType(header.get<string>("CTYPE1"), header.get<string>("CTYPE2"));
+	else
+		cerr<<"Error: Fits header not conform: No CTYPE1 or CTYPE2 keyword."<<endl;
+	
 	if(header.has("CDELT1") and header.has("CDELT2"))
 		wcs.setCDelt(header.get<Real>("CDELT1"), header.get<Real>("CDELT2"));
 	else
@@ -607,8 +612,12 @@ void SunImage<T>::fillHeader()
 {
 	header.set<Real>("CRPIX1", wcs.sun_center.x + 1);
 	header.set<Real>("CRPIX2", wcs.sun_center.y + 1);
+	header.set<string>("CTYPE1", wcs.ctype1);
+	header.set<string>("CTYPE2", wcs.ctype2);
 	header.set<Real>("CDELT1", wcs.cdelt1);
 	header.set<Real>("CDELT2", wcs.cdelt2);
+	header.set<string>("CUNIT1", wcs.cunit1);
+	header.set<string>("CUNIT2", wcs.cunit2);
 	header.set<string>("DATE_OBS", wcs.date_obs);
 	header.set<Real>("R_SUN", wcs.sun_radius);
 	header.set<Real>("HGLT_OBS", wcs.b0 * RADIAN2DEGREE);
@@ -1085,6 +1094,3 @@ Real earth_latitude(const time_t& time_obs)
 	Real b = asin(0.12620 * sin(arg*DEGREE2RADIAN)) * RADIAN2DEGREE;
 	return b;
 }
-
-
-

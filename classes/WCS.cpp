@@ -7,14 +7,14 @@
 using namespace std;
 
 WCS::WCS()
-:sun_center(NAN), sun_radius(NAN), date_obs(""), cdelt1(0), cdelt2(0), b0(NAN), l0(NAN), carrington_l0(NAN), dsun_obs(NAN), sunradius_Mm(SUN_RADIUS), time_obs(0), cos_b0(NAN), sin_b0(NAN) 
+:sun_center(NAN), sun_radius(NAN), date_obs(""), ctype1("HPLN-TAN"), ctype2("HPLT-TAN"), cdelt1(0), cdelt2(0), cunit1("arcsec"), cunit2("arcsec"), b0(NAN), l0(NAN), carrington_l0(NAN), dsun_obs(NAN), sunradius_Mm(SUN_RADIUS), time_obs(0), cos_b0(NAN), sin_b0(NAN)
 {
 	cd[0][0] = cd[0][1] = cd[1][0] = cd[1][1] = NAN;
 	icd[0][0] = icd[0][1] = icd[1][0] = icd[1][1] = NAN;
 }
 
 WCS::WCS(const RealPixLoc& sun_center, const Real& sun_radius)
-:sun_center(sun_center), sun_radius(sun_radius), date_obs(""), cdelt1(0), cdelt2(0), b0(NAN), l0(NAN), carrington_l0(NAN), dsun_obs(NAN), sunradius_Mm(SUN_RADIUS), time_obs(0), cos_b0(NAN), sin_b0(NAN) 
+:sun_center(sun_center), sun_radius(sun_radius), date_obs(""), ctype1("HPLN-TAN"), ctype2("HPLT-TAN"), cdelt1(0), cdelt2(0), cunit1("arcsec"), cunit2("arcsec"), b0(NAN), l0(NAN), carrington_l0(NAN), dsun_obs(NAN), sunradius_Mm(SUN_RADIUS), time_obs(0), cos_b0(NAN), sin_b0(NAN)
 {
 	cd[0][0] = cd[0][1] = cd[1][0] = cd[1][1] = NAN;
 	icd[0][0] = icd[0][1] = icd[1][0] = icd[1][1] = NAN;
@@ -41,6 +41,12 @@ void WCS::setDateObs(string date_obs)
 		time_obs = iso2ctime(date_obs);
 	else
 		time_obs = 0;
+}
+
+void WCS::setCType(const string& ctype1, const string& ctype2)
+{
+	this->ctype1 = ctype1;
+	this->ctype2 = ctype2;
 }
 
 void WCS::setCDelt(const Real& cdelt1, const Real& cdelt2)
@@ -112,4 +118,3 @@ Real WCS::getCrota2() const
 	else
 		return - acos(cd[0][0] / cdelt2) * RADIAN2DEGREE;
 }
-

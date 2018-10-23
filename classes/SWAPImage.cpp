@@ -58,6 +58,11 @@ void SWAPImage::parseHeader()
 	else if (header.has("DATE-OBS"))
 		wcs.setDateObs(header.get<string>("DATE-OBS"));
 	
+	if(header.has("CTYPE1") and header.has("CTYPE2"))
+		wcs.setCType(header.get<string>("CTYPE1"), header.get<string>("CTYPE2"));
+	else
+		cerr<<"Error: Fits header not conform: No CTYPE1 or CTYPE2 keyword."<<endl;
+	
 	if(header.has("CDELT1") and header.has("CDELT2"))
 		wcs.setCDelt(header.get<Real>("CDELT1"), header.get<Real>("CDELT2"));
 	else
@@ -114,8 +119,12 @@ void SWAPImage::fillHeader()
 	header.set<Real>("EXPTIME", exposureTime);
 	header.set<Real>("CRPIX1", wcs.sun_center.x + 1);
 	header.set<Real>("CRPIX2", wcs.sun_center.y + 1);
+	header.set<string>("CTYPE1", wcs.ctype1);
+	header.set<string>("CTYPE2", wcs.ctype2);
 	header.set<Real>("CDELT1", wcs.cdelt1);
 	header.set<Real>("CDELT2", wcs.cdelt2);
+	header.set<string>("CUNIT1", wcs.cunit1);
+	header.set<string>("CUNIT2", wcs.cunit2);
 	header.set<Real>("HGLT_OBS", wcs.b0 * RADIAN2DEGREE);
 	header.set<Real>("HGLN_OBS", wcs.l0 * RADIAN2DEGREE);
 	header.set<Real>("CRLN_OBS", wcs.carrington_l0 * RADIAN2DEGREE);
@@ -140,6 +149,5 @@ void SWAPImage::fillHeader()
 
 bool isSWAP(const Header& header)
 {
-	return header.has("INSTRUME") && header.get<string>("INSTRUME").find("SWAP") != string::npos;	
+	return header.has("INSTRUME") && header.get<string>("INSTRUME").find("SWAP") != string::npos;
 }
-

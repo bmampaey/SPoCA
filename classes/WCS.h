@@ -24,11 +24,23 @@ class WCS
 		//! Date & Time of observation as a string
 		std::string date_obs;
 		
-		//! Length of pixel in arcsec
+		//! Projection code of the x axis
+		std::string ctype1;
+		
+		//! Projection code the y axis
+		std::string ctype2;
+		
+		//! Pixel scale along the x axis (in arcsec)
 		Real cdelt1;
 		
-		//! Width of pixel in arcsec
+		//! Pixel scale along the y axis (in arcsec)
 		Real cdelt2;
+		
+		//! Unit along the x axis
+		std::string cunit1;
+		
+		//! Unit along the y axis
+		std::string cunit2;
 		
 		//! Heliographic Latitude of the observer/satellite in radians
 		Real b0;
@@ -69,6 +81,7 @@ class WCS
 		void setSunCenter(const Real& crpix1, const Real& crpix2);
 		void setSunradius(const double& sun_radius);
 		void setDateObs(std::string date_obs);
+		void setCType(const std::string& ctype1, const std::string& ctype2);
 		void setCDelt(const Real& cdelt1, const Real& cdelt2);
 		void setB0(const Real& b0);
 		void setL0(const Real& l0);

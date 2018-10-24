@@ -3,7 +3,7 @@
 
 using namespace std;
 
-inline bool read_more(ifstream& file)
+bool read_more(ifstream& file)
 {
 	while(file.good() && isspace(file.peek()))
 		file.get();
@@ -252,7 +252,7 @@ bool writeCentersEtasToFile(const string& filename, const vector<string>& channe
 	return false;
 }
 
-inline bool readCoordinate(RealPixLoc& coordinate, string sCoordinate)
+bool readCoordinate(RealPixLoc& coordinate, string sCoordinate)
 {
 	if(!sCoordinate.empty())
 	{
@@ -271,7 +271,7 @@ inline bool readCoordinate(RealPixLoc& coordinate, string sCoordinate)
 }
 
 
-inline EUVImage* getImageFromFile(const string imageType, const string imageFilename)
+EUVImage* getImageFromFile(const string imageType, const string imageFilename)
 {
 	EUVImage* image;
 	
@@ -321,7 +321,7 @@ inline EUVImage* getImageFromFile(const string imageType, const string imageFile
 	return image;
 }
 
-inline ColorMap* getColorMapFromFile(const string imageFilename)
+ColorMap* getColorMapFromFile(const string imageFilename)
 {
 
 	#if defined EXTRA_SAFE
@@ -425,4 +425,3 @@ bool reorderImages(vector<EUVImage*>& images, const vector<string>& channels)
 	}
 	return true;
 }
-

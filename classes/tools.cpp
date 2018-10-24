@@ -26,7 +26,7 @@ istream& operator>>(istream& in, vector<string>& v)
 		in.get();
 		char c;
 		in.get(c);
-		string value; 
+		string value;
 		while (in.good())
 		{
 			if(c == ',')
@@ -73,14 +73,14 @@ istream& operator>>(istream& in, vector<string>& v)
 	return in;
 }
 
-inline string toString(const time_t time)
+string toString(const time_t time)
 {
 	char datetime_string[100];
 	strftime(datetime_string, 100, "%Y%m%d_%H%M%S", gmtime(&time));
 	return string(datetime_string);
 }
 
-inline string toString(const int& i, const int size)
+string toString(const int& i, const int size)
 {
 	ostringstream ss;
 	if (size > 0)
@@ -90,7 +90,7 @@ inline string toString(const int& i, const int size)
 	return ss.str();
 }
 
-inline string toString(const unsigned& i, const int size)
+string toString(const unsigned& i, const int size)
 {
 	ostringstream ss;
 	if (size > 0)
@@ -100,7 +100,7 @@ inline string toString(const unsigned& i, const int size)
 	return ss.str();
 }
 
-inline string toString(const double& d, const int size)
+string toString(const double& d, const int size)
 {
 	ostringstream ss;
 	if (size > 0)
@@ -112,7 +112,7 @@ inline string toString(const double& d, const int size)
 
 
 
-inline int toInt(const string& s)
+int toInt(const string& s)
 {
 	int i = 0;
 	istringstream ss(s);
@@ -120,7 +120,7 @@ inline int toInt(const string& s)
 	return i;
 }
 
-inline unsigned toUnsigned(const string& s)
+unsigned toUnsigned(const string& s)
 {
 	unsigned i = 0;
 	istringstream ss(s);
@@ -128,7 +128,7 @@ inline unsigned toUnsigned(const string& s)
 	return i;
 }
 
-inline double toDouble(const string& s)
+double toDouble(const string& s)
 {
 	double d = 0;
 	istringstream ss(s);
@@ -136,18 +136,19 @@ inline double toDouble(const string& s)
 	return d;
 }
 
-inline string stripPath(const string &name) 
+string stripPath(const string &name)
 {
 	size_t pos = name.rfind('/');
 	return  pos != string::npos ? name.substr(pos+1) : name;
 }
-inline string stripSuffix(const string &name) 
+
+string stripSuffix(const string &name)
 {
 	size_t pos = name.rfind('.');
 	return  pos != string::npos ? name.substr(0,pos) : name;
 }
 
-inline string getPath(const string &name) 
+string getPath(const string &name)
 {
 	size_t pos = name.rfind('/');
 	if (pos == string::npos)
@@ -156,7 +157,7 @@ inline string getPath(const string &name)
 		return  name.substr(0, pos+1);
 }
 
-inline string getSuffix(const string &name) 
+string getSuffix(const string &name)
 {
 	size_t pos = name.rfind('.');
 	if (pos == string::npos)
@@ -165,7 +166,7 @@ inline string getSuffix(const string &name)
 		return  name.substr(pos);
 }
 
-inline string makePath(const string &path1, const string &path2)
+string makePath(const string &path1, const string &path2)
 {
 	if(path1.empty())
 		return path2;
@@ -185,19 +186,19 @@ inline string makePath(const string &path1, const string &path2)
 }
 
 
-inline bool isDir(const string path)
+bool isDir(const string path)
 {
 	struct stat statbuf;
 	return (stat(path.c_str(), &statbuf) == 0) && (S_ISDIR(statbuf.st_mode));
 }
 
-inline bool isFile(const string path)
+bool isFile(const string path)
 {
 	struct stat statbuf;
 	return (stat(path.c_str(), &statbuf) == 0) && (S_ISREG(statbuf.st_mode));
 }
 
-inline bool emptyFile(const string path)
+bool emptyFile(const string path)
 {
 	struct stat statbuf;
 	return (stat(path.c_str(), &statbuf) == 0) && (statbuf.st_size == 0);
@@ -302,5 +303,3 @@ EUVPixelType quickselect(deque<EUVPixelType>& arr, Real percentil)
 	}
 }
 #undef ELEM_SWAP
-
-

@@ -30,6 +30,11 @@ void WCS::setSunradius(const double& sun_radius)
 	this->sun_radius = sun_radius;
 }
 
+void WCS::setSunradiusMm(const double& sun_radius)
+{
+	this->sunradius_Mm = sun_radius;
+}
+
 void WCS::setDateObs(string date_obs)
 {
 	//Sometimes the date is appended with a z

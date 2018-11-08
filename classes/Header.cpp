@@ -102,4 +102,3 @@ string Header::expand(const string& text)
 	#endif
 	return result;
 }
-

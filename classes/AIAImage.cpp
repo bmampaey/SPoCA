@@ -119,7 +119,11 @@ void AIAImage::parseHeader()
 		cerr<<"Error: No sun radius found in header"<<endl;
 		exit(EXIT_FAILURE);
 	}
-
+	
+	if(header.has("RSUN_REF"))
+	{
+		wcs.setSunradiusMm(header.get<Real>("RSUN_REF")/1000000.);
+	}
 
 }
 
@@ -145,6 +149,7 @@ void AIAImage::fillHeader()
 	header.set<Real>("CD2_2", wcs.cd[1][1]);
 	header.set<string>("T_OBS",  wcs.date_obs);
 	header.set<Real>("R_SUN", wcs.sun_radius);
+	header.set<Real>("RSUN_REF", wcs.sunradius_Mm * 1000000.);
 	
 	if (header.has("CROTA2"))
 	{

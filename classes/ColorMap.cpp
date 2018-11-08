@@ -137,8 +137,24 @@ void ColorMap::parseHeader()
 	}
 	
 	// We read the radius
-	if (header.has("R_SUN"))
+	if(header.has("RSUN_OBS"))
+	{
+		wcs.setSunradius(header.get<Real>("RSUN_OBS")/wcs.cdelt1);
+	}
+	else if(header.has("R_SUN"))
+	{
 		wcs.setSunradius(header.get<Real>("R_SUN"));
+	}
+	else
+	{
+		cerr<<"Error: No sun radius found in header"<<endl;
+		exit(EXIT_FAILURE);
+	}
+	
+	if(header.has("RSUN_REF"))
+	{
+		wcs.setSunradiusMm(header.get<Real>("RSUN_REF")/1000000.);
+	}
 }
 
 void ColorMap::fillHeader()
@@ -151,16 +167,17 @@ void ColorMap::fillHeader()
 	header.set<Real>("CDELT2", wcs.cdelt2);
 	header.set<string>("CUNIT1", wcs.cunit1);
 	header.set<string>("CUNIT2", wcs.cunit2);
-	header.set<Real>("HGLT_OBS", wcs.b0 * RADIAN2DEGREE);
-	header.set<Real>("HGLN_OBS", wcs.l0 * RADIAN2DEGREE);
-	header.set<Real>("CRLN_OBS", wcs.carrington_l0 * RADIAN2DEGREE);
-	header.set<Real>("DSUN_OBS", wcs.dsun_obs*1000000.);
+	header.set<Real>("HGLT_OBS", wcs.b0 * RADIAN2DEGREE, "[deg]");
+	header.set<Real>("HGLN_OBS", wcs.l0 * RADIAN2DEGREE, "[deg]");
+	header.set<Real>("CRLN_OBS", wcs.carrington_l0 * RADIAN2DEGREE, "[deg]");
+	header.set<Real>("DSUN_OBS", wcs.dsun_obs * 1000000., "[m]");
 	header.set<Real>("CD1_1", wcs.cd[0][0]);
 	header.set<Real>("CD1_2", wcs.cd[0][1]);
 	header.set<Real>("CD2_1", wcs.cd[1][0]);
 	header.set<Real>("CD2_2", wcs.cd[1][1]);
 	header.set<string>("DATE_OBS",  wcs.date_obs);
-	header.set<Real>("R_SUN", wcs.sun_radius);
+	header.set<Real>("RSUN_OBS", wcs.sun_radius * wcs.cdelt1, "[arcsec]");
+	header.set<Real>("RSUN_REF", wcs.sunradius_Mm * 1000000., "[m]");
 }
 
 

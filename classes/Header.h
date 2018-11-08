@@ -3,14 +3,16 @@
 #define Header_H
 
 #include <sstream>
+#include <iomanip>
 #include <iostream>
 #include <typeinfo>
+#include <limits>
 #include <string>
 #include <map>
 #include <ctime>
 #include <cstring>
-#include <stdexcept> 
-
+#include <stdexcept>
+#include "constants.h"
 
 
 class Header
@@ -54,7 +56,7 @@ class Header
 		typedef std::map<std::string,std::string>::const_iterator const_iterator;
 		iterator begin() { return keywords.begin(); }
 		iterator end() { return keywords.end(); }
-		const_iterator begin() const { return keywords.begin(); } 
+		const_iterator begin() const { return keywords.begin(); }
 		const_iterator end() const { return keywords.end(); }
 
 };
@@ -83,7 +85,14 @@ template<class T>
 void Header::set(const std::string& key, const T& value, const std::string& comment)
 {
 	std::ostringstream ss;
-	ss << value;
+	if(typeid(T) == typeid(float) || typeid(T) == typeid(double))
+	{
+		ss << std::fixed << std::showpoint << std::setprecision(std::numeric_limits<double>::digits10 + 2) << value;
+	}
+	else
+	{
+		ss << value;
+	}
 	keywords[key] = ss.str();
 	if(!comment.empty())
 		keywords_comments[key] = comment;

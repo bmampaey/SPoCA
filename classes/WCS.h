@@ -80,6 +80,7 @@ class WCS
 		
 		void setSunCenter(const Real& crpix1, const Real& crpix2);
 		void setSunradius(const double& sun_radius);
+		void setSunradiusMm(const double& sun_radius);
 		void setDateObs(std::string date_obs);
 		void setCType(const std::string& ctype1, const std::string& ctype2);
 		void setCDelt(const Real& cdelt1, const Real& cdelt2);

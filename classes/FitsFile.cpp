@@ -68,10 +68,10 @@ void FitsFile::close()
 	status = 0;
 	if ( fits_close_file(fptr, &status) )
 	{
-		cerr<<"Error : closing file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : closing file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		
-	} 
+	}
 	fptr = NULL;
 	status = 0;
 }
@@ -90,10 +90,10 @@ FitsFile& FitsFile::moveTo(int extension_number)
 	int *hdutype = NULL;
 	if (fits_movabs_hdu(fptr, extension_number, hdutype, &status) )
 	{
-		cerr<<"Error : moving to extension "<<extension_number<<" in file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : moving to extension "<<extension_number<<" in file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		
-	} 
+	}
 	return *this;
 }
 
@@ -104,10 +104,10 @@ FitsFile& FitsFile::moveTo(const string& extension_name)
 	int extver = 0;
 	if (fits_movnam_hdu(fptr, hdutype, extname, extver, &status) )
 	{
-		cerr<<"Error : moving to extension "<<extension_name<<" in file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : moving to extension "<<extension_name<<" in file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		
-	} 
+	}
 	return *this;
 
 }
@@ -128,7 +128,7 @@ bool FitsFile::has(const string& extension_name)
 
 }
 
-//Routine to determine the fits code for a C datatype 
+//Routine to determine the fits code for a C datatype
 int FitsFile::fitsDataType(const type_info& t)
 {
 	int datatype;
@@ -353,7 +353,7 @@ FitsFile& FitsFile::readHeader(Header& header)
 	if(status == KEY_OUT_BOUNDS)
 		status = 0;
 	#if defined VERBOSE
-	cout<<"Header for file "<<filename<<endl; 
+	cout<<"Header for file "<<filename<<endl;
 	for ( map<string,string>::iterator i = header.begin(); i != header.end(); ++i )
 	{
 		cout<<setw(8)<<left<<i->first<<": "<<i->second<<endl;
@@ -399,7 +399,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
 				status = 0;
-			} 
+			}
 		}
 		else if(i->second.find_first_of(".") == string::npos)
 		{
@@ -410,7 +410,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
 				status = 0;
-			} 
+			}
 		
 		}
 		else
@@ -422,7 +422,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
 				status = 0;
-			} 
+			}
 		
 		}
 	}
@@ -434,7 +434,7 @@ int FitsFile::get_CHDU_type()
 	int hdutype = ANY_HDU;
 	if (fits_get_hdu_type(fptr, &hdutype, &status) )
 	{
-		cerr<<"Error : could not get current HDU type :"<< status <<endl;			
+		cerr<<"Error : could not get current HDU type :"<< status <<endl;
 		fits_report_error(stderr, status);
 	}
 	return hdutype;
@@ -455,7 +455,7 @@ FitsFile& FitsFile::readImage(T*& image, unsigned &X, unsigned& Y, T* null)
 		
 		return *this;
 	}
-	//We determine the datatype 
+	//We determine the datatype
 	int datatype = fitsDataType(typeid(T));
 	if (datatype == 0 || datatype == TSTRING)
 	{
@@ -469,7 +469,7 @@ FitsFile& FitsFile::readImage(T*& image, unsigned &X, unsigned& Y, T* null)
 	long axes[2];
 	if (fits_get_img_param(fptr, 2, &bitpix, &naxis, axes, &status))
 	{
-		cerr<<"Error : reading image parameters from file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : reading image parameters from file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		
 		return *this;
@@ -477,7 +477,7 @@ FitsFile& FitsFile::readImage(T*& image, unsigned &X, unsigned& Y, T* null)
 	
 	if(naxis != 2)
 	{
-		cerr<<"Error : image is not 2D "<<endl;			
+		cerr<<"Error : image is not 2D "<<endl;
 		
 		return *this;
 	}
@@ -499,7 +499,7 @@ FitsFile& FitsFile::readImage(T*& image, unsigned &X, unsigned& Y, T* null)
 	int anynull;
 	if (fits_read_img(fptr, datatype, 1, numberPixels, null, image, &anynull, &status))
 	{
-		cerr<<"Error : reading image from file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : reading image from file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		
 		return *this;
@@ -567,7 +567,7 @@ FitsFile& FitsFile::writeImage(T* image, const unsigned X, const unsigned Y, int
 		
 		return *this;
 	}
-	//We determine the datatype 
+	//We determine the datatype
 	int datatype = fitsDataType(typeid(T));
 	if (datatype == 0 || datatype == TSTRING)
 	{
@@ -591,24 +591,24 @@ FitsFile& FitsFile::writeImage(T* image, const unsigned X, const unsigned Y, int
 		int hdutype = ANY_HDU;
 		if (fits_get_hdu_type(fptr, &hdutype, &status) )
 		{
-			cerr<<"Error : could not get current HDU type :"<< status <<endl;			
+			cerr<<"Error : could not get current HDU type :"<< status <<endl;
 			fits_report_error(stderr, status);
 		}
 		if(hdutype!= IMAGE_HDU)
 		{
-			cerr<<"Error : current HDU is not an image, cannot overwrite."<<endl;			
+			cerr<<"Error : current HDU is not an image, cannot overwrite."<<endl;
 			fits_report_error(stderr, status);
 			return *this;
 		}
 		if(fits_delete_hdu(fptr, NULL, &status) )
 		{
-			cerr<<"Error : could not overwrite image :"<< status <<endl;			
+			cerr<<"Error : could not overwrite image :"<< status <<endl;
 			fits_report_error(stderr, status);
 		}
 		else if(fits_movrel_hdu(fptr, -1, NULL, &status))
 		{
 			#if defined EXTRA_SAFE
-			cerr<<"Error : moving to previous hdu :"<< status <<endl;			
+			cerr<<"Error : moving to previous hdu :"<< status <<endl;
 			fits_report_error(stderr, status);
 			#endif
 		}
@@ -616,23 +616,23 @@ FitsFile& FitsFile::writeImage(T* image, const unsigned X, const unsigned Y, int
 		{
 			if ( fits_set_compression_type(fptr, RICE_1, &status) )
 			{
-				cerr<<"Error : could not set image compression :"<< status <<endl;			
+				cerr<<"Error : could not set image compression :"<< status <<endl;
 				fits_report_error(stderr, status);
 				status = 0;
 			}
 		}
 		if (fits_insert_img(fptr, bitpix, naxis, axes, &status))
 		{
-			cerr<<"Error : creating image in file "<<filename<<" :"<< status <<endl;			
+			cerr<<"Error : creating image in file "<<filename<<" :"<< status <<endl;
 			fits_report_error(stderr, status);
 			return *this;
-		} 
+		}
 	}*/
 	if(mode & update)
 	{
 		if(get_CHDU_type() != IMAGE_HDU)
 		{
-			cerr<<"Error : current HDU is not an image, cannot update."<<endl;			
+			cerr<<"Error : current HDU is not an image, cannot update."<<endl;
 			fits_report_error(stderr, status);
 			return *this;
 		}
@@ -641,7 +641,7 @@ FitsFile& FitsFile::writeImage(T* image, const unsigned X, const unsigned Y, int
 		long caxes[2];
 		if(fits_get_img_param(fptr, 2, &cbitpix, &cnaxis, caxes, &status))
 		{
-			cerr<<"Error : reading image parameters from file "<<filename<<" :"<< status <<endl;			
+			cerr<<"Error : reading image parameters from file "<<filename<<" :"<< status <<endl;
 			fits_report_error(stderr, status);
 			return *this;
 		}
@@ -658,28 +658,28 @@ FitsFile& FitsFile::writeImage(T* image, const unsigned X, const unsigned Y, int
 		{
 			if ( fits_set_compression_type(fptr, RICE_1, &status) )
 			{
-				cerr<<"Error : could not set image compression :"<< status <<endl;			
+				cerr<<"Error : could not set image compression :"<< status <<endl;
 				fits_report_error(stderr, status);
 				status = 0;
 			}
 		}
 		if(fits_create_img(fptr, bitpix, naxis, axes, &status))
 		{
-			cerr<<"Error : creating image in file "<<filename<<" :"<< status <<endl;			
+			cerr<<"Error : creating image in file "<<filename<<" :"<< status <<endl;
 			fits_report_error(stderr, status);
 			return *this;
-		} 
+		}
 	}
 
 
 	unsigned numberPixels = X*Y;
 	if ( fits_write_img(fptr, datatype, 1, numberPixels, image, &status) )
 	{
-		cerr<<"Error : writing pixels to file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : writing pixels to file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		
 		return *this;
-	} 
+	}
 	if(! name.empty())
 	{
 		if(fits_update_key(fptr, TSTRING, "EXTNAME", const_cast<char *>(name.c_str()), NULL, &status))
@@ -687,7 +687,7 @@ FitsFile& FitsFile::writeImage(T* image, const unsigned X, const unsigned Y, int
 			cerr<<"Error : setting image name to file "<<filename<<" :"<< status <<endl;
 			fits_report_error(stderr, status);
 			status = 0;
-		} 
+		}
 	}
 	return *this;
 
@@ -710,7 +710,7 @@ FitsFile& FitsFile::writeTable(const string &name, const unsigned number_rows)
 	}
 	if (fits_create_tbl(fptr, BINARY_TBL, number_rows, 0, NULL, NULL, NULL, const_cast<char *>(name.c_str()), &status))
 	{
-		cerr<<"Error : writing table to file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : writing table to file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		
 	}
@@ -772,7 +772,7 @@ FitsFile& FitsFile::writeColumn(const string &name, const vector<T>& data, const
 		{
 			if (fits_delete_col(fptr, colnum, &status) )
 			{
-				cerr<<"Error : delting column from file "<<filename<<" :"<< status <<endl;			
+				cerr<<"Error : delting column from file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
 			}
 		}
@@ -781,7 +781,7 @@ FitsFile& FitsFile::writeColumn(const string &name, const vector<T>& data, const
 	{
 		if (fits_get_num_cols(fptr, &colnum, &status) )
 		{
-			cerr<<"Error : writing column from file "<<filename<<" :"<< status <<endl;			
+			cerr<<"Error : writing column from file "<<filename<<" :"<< status <<endl;
 			fits_report_error(stderr, status);
 		}
 		++colnum;
@@ -793,7 +793,7 @@ FitsFile& FitsFile::writeColumn(const string &name, const vector<T>& data, const
 	char* tform = const_cast<char *>(format.c_str());
 	if (fits_insert_col(fptr, colnum, ttype, tform, &status) )
 	{
-		cerr<<"Error : writing column to file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : writing column to file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		
 		return *this;
@@ -841,7 +841,7 @@ FitsFile& FitsFile::readColumn(const string &name, vector<T>& data)
 	int colnum = find_column(name);
 	if (colnum == 0)
 	{
-		cerr<<"Error : searching column "<<name<<" in file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : searching column "<<name<<" in file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		return *this;
 	}
@@ -850,7 +850,7 @@ FitsFile& FitsFile::readColumn(const string &name, vector<T>& data)
 	long nrows = 0;
 	if(fits_get_num_rows(fptr, &nrows, &status))
 	{
-		cerr<<"Error : reading number of rows in table of file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : reading number of rows in table of file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		return *this;
 	}
@@ -865,7 +865,7 @@ FitsFile& FitsFile::readColumn(const string &name, vector<T>& data)
 	int anynul;
 	if (fits_read_col(fptr, datatype, colnum, 1, 1, nrows, nulval, array, &anynul, &status))
 	{
-		cerr<<"Error : reading values from column "<<name<<" in file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : reading values from column "<<name<<" in file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		
 		return *this;
@@ -921,7 +921,7 @@ FitsFile& FitsFile::writeColumn(const string &name, const vector<string>& data, 
 		{
 			if (fits_delete_col(fptr, colnum, &status) )
 			{
-				cerr<<"Error : delting column from file "<<filename<<" :"<< status <<endl;			
+				cerr<<"Error : delting column from file "<<filename<<" :"<< status <<endl;
 				fits_report_error(stderr, status);
 			}
 		}
@@ -930,7 +930,7 @@ FitsFile& FitsFile::writeColumn(const string &name, const vector<string>& data, 
 	{
 		if (fits_get_num_cols(fptr, &colnum, &status) )
 		{
-			cerr<<"Error : writing column from file "<<filename<<" :"<< status <<endl;			
+			cerr<<"Error : writing column from file "<<filename<<" :"<< status <<endl;
 			fits_report_error(stderr, status);
 		}
 		++colnum;
@@ -949,7 +949,7 @@ FitsFile& FitsFile::writeColumn(const string &name, const vector<string>& data, 
 	char* ttype = const_cast<char *>(name.c_str());
 	if (fits_insert_col(fptr, colnum, ttype, tform, &status))
 	{
-		cerr<<"Error : writing column to file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : writing column to file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 	
 		return *this;
@@ -1000,7 +1000,7 @@ FitsFile& FitsFile::readColumn(const string &name, vector<string>& data)
 	long nrows = 0;
 	if(fits_get_num_rows(fptr, &nrows, &status))
 	{
-		cerr<<"Error : reading number of rows in table of file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : reading number of rows in table of file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 		return *this;
 	}
@@ -1013,7 +1013,7 @@ FitsFile& FitsFile::readColumn(const string &name, vector<string>& data)
 	int maxsringsize = 1000;
 	if(fits_get_col_display_width(fptr, colnum, &maxsringsize, &status))
 	{
-		cerr<<"Error : determinig max string size of column "<<name<<" in file "<<filename<<" :"<< status <<endl;			
+		cerr<<"Error : determinig max string size of column "<<name<<" in file "<<filename<<" :"<< status <<endl;
 		fits_report_error(stderr, status);
 	}
 	
@@ -1025,7 +1025,7 @@ FitsFile& FitsFile::readColumn(const string &name, vector<string>& data)
 	{
 		if (fits_read_col_str (fptr, colnum, firstrow, 1, 1, nulstr, &value, &anynul, &status))
 		{
-			cerr<<"Error : reading value from column "<<name<<" in file "<<filename<<" :"<< status <<endl;			
+			cerr<<"Error : reading value from column "<<name<<" in file "<<filename<<" :"<< status <<endl;
 			fits_report_error(stderr, status);
 		}
 		else
@@ -1035,7 +1035,7 @@ FitsFile& FitsFile::readColumn(const string &name, vector<string>& data)
 	return *this;
 }
 
-//! Write a list of PixLoc coordinates to a FitsFile, adding 1 to conform to fits standard 
+//! Write a list of PixLoc coordinates to a FitsFile, adding 1 to conform to fits standard
 template<>
 FitsFile& FitsFile::writeColumn(const string &name, const vector<PixLoc>& data, const int mode)
 {
@@ -1054,7 +1054,7 @@ FitsFile& FitsFile::writeColumn(const string &name, const vector<PixLoc>& data, 
 	return *this;
 }
 
-//! Read a list of PixLoc coordinates from a FitsFile, substracting 1 to conform to fits standard 
+//! Read a list of PixLoc coordinates from a FitsFile, substracting 1 to conform to fits standard
 template<>
 FitsFile& FitsFile::readColumn(const string &name, vector<PixLoc>& data)
 {
@@ -1082,7 +1082,7 @@ FitsFile& FitsFile::readColumn(const string &name, vector<PixLoc>& data)
 	return *this;
 }
 
-//! Write a list of RealPixLoc coordinates to a FitsFile, adding 1 to conform to fits standard 
+//! Write a list of RealPixLoc coordinates to a FitsFile, adding 1 to conform to fits standard
 template<>
 FitsFile& FitsFile::writeColumn(const string &name, const vector<RealPixLoc>& data, const int mode)
 {
@@ -1101,7 +1101,7 @@ FitsFile& FitsFile::writeColumn(const string &name, const vector<RealPixLoc>& da
 	return *this;
 }
 
-//! Read a list of RealPixLoc coordinates from a FitsFile, substracting 1 to conform to fits standard 
+//! Read a list of RealPixLoc coordinates from a FitsFile, substracting 1 to conform to fits standard
 template<>
 FitsFile& FitsFile::readColumn(const string &name, vector<RealPixLoc>& data)
 {
@@ -1196,4 +1196,3 @@ time_t iso2ctime(const string& date)
 	}
 	return timegm(&time);
 }
-

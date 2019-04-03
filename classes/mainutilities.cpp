@@ -311,6 +311,8 @@ EUVImage* getImageFromFile(const string imageType, const string imageFilename)
 			image = new SWAPImage();
 		else if (isHMI(header))
 			image = new HMIImage();
+		else if (isSUVI(header))
+			image = new SUVIImage();
 		else
 		{
 			cerr<<"Error: Unknown instrument for "<<imageFilename<<endl;

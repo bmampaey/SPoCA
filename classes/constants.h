@@ -27,12 +27,12 @@ See constants.h for the actual values.
 <BR>Acceptable values are float or double (gives better precision, but increase computation time)
 */
 #if ! defined(Real)
-#define Real float
+#define Real double
 #endif
 
 /*!
 @page Compilation_Options
-@param EUVPixelType The type of the pixel values for the EUVImage. 
+@param EUVPixelType The type of the pixel values for the EUVImage.
 <BR> Acceptable values are float or double (gives better precision, but increase computation time)
  Be carrefull that depending on the type of the image you may loose precision.
  It is best to use the same type for EUVPixelType and Real
@@ -43,11 +43,11 @@ See constants.h for the actual values.
 
 /*!
 @page Compilation_Options
-@param ColorType The type of the pixel color for the ColorMap 
+@param ColorType The type of the pixel color for the ColorMap
 <BR> It should be an integer, preferably a unsigned
 */
 #if ! defined(ColorType)
-#define ColorType unsigned 
+#define ColorType unsigned
 #endif
 
 /*!
@@ -58,7 +58,7 @@ See constants.h for the actual values.
 @param NUMBERCHANNELS The number of channels for the classifier.
 */
 #if ! defined(NUMBERCHANNELS)
-#define NUMBERCHANNELS 2
+#define NUMBERCHANNELS 1
 #endif
 
 /*!
@@ -157,7 +157,7 @@ See @ref ALC.
 
 */
 
-#define AIA_ALC_PARAMETERS {70, 95, 108, 112} 
+#define AIA_ALC_PARAMETERS {70, 95, 108, 112}
 
 /*!
 @page Compilation_Options
@@ -165,7 +165,7 @@ See @ref ALC.
 
 */
 
-#define SWAP_ALC_PARAMETERS {70, 75, 107, 112} 
+#define SWAP_ALC_PARAMETERS {70, 75, 107, 112}
 
 /*!
 @page Compilation_Options
@@ -173,7 +173,7 @@ See @ref ALC.
 
 */
 
-#define EUV_ALC_PARAMETERS {70, 95, 108, 112} 
+#define EUV_ALC_PARAMETERS {70, 95, 108, 112}
 
 
 /*!
@@ -194,13 +194,13 @@ See @ref ALC.
 
 /*!
 @page Compilation_Options
-@param EARTH_ORBIT_ECCENTRICITY  
+@param EARTH_ORBIT_ECCENTRICITY
 */
 #define EARTH_ORBIT_ECCENTRICITY 0.0167
 
 /*!
 @page Compilation_Options
-@param YEARLY_MAXIMAL_ERROR 
+@param YEARLY_MAXIMAL_ERROR
 */
 #define YEARLY_MAXIMAL_ERROR (DISTANCE_EARTH_SUN * EARTH_ORBIT_ECCENTRICITY)
 
@@ -254,7 +254,7 @@ See @ref ALC.
 
 /*!
 @page Compilation_Options
-@param DEGREE2RADIAN Conversion between degrees and radians 
+@param DEGREE2RADIAN Conversion between degrees and radians
 */
 #define DEGREE2RADIAN (PI/180.)
 
@@ -276,7 +276,7 @@ See @ref ALC.
 
 #ifndef ColorType
 #warning "COLORTYPE not defined or badly defined, using default type unsigned short"
-#define ColorType short unsigned 
+#define ColorType short unsigned
 #endif
 
 #ifndef NAN

@@ -23,6 +23,7 @@
 #include "AIAImage.h"
 #include "SWAPImage.h"
 #include "HMIImage.h"
+#include "SUVIImage.h"
 #include "ColorMap.h"
 #include "Header.h"
 #include "Coordinate.h"

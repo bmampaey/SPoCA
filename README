@@ -27,10 +27,12 @@ It received several improvements, with the help of Cis Verbeeck and Veronique De
 
 \section references_sec References
 
-- [1] Barra, V., Delouille, V., Hochedez, J.-F., & Chainais, P.:2005 `Segmentation of EIT Images Using Fuzzy Clustering: a Preliminary Study', ESA Special Publication, 600, 77.1.
-- [2] Barra V., Delouille V., Hochedez J.-F.:2008 `Segmentation of extreme ultraviolet solar images via multichannel fuzzy clustering', Advances in Space Research, 42, 917--925.
-- [3] Barra V., Delouille V., Kretzschmar M., Hochedez J.-F.:2009 `Fast and robust segmentation of solar EUV images: algorithm and results for solar cycle 23', A&A, 505(1), 2009, 361--371
-- [4] V. Barra, V. Delouille, and J.-F. Hochedez: 2009 `Segmentation, Tracking and Characterization of Solar Features from EIT Solar Corona Images', Lecture Notes in Computer Science, Volume 5575/2009, 199--208,
+- [1] Barra, V., Delouille, V., Hochedez, J.-F., & Chainais, P. : 2005 `Segmentation of EIT Images Using Fuzzy Clustering: a Preliminary Study', ESA Special Publication, 600, 77.1.
+- [2] Barra V., Delouille V., Hochedez J.-F. : 2008 `Segmentation of extreme ultraviolet solar images via multichannel fuzzy clustering', Advances in Space Research, 42, 917--925.
+- [3] Barra V., Delouille V., Kretzschmar M., Hochedez J.-F. : 2009 `Fast and robust segmentation of solar EUV images: algorithm and results for solar cycle 23', A&A, 505(1), 2009, 361--371
+- [4] V. Barra, V. Delouille, and J.-F. Hochedez : 2009 `Segmentation, Tracking and Characterization of Solar Features from EIT Solar Corona Images', Lecture Notes in Computer Science, Volume 5575/2009, 199--208,
+- [5] Verbeeck, C., Delouille, V., Mampaey, B., De Visscher, R. : 2014 `The SPoCA-suite: Software for extraction, characterization, and tracking of active regions and coronal holes on EUV images', Astronomy and Astrophysics 561.
+
 
 */
 

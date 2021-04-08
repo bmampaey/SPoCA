@@ -199,7 +199,7 @@ void AIAImage::enhance_contrast()
 		
 		case 193:
 			mul(2.99950/exposureTime);
-			threshold(120.0 / 1.08, 6000.0 / 1.08);
+			threshold(120.0 / 2.2, 6000.0 / 2.2);
 			for(unsigned j = 0; j < NumberPixels(); ++j)
 			{
 				pixels[j] = log10(pixels[j]);
@@ -235,7 +235,7 @@ void AIAImage::enhance_contrast()
 		
 		case 1600:
 			mul(2.99911/exposureTime);
-			threshold(0, 1000);
+			threshold(0, 200);
 		break;
 		
 		case 1700:

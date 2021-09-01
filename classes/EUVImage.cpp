@@ -219,6 +219,16 @@ void EUVImage::preprocessing(const string& preprocessingList)
 			double upperValue = percentiles(toDouble(stepParameters[1])/100.), lowerValue = std::numeric_limits<double>::min();
 			threshold(lowerValue, upperValue);
 		}
+		else if(stepType == "ThrMinMode")
+		{
+			double upperValue = std::numeric_limits<double>::max(), lowerValue = (double) mode();
+			threshold(lowerValue, upperValue);
+		}
+		else if(stepType == "ThrMaxMode")
+		{
+			double upperValue = (double) mode(), lowerValue = std::numeric_limits<double>::min();
+			threshold(lowerValue, upperValue);
+		}
 		else if(stepType == "Smooth")
 		{
 			binomial_smoothing(int(toDouble(stepParameters[1])/PixelWidth()+0.5));

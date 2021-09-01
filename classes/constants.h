@@ -38,7 +38,7 @@ See constants.h for the actual values.
  It is best to use the same type for EUVPixelType and Real
 */
 #if ! defined(EUVPixelType)
-#define EUVPixelType float
+#define EUVPixelType double
 #endif
 
 /*!

@@ -40,7 +40,7 @@ void HistogramClassifier::initHistogram(const std::string& histogramFilename, bo
 	//We put the file into a stringstream for rapidity
 	if (histoFile.good())
 	{
-		// We get the size of the file   
+		// We get the size of the file
 		histoFile.seekg(0,ios::end);
 		streampos length = histoFile.tellg();
 		histoFile.seekg(0,ios::beg);
@@ -150,7 +150,7 @@ void HistogramClassifier::addImages(vector<EUVImage*> images, const unsigned xax
 		exit(EXIT_FAILURE);
 	}
 	
-	HistoRealFeature f;
+	HistoRealFeature f(0);
 	f.c = 1;
 	
 	for (unsigned y = 0; y < yaxes; ++y)
@@ -175,4 +175,3 @@ void HistogramClassifier::addImages(vector<EUVImage*> images, const unsigned xax
 	
 	numberBins = HistoX.size();
 }
-

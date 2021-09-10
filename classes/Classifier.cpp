@@ -67,13 +67,12 @@ void Classifier::addImages(vector<EUVImage*> images)
 	X.reserve(numberPixelsEstimate * 1.1);
 	coordinates.reserve(numberPixelsEstimate * 1.1);
 
-	RealFeature f;
-	bool validPixel;
+	RealFeature f(0);
 	for (unsigned y = 0; y < Yaxes; ++y)
 	{
 		for (unsigned x = 0; x < Xaxes; ++x)
 		{
-			validPixel = true;
+			bool validPixel = true;
 			for (unsigned p = 0; p < NUMBERCHANNELS && validPixel; ++p)
 			{
 				f.v[p] = images[p]->pixel(x, y);

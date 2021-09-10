@@ -50,10 +50,10 @@ inline ColorType ColorMap::interpolate(float x, float y) const
 	
 	unsigned ix = (unsigned) x;
 	unsigned iy = (unsigned) y;
-	Real dx = x - ix;
-	Real dy = y - iy;
-	Real cdx = 1. - dx;
-	Real cdy = 1. - dy;
+	float dx = x - ix;
+	float dy = y - iy;
+	float cdx = 1. - dx;
+	float cdy = 1. - dy;
 	ColorType colors[] = {pixel(ix, iy), pixel(ix+1, iy), pixel(ix, iy+1), pixel(ix+1, iy+1)};
 	float quantity[] = {cdx*cdy, dx*cdy, cdx*dy, dx*dy};
 	

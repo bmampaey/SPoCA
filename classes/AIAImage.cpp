@@ -31,7 +31,7 @@ AIAImage::AIAImage(const EUVImage* i)
 
 vector<Real> AIAImage::getALCParameters()
 {
-	Real parameters[] = EUV_ALC_PARAMETERS;
+	Real parameters[] = AIA_ALC_PARAMETERS;
 	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
 	for(unsigned p = 0; p < temp.size(); ++p)
 		temp[p] /= 100.;

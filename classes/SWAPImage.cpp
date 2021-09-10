@@ -31,7 +31,7 @@ SWAPImage::SWAPImage(const EUVImage* i)
 
 vector<Real> SWAPImage::getALCParameters()
 {
-	Real parameters[] = EUV_ALC_PARAMETERS;
+	Real parameters[] = SWAP_ALC_PARAMETERS;
 	vector<Real> temp(parameters, parameters + (sizeof(parameters)/sizeof(parameters[0])));
 	for(unsigned p = 0; p < temp.size(); ++p)
 		temp[p] /= 100.;

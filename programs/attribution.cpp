@@ -214,7 +214,7 @@ int main(int argc, const char **argv)
 	// Options for the desired maps
 	bool uncompressedMaps = false;
 	string desiredMaps;
-	bool getARStats = true, getCHStats = true, getSegmentedStats = true;
+	bool getARStats = false, getCHStats = false, getSegmentedStats = false;
 	
 	// Options for the chain code
 	unsigned chaincodeMinPoints = 4;

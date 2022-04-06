@@ -333,17 +333,18 @@ vector<PixLoc> Region::chainCode(const ColorMap* image, const unsigned min_point
 	unsigned xAxes = image->Xaxes();
 	
 	// We list all the directions
-	int directions[] = {	0 + xAxes, //Norh
-				1 + xAxes, //NE
-				1 + 0, //East
-				1 - xAxes, //SE
-				0 - xAxes, //South
-				-1 - xAxes, //SW
-				-1 + 0, //West
-				-1 + xAxes, //NW
-				//We repeat for simplicity 
-				0 + xAxes, 1 + xAxes, 1 + 0, 1 - xAxes, 0 - xAxes, -1 - xAxes, -1 + 0, -1 + xAxes
-			};
+	int directions[] = {    0 + int(xAxes), //Norh
+                                1 + int(xAxes), //NE
+                                1 + 0, //East
+                                1 - int(xAxes), //SE
+                                0 - int(xAxes), //South
+                                -1 - int(xAxes), //SW
+                                -1 + 0, //West
+                                -1 + int(xAxes), //NW
+                                //We repeat for simplicity
+                                0 + int(xAxes), 1 + int(xAxes), 1 + 0, 1 - int(xAxes), 0 - int(xAxes), -1 - int(xAxes), -1 + 0, -1 + int(xAxes)
+                        };
+
 	
 	// We search the left most pixel on the external border
 	PixLoc firstPixel = PixLoc(boxmin.x, boxmax.y);

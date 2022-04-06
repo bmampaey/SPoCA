@@ -152,7 +152,7 @@ class Image
 		void mul(const T value);
 		
 		//! Routine to threshold the image betwenn min and max
-		void threshold(const T min, const T max);
+		void threshold(const T min, const T max = std::numeric_limits<T>::max());
 		
 		//! Routine that set all pixels to 1 if the corresponding pixel has a value of setValue
 		Image<T>* bitmap(T setValue = 1);

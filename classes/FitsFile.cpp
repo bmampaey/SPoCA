@@ -393,7 +393,7 @@ FitsFile& FitsFile::writeHeader(const Header& header)
 		else if(i->second.find_first_of(".") == string::npos)
 		{
 			//It is probably a integer
-			int value = stoi(i->second);
+			int value = string2integer(i->second);
 			if(fits_update_key(fptr, TINT, i->first.c_str(), &value, comment, &status))
 			{
 				cerr<<"Error : writing keyword "<<i->first<<" to file "<<filename<<" :"<< status <<endl;

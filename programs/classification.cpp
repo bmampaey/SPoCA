@@ -246,7 +246,7 @@ int main(int argc, const char **argv)
 	programDescription+="\nEXTRA_SAFE: ON";
 	#endif
 	#if defined VERBOSE
-	programDescription+="\VERBOSE: ON";
+	programDescription+="\nVERBOSE: ON";
 	#endif
 	programDescription+="\nEUVPixelType: " + string(typeid(EUVPixelType).name());
 	programDescription+="\nReal: " + string(typeid(Real).name());

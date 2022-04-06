@@ -255,7 +255,7 @@ void Image<T>::mul(const T value)
 }
 		
 template<class T>
-void Image<T>::threshold(const T min, const T max = numeric_limits<T>::max())
+void Image<T>::threshold(const T min, const T max)
 {
 	for (unsigned j = 0; j < numberPixels; ++j)
 	{
@@ -1041,18 +1041,12 @@ Image<T>* Image<T>::binomial_smoothing(unsigned width, const Image<T>* img)
 	convolution(img, kernel, kernel);
 	return this;
 }
-
 template<class T>
 inline T Image<T>::interpolate(float x, float y) const
 {
-	if(x < 0)
-		x = 0;
-	if(y < 0)
-		y = 0;
-	if(x >= xAxes-1.)
-		x = xAxes-1.0001;
-	if(y >= yAxes-1.)
-		y = yAxes-1.0001;
+	// We assert x and y are in the boundaries of the image
+	x = x < 0.? 0. : min(float(xAxes-1.001), x);
+	y = y < 0.? 0. : min(float(yAxes-1.001), y);
 	
 	unsigned ix = (unsigned) x;
 	unsigned iy = (unsigned) y;

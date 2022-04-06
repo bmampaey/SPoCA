@@ -237,7 +237,7 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 				datap99 /= denominator;
 				mode /= denominator;
 			}
-		}	
+		}
 		else if( preprocessingStep == "TakeSqrt")
 		{
 			for (unsigned j=0; j < numberPixels; ++j)
@@ -249,7 +249,7 @@ void EUVImage::preprocessing(string preprocessingList, const Real radiusRatio)
 			mode = nullpixelvalue;
 			datap01 = sqrt(datap01);
 			datap99 = sqrt(datap99);
-		}	
+		}
 		else if( preprocessingStep == "TakeLog")
 		{
 			for (unsigned j=0; j < numberPixels; ++j)
@@ -370,7 +370,7 @@ inline Real EUVImage::percentCorrection(const Real r)const
 /* Older methods kept for historical reasons
 
 // Method proposed by Vincent
-// No Correction before r1, Full correction after r1 
+// No Correction before r1, Full correction after r1
 inline Real EUVImage::percentCorrection(const Real r)const
 {
 	const Real r1 = DISCRETE_CORR_R1 / 100.;
@@ -498,7 +498,7 @@ void EUVImage::annulusLimbCorrection(Real maxLimbRadius, Real minLimbRadius)
 }
 
 void EUVImage::ALCDivMedian(Real maxLimbRadius, Real minLimbRadius)
-{						  
+{
 	minLimbRadius *= SunRadius();
 	maxLimbRadius *= SunRadius();
 	Real minLimbRadius2 = minLimbRadius*minLimbRadius;
@@ -599,11 +599,12 @@ void EUVImage::enhance_contrast()
 	threshold(datap01, datap99);
 }
 
-vector<char> EUVImage::color_table() const
+vector<unsigned char> EUVImage::color_table() const
 {
-	char colorTable[][3] = CT_BLUE_RED;
-	return vector<char>(colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+	unsigned char colorTable[][3] = CT_BLUE_RED;
+	return vector<unsigned char>(colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 }
+
 
 #ifdef MAGICK
 MagickImage EUVImage::magick()
@@ -622,5 +623,3 @@ MagickImage EUVImage::magick()
 }
 
 #endif
-
-

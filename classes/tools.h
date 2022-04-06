@@ -136,9 +136,9 @@ std::string itos(const int& i, const int size = 0);
 std::string dtos(const double& d, const int size = 0);
 
 //! Convert a string to a integer
-int stoi(const std::string& s);
+int string2integer(const std::string& s);
 //! Convert a string to a double
-double stod(const std::string& s);
+double string2double(const std::string& s);
 
 //! Return the name of the file without the preceding path (/ si the directory limiter)
 std::string stripPath(const std::string &name); 

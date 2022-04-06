@@ -39,7 +39,7 @@ class EUVIImage : public EUVImage
 		std::string Instrument() const;
 		
 		//! Routine that returns the color table
-		std::vector<char> color_table() const;
+		std::vector<unsigned char> color_table() const;
 };
 
 bool isEUVI(const Header& header);

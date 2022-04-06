@@ -164,41 +164,41 @@ void EITImage::enhance_contrast()
 }
 
 
-vector<char> EITImage::color_table() const
+vector<unsigned char> EITImage::color_table() const
 {
 	switch (int(wavelength))
 	{
 		case 171:
 		{
-			char colorTable[][3] = CT_EIT_171;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_EIT_171;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 		
 		case 195:
 		{
-			char colorTable[][3] = CT_EIT_195;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_EIT_195;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 		
 		case 284:
 		{
-			char colorTable[][3] = CT_EIT_284;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_EIT_284;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 
 		case 304:
 		{
-			char colorTable[][3] = CT_EIT_304;
-			return vector<char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
+			unsigned char colorTable[][3] = CT_EIT_304;
+			return vector<unsigned char> (colorTable[0], colorTable[0] + 3*(sizeof(colorTable)/sizeof(colorTable[0])));
 			break;
 		}
 		
 		default:
 			cerr<<"Unknow wavelength "<<wavelength<<" for EIT"<<endl;
-			return vector<char>(0);
+			return vector<unsigned char>(0);
 		break;
 	}
 }
@@ -208,6 +208,5 @@ string EITImage::Instrument() const
 
 bool isEIT(const Header& header)
 {
-	return header.has("INSTRUME") && header.get<string>("INSTRUME").find("EIT") != string::npos;	
+	return header.has("INSTRUME") && header.get<string>("INSTRUME").find("EIT") != string::npos;
 }
-

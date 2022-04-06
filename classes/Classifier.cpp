@@ -77,7 +77,7 @@ unsigned Classifier::sursegmentation(unsigned Cmin)
 	vector<Real> V;
 	Real newScore = assess(V);
 	Real oldScore = numeric_limits<Real>::max();
-	vector<RealFeature> oldB; 
+	vector<RealFeature> oldB;
 
 	#if defined VERBOSE
 	cout<<"--Classifier::sursegmentation--START--"<<endl;
@@ -168,7 +168,7 @@ unsigned Classifier::sursegmentation(vector<RealFeature>& B, unsigned Cmin)
 #if MERGE_TYPE==MERGEMAX
 /*!
 Compute the new center by computing the mean value of the featurevector belonging to one of the 2 centers to be merged.
-A featurevector belong to a class if it's memebership is maximal for that class. 
+A featurevector belong to a class if it's memebership is maximal for that class.
 The values of the membership are computed using the regular method for computing membership with the new centers.
 */
 void Classifier::merge(unsigned i1, unsigned i2)
@@ -179,7 +179,7 @@ void Classifier::merge(unsigned i1, unsigned i2)
 	
 	for (FeatureVectorSet::iterator xj = X.begin(); xj != X.end(); ++xj)
 	{
-		// We search to which class belongs the featureVector 
+		// We search to which class belongs the featureVector
 		Real max_uij = 0;
 		unsigned max_i = 0;
 		for (unsigned i = 0 ; i < numberClasses ; ++i, ++uij)
@@ -737,13 +737,16 @@ void Classifier::stepout(const unsigned iteration, const Real precisionReached, 
 	
 	#if defined DEBUG || defined WRITE_MEMBERSHIP_FILES
 	// We write the fits file of Uij
-	Image<EUVPixelType> image(Xaxes,Yaxes);
-	for (unsigned i = 0; i < numberClasses; ++i)
+	if(U.size() == numberFeatureVectors * numberClasses)
 	{
-		image.zero();
-		for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
-			image.pixel(coordinates[j]) = U[j*numberClasses + i];
-		image.writeFits(filenamePrefix + "membership.iteration_" + itos(iteration) + ".class_" + itos(i) + ".fits");
+		Image<EUVPixelType> image(Xaxes,Yaxes);
+		for (unsigned i = 0; i < numberClasses; ++i)
+		{
+			image.zero();
+			for (unsigned j = 0 ; j < numberFeatureVectors ; ++j)
+				image.pixel(coordinates[j]) = U[j*numberClasses + i];
+			image.writeFits(filenamePrefix + "membership.iteration_" + itos(iteration) + ".class_" + itos(i) + ".fits");
+		}
 	}
 	#endif
 }

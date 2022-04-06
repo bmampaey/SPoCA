@@ -21,7 +21,7 @@ istream& operator>>(istream& in, vector<string>& v)
 		in.get();
 		char c;
 		in.get(c);
-		string value; 
+		string value;
 		while (in.good())
 		{
 			if(c == ',')
@@ -93,7 +93,7 @@ inline string dtos(const double& d, const int size)
 
 
 
-inline int stoi(const string& s)
+inline int string2integer(const string& s)
 {
 	int i = 0;
 	istringstream ss(s);
@@ -101,7 +101,7 @@ inline int stoi(const string& s)
 	return i;
 }
 
-inline double stod(const string& s)
+inline double string2double(const string& s)
 {
 	double d = 0;
 	istringstream ss(s);
@@ -109,18 +109,18 @@ inline double stod(const string& s)
 	return d;
 }
 
-inline string stripPath(const string &name) 
+inline string stripPath(const string &name)
 {
 	size_t pos = name.rfind('/');
 	return  pos != string::npos ? name.substr(pos+1) : name;
 }
-inline string stripSuffix(const string &name) 
+inline string stripSuffix(const string &name)
 {
 	size_t pos = name.rfind('.');
 	return  pos != string::npos ? name.substr(0,pos) : name;
 }
 
-inline string getPath(const string &name) 
+inline string getPath(const string &name)
 {
 	size_t pos = name.rfind('/');
 	if (pos == string::npos)
@@ -129,7 +129,7 @@ inline string getPath(const string &name)
 		return  name.substr(0, pos+1);
 }
 
-inline string getSuffix(const string &name) 
+inline string getSuffix(const string &name)
 {
 	size_t pos = name.rfind('.');
 	if (pos == string::npos)
@@ -221,4 +221,3 @@ EUVPixelType quickselect(deque<EUVPixelType>& arr, Real percentil)
 	}
 }
 #undef ELEM_SWAP
-

@@ -113,7 +113,7 @@ class EUVImage : public SunImage<EUVPixelType>
 		
 		//! Routine that returns the color table
 		/*! Based on the routine aia_lct.pro from solar soft */
-		virtual std::vector<char> color_table() const;
+		virtual std::vector<unsigned char> color_table() const;
 		
 		#ifdef MAGICK
 		//! Routine that creates and return a grey MagickImage 

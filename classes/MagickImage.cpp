@@ -29,7 +29,7 @@ StorageType MagickImage::magickDataType(const type_info& t)
 		datatype = Magick::IntegerPixel;
 	else if(t == typeid(unsigned int))
 		datatype = Magick::IntegerPixel;
-	else if(t == typeid(char))
+	else if(t == typeid(unsigned char))
 		datatype = Magick::CharPixel;
 	else if(t == typeid(signed char))
 		datatype = Magick::CharPixel;

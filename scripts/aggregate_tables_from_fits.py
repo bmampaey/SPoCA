@@ -17,7 +17,7 @@ def get_dataframe_from_files(filepaths, hdu_name_or_index):
 			with fits.open(filepath) as hdulist:
 				data = hdulist[hdu_name_or_index].data
 		except Exception as why:
-			logging.error('Could not read HDU %s from FITS file %s: %s', hdu_name_or_index, filepath)
+			logging.error('Could not read HDU %s from FITS file %s: %s', hdu_name_or_index, filepath, why)
 		else:
 			tables[filepath] = pandas.DataFrame(data.tolist(), columns=[c.name for c in data.columns])
 	
@@ -39,8 +39,8 @@ if __name__ == '__main__':
 	parser.add_argument('--verbose', '-v', choices = ['DEBUG', 'INFO', 'ERROR'], default = 'INFO', help = 'Set the logging level (default is INFO)')
 	parser.add_argument('--output', '-o', required = True, help = 'Path of the output CSV file')
 	group = parser.add_mutually_exclusive_group(required=True)
-	group.add_argument('--hdu-name', metavar = 'NAME', help = 'The name of the table HDU to read the table from')
-	group.add_argument('--hdu-index', metavar = 'NUMBER', type = int, help = 'The index of the table HDU to read the table from')
+	group.add_argument('--hdu-name', metavar = 'NAME', dest = 'hdu_name_or_index', help = 'The name of the table HDU to read the table from')
+	group.add_argument('--hdu-index', metavar = 'NUMBER', type = int, dest = 'hdu_name_or_index', help = 'The index of the table HDU to read the table from')
 	parser.add_argument('filepaths', nargs = '+', metavar = 'FILEPATH', help = 'The path to a SPoCA fits map (accept also a glob pattern)')
 	args = parser.parse_args()
 	
@@ -49,7 +49,7 @@ if __name__ == '__main__':
 	
 	# We get the dataframe from the files and write it as CSV to the output file
 	try:
-		dataframe = get_dataframe_from_files(iter_filepaths(args.filepaths), args.hdu_name or args.hdu_index)
+		dataframe = get_dataframe_from_files(iter_filepaths(args.filepaths), args.hdu_name_or_index)
 	except Exception as why:
 		logging.critical('Could not extract info from files: %s', why)
 	else:

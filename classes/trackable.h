@@ -47,7 +47,7 @@ public:
 	class iterator {
 		RegionGraph * graph;
 		std::map<Region*,node>::iterator it;
-	public:	
+	public:
 		iterator(RegionGraph* graph, std::map<Region*,node>::iterator it) : graph(graph), it(it) {}
 
 		node& operator*() { return it->second; }
@@ -128,7 +128,10 @@ public:
 	node* get_node(Region* region) {
 		return &nodes[region];
 	}
-
+	const node* get_node(Region* region) const {
+		return &nodes.at(region);
+	}
+	
 	void add_node(Region* region) {
 		nodes[region] = node(this, region);
 	}
@@ -160,4 +163,7 @@ void ouputGraph(const RegionGraph& g, const std::vector<std::vector<Region*> >& 
 void ouputRegions(const std::vector<std::vector<Region*> >& regions, std::string filename);
 
 void recolorFromRegions(ColorMap* image, const std::vector<Region*>& regions);
+
+// Write a table with the tracking relations with previous regions into a fits file
+FitsFile& writeTrackingRelations(FitsFile& file, const std::vector<Region*>& regions, const RegionGraph& tracking_graph);
 #endif

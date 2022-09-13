@@ -20,7 +20,7 @@ unsigned overlay_derotate(ColorMap* image1, const Region* region1, ColorMap* ima
 	PixLoc r2_boxmin = region2->Boxmin();
 	PixLoc r2_boxmax = region2->Boxmax();
 
-	//The projection of the box of region1 may lie outside of the sundisc ==> the projection is null 
+	//The projection of the box of region1 may lie outside of the sundisc ==> the projection is null
 	if(!r1_boxmin)
 		 r1_boxmin = r2_boxmin;
 	if(!r1_boxmax)
@@ -45,7 +45,7 @@ unsigned overlay_derotate(ColorMap* image1, const Region* region1, ColorMap* ima
 			// The projection of the coordinate may lie outside of the sundisc ==> the projection is null
 			if (!c1)
 				continue;
-			// We check if there is overlay between the two regions 
+			// We check if there is overlay between the two regions
 			if(image1->interpolate(c1) == setValue1 && image2->pixel(c2) == setValue2)
 				++intersectPixels;
 		}
@@ -101,7 +101,7 @@ void RegionGraph::node::colorize()
 	for (RegionGraph::node::const_iterator it = in_begin(); it != in_end(); ++it)
 	{
 		//Carefull there is recursion here
-		it->from->colorize(); 
+		it->from->colorize();
 		// We search for the biggest parent
 		if(it->weight > biggestInEdge->weight)
 			biggestInEdge = it;
@@ -272,7 +272,7 @@ void recolorFromRegions(ColorMap* image, const vector<Region*>& regions)
 				if(colorTransfo.count(image->pixel(j)) == 0)
 				{
 					cerr<<"Error: trying to colorize image, pixel has no corresponding region"<<endl;
-					exit (EXIT_FAILURE); 
+					exit (EXIT_FAILURE);
 				}
 			#endif
 			image->pixel(j) = colorTransfo[image->pixel(j)];
@@ -280,3 +280,34 @@ void recolorFromRegions(ColorMap* image, const vector<Region*>& regions)
 	}
 }
 
+FitsFile& writeTrackingRelations(FitsFile& file, const vector<Region*>& regions, const RegionGraph& tracking_graph)
+{
+	vector<string> past_dates_obs;
+	vector<ColorType> past_colors;
+	vector<string> present_dates_obs;
+	vector<ColorType> present_colors;
+	vector<int> overlay_sizes;
+	
+	for (unsigned r = 0; r < regions.size(); ++r)
+	{
+		// For each region find all the edges comming in and extract the color and overlay size
+		const RegionGraph::node* n = tracking_graph.get_node(regions[r]);
+		for (RegionGraph::node::const_iterator it = n->in_begin(); it != n->in_end(); ++it)
+		{
+			past_dates_obs.push_back(it->from->get_region()->ObservationDate());
+			past_colors.push_back(it->from->get_region()->Color());
+			present_dates_obs.push_back(it->to->get_region()->ObservationDate());
+			present_colors.push_back(it->to->get_region()->Color());
+			overlay_sizes.push_back(it->weight);
+		}
+	}
+	
+	file.writeTable("TrackingRelations");
+	file.writeColumn("PAST_DATE_OBS", past_dates_obs);
+	file.writeColumn("PAST_COLOR", past_colors);
+	file.writeColumn("PRESENT_DATE_OBS", present_dates_obs);
+	file.writeColumn("PRESENT_COLOR", present_colors);
+	file.writeColumn("OVERLAY_SIZE", overlay_sizes);
+	
+	return file;
+}

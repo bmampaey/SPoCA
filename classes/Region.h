@@ -27,7 +27,7 @@ class Region
 		time_t observationTime;
 		
 		//! Corresponding color of the pixels of the region in a ColorMap
-		unsigned long color;
+		ColorType color;
 		
 		//! Coordonates of the first (lower left) pixel of the region
 		PixLoc first;
@@ -50,7 +50,7 @@ class Region
 		//! Constructor
 		Region(const time_t& observationTime, const unsigned id, const ColorType color = 0);
 		
-		//! Comparison operator 
+		//! Comparison operator
 		bool operator==(const Region& r)const;
 		
 		//! Accessor to retrieve the id
@@ -110,23 +110,22 @@ class Region
 };
 
 //! Extraction of the regions from a ColorMap
-/* 
+/*
 @param map A map of the region, each one must have a different color
 */
 std::vector<Region*> getRegions(const ColorMap* coloredMap);
 
 //! Extraction of the regions from a ColorMap
-/* 
+/*
 @param map A map of the region, each one must have a different color
 @param colors The regions color for which to compute the stats
 */
 std::vector<Region*> getRegions(const ColorMap* coloredMap, const std::set<ColorType>& colors);
 
-//! Write the regions into a fits file as column into the current table 
+//! Write the regions into a fits file as column into the current table
 FitsFile& writeRegions(FitsFile& file, const std::vector<Region*>& regions);
 
 //! Read the regions from the fits file current table
 FitsFile& readRegions(FitsFile& file, std::vector<Region*>& regions, bool getTrackedColors = false);
 
 #endif
-

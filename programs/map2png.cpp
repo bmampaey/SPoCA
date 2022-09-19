@@ -1,4 +1,4 @@
-//! This program convert a color map to a png image.
+//! This program convert a color map FITS file to a png image.
 /*!
 @page map2png map2png.x
 
@@ -7,9 +7,9 @@ Version: 3.0
 Author: Benjamin Mampaey, benjamin.mampaey@sidc.be
 
 @section usage Usage
-<tt> bin/map2png.x [-option optionvalue ...]  fitsFile [ fitsFile ... ] </tt>
+<tt> bin/map2png.x [-option optionvalue ...] fitsFile</tt>
 
-@param fitsFile	Path to a fits file to be converted
+@param fitsFile	Path to the color map FITS file to be converted
 
 global parameters:
 
@@ -30,7 +30,7 @@ global parameters:
 @param lowerLabel	The label to write on the lower left corner.
 <BR>You can use keywords from the color map fits file by specifying them between {}
 
-@param output	The path of the the output directory.
+@param output	The path of the output file or of a directory.
 
 @param recenter	Set to the position of the new sun center if you want to translate the image
 
@@ -42,8 +42,6 @@ global parameters:
 @param straightenUp	Set if you want to rotate the image so the solar north is up.
 
 @param transparent	If you want the null values to be transparent.
-
-@param type	The type of image to write.
 
 @param uniqueColor	Set to a color if you want all regions to be plotted in that color.
 <BR>See gradient image for the color number.
@@ -77,7 +75,7 @@ string filenamePrefix;
 int main(int argc, const char **argv)
 {
 	// We declare our program description
-	string programDescription = "This program convert a color map to a png image.";
+	string programDescription = "This program convert a color map FITS file to a png image.";
 	programDescription+="\nVersion: 3.0";
 	programDescription+="\nAuthor: Benjamin Mampaey, benjamin.mampaey@sidc.be";
 	
@@ -101,7 +99,6 @@ int main(int argc, const char **argv)
 	args["config"] = ArgParser::ConfigurationFile('C');
 	args["help"] = ArgParser::Help('h');
 	
-	args["type"] = ArgParser::Parameter("png", 'T', "The type of image to write.");
 	args["upperLabel"] = ArgParser::Parameter("", 'L', "The label to write on the upper left corner.\nIf set but no value is passed, a default label will be written.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["lowerLabel"] = ArgParser::Parameter("{CLASTYPE} {CPREPROC}", 'l', "The label to write on the lower left corner.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["fill"] = ArgParser::Parameter(false, 'f', "Set this flag if you want to fill holes in the regions before ploting.");
@@ -112,8 +109,8 @@ int main(int argc, const char **argv)
 	args["recenter"] = ArgParser::Parameter("", 'R', "Set to the position of the new sun center if you want to translate the image");
 	args["scaling"] = ArgParser::Parameter(1, 's', "Set to the scaling factor if you want to rescale the image.");
 	args["size"] = ArgParser::Parameter("100%x100%", 'S', "The size of the image written. i.e. \"1024x1024\". See ImageMagick Image Geometry for specification.\nIf not set the output image will have the same dimension as the input image.");
-	args["output"] = ArgParser::Parameter(".", 'O', "The path of the the output directory.");
-	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file to be converted", 1);
+	args["output"] = ArgParser::Parameter(".", 'O', "The path of the output file or of a directory.");
+	args["fitsFile"] = ArgParser::PositionalParameter("Path to the color map FITS file to be converted");
 	
 	// We parse the arguments
 	try
@@ -127,10 +124,21 @@ int main(int argc, const char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	if(!isDir(args["output"]))
+	// We setup the filenamePrefix
+	if (isDir(args["output"]))
 	{
-		cerr<<"Error : "<<args["output"]<<" is not a directory!"<<endl;
-		return EXIT_FAILURE;
+		filenamePrefix = stripSuffix(stripPath(args["fitsFile"]));
+		filenamePrefix = makePath(args["output"], filenamePrefix + ".");
+	}
+	else
+	{
+		string outputDirectory = getPath(args["output"]);
+		if (! isDir(outputDirectory))
+		{
+			cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
+			return EXIT_FAILURE;
+		}
+		filenamePrefix = stripSuffix(args["output"]) + ".";
 	}
 
 	// We parse the size option
@@ -171,135 +179,130 @@ int main(int argc, const char **argv)
 		}
 	}
 	
-	// We convert the images
-	deque<string> imagesFilenames = args.RemainingPositionalArguments();
-	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
+	// We convert the image
+	ColorMap* colorMap = getColorMapFromFile(args["fitsFile"]);
+	
+	// We fill holes if requested
+	if(args["fill"])
 	{
-		filenamePrefix = makePath(args["output"], stripPath(stripSuffix(imagesFilenames[p]))) + ".";
-		ColorMap* colorMap = getColorMapFromFile(imagesFilenames[p]);
-		
-		// We fill holes if requested
-		if(args["fill"])
+		colorMap->removeHoles();
+
+		#if defined DEBUG
+		colorMap->writeFits(filenamePrefix + "filled.fits");
+		#endif
+	}
+
+	// We erase any colors that is not to be kept
+	if(colors.size() > 0 && args["uniqueColor"].is_set())
+	{
+		ColorType uniqueColor = args["uniqueColor"];
+		for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
 		{
-			colorMap->removeHoles();
-	
-			#if defined DEBUG
-			colorMap->writeFits(filenamePrefix + "filled.fits");
-			#endif
-		}
-	
-		// We erase any colors that is not to be kept
-		if(colors.size() > 0 && args["uniqueColor"].is_set())
-		{
-			ColorType uniqueColor = args["uniqueColor"];
-			for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
+			if(colorMap->pixel(j) != colorMap->null())
 			{
-				if(colorMap->pixel(j) != colorMap->null())
+				if(colors.count(colorMap->pixel(j)) == 0)
 				{
-					if(colors.count(colorMap->pixel(j)) == 0)
-					{
-						colorMap->pixel(j) = colorMap->null();
-					}
-					else
-					{
-						colorMap->pixel(j) = uniqueColor;
-					}
+					colorMap->pixel(j) = colorMap->null();
 				}
-			}
-		}
-		else if(args["uniqueColor"].is_set())
-		{
-			ColorType uniqueColor = args["uniqueColor"];
-			for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
-			{
-				if(colorMap->pixel(j) != colorMap->null())
+				else
 				{
 					colorMap->pixel(j) = uniqueColor;
 				}
 			}
 		}
-		else if(colors.size() > 0)
+	}
+	else if(args["uniqueColor"].is_set())
+	{
+		ColorType uniqueColor = args["uniqueColor"];
+		for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
 		{
-			for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
+			if(colorMap->pixel(j) != colorMap->null())
 			{
-				if(colorMap->pixel(j) != colorMap->null() && colors.count(colorMap->pixel(j)) == 0)
-				{
-					colorMap->pixel(j) = colorMap->null();
-				}
+				colorMap->pixel(j) = uniqueColor;
 			}
+		}
+	}
+	else if(colors.size() > 0)
+	{
+		for(unsigned j = 0; j < colorMap->NumberPixels(); ++j)
+		{
+			if(colorMap->pixel(j) != colorMap->null() && colors.count(colorMap->pixel(j)) == 0)
+			{
+				colorMap->pixel(j) = colorMap->null();
+			}
+		}
+	}
+
+	#if defined DEBUG
+	if(colors.size() > 0 || args["uniqueColor"].is_set())
+		colorMap->writeFits(filenamePrefix + "recolored.fits");
+	#endif
+	
+	// We transform the image
+	if(args["straightenUp"] || args["recenter"].is_set() || args["scaling"].is_set())
+	{
+		// We correct for the roll
+		Real rotationAngle = 0;
+		if (args["straightenUp"])
+		{
+			rotationAngle = - colorMap->Crota2();
 		}
 	
+		// We recenter the image
+		RealPixLoc newCenter = colorMap->SunCenter();
+		if(args["recenter"].is_set() && !readCoordinate(newCenter, args["recenter"]))
+		{
+			cerr<<"Error : Cannot convert "<<args["recenter"]<<" to coordinates"<<endl;
+			return EXIT_FAILURE;
+		}
+	
+		// We scale the image
+		Real scaling = 1.;
+		if(args["scaling"].is_set())
+			scaling = args["scaling"];
+	
+		colorMap->transform(rotationAngle, RealPixLoc(newCenter.x - colorMap->SunCenter().x, newCenter.y - colorMap->SunCenter().y), scaling);
+	
 		#if defined DEBUG
-		if(colors.size() > 0 || args["uniqueColor"].is_set())
-			colorMap->writeFits(filenamePrefix + "recolored.fits");
+		colorMap->writeFits(filenamePrefix + "transformed.fits");
 		#endif
-		
-		// We transform the image
-		if(args["straightenUp"] || args["recenter"].is_set() || args["scaling"].is_set())
-		{
-			// We correct for the roll
-			Real rotationAngle = 0;
-			if (args["straightenUp"])
-			{
-				rotationAngle = - colorMap->Crota2();
-			}
-		
-			// We recenter the image
-			RealPixLoc newCenter = colorMap->SunCenter();
-			if(args["recenter"].is_set() && !readCoordinate(newCenter, args["recenter"]))
-			{
-				cerr<<"Error : Cannot convert "<<args["recenter"]<<" to coordinates"<<endl;
-				return EXIT_FAILURE;
-			}
-		
-			// We scale the image
-			Real scaling = 1.;
-			if(args["scaling"].is_set())
-				scaling = args["scaling"];
-		
-			colorMap->transform(rotationAngle, RealPixLoc(newCenter.x - colorMap->SunCenter().x, newCenter.y - colorMap->SunCenter().y), scaling);
-		
-			#if defined DEBUG
-			colorMap->writeFits(filenamePrefix + "transformed.fits");
-			#endif
-		}
-		
-		// We make the png
-		MagickImage outputImage = colorMap->magick(backgroundColor);
-		
-		// We label the image
-		if(args["upperLabel"].is_set())
-		{
-			string text = args["upperLabel"];
-			if(text.empty())
-				text = colorMap->Label();
-			else
-				text = colorMap->getHeader().expand(text);
-			
-			size_t text_size = colorMap->Xaxes()/40;
-			outputImage.fillColor("white");
-			outputImage.fontPointsize(text_size);
-			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
-		}
-		
-		// We label the image
-		if(args["lowerLabel"].is_set())
-		{
-			string text = colorMap->getHeader().expand(args["lowerLabel"]);
-			size_t text_size = colorMap->Xaxes()/40;
-			outputImage.fillColor("white");
-			outputImage.fontPointsize(text_size);
-			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
-		}
-		
-		delete colorMap;
-		
-		// We resize the image
-		outputImage.scale(size_geometry);
-		
-		// We write down the image
-		outputImage.write(filenamePrefix + args["type"]);
 	}
+	
+	// We make the png
+	MagickImage outputImage = colorMap->magick(backgroundColor);
+	
+	// We label the image
+	if(args["upperLabel"].is_set())
+	{
+		string text = args["upperLabel"];
+		if(text.empty())
+			text = colorMap->Label();
+		else
+			text = colorMap->getHeader().expand(text);
+		
+		size_t text_size = colorMap->Xaxes()/40;
+		outputImage.fillColor("white");
+		outputImage.fontPointsize(text_size);
+		outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
+	}
+	
+	// We label the image
+	if(args["lowerLabel"].is_set())
+	{
+		string text = colorMap->getHeader().expand(args["lowerLabel"]);
+		size_t text_size = colorMap->Xaxes()/40;
+		outputImage.fillColor("white");
+		outputImage.fontPointsize(text_size);
+		outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
+	}
+	
+	delete colorMap;
+	
+	// We resize the image
+	outputImage.scale(size_geometry);
+	
+	// We write down the image
+	outputImage.write(filenamePrefix + "png");
 	
 	return EXIT_SUCCESS;
 }

@@ -4,15 +4,15 @@
 using namespace std;
 
 Region::Region(const unsigned id)
-:id(id),observationTime(0), color(0), first(PixLoc::null()), boxmin(PixLoc::null()), boxmax(PixLoc::null()), firstObservationTime(observationTime)
+:id(id),observationTime(0), color(0), first(PixLoc::null()), boxmin(PixLoc::null()), boxmax(PixLoc::null()), firstObservationTime(observationTime), numberPixels(0), center(0,0), centerxError(0), centeryError(0), areaProjected(0), areaProjectedUncertainity(0), areaDeprojected(0), areaDeprojectedUncertainity(0)
 {}
 
 Region::Region(const time_t& observationTime)
-:id(0),observationTime(observationTime), color(0), first(PixLoc::null()), boxmin(PixLoc::null()), boxmax(PixLoc::null()), firstObservationTime(observationTime)
+:id(0),observationTime(observationTime), color(0), first(PixLoc::null()), boxmin(PixLoc::null()), boxmax(PixLoc::null()), firstObservationTime(observationTime), numberPixels(0), center(0,0), centerxError(0), centeryError(0), areaProjected(0), areaProjectedUncertainity(0), areaDeprojected(0), areaDeprojectedUncertainity(0)
 {}
 
 Region::Region(const time_t& observationTime, const unsigned id, const ColorType color)
-:id(id),observationTime(observationTime), color(color), first(PixLoc::null()), boxmin(PixLoc::null()), boxmax(PixLoc::null()), firstObservationTime(observationTime)
+:id(id),observationTime(observationTime), color(color), first(PixLoc::null()), boxmin(PixLoc::null()), boxmax(PixLoc::null()), firstObservationTime(observationTime), numberPixels(0), center(0,0), centerxError(0), centeryError(0), areaProjected(0), areaProjectedUncertainity(0), areaDeprojected(0), areaDeprojectedUncertainity(0)
 {}
 
 bool Region::operator==(const Region& r)const
@@ -88,9 +88,76 @@ string Region::FirstObservationDate() const
 	return ss.str();
 }
 
-inline void Region::add(const PixLoc& coordinate)
+unsigned Region::NumberPixels() const
 {
-	// We compute the positions
+	return numberPixels;
+}
+
+RealPixLoc Region::Center() const
+{
+	if (numberPixels > 0)
+		return RealPixLoc(center.x/numberPixels, center.y/numberPixels);
+	else
+		return center;
+}
+
+Real Region::CenterxError() const
+{
+	return 1 + EARTH_ORBIT_ECCENTRICITY * centerxError;
+}
+
+Real Region::CenteryError() const
+{
+	return 1 + EARTH_ORBIT_ECCENTRICITY * centeryError;
+}
+
+Real Region::Area_Projected() const
+{
+	return areaProjected;
+}
+
+Real Region::Area_Projected_Uncertainity() const
+{
+	return areaProjectedUncertainity;
+}
+
+Real Region::Area_Deprojected() const
+{
+	return areaDeprojected;
+}
+
+Real Region::Area_Deprojected_Uncertainity() const
+{
+	return areaDeprojectedUncertainity;
+}
+
+string Region::HekLabel() const
+{
+	tm* date_obs;
+	date_obs = gmtime(&observationTime);
+	ostringstream ss;
+	ss<<setfill('0')<<setw(4)<<date_obs->tm_year+1900<<setw(2)<<date_obs->tm_mon + 1<<setw(2)<<date_obs->tm_mday<<"T"<<setw(2)<<date_obs->tm_hour<<setw(2)<<date_obs->tm_min<<setw(2)<<date_obs->tm_sec<<"_"<<id;
+	return ss.str();
+}
+
+string Region::toString(const string& separator, bool header) const
+{
+	if (header)
+	{
+		return "Id"+separator+"Color"+separator+"ObservationDate"+separator+"FirstObservationDate"+separator+"Boxmin"+separator+"Boxmax";
+	}
+	else
+	{
+		ostringstream out;
+		out<<setiosflags(ios::fixed)<<Id()<<separator<<Color()<<separator<<ObservationDate()<<separator<<FirstObservationDate()<<separator<<Boxmin()<<separator<<Boxmax();
+		return out.str();
+	}
+}
+
+inline void Region::add(const PixLoc& coordinate, const bool& atBorder, const RealPixLoc& sunCenter, const Real& sun_radius, const Real pixelLength, const Real pixelWidth)
+{
+	
+	// We compute the positions of the first pixel, and the bounding box
 	if(!first)
 	{
 		first = coordinate;
@@ -118,47 +185,48 @@ inline void Region::add(const PixLoc& coordinate)
 		boxmax.x = coordinate.x > boxmax.x ? coordinate.x : boxmax.x;
 		boxmax.y = coordinate.y > boxmax.y ? coordinate.y : boxmax.y;
 	}
+	
+	++numberPixels;
+	
+	// We compute the center
+	center.x += coordinate.x;
+	center.y += coordinate.y;
+	
+	centerxError = fabs(center.x/numberPixels - sunCenter.x);
+	centeryError = fabs(center.y/numberPixels - sunCenter.y);
+	
+	// We compute the contribution of the pixel to the area as seen by the observer (arcsec²)
+	const Real pixelAreaArcsec2 = pixelLength * pixelWidth;
+	areaProjected += pixelAreaArcsec2;
+	areaProjectedUncertainity += 2 * pixelAreaArcsec2 * ((SUN_RADIUS_VARIATION / SUN_RADIUS) + (SUN_RADIUS_VARIATION_PIXELS / sun_radius));
+	if(atBorder)
+		areaProjectedUncertainity += pixelAreaArcsec2;
+	
+	// We compute the contribution of the pixel to the area on the solar sphere (Mm²)
+	// Compute the area error
+	const Real dx = fabs(coordinate.x - sunCenter.x);
+	const Real dy = fabs(coordinate.y - sunCenter.y);
+	const Real radius_squared = sun_radius * sun_radius;
+	const Real sigma = radius_squared - (dx * dx) - (dy * dy);
+	const Real pixelAreaMm2 = (SUN_RADIUS * SUN_RADIUS) / radius_squared;
+	Real areaCorrectionFactor = HIGGINS_FACTOR;
+	
+	if(sigma > 0)
+		areaCorrectionFactor = sun_radius/sqrt(sigma);
+	
+	// Limit the correction factor to some max limit in case the pixel is near the limb
+	if (areaCorrectionFactor > HIGGINS_FACTOR)
+		areaCorrectionFactor = HIGGINS_FACTOR;
+	
+	areaDeprojected += pixelAreaMm2 * areaCorrectionFactor;
+	areaDeprojectedUncertainity += (pixelAreaMm2 / sqrt(sigma*sigma*sigma)) * (dx + dy + (2 * (SUN_RADIUS_VARIATION / SUN_RADIUS) * sigma) + ((SUN_RADIUS_VARIATION_PIXELS / sun_radius) * (radius_squared + sigma)));
+	if(atBorder)
+		areaDeprojectedUncertainity += pixelAreaMm2 * areaCorrectionFactor;
 }
-
-
-string Region::HekLabel() const
-{
-	tm* date_obs;
-	date_obs = gmtime(&observationTime);
-	ostringstream ss;
-	ss<<setfill('0')<<setw(4)<<date_obs->tm_year+1900<<setw(2)<<date_obs->tm_mon + 1<<setw(2)<<date_obs->tm_mday<<"T"<<setw(2)<<date_obs->tm_hour<<setw(2)<<date_obs->tm_min<<setw(2)<<date_obs->tm_sec<<"_"<<id;
-	return ss.str();
-}
-
-string Region::Visu3DLabel() const
-{
-	tm* date_obs;
-	date_obs = gmtime(&observationTime);
-	ostringstream ss;
-	ss<<setfill('0')<<setw(4)<<date_obs->tm_year+1900<<setw(2)<<date_obs->tm_mon + 1<<setw(2)<<date_obs->tm_mday<<setw(2)<<date_obs->tm_hour<<setw(2)<<date_obs->tm_min;
-	return ss.str();
-}
-
-
-string Region::toString(const string& separator, bool header) const
-{
-	if (header)
-	{
-		return "Id"+separator+"Color"+separator+"ObservationDate"+separator+"FirstObservationDate"+separator+"Boxmin"+separator+"Boxmax";
-	}
-	else
-	{
-		ostringstream out;
-		out<<setiosflags(ios::fixed)<<Id()<<separator<<Color()<<separator<<ObservationDate()<<separator<<FirstObservationDate()<<separator<<Boxmin()<<separator<<Boxmax();
-		return out.str();
-	}
-}
-
 
 vector<Region*> getRegions(const ColorMap* coloredMap)
 {
 	unsigned id = 0;
-	
 	map<ColorType, Region*> regions;
 	
 	for (unsigned y = 0; y < coloredMap->Yaxes(); ++y)
@@ -171,12 +239,15 @@ vector<Region*> getRegions(const ColorMap* coloredMap)
 				// If no region of that color exist we create it
 				if(regions.count(color) == 0)
 				{
-					regions[color] = new Region(coloredMap->ObservationTime(),id, color);
+					regions[color] = new Region(coloredMap->ObservationTime(), id, color);
 					++id;
 				}
 				
+				// Is the pixel in the contour (<=> there is a neighboor pixel != pixel color)
+				bool atBorder = coloredMap->pixel(x-1,y) != color || coloredMap->pixel(x+1,y) != color || coloredMap->pixel(x,y-1) != color || coloredMap->pixel(x,y+1) != color;
+				
 				// We add the pixel to the region
-				regions[color]->add(PixLoc(x,y));
+				regions[color]->add(PixLoc(x,y), atBorder, coloredMap->SunCenter(), coloredMap->SunRadius(), coloredMap->PixelLength(), coloredMap->PixelWidth());
 			}
 		}
 	}
@@ -204,8 +275,11 @@ vector<Region*> getRegions(const ColorMap* coloredMap, const set<ColorType>& col
 						regions[color] = new Region(coloredMap->ObservationTime(),id, color);
 						++id;
 					}
+					// Is the pixel in the contour (<=> there is a neighboor pixel != pixel color)
+					bool atBorder = coloredMap->pixel(x-1,y) != color || coloredMap->pixel(x+1,y) != color || coloredMap->pixel(x,y-1) != color || coloredMap->pixel(x,y+1) != color;
+					
 					// We add the pixel to the region
-					regions[color]->add(PixLoc(x,y));
+					regions[color]->add(PixLoc(x,y), atBorder, coloredMap->SunCenter(), coloredMap->SunRadius(), coloredMap->PixelLength(), coloredMap->PixelWidth());
 				}
 			}
 		}
@@ -257,7 +331,7 @@ FitsFile& writeRegions(FitsFile& file, const vector<Region*>& regions)
 			data[r] = regions[r]->Boxmin();
 		file.writeColumn("BOXMIN", data);
 	}
-	
+
 	{
 		vector<PixLoc> data(regions.size());
 		for(unsigned r = 0; r < regions.size(); ++r)
@@ -270,6 +344,62 @@ FitsFile& writeRegions(FitsFile& file, const vector<Region*>& regions)
 		for(unsigned r = 0; r < regions.size(); ++r)
 			data[r] = regions[r]->FirstPixel();
 		file.writeColumn("FIRST", data);
+	}
+
+	{
+		vector<unsigned> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->NumberPixels();
+		file.writeColumn("NUMBER_PIXELS", data);
+	}
+
+	{
+		vector<RealPixLoc> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Center();
+		file.writeColumn("CENTER", data);
+	}
+
+	{
+		vector<Real> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->CenterxError();
+		file.writeColumn("XCENTER_ERROR", data);
+	}
+
+	{
+		vector<Real> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->CenteryError();
+		file.writeColumn("YCENTER_ERROR", data);
+	}
+
+	{
+		vector<Real> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Area_Projected();
+		file.writeColumn("AREA_PROJECTED", data);
+	}
+
+	{
+		vector<Real> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Area_Projected_Uncertainity();
+		file.writeColumn("AREA_PROJECTED_UNCERTAINITY", data);
+	}
+
+	{
+		vector<Real> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Area_Deprojected();
+		file.writeColumn("AREA_DEPROJECTED", data);
+	}
+
+	{
+		vector<Real> data(regions.size());
+		for(unsigned r = 0; r < regions.size(); ++r)
+			data[r] = regions[r]->Area_Deprojected_Uncertainity();
+		file.writeColumn("AREA_DEPROJECTED_UNCERTAINITY", data);
 	}
 
 	return file;

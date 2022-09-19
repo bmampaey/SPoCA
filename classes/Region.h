@@ -41,7 +41,15 @@ class Region
 		//! Time of first observation of the region
 		time_t firstObservationTime;
 		
-
+		//! Total number of pixels in the region
+		unsigned numberPixels;
+		
+		//! Coordinates of the center of the region
+		RealPixLoc center;
+		
+		//! Accumulators to compute the area and the errors
+		Real centerxError, centeryError, areaProjected, areaProjectedUncertainity, areaDeprojected, areaDeprojectedUncertainity;
+		
 	public :
 		//! Constructor
 		Region(const unsigned id = 0);
@@ -89,17 +97,38 @@ class Region
 		//! Accessor to retrieve the first observation time as a string
 		std::string FirstObservationDate() const;
 		
+		//! Accessor to retrieve the number of pixels
+		unsigned NumberPixels() const;
+		
+		//! The geometric center of the region
+		RealPixLoc Center() const;
+		
+		//! Error for the center x coordinate in pixels
+		Real CenterxError() const;
+		
+		//! Error for the center y coordinate in pixels
+		Real CenteryError() const;
+		
+		//! Area of the region as seen by the observer (arcsec²)
+		Real Area_Projected() const;
+		
+		//! Uncertainty of the Area Projected
+		Real Area_Projected_Uncertainity() const;
+		
+		//! Area of the region on the solar sphere (Mm²)
+		Real Area_Deprojected() const;
+		
+		//! Uncertainty of the Area Deprojected
+		Real Area_Deprojected_Uncertainity() const;
+		
 		//! Routine that returns a label for the HEK.
 		std::string HekLabel() const;
-		
-		//! Routine that returns a label for the 3D visualisation.
-		std::string Visu3DLabel() const;
 		
 		//! Output a region as a string
 		std::string toString(const std::string& separator, bool header = false) const;
 		
 		//! Routine to update a region with a new pixel coordinate
-		void add(const PixLoc& coordinate);
+		void add(const PixLoc& coordinate, const bool& atBorder, const RealPixLoc& sunCenter, const Real& sun_radius, const Real pixelLength, const Real pixelWidth);
 		
 		//! Routine that generate a chaincode for the connected component indicated by firstPixel
 		std::vector<PixLoc> chainCode(const ColorMap* image, const unsigned min_points, const unsigned max_points, Real max_deviation = 0.) const;

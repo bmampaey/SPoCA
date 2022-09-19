@@ -2,7 +2,7 @@
 #include <fstream>
 #include <algorithm>
 #include <cctype>
-#include <stdlib.h> 
+#include <stdlib.h>
 
 #include "tools.h"
 #include "ArgParser.h"
@@ -473,7 +473,7 @@ void ArgParser::parse(const int argc, const char **argv, bool warn_duplicate, bo
 		if(sections[i->at(0)][i->at(1)].is_set())
 		{
 			if(warn_duplicate)
-			{ 
+			{
 				cerr<<"WARN: Argument "<<i->at(0)<<"."<<i->at(1)<<" was set more than once";
 				if(i->size() >= 3 && overwrite)
 					cerr<<", final value is "<<i->at(2)<<endl;
@@ -540,15 +540,25 @@ void ArgParser::parse(const int argc, const char **argv, bool warn_duplicate, bo
 	sort(positional_parameters.begin(), positional_parameters.end(), compare_parameter_position);
 	
 	// We set the positional parameters value
-	for(unsigned i = 0; i < positional_parameters.size() && !positional_arguments.empty(); ++i)
+	for(unsigned i = 0; i < positional_parameters.size(); ++i)
 	{
+		if(positional_arguments.empty())
+		{
+			throw invalid_argument("You must specify a value for parameter " + find_long_parameter_name(positional_parameters[i]->short_name, "global"));
+		}
 		positional_parameters[i]->set = true;
 		positional_parameters[i]->value = positional_arguments.front();
 		positional_arguments.pop_front();
 	}
 	
-	// We verify the remaining 
-	if(! remaining_parameters_name.empty())
+	// We verify the remaining
+	if(remaining_parameters_name.empty())
+	{
+		if(! positional_arguments.empty())
+			// We have remaining positional arguments that were not declared
+			throw invalid_argument("The following positional arguments are superfluous: " + toString(positional_arguments));
+	}
+	else
 	{
 		if(int(positional_arguments.size()) < sections["global"][remaining_parameters_name].remaining_parameter_min)
 		{
@@ -561,11 +571,7 @@ void ArgParser::parse(const int argc, const char **argv, bool warn_duplicate, bo
 			throw invalid_argument("You must specify at most " + toString(sections["global"][remaining_parameters_name].remaining_parameter_max) + " " + remaining_parameters_name);
 		}
 	}
-	else
-	{
-		// We have remaining positional arguments that were not declared
-		throw invalid_argument("The following positional arguments are superfluous: " + toString(positional_arguments));
-	}
+
 	
 	// We parse the config files
 	while(! config_files_parameters.empty())
@@ -649,7 +655,7 @@ void ArgParser::parse_file(const string& filename, bool warn_duplicate, bool ove
 		if(sections[i->at(0)][i->at(1)].is_set())
 		{
 			if(warn_duplicate)
-			{ 
+			{
 				cerr<<"WARN: Argument "<<i->at(0)<<"."<<i->at(1)<<" was set more than once";
 				if(i->size() >= 3 && overwrite)
 					cerr<<", final value is "<<i->at(2)<<endl;
@@ -1018,4 +1024,3 @@ string str(const ArgParser::Parameter& p)
 	string result = p;
 	return result;
 }
-

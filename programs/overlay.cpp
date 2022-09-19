@@ -38,6 +38,8 @@ global parameters:
 <BR> ThrMax=zz.z (Threshold intensities to maximum zz.z)
 <BR> ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)
 <BR> ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)
+<BR> ThrMinMode (Threshold intensities to minimum the mode of pixel intensities)
+<BR> ThrMaxMode (Threshold intensities to maximum the mode of pixel intensities)
 <BR> Smooth=zz.z (Binomial smoothing of zz.z arcsec)
 
 @param internal	Set this flag if you want the contours inside the regions.
@@ -130,7 +132,7 @@ int main(int argc, const char **argv)
 	args["help"] = ArgParser::Help('h');
 	
 	args["type"] = ArgParser::Parameter("png", 'T', "The type of image to write.");
-	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n TakeAbs (Take the absolute value)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n TakeAbs (Take the absolute value)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile\n ThrMinMode (Threshold intensities to minimum the mode)\n ThrMaxMode (Threshold intensities to maximum the mode)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["upperLabel"] = ArgParser::Parameter("", 'L', "The label to write on the upper left corner.\nIf set but no value is passed, a default label will be written.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["lowerLabel"] = ArgParser::Parameter("{CLASTYPE} {CPREPROC}", 'l', "The label to write on the lower left corner.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["width"] = ArgParser::Parameter(1, 'w', "The width of the contour in pixels.");
@@ -392,5 +394,3 @@ int main(int argc, const char **argv)
 	delete colorMap;
 	return EXIT_SUCCESS;
 }
-
-

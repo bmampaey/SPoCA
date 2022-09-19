@@ -43,6 +43,8 @@ global parameters:
 <BR> ThrMax=zz.z (Threshold intensities to maximum zz.z)
 <BR> ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)
 <BR> ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)
+<BR> ThrMinMode (Threshold intensities to minimum the mode of pixel intensities)
+<BR> ThrMaxMode (Threshold intensities to maximum the mode of pixel intensities)
 <BR> Smooth=zz.z (Binomial smoothing of zz.z arcsec)
 
 @param uncompressed	Set this flag if you want results maps to be uncompressed.
@@ -121,7 +123,7 @@ int main(int argc, const char **argv)
 	args("mapPreprocessing") = CHMapParameters();
 	args["imageType"] = ArgParser::Parameter("Unknown", 'I', "The type of the images.\nPossible values are : EIT, EUVI, AIA, SWAP");
 	args["registerImages"] = ArgParser::Parameter(false, 'r', "Set to register/align the images to the map.");
-	args["statsPreprocessing"] = ArgParser::Parameter("NAR=0.95", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n TakeAbs (Take the absolute value)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
+	args["statsPreprocessing"] = ArgParser::Parameter("NAR=0.95", 'P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n TakeAbs (Take the absolute value)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile\n ThrMinMode (Threshold intensities to minimum the mode)\n ThrMaxMode (Threshold intensities to maximum the mode)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["output"] = ArgParser::Parameter(".", 'O', "The name for the output file or of a directory.");
 	args["uncompressed"] = ArgParser::Parameter(false, 'u', "Set this flag if you want results maps to be uncompressed.");
 	args["color"] = ArgParser::Parameter('c', "The value of the pixels in the segmentation map corresponding to Coronal Hole.");
@@ -206,7 +208,7 @@ int main(int argc, const char **argv)
 			image->writeFits(makePath(outputDirectory, stripPath(stripSuffix(imageFilename)) + "registered.fits"));
 		#endif
 		images.push_back(image);
-	}	
+	}
 	// We transform the segmented map into a binary map
 	if (args["color"].is_set())
 	{

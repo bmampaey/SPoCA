@@ -1,4 +1,4 @@
-//! This program plots a map regions contours overlayed on a background image.
+//! This program plots a color map contours overlayed on a background sun image.
 /*!
 @page overlay overlay.x
 
@@ -7,10 +7,10 @@ Version: 3.0
 Author: Benjamin Mampaey, benjamin.mampaey@sidc.be
 
 @section usage Usage
-<tt> bin/overlay.x [-option optionvalue ...]  mapFile fitsFile [ fitsFile ... ] </tt>
+<tt> bin/overlay.x [-option optionvalue ...] mapFitsFile backgroundFitsFile</tt>
 
-@param mapFile	Path to the map
-@param fitsFile	Path to a fits file to be converted
+@param mapFitsFile	Path to the color map FITS file
+@param backgroundFitsFile	Path to the background sun image FITS file
 
 global parameters:
 
@@ -52,7 +52,7 @@ global parameters:
 @param lowerLabel	The label to write on the lower left corner.
 <BR>You can use keywords from the color map fits file by specifying them between {}
 
-@param output	The path of the the output directory.
+@param output	The path of the output file or of a directory.
 
 @param recenter	Set to the position of the new sun center if you want to translate the image
 
@@ -64,8 +64,6 @@ global parameters:
 <BR>If not set the output image will have the same dimension as the input image.
 
 @param straightenUp	Set if you want to rotate the image so the solar north is up.
-
-@param type	The type of image to write.
 
 @param uniqueColor	Set to a color if you want all contours to be plotted in that color.
 <BR>See gradient image for the color number.
@@ -107,7 +105,7 @@ string filenamePrefix;
 int main(int argc, const char **argv)
 {
 	// We declare our program description
-	string programDescription = "This program plots a map regions contours overlayed on a background image.";
+	string programDescription = "This program plots a color map contours overlayed on a background sun image.";
 	programDescription+="\nVersion: 3.0";
 	programDescription+="\nAuthor: Benjamin Mampaey, benjamin.mampaey@sidc.be";
 	
@@ -131,7 +129,6 @@ int main(int argc, const char **argv)
 	args["config"] = ArgParser::ConfigurationFile('C');
 	args["help"] = ArgParser::Help('h');
 	
-	args["type"] = ArgParser::Parameter("png", 'T', "The type of image to write.");
 	args["imagePreprocessing"] = ArgParser::Parameter('P', "The steps of preprocessing to apply to the sun images.\nCan be any combination of the following:\n NAR=zz.z (Nullify pixels above zz.z*radius)\n ALC (Annulus Limb Correction)\n DivMedian (Division by the median)\n TakeSqrt (Take the square root)\n TakeLog (Take the log)\n TakeAbs (Take the absolute value)\n DivMode (Division by the mode)\n DivExpTime (Division by the Exposure Time)\n ThrMin=zz.z (Threshold intensities to minimum zz.z)\n ThrMax=zz.z (Threshold intensities to maximum zz.z)\n ThrMinPer=zz.z (Threshold intensities to minimum the zz.z percentile)\n ThrMaxPer=zz.z (Threshold intensities to maximum the zz.z percentile\n ThrMinMode (Threshold intensities to minimum the mode)\n ThrMaxMode (Threshold intensities to maximum the mode)\n Smooth=zz.z (Binomial smoothing of zz.z arcsec)");
 	args["upperLabel"] = ArgParser::Parameter("", 'L', "The label to write on the upper left corner.\nIf set but no value is passed, a default label will be written.\nYou can use keywords from the color map fits file by specifying them between {}");
 	args["lowerLabel"] = ArgParser::Parameter("{CLASTYPE} {CPREPROC}", 'l', "The label to write on the lower left corner.\nYou can use keywords from the color map fits file by specifying them between {}");
@@ -146,8 +143,8 @@ int main(int argc, const char **argv)
 	args["scaling"] = ArgParser::Parameter(1, 's', "Set to the scaling factor if you want to rescale the image.");
 	args["size"] = ArgParser::Parameter("100%x100%", 'S', "The size of the image written. i.e. \"1024x1024\". See ImageMagick Image Geometry for specification.\nIf not set the output image will have the same dimension as the input image.");
 	args["output"] = ArgParser::Parameter(".", 'O', "The path of the the output directory.");
-	args["mapFile"] = ArgParser::PositionalParameter("Path to the map");
-	args["fitsFile"] = ArgParser::RemainingPositionalParameters("Path to a fits file to be converted", 1);
+	args["mapFitsFile"] = ArgParser::PositionalParameter("Path to the color map FITS file");
+	args["backgroundFitsFile"] = ArgParser::PositionalParameter("Path to the background sun image FITS file");
 	
 	// We parse the arguments
 	try
@@ -161,14 +158,6 @@ int main(int argc, const char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	if(!isDir(args["output"]))
-	{
-		cerr<<"Error : "<<args["output"]<<" is not a directory!"<<endl;
-		return EXIT_FAILURE;
-	}
-	
-	filenamePrefix = makePath(args["output"], stripPath(stripSuffix(args["mapFile"]))) + ".";
-	
 	// We parse the size option
 	Magick::Geometry size_geometry(args["size"].as<string>());
 	if(!size_geometry.isValid())
@@ -178,7 +167,35 @@ int main(int argc, const char **argv)
 	}
 	
 	// We create the contour image
-	ColorMap* colorMap = getColorMapFromFile(args["mapFile"]);
+	ColorMap* colorMap = getColorMapFromFile(args["mapFitsFile"]);
+	
+	// We expand the name of the background fits image with the header of the colorMap
+	string backgroundFitsFile = colorMap->getHeader().expand(args["backgroundFitsFile"]);
+	
+	if(!isFile(backgroundFitsFile))
+	{
+		cerr<<"Error : "<<backgroundFitsFile<<" is not a regular file!"<<endl;
+		return EXIT_FAILURE;
+	}
+	
+	// We setup the filenamePrefix
+	if (isDir(args["output"]))
+	{
+		filenamePrefix = stripSuffix(stripPath(args["mapFitsFile"]));
+		filenamePrefix += "_on_";
+		filenamePrefix += stripSuffix(stripPath(backgroundFitsFile));
+		filenamePrefix = makePath(args["output"], filenamePrefix + ".");
+	}
+	else
+	{
+		string outputDirectory = getPath(args["output"]);
+		if (! isDir(outputDirectory))
+		{
+			cerr<<"Error : "<<outputDirectory<<" is not a directory!"<<endl;
+			return EXIT_FAILURE;
+		}
+		filenamePrefix = stripSuffix(args["output"]) + ".";
+	}
 	
 	// We fill holes if requested
 	if(args["fill"])
@@ -313,84 +330,70 @@ int main(int argc, const char **argv)
 	}
 	
 	#if defined DEBUG
-	contours.write(filenamePrefix + "contours." + args["type"]);
+	contours.write(filenamePrefix + "contours.png");
 	#endif
 	
-	// We convert the images
-	deque<string> imagesFilenames = args.RemainingPositionalArguments();
-	for (unsigned p = 0; p < imagesFilenames.size(); ++p)
+	// We read the sun image for the background
+	EUVImage* image = getImageFromFile("Unknown", backgroundFitsFile);
+	
+	// We improve the contrast
+	if(args["imagePreprocessing"].is_set())
 	{
-		// We expand the name of the background fits image with the header of the colorMap
-		string imageFilename = colorMap->getHeader().expand(imagesFilenames[p]);
-		string outputFilename = makePath(args["output"], stripPath(stripSuffix(imageFilename))) + ".";
-		
-		if(!isFile(imageFilename))
-		{
-			cerr<<"Error : "<<imageFilename<<" is not a regular file!"<<endl;
-			continue;
-		}
-		
-		// We read the sun image for the background
-		EUVImage* image = getImageFromFile("Unknown", imageFilename);
-		
-		// We improve the contrast
-		if(args["imagePreprocessing"].is_set())
-		{
-			image->preprocessing(args["imagePreprocessing"]);
-		}
-		else
-		{
-			image->enhance_contrast();
-		}
-		
-		#if defined DEBUG
-		image->writeFits(outputFilename + "preprocessed.fits");
+		image->preprocessing(args["imagePreprocessing"]);
+	}
+	else
+	{
+		image->enhance_contrast();
+	}
+	
+	#if defined DEBUG
+	image->writeFits(filenamePrefix + "preprocessed.fits");
+	#endif
+	
+	// We transform the image to align it with the colorMap
+	if(args["registerImages"])
+	{
+		#if defined VERBOSE
+		cout<<"Image "<<backgroundFitsFile<<" will be registered to image "<<args["mapFitsFile"]<<endl;
 		#endif
-		
-		// We transform the image to align it with the colorMap
-		if(args["registerImages"])
-		{
-			#if defined VERBOSE
-			cout<<"Image "<<imagesFilenames[p]<<" will be registered to image "<<args["mapFile"]<<endl;
-			#endif
-			image->align(colorMap);
-			#if defined DEBUG
-			image->writeFits(outputFilename + "registered.fits");
-			#endif
-		}
-
-		
-		// We make the png background and label it if necessary
-		MagickImage outputImage = image->magick();
-		if(args["upperLabel"].is_set())
-		{
-			string text = args["upperLabel"];
-			if(text.empty())
-				text = image->Label();
-			else
-				text = image->getHeader().expand(text);
-			
-			size_t text_size = image->Xaxes()/40;
-			outputImage.fillColor("white");
-			outputImage.fontPointsize(text_size);
-			outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
-		}
+		image->align(colorMap);
 		#if defined DEBUG
-		outputImage.write(outputFilename + "background." + args["type"]);
+		image->writeFits(filenamePrefix + "registered.fits");
 		#endif
-		
-		delete image;
-		
-		// We overlay the 2 images
-		outputImage.composite(contours, Magick::CenterGravity, Magick::OverCompositeOp);
-		
-		// We resize the image
-		outputImage.scale(size_geometry);
-		
-		// We write down the image
-		outputImage.write(filenamePrefix + "_on_." + stripSuffix(stripPath(imageFilename)) + "." + args["type"]);
 	}
 	
 	delete colorMap;
+	
+	// We make the png background and label it if necessary
+	MagickImage outputImage = image->magick();
+	if(args["upperLabel"].is_set())
+	{
+		string text = args["upperLabel"];
+		if(text.empty())
+			text = image->Label();
+		else
+			text = image->getHeader().expand(text);
+		
+		size_t text_size = image->Xaxes()/40;
+		outputImage.fillColor("white");
+		outputImage.fontPointsize(text_size);
+		outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
+	}
+	#if defined DEBUG
+	outputImage.write(filenamePrefix + "background.png");
+	#endif
+	
+	delete image;
+
+	// We overlay the 2 images
+	outputImage.composite(contours, Magick::CenterGravity, Magick::OverCompositeOp);
+	
+	// We resize the image
+	outputImage.scale(size_geometry);
+	
+	// We write down the image
+	outputImage.write(filenamePrefix + "png");
+
+	
 	return EXIT_SUCCESS;
 }

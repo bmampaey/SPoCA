@@ -39,7 +39,7 @@ def get_fixed_median_dataframe(dataframe):
 if __name__ == '__main__':
 	
 	# Get the arguments
-	parser = ArgumentParser(description='Calculate the median (or rolling median) of SPoCA class centers and etas from a CSV file and write them to a new CSV file')
+	parser = ArgumentParser(description='Compute the median (or rolling median) of SPoCA class centers and etas from a CSV file and write them to a new CSV file')
 	parser.add_argument('--verbose', '-v', choices = ['DEBUG', 'INFO', 'ERROR'], default = 'INFO', help = 'Set the logging level (default is INFO)')
 	parser.add_argument('--output', '-o', required = True, help = 'Path of the output CSV file')
 	parser.add_argument('--start-date', '-s', type = datetime.fromisoformat, help = 'Discard all centers before this date (ISO 8601 format)')

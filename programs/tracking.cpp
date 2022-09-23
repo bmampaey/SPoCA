@@ -113,10 +113,6 @@ int main(int argc, const char **argv)
 	
 	newColor = args["newColor"];
 	
-	#ifdef HEK
-		unsigned previous_last_hek_map = 0;
-	#endif
-
 	// We get the maps, regions and colors from the fits files
 	vector<vector<Region*> > regions;
 	vector<ColorMap*> images;
@@ -162,13 +158,6 @@ int main(int argc, const char **argv)
 				newColor = latest_color > newColor ? latest_color : newColor;
 			}
 		}
-
-		#ifdef HEK
-		// For the hek we need to know what was the last map that we wrote TrackingRelations in
-		// (see at the end for an explanation)
-		if (file.has("TrackingRelations"))
-			previous_last_hek_map = s;
-		#endif
 		regions.push_back(tmp_regions);
 	}
 	
@@ -194,7 +183,7 @@ int main(int argc, const char **argv)
 	// We create the edges of the graph
 	// According to Cis we create an edge between 2 nodes
 	// if their time difference is smaller than some value and
-	// if they overlay and
+	// if they overlap and
 	// if there is not already a path between them
 	unsigned maxDeltaT = args["maxDeltaT"];
 	for (unsigned d = 1; d < indices.size(); ++d)
@@ -244,15 +233,6 @@ int main(int argc, const char **argv)
 		}
 	}
 
-
-	// To gain some memory space we can delete all images except if we need to recolor them
-	if(!args["recolorImages"])
-	{
-		for (unsigned s = 0; s < images.size(); ++s)
-			delete images[s];
-	
-	}
-
 	#if defined DEBUG
 	// We output the graph before tranformation
 	ouputGraph(tracking_graph, regions, "ar_graph_premodification", false);
@@ -286,7 +266,6 @@ int main(int argc, const char **argv)
 			recolorFromRegions(images[s], regions[s]);
 			images[s]->getHeader().set("TRACKED", true, "Map has been tracked");
 			images[s]->writeFits(file, FitsFile::update|compressed_fits);
-			delete images[s];
 		}
 		
 		file.moveTo(args["regionTableName"].as<string>());
@@ -321,7 +300,9 @@ int main(int argc, const char **argv)
 			file.writeColumn("COLOR", tracked_colors, FitsFile::overwrite);
 		
 		// We write the relations in a table of the FITS file
-		writeTrackingRelations(file, regions[s], tracking_graph);
+		writeTrackingRelations(file, regions[s], tracking_graph, images[s]->PixelLength() * images[s]->PixelWidth());
+		
+		delete images[s];
 	}
 
 	cout<<"Last color assigned: "<<newColor<<endl;

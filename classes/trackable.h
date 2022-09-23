@@ -165,5 +165,5 @@ void ouputRegions(const std::vector<std::vector<Region*> >& regions, std::string
 void recolorFromRegions(ColorMap* image, const std::vector<Region*>& regions);
 
 // Write a table with the tracking relations with previous regions into a fits file
-FitsFile& writeTrackingRelations(FitsFile& file, const std::vector<Region*>& regions, const RegionGraph& tracking_graph);
+FitsFile& writeTrackingRelations(FitsFile& file, const std::vector<Region*>& regions, const RegionGraph& tracking_graph, const Real pixel_area);
 #endif

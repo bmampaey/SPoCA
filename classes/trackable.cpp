@@ -280,13 +280,14 @@ void recolorFromRegions(ColorMap* image, const vector<Region*>& regions)
 	}
 }
 
-FitsFile& writeTrackingRelations(FitsFile& file, const vector<Region*>& regions, const RegionGraph& tracking_graph)
+FitsFile& writeTrackingRelations(FitsFile& file, const vector<Region*>& regions, const RegionGraph& tracking_graph, const Real pixel_area)
 {
 	vector<string> past_dates_obs;
 	vector<ColorType> past_colors;
 	vector<string> present_dates_obs;
 	vector<ColorType> present_colors;
-	vector<int> overlay_sizes;
+	vector<int> overlap_number_pixels;
+	vector<Real> overlap_area_projected;
 	
 	for (unsigned r = 0; r < regions.size(); ++r)
 	{
@@ -298,7 +299,8 @@ FitsFile& writeTrackingRelations(FitsFile& file, const vector<Region*>& regions,
 			past_colors.push_back(it->from->get_region()->Color());
 			present_dates_obs.push_back(it->to->get_region()->ObservationDate());
 			present_colors.push_back(it->to->get_region()->Color());
-			overlay_sizes.push_back(it->weight);
+			overlap_number_pixels.push_back(it->weight);
+			overlap_area_projected.push_back(it->weight * pixel_area);
 		}
 	}
 	
@@ -307,7 +309,8 @@ FitsFile& writeTrackingRelations(FitsFile& file, const vector<Region*>& regions,
 	file.writeColumn("PAST_COLOR", past_colors);
 	file.writeColumn("PRESENT_DATE_OBS", present_dates_obs);
 	file.writeColumn("PRESENT_COLOR", present_colors);
-	file.writeColumn("OVERLAY_SIZE", overlay_sizes);
+	file.writeColumn("OVERLAP_NUMBER_PIXELS", overlap_number_pixels);
+	file.writeColumn("OVERLAP_AREA_PROJECTED", overlap_area_projected);
 	
 	return file;
 }

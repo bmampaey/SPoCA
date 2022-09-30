@@ -189,7 +189,7 @@ int main(int argc, const char **argv)
 			continue;
 		}
 		
-		EUVImage* image = getImageFromFile(args["imageType"], imageFilename);
+		EUVImage* image = getImageFromFile("Unknown", imageFilename);
 		
 		// We apply the preprocessing
 		image->preprocessing(args["statsPreprocessing"]);

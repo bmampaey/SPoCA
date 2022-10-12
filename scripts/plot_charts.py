@@ -7,6 +7,7 @@ import copy
 import pandas
 import sys
 from collections import defaultdict
+from shlex import quote
 
 # HTML template to generate the document and each chart
 FILE_TEMPLATE = string.Template('''
@@ -15,15 +16,85 @@ FILE_TEMPLATE = string.Template('''
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-		<!-- Amcharts 4 library -->
-		<script src="https://cdn.amcharts.com/lib/4/core.js"></script>
-		<script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+	<!-- Amcharts 4 library -->
+	<script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+	<script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+	${extra_head}
 </head>
 
 <body>
+	<script type="text/javascript">
+		// Improve performance of amchart4 for big charts
+		// See https://www.amcharts.com/docs/v4/concepts/performance/
+		am4core.options.minPolylineStep = 5;
+		am4core.options.queue = true;
+		
+		// List of all charts drawn for future reference
+		var charts = [];
+		
+		document.addEventListener("DOMContentLoaded", function(event) {
+			// Attach the event handlers on each chart
+			charts.forEach(function(chart) {
+				// Attach the zoom handler
+				// Zoom handler must not be attached to the chart itself but to all Xaxes
+				if(typeof chart_zoom === "function"){
+					console.log('Attaching chart_zoom event handler on chart', chart);
+					chart.xAxes.values.forEach(function(axis){
+						axis.events.on('startendchanged', chart_zoom);
+					});
+				}
+				// Attach the click handler to all charts
+				// Click handler must be attached to the chart but the xaxis tooltip gives us the select date
+				if (typeof chart_click === "function") {
+					console.log('Attaching chart_click event handler on chart', chart);
+					chart.events.on("doublehit", function(event) {
+						let selectedDate = chart.xAxes.getIndex(0).tooltipDate;
+						console.log('Double click on chart', chart.titles.getIndex(0).text, ' on date ', selectedDate);
+						chart_click(selectedDate);
+					});
+				}
+			});
+		})
+		
+		// Event listener for axis to sync this axis zoom with all other charts xAxes
+		function chart_zoom(event) {
+			let refAxis = event.target;
+			let start_date = new Date(refAxis.minZoomed);
+			let end_date = new Date(refAxis.maxZoomed);
+			
+			// Disable chart_zoom on all charts xAxes while doing the zoom
+			charts.forEach(function(chart) {
+				chart.xAxes.values.forEach(function(axis){
+					axis.events.off('startendchanged', chart_zoom);
+				});
+			});
+			
+			// Sync the zoom of other charts
+			charts.forEach(function(chart) {
+				if (chart != refAxis.chart) {
+					console.log('Zooming chart', chart.titles.getIndex(0).text, 'to range', start_date, end_date);
+					chart.xAxes.values.forEach(function(axis){
+						axis.zoomToDates(start_date, end_date, false, false, false);
+					});
+				}
+			});
+			
+			// Re-enable chart_zoom on all charts xAxes
+			charts.forEach(function(chart) {
+				chart.xAxes.values.forEach(function(axis){
+					axis.events.on('startendchanged', chart_zoom);
+				});
+			});
+		}
+	</script>
+	
+	${body_start}
 	${charts}
+	${body_end}
 	<footer>
-		<p>Generated with command<pre><code>${command}</code></pre></p>
+		<p>Generated with command</p>
+		<pre><code>${command}</code></pre>
 	</footer>
 </body>
 </html>
@@ -32,7 +103,7 @@ FILE_TEMPLATE = string.Template('''
 CHART_TEMPLATE = string.Template('''
 	<div id="${chart_name}" style="width: 100%; height: 500px;"></div>
 	<script type="text/javascript">
-		am4core.createFromConfig(${chart_config}, "${chart_name}");
+		charts.push(am4core.createFromConfig(${chart_config}, "${chart_name}"));
 	</script>
 ''')
 
@@ -127,6 +198,7 @@ SERIES_CONFIG = {
 	},
 	'tooltipText': '{valueY}',
 	'stroke': '',
+	'fill': '',
 	'yAxis': ''
 }
 
@@ -192,7 +264,7 @@ def get_charts_configs(charts, sources_dataframes, filters = {}):
 		series_config['data'] = get_data(sources_dataframes[source_name], column_name, filters.get('%s:%s' % (chart_name, series_name), []))
 		series_config['dataFields']['valueY'] = column_name
 		series_config['yAxis'] = unit
-		series_config['stroke'] = COLORS[len(chart_config['series'])]
+		series_config['stroke'] = series_config['fill'] = COLORS[len(chart_config['series'])]
 		
 		chart_config['series'].append(series_config)
 		
@@ -224,12 +296,12 @@ def get_data(dataframe, column, filters):
 	return dataframe.to_dict('records')
 
 
-def write_html_file(output_file, charts_configs):
+def write_html_file(output_file, charts_configs, extra_head = '', body_start = '', body_end = ''):
 	'''Write an HTML file using the templates with the chart_configs converted to JSON for the AmCharts library'''
 	charts_html = [CHART_TEMPLATE.substitute(chart_name = chart_name, chart_config = json.dumps(chart_config, indent = 2)) for chart_name, chart_config in charts_configs.items()]
 	
 	with open(output_file, 'wt') as file:
-		file.write(FILE_TEMPLATE.substitute(charts = ''.join(charts_html), command = ' '.join(sys.argv)))
+		file.write(FILE_TEMPLATE.substitute(charts = ''.join(charts_html), command = ' '.join(quote(arg) for arg in sys.argv), extra_head = extra_head, body_start = body_start, body_end = body_end))
 
 
 # Start point of the script

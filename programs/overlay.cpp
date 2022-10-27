@@ -142,7 +142,7 @@ int main(int argc, const char **argv)
 	args["recenter"] = ArgParser::Parameter("", 'R', "Set to the position of the new sun center if you want to translate the image");
 	args["scaling"] = ArgParser::Parameter(1, 's', "Set to the scaling factor if you want to rescale the image.");
 	args["size"] = ArgParser::Parameter("100%x100%", 'S', "The size of the image written. i.e. \"1024x1024\". See ImageMagick Image Geometry for specification.\nIf not set the output image will have the same dimension as the input image.");
-	args["output"] = ArgParser::Parameter(".", 'O', "The path of the the output directory.");
+	args["output"] = ArgParser::Parameter(".", 'O', "The path of the the output file or directory.");
 	args["mapFitsFile"] = ArgParser::PositionalParameter("Path to the color map FITS file");
 	args["backgroundFitsFile"] = ArgParser::PositionalParameter("Path to the background sun image FITS file");
 	

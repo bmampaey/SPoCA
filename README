@@ -7,7 +7,7 @@
 @authors
 Benjamin Mampaey benjamin.mampaey@oma.be
 Cis Verbeeck cis.verbeeck@oma.be
-Veronique Delouille veronique.delouille@oma.be
+Véronique Delouille veronique.delouille@oma.be
 
 \section intro_sec Introduction
 
@@ -15,15 +15,15 @@ SPoCA stands for Spatial Possibilistic Classification Algorithm.
 
 It's a multi-channel unsupervised spatially-constrained fuzzy clustering algorithm.
 
-It's purpose is to segment Extreme Ultra Violet (EUV) images of the sun into 3 categories: Quiet Sun (QS), Active %Region (AR) and Coronal Hole (CH)
+It's purpose is to segment Extreme Ultra Violet (EUV) images of the sun into 3 categories: Quiet Sun (QS), Active Region (AR) and Coronal Hole (CH)
 
 \section history_sec History
 
-The software was first develloped by Vincent Barra in 2007.
+The software was first developed by Vincent Barra in 2007.
 
-It has been completely rewritten by Benjamin Mampaey starting in 2009, and has been in developpement since.
+It has been completely rewritten by Benjamin Mampaey starting in 2009, and has been in development since.
 
-It received several improvements, with the help of Cis Verbeeck and Veronique Delouille.
+It received several improvements, with the help of Cis Verbeeck and Véronique Delouille.
 
 \section references_sec References
 
@@ -54,5 +54,3 @@ List of programs and utilities included in SPoCA.
 <BR>@subpage overlay
 
 */
-
-

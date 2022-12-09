@@ -26,7 +26,7 @@ def clean_map(input_filepath, image_hdu_name_or_index, output_filepath, regions_
 			logging.debug('No regions to erase in file %s', input_filepath)
 		
 		# Note that if the image HDU is compressed, the image in the output file will also be compressed
-		image_hdu.writeto(output_filepath, checksum = True)
+		image_hdu.writeto(output_filepath, checksum = True, overwrite = True)
 	
 	logging.info('Wrote file %s', output_filepath)
 	return output_filepath

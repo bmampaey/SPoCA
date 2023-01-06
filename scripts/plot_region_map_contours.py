@@ -14,8 +14,8 @@ from gradient import gradient
 
 def get_contours_image(fits_file, image_hdu_name_or_index, colors, background_color = (0, 0, 0), contour_width = 3, image_size = None):
 	'''Return a RGBA image with the region contours of a region map FITS file,
-		colors must be a numpy array of RGB values used to represent the contours
-		background_color is a triplet representing the color to be used for everything but the contours'''
+		colors must be a list of RGB triplets to represent the contours
+		background_color is a single RGB triplet to represent everything but the contours'''
 	
 	colors = numpy.array(colors)
 	
@@ -60,8 +60,6 @@ def overlay_contours_image(contours_image, background_image, alpha = 1.):
 	
 	if alpha < 0 or alpha > 1:
 		raise ValueError('Parameter alpha must be a value between 0 and 1')
-	
-	background_image = skimage.io.imread(background_image)
 	
 	# For simplicity we work with floats instead of integers
 	contours_image = skimage.util.img_as_float(contours_image)
@@ -135,16 +133,19 @@ if __name__ == '__main__':
 		colors = [matplotlib.colors.to_rgb(color) for color in args.colors]
 	
 	try:
-		image = get_contours_image(args.region_map, args.image_hdu_name_or_index, colors, contour_width = args.contour_width, image_size = args.image_size)
+		contours_image = get_contours_image(args.region_map, args.image_hdu_name_or_index, colors, contour_width = args.contour_width, image_size = args.image_size)
 	except Exception as why:
 		logging.exception('Could not get contours image from %s: %s', args.region_map, why)
 		raise
 	
-	if args.background is not None:
+	if args.background :
+		background_image = skimage.io.imread(args.background)
 		try:
-			image = overlay_contours_image(image, args.background)
+			image = overlay_contours_image(contours_image, background_image)
 		except Exception as why:
 			logging.exception('Could not overlay contours over image %s: %s', args.background, why)
 			raise
+	else:
+		image = contours_image
 	
 	save_image(image, args.output)

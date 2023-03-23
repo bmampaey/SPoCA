@@ -325,6 +325,7 @@ int main(int argc, const char **argv)
 		string text = colorMap->getHeader().expand(args["lowerLabel"]);
 		size_t text_size = colorMap->Xaxes()/40;
 		contours.fillColor("white");
+		contours.font(FONT);
 		contours.fontPointsize(text_size);
 		contours.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::SouthWestGravity);
 	}
@@ -376,6 +377,7 @@ int main(int argc, const char **argv)
 		
 		size_t text_size = image->Xaxes()/40;
 		outputImage.fillColor("white");
+		outputImage.font(FONT);
 		outputImage.fontPointsize(text_size);
 		outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
 	}

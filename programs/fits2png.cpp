@@ -250,6 +250,7 @@ int main(int argc, const char **argv)
 		
 		size_t text_size = inputImage->Xaxes()/40;
 		outputImage.fillColor("white");
+		outputImage.font(FONT);
 		outputImage.fontPointsize(text_size);
 		outputImage.annotate(text, Geometry(0, 0, text_size/2, text_size/2), Magick::NorthWestGravity);
 	}

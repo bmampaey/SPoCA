@@ -123,6 +123,14 @@ See constants.h for the actual values.
 #define STRICTFITS
 #endif
 
+/*!
+@page Compilation_Options
+@param FONT The font to use for annotation of PNG images
+*/
+#if ! defined(FONT)
+#define FONT "FreeSans"
+#endif
+
 
 /*!
 @page Compilation_Options

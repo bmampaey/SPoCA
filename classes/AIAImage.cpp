@@ -168,8 +168,10 @@ string AIAImage::Instrument() const
 
 void AIAImage::enhance_contrast()
 {
+	// The following enhancement formulas are taken from the SolarSoft preocedure aia_intscale.pro
 	switch (int(wavelength))
 	{
+		// bytscl(  sqrt((image*(4.99803/exptime)>(   1.5/ 1.06 )<(   50/ 1.06 ))))
 		case 94:
 			mul(4.99803/exposureTime);
 			threshold(1.5 / 1.06, 50.0 / 1.06);
@@ -179,6 +181,7 @@ void AIAImage::enhance_contrast()
 			}
 		break;
 		
+		// bytscl(alog10((image*(6.99685/exptime)>(   7.0/ 1.49 )<( 1200/ 1.49 ))))
 		case 131:
 			mul(6.99685/exposureTime);
 			threshold(7.0 / 1.49, 1200.0 / 1.49);
@@ -188,6 +191,7 @@ void AIAImage::enhance_contrast()
 			}
 		break;
 		
+		// bytscl(  sqrt((image*(4.99803/exptime)>(  10.0/ 1.49 )<( 6000/ 1.49 ))))
 		case 171:
 			mul(4.99803/exposureTime);
 			threshold(10.0 / 1.49, 6000.0 / 1.49);
@@ -197,6 +201,7 @@ void AIAImage::enhance_contrast()
 			}
 		break;
 		
+		// bytscl(alog10((image*(2.9995/exptime) > ( 120d/ 2.2 ) < (6000d/ 2.2 ))))
 		case 193:
 			mul(2.99950/exposureTime);
 			threshold(120.0 / 2.2, 6000.0 / 2.2);
@@ -206,6 +211,7 @@ void AIAImage::enhance_contrast()
 			}
 		break;
 		
+		// bytscl(alog10((image*(4.99801/exptime)>(  30.0/ 1.10 )<(13000/ 1.10 ))))
 		case 211:
 			mul(4.99801/exposureTime);
 			threshold(30.0 / 1.10, 13000.0 / 1.10);
@@ -215,6 +221,7 @@ void AIAImage::enhance_contrast()
 			}
 		break;
 
+		// bytscl(alog10((image*(4.99941/exptime)>(  50.0/12.11 )<( 2000/12.11  ))))
 		case 304:
 			mul(4.99941/exposureTime);
 			threshold(50.0 / 12.11,  2000.0 / 12.11);
@@ -224,6 +231,7 @@ void AIAImage::enhance_contrast()
 			}
 		break;
 		
+		// bytscl(alog10((image*(6.99734/exptime)>(   3.5/ 2.97 )<( 1000/ 2.97 ))))
 		case 335:
 			mul(6.99734/exposureTime);
 			threshold(3.5 / 2.97, 1000.0 / 2.97);
@@ -233,16 +241,19 @@ void AIAImage::enhance_contrast()
 			}
 		break;
 		
+		// bytscl(       (image*(2.99911/exptime)), max = 200, min=-8)
 		case 1600:
 			mul(2.99911/exposureTime);
 			threshold(0, 200);
 		break;
 		
+		// bytscl(       (image*(1.00026        )), max = 2500)
 		case 1700:
 			mul(1.00026);
 			threshold(0, 2500);
 		break;
 
+		// bytscl(       (image*(1.00026/exptime)<(26000.)))
 		case 4500:
 			mul(1.00026/exposureTime);
 			threshold(0, 26000);
